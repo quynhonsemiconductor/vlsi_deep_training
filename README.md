@@ -1,2 +1,6 @@
 # vlsi_deep_training
-A general purpose MCU
+## Overview
+A general purpose MCU is designed for the deep training.
+# Training Flow
+![Training Flow][img/DeepTrainingFlow.jpg]
+
