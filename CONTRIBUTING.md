@@ -58,7 +58,8 @@ the worked example.
 ### 4. Check locally before pushing
 
 ```bash
-python3 flow/lint/naming_check.py design/<block>    # naming rule
+python3 flow/lint/naming_check.py   design/<block>  # naming rule
+python3 flow/lint/hardcode_check.py design/<block>  # no shared value typed by hand
 bash    flow/lint/lint_all.sh                       # Verilator, through your filelist
 ```
 
@@ -75,6 +76,7 @@ Both run in CI. Running them first saves a round trip.
 | `PR title (conventional commits)` | the title is not a conventional commit |
 | `Verilator lint` | your block does not lint through its filelist |
 | `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** |
+| `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region |
 | `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract |
 | `Vendor tree unmodified` | `vendor/` changed without `vendor/manifest.yml` |
 | `Specifications build and check` | the specifications no longer build |
@@ -114,7 +116,7 @@ parameters, `ram` twice with different depths. What differs between instances is
 |---|---|
 | Edit anything under `vendor/` | It is vendored at a pinned commit so tape-out has a frozen, auditable source. Local fixes go in `vendor/patches/` with a reason. CI fails on it |
 | Copy upstream IP into `design/<block>/rtl/` | `rtl/` is what makes "self-designed or IP?" answerable by reading one directory. List the IP in your filelist instead |
-| Type an address, interrupt index or domain name into a wrapper | That is how ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11` and eleven interrupt sources against twelve all happened. Import it from `qnsc_pkg` |
+| Type an address, interrupt index or domain name into a wrapper | That is how ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11` and eleven interrupt sources against twelve all happened. Import it from `qnsc_pkg` — and `No hardcoded shared values` will fail the PR if you do |
 | Hand-edit `design/top/rtl/qnsc_pkg.sv` | It is generated. CI regenerates and compares |
 | Fork the wrapper per instance | One wrapper, parameters for the difference |
 | Rename a vendored module's port to satisfy the naming rule | The rule applies to our RTL. `naming_check.py` already skips identifiers after a dot for exactly this reason |

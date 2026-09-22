@@ -59,6 +59,31 @@ jobs:
         run: bash flow/lint/lint_all.sh
 
   # ---------------------------------------------------------------------------
+  hardcode:
+    name: No hardcoded shared values
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install PyYAML
+        run: pip install --quiet pyyaml
+
+      # The rule the anti-drift design rests on: a number shared between blocks is
+      # imported from qnsc_pkg, never typed. A wrapper that writes 32'h8002_4000
+      # instead of C_UART_0_BASE has created the next ROM-8-KiB-against-2-KiB, and
+      # nothing else would notice.
+      #
+      # The check decides by comparison rather than by guessing: a literal equal to
+      # a contract constant is wrong by construction, and one that lands inside a
+      # mapped region is almost certainly an address. Scope is design/**/rtl, so
+      # vendored IP and the generated package itself are excluded.
+      - name: Check no shared value is hardcoded
+        run: python3 flow/lint/hardcode_check.py
+
+  # ---------------------------------------------------------------------------
   contract:
     name: Inter-block contract
     runs-on: ubuntu-latest

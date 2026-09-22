@@ -48,26 +48,49 @@ import re
 import sys
 from pathlib import Path
 
+try:
+    import yaml
+except ImportError:
+    sys.exit("PyYAML is required: pip install pyyaml")
+
 REPO = Path(__file__).resolve().parent.parent.parent
-DEFAULT_SCOPE = REPO / "design"
+RULES_FILE = Path(__file__).resolve().parent / "naming_rules.yml"
 CI = bool(os.environ.get("GITHUB_ACTIONS"))
-IGNORE = re.compile(r"//\s*naming-check:\s*ignore")
 
-# --- rule patterns ---------------------------------------------------------
-MODULE_OK = re.compile(r"^(?:m_qnsc_wrap_[a-z0-9_]+|m_qnsc_[a-z0-9_]+|qnsc_[a-z0-9_]+)$")
-PORT_OK = re.compile(r"^(?:i_|o_|io_)[a-z0-9_]+$")
-PARAM_OK = re.compile(r"^(?:P_|C_|S_)[A-Z0-9_]+$")
-INST_OK = re.compile(r"^u_[a-z0-9_]+$")
-SIGNAL_OK = re.compile(r"^(?:r_|w_|mem_)[a-z0-9_]+$")
+# --- rules, loaded from naming_rules.yml -----------------------------------
+# The patterns live in that file rather than here so that a new revision of
+# QNSC_RTL_Design_Naming_Rule is an edit to data, not a patch to a regex only
+# its author can read -- and so a reviewer can compare the file line by line
+# with section 4.3 of the rule document.
+RULES = yaml.safe_load(RULES_FILE.read_text())
 
-CAMEL = re.compile(r"[a-z][A-Z]|[A-Z]{2,}[a-z]")
-BAD_INDEX = re.compile(r"[a-z]\d+(?:_|$)")          # timer0  ->  timer_0
-BAD_ACTIVE_LOW = re.compile(r"\b(?:rstn|resetn|reset_b|rst_bar)\b")
-VOCAB = {
-    "irq": "int", "interrupt": "int", "clock": "clk", "reset": "rst",
-    "config": "cfg", "debug": "dbg", "power": "pwr", "memory": "mem",
-    "peripheral": "peri", "multiplexer": "mux", "analog": "ana",
-}
+DEFAULT_SCOPE = REPO / RULES["scope"]["include"][0]
+EXTENSIONS = tuple(RULES["scope"]["extensions"])
+EXCLUDE_PARTS = set(RULES["scope"]["exclude_path_parts"])
+IGNORE = re.compile(r"//\s*" + re.escape(RULES["scope"]["ignore_comment"]))
+
+_ID = RULES["identifiers"]
+MODULE_OK = re.compile(_ID["module"]["pattern"])
+PORT_OK = re.compile(_ID["port"]["pattern"])
+PARAM_OK = re.compile(_ID["parameter"]["pattern"])
+INST_OK = re.compile(_ID["instance"]["pattern"])
+SIGNAL_OK = re.compile(_ID["signal"]["pattern"])
+
+_LX = RULES["lexical"]
+CAMEL = re.compile(_LX["mixed_case"]["forbid_pattern"])
+BAD_ACTIVE_LOW = re.compile(_LX["active_low"]["forbid_pattern"])
+BAD_INDEX = re.compile(_LX["numeric_index"]["forbid_pattern"])
+VOCAB = RULES["vocabulary"]["replace"]
+
+
+def _msg(section: str, key: str) -> str:
+    """The message text for a rule, from the config."""
+    d = RULES[section][key] if section != "identifiers" else RULES[section][key]
+    return " ".join(str(d["message"]).split())
+
+
+def _rule(section: str, key: str) -> str:
+    return RULES[section][key]["rule"]
 
 # --- SystemVerilog keywords that are not identifiers we own ---------------
 KEYWORDS = {
@@ -141,9 +164,8 @@ def check_file(path: Path) -> list[Finding]:
     for m in re.finditer(r"^\s*module\s+([A-Za-z_]\w*)", src, re.M):
         name, ln = m.group(1), lineno_of(m.start(1))
         if not MODULE_OK.match(name):
-            add(ln, "2.1 module",
-                f"module '{name}' must be m_qnsc_<function>, m_qnsc_wrap_<ip_module> "
-                f"or qnsc_<function>")
+            add(ln, _rule("identifiers", "module"),
+                f"module '{name}' {_msg('identifiers', 'module')}")
 
     # ---- 1.2 / 3.x port direction prefix ---------------------------------
     # ANSI port declarations: input/output/inout ... name
@@ -155,8 +177,8 @@ def check_file(path: Path) -> list[Finding]:
         if name in KEYWORDS:
             continue
         if not PORT_OK.match(name):
-            add(ln, "1.2 port prefix",
-                f"port '{name}' must start with i_, o_ or io_")
+            add(ln, _rule("identifiers", "port"),
+                f"port '{name}' {_msg('identifiers', 'port')}")
 
     # ---- 2.4 parameter / constant / state --------------------------------
     for m in re.finditer(r"^\s*(?:localparam|parameter)\b[^=;]*?\b([A-Za-z_]\w*)\s*=",
@@ -165,9 +187,8 @@ def check_file(path: Path) -> list[Finding]:
         if name in KEYWORDS:
             continue
         if not PARAM_OK.match(name):
-            add(ln, "2.4 parameter",
-                f"'{name}' must be P_<FUNCTION> (parameter), C_<FUNCTION> (constant) "
-                f"or S_<STATE> (FSM state), uppercase")
+            add(ln, _rule("identifiers", "parameter"),
+                f"'{name}' {_msg('identifiers', 'parameter')}")
 
     # ---- 2.2 instance name ----------------------------------------------
     # <ModuleName> [#(...)] <inst> ( ... )   at statement level
@@ -180,8 +201,8 @@ def check_file(path: Path) -> list[Finding]:
             continue
         ln = lineno_of(m.start(2))
         if not INST_OK.match(inst):
-            add(ln, "2.2 instance",
-                f"instance '{inst}' of '{mod}' must be u_<function>[_<index>]")
+            add(ln, _rule("identifiers", "instance"),
+                f"instance '{inst}' of '{mod}' {_msg('identifiers', 'instance')}")
 
     # ---- 2.3 / 2.5 internal signal ---------------------------------------
     for m in re.finditer(
@@ -196,9 +217,8 @@ def check_file(path: Path) -> list[Finding]:
         if PORT_OK.match(name):
             continue
         if not SIGNAL_OK.match(name):
-            add(ln, "2.3 signal",
-                f"'{name}' must be r_<function> if registered, w_<function> if "
-                f"combinational, or mem_<function> if a memory array")
+            add(ln, _rule("identifiers", "signal"),
+                f"'{name}' {_msg('identifiers', 'signal')}")
 
     # ---- 1.1 / 1.3 / 1.4 / 1.5 lexical rules over all identifiers --------
     seen: set[tuple[int, str]] = set()
@@ -219,20 +239,20 @@ def check_file(path: Path) -> list[Finding]:
         seen.add((ln, name))
 
         if CAMEL.search(name) and not PARAM_OK.match(name):
-            add(ln, "1.1 case",
-                f"'{name}' uses mixed case; identifiers are lowercase with _ "
-                f"(uppercase only for P_/C_/S_)")
+            add(ln, _rule("lexical", "mixed_case"),
+                f"'{name}' {_msg('lexical', 'mixed_case')}")
         if BAD_ACTIVE_LOW.search(name):
-            add(ln, "1.3 active low",
-                f"'{name}' -- active low is _n after the meaning, as in i_rst_n_sys")
+            add(ln, _rule("lexical", "active_low"),
+                f"'{name}' -- {_msg('lexical', 'active_low')}")
         if BAD_INDEX.search(name) and not PARAM_OK.match(name):
-            add(ln, "1.4 index",
-                f"'{name}' -- a numeric index takes an underscore, as in timer_0")
+            add(ln, _rule("lexical", "numeric_index"),
+                f"'{name}' -- {_msg('lexical', 'numeric_index')}")
         low = name.lower()
         for bad, good in VOCAB.items():
             if re.search(rf"(?:^|_){bad}(?:_|$)", low):
-                add(ln, "1.5 vocabulary",
-                    f"'{name}' uses '{bad}'; the project term is '{good}'")
+                add(ln, RULES["vocabulary"]["rule"],
+                    f"'{name}' uses '{bad}'; "
+                    f"{RULES['vocabulary']['message']} '{good}'")
                 break
     return out
 
@@ -240,11 +260,11 @@ def check_file(path: Path) -> list[Finding]:
 def collect(paths: list[Path]) -> list[Path]:
     files: list[Path] = []
     for p in paths:
-        if p.is_file() and p.suffix in (".sv", ".v"):
+        if p.is_file() and p.suffix in EXTENSIONS:
             files.append(p)
         elif p.is_dir():
             for f in sorted(p.rglob("*")):
-                if f.suffix in (".sv", ".v") and "vendor" not in f.parts:
+                if f.suffix in EXTENSIONS and not (EXCLUDE_PARTS & set(f.parts)):
                     files.append(f)
     return files
 
@@ -261,7 +281,7 @@ def main(argv: list[str]) -> int:
         findings.extend(check_file(f))
 
     print(f"naming-check: {len(files)} file(s) checked against "
-          f"QNSC_RTL_Design_Naming_Rule V1.0")
+          f"{RULES['document']} V{RULES['version']}")
     if not findings:
         print("naming-check: clean")
         return 0
