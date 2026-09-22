@@ -126,7 +126,7 @@ parameters, `ram` twice with different depths. What differs between instances is
 Ownership is per directory in [`.github/CODEOWNERS`](.github/CODEOWNERS). `vendor/`,
 `util/` and `design/top/` need a maintainer, because a change there reaches every
 block. Repository policy, CI and the ruleset are described in
-[`.github/README.md`](.github/README.md).
+[`.github/POLICY.md`](.github/POLICY.md).
 
 ## Specifications
 

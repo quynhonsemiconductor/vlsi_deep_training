@@ -1,7 +1,7 @@
 # PR auto-labeler config — maps file path patterns to labels.
 # Used by the labeler workflow (labeler.yml).
 # Labels must exist in the repo before they can be applied: see
-# .github/labels.yml and the bootstrap commands in .github/README.md.
+# .github/labels.yml and the bootstrap commands in .github/POLICY.md.
 
 # ---- blocks ----------------------------------------------------------------
 area/ram:
