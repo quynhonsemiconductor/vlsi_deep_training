@@ -1,6 +1,6 @@
 # `pwm` — PWM / advanced timer
 
-**Owner:** @nghia   **Spec:** [`doc/QNSC_PWM_MAS.docx`](../../doc)   **DV:** [`../../dv/pwm`](../../dv/pwm)
+**Owner:** @nghia   **Spec:** [`doc/src/QNSC_PWM_MAS.md`](../../doc/src/QNSC_PWM_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/pwm`](../../dv/pwm)
 
 ## What this block is
 

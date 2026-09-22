@@ -1,6 +1,6 @@
 # `ram` — RAM / ROM controller
 
-**Owner:** @nghia   **Spec:** [`doc/QNSC_RAM_MAS.docx`](../../doc)   **DV:** [`../../dv/ram`](../../dv/ram)
+**Owner:** @nghia   **Spec:** [`doc/src/QNSC_RAM_MAS.md`](../../doc/src/QNSC_RAM_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/ram`](../../dv/ram)
 
 ## What this block is
 
