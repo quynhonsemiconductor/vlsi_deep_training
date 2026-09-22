@@ -52,11 +52,34 @@ jobs:
           sudo apt-get install -y --no-install-recommends verilator
           verilator --version
 
-      # One invocation per block that has RTL, so a failure names the block.
-      # Blocks with no .sv yet are skipped rather than failing, so the workflow
-      # is useful from the first commit instead of only once every block exists.
+      # One invocation per block, driven by design/<block>/<block>.f rather than
+      # by `find` -- see the header of lint_all.sh for why that matters here.
+      # Blocks whose filelist has no sources yet are skipped rather than failing.
       - name: Lint each block
         run: bash flow/lint/lint_all.sh
+
+  # ---------------------------------------------------------------------------
+  naming:
+    name: RTL naming rule
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # QNSC_RTL_Design_Naming_Rule V1.0 is mandatory and entirely mechanical, so
+      # it is enforced by a deterministic script rather than by review or by a
+      # language model: this is a required check, and a gate that can return a
+      # different verdict for the same input is worse than no gate.
+      #
+      # Violations are emitted as GitHub Actions annotations, so they appear
+      # inline on the pull request diff at the offending line.
+      #
+      # Scope is design/**/rtl only. Vendored IP keeps its upstream conventions
+      # and must not be renamed -- editing vendor/ is itself a CI failure.
+      - name: Check naming against QNSC_RTL_Design_Naming_Rule V1.0
+        run: python3 flow/lint/naming_check.py
 
   # ---------------------------------------------------------------------------
   vendor-guard:

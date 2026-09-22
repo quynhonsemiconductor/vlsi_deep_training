@@ -1,28 +1,50 @@
 #!/usr/bin/env bash
-# Verilator lint, one invocation per block so a failure names the block.
+# Verilator lint, one invocation per block so a failure names the block -- and
+# therefore names the owner, through CODEOWNERS.
 #
-# A block with no .sv yet is skipped, not failed: this has to be useful from the
-# first commit rather than only once all sixteen blocks exist.
+# The file list comes from design/<block>/<block>.f, never from `find`. Three
+# reasons, all of them already true in this repository:
 #
-# --timing is off and -Wall is on. The waivers live per block in
-# flow/lint/waivers/<block>.vlt so that a waiver is attributable to an owner
-# rather than accumulating in one shared file nobody reads.
+#   1. A wrapper instantiates upstream IP that lives under vendor/, which `find
+#      design/<block>` cannot see -- lint would report the IP as undefined.
+#   2. Vendor trees contain modules that share a name on purpose, as mutually
+#      exclusive alternatives: riscv-dbg defines dmi_jtag_tap in both
+#      dmi_jtag_tap.sv and dmi_bscane_tap.sv, and OpenTitan defines
+#      tlul_adapter_vh twice. Verilog has one flat module namespace, so exactly
+#      one of each pair may be compiled. Only an explicit list can choose.
+#   3. Compile order matters -- a package must precede the modules that import
+#      it -- and `find` returns alphabetical order.
+#
+# A block whose filelist has no source lines yet is skipped rather than failed,
+# so this is useful from the first commit instead of only once every block exists.
 set -uo pipefail
 
 fail=0
 for dir in design/*/; do
   block=$(basename "$dir")
-  files=$(find "$dir" -name '*.sv' -o -name '*.v' 2>/dev/null | sort)
-  [ -z "$files" ] && { printf '  %-10s no RTL yet, skipped\n' "$block"; continue; }
+  flist="${dir}${block}.f"
+
+  if [ ! -f "$flist" ]; then
+    printf '  %-10s no %s.f -- add one, see design/%s/%s.f in another block\n' \
+           "$block" "$block" "$block" "$block"
+    fail=1
+    continue
+  fi
+
+  # Source lines are the non-comment, non-blank ones.
+  if ! grep -qvE '^\s*(#|//|$)' "$flist"; then
+    printf '  %-10s filelist empty, skipped\n' "$block"
+    continue
+  fi
 
   waiver=""
-  [ -f "flow/lint/waivers/${block}.vlt" ] && waiver="flow/lint/waivers/${block}.vlt"
+  [ -f "${dir}waivers.vlt" ] && waiver="${dir}waivers.vlt"
 
-  # -I paths let a wrapper include vendored headers without copying them.
-  if verilator --lint-only -Wall -Wno-fatal \
-       -Ivendor -Idesign/top/rtl \
-       $waiver $files 2>&1 | tee "/tmp/lint-${block}.log" | grep -q '%Error'; then
-    printf '  %-10s FAIL\n' "$block"; sed 's/^/      /' "/tmp/lint-${block}.log"; fail=1
+  if verilator --lint-only -Wall -Wno-fatal $waiver -f "$flist" \
+       2>&1 | tee "/tmp/lint-${block}.log" | grep -q '%Error'; then
+    printf '  %-10s FAIL\n' "$block"
+    sed 's/^/      /' "/tmp/lint-${block}.log"
+    fail=1
   else
     printf '  %-10s ok\n' "$block"
   fi
