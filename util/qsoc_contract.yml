@@ -171,7 +171,12 @@ memory_map:
       would shadow the registers.
 
 # -----------------------------------------------------------------------------
-# Interrupts. Source: QSOC_HAS Table 8-1, QNSC_Interrupt_Map_MAS section 5.3.
+# Interrupts. Source: QNSC_Interrupt_Map_MAS section 5.3 -- and that is now the
+# ONLY prose source. QSOC_HAS_Report_EN_v4_final carries a '# Interrupt map'
+# heading with nothing under it: Table 8-1 (fast line assignment) and Table 8-2
+# (source count per block) were lost in that revision. Until the HAS is repaired,
+# this file and the INTMAP specification are the contract, and a disagreement
+# should be resolved in their favour rather than by the empty section.
 #
 # INTMAP is an OR tree: one OR per peripheral, no state, no address, no bus port.
 # The line index IS the priority -- Ibex resolves the lowest index first -- so
@@ -330,5 +335,7 @@ tbd:
       IPs all declare APB_ADDR_WIDTH = 12 and decode only their low bits
       (apb_timer_unit PADDR[5:0], apb_gpio PADDR[6:2], apb_i2c PADDR[5:2]), while
       the memory map gives each peripheral a 16 KiB window, which is 14 bits. So
-      the bus must supply at least 12; 14 covers the window. The bus owner picks
-      one and it applies to all peripheral slaves.
+      the bus must supply at least 12; 14 covers the window. The one width the HAS
+      does state is 16 bits, for SYSCSR (Table 9-1, "three registers in one 16 KiB
+      window"), which is wider than the window needs. The bus owner picks one
+      number and it applies to all peripheral slaves.
