@@ -1,0 +1,341 @@
+# =============================================================================
+# QSOC inter-block contract -- THE single source of truth.
+#
+# Every number here is shared by more than one block, which is exactly why it
+# lives in one file instead of being retyped in each wrapper. The defects this
+# project has already paid for were all of this kind:
+#
+#   ROM 8 KiB against 2 KiB · APB_M11 against APB_S11 · eleven interrupt
+#   sources against twelve · apb_adv_timer against apb_timer_unit
+#
+# Each is two documents disagreeing about one fact. Generating instead of
+# retyping makes that impossible rather than merely detectable.
+#
+# GENERATED FROM THIS FILE -- do not hand-edit the outputs:
+#   design/top/rtl/qnsc_pkg.sv     the package every wrapper imports
+#
+# CI regenerates and compares. A diff fails the build, so the committed package
+# can never drift from this file.
+#
+# TO CHANGE A NUMBER: edit here, run `python3 util/gen_qnsc_pkg.py`, commit both.
+#
+# Fields marked `tbd: true` are not yet agreed. They are named rather than
+# omitted, so the gap is visible instead of being silently filled in by whoever
+# needs it first.
+# =============================================================================
+
+meta:
+  project: QSOC
+  data_width: 32
+  addr_width: 32
+  clock_mhz: 20
+
+# -----------------------------------------------------------------------------
+# Memory map. Source: QSOC_HAS Table 7-1, cross-checked against QNSC_RAM_MAS
+# section 5.1 and QNSC_SYSDBG_MAS Table 11.
+#
+# Every address in the 32-bit space belongs to exactly one row; an access
+# outside them returns a decode error rather than reaching a subordinate.
+# -----------------------------------------------------------------------------
+memory_map:
+  - name: rom
+    base: 0x00000000
+    size: 0x00000800          # 2 KiB
+    port: AXI_M0
+    kind: memory
+    note: >
+      Boot code, read-only, executable. 2 KiB after the Day005 review of
+      2026-09-18; the first 128 B are the trap vector table forced by the Ibex
+      reset vector, leaving 1920 B, which is why the bootloader must use the
+      bitwise CRC32 rather than the table-driven one.
+
+  - name: isram_dbg
+    base: 0x20000000
+    size: 0x00001000          # 4 KiB
+    port: AXI_M1
+    kind: memory
+    note: >
+      The debug window: the first 4 KiB of ISRAM, not a block of its own.
+      Firmware must place nothing here. Enforced by a PMP region.
+
+  - name: isram
+    base: 0x20001000
+    size: 0x0000F000          # 60 KiB
+    port: AXI_M1
+    kind: memory
+    note: The downloaded application. Firmware links the main image at this base.
+
+  - name: dsram
+    base: 0x30000000
+    size: 0x00008000          # 32 KiB
+    port: AXI_M2
+    kind: memory
+    note: >
+      Stack, heap and variables. Separate from ISRAM so a stack overflow cannot
+      overwrite the running program -- the only protection available without an MPU.
+
+  - name: scrc
+    base: 0x80000000
+    size: 0x00004000
+    port: APB_M0
+    kind: peripheral
+    note: System clock and reset control registers. Renamed from SYSCTL.
+  - name: syscsr
+    base: 0x80004000
+    size: 0x00004000
+    port: APB_M1
+    kind: peripheral
+  - name: wdt
+    base: 0x80008000
+    size: 0x00004000
+    port: APB_M2
+    kind: peripheral
+  - name: gpio_0
+    base: 0x8000C000
+    size: 0x00004000
+    port: APB_M3
+    kind: peripheral
+  - name: gpio_1
+    base: 0x80010000
+    size: 0x00004000
+    port: APB_M4
+    kind: peripheral
+  - name: gpio_2
+    base: 0x80014000
+    size: 0x00004000
+    port: APB_M5
+    kind: peripheral
+  - name: gpio_3
+    base: 0x80018000
+    size: 0x00004000
+    port: APB_M6
+    kind: peripheral
+  - name: timer_0
+    base: 0x8001C000
+    size: 0x00004000
+    port: APB_M7
+    kind: peripheral
+    note: apb_timer_unit in 64-bit mode; QSOC's timebase.
+  - name: timer_1
+    base: 0x80020000
+    size: 0x00004000
+    port: APB_M8
+    kind: peripheral
+    note: apb_timer_unit as two independent 32-bit timers.
+  - name: uart_0
+    base: 0x80024000
+    size: 0x00004000
+    port: APB_M9
+    kind: peripheral
+    note: Carries the boot download.
+  - name: uart_1
+    base: 0x80028000
+    size: 0x00004000
+    port: APB_M10
+    kind: peripheral
+  - name: spi
+    base: 0x8002C000
+    size: 0x00004000
+    port: APB_M11
+    kind: peripheral
+    note: >
+      One APB4 slave for both SPI blocks: host at wrapper offset 0x0000-0x0FFF,
+      reserved 0x1000-0x1FFF, device at 0x2000-0x3FFF.
+  - name: i2c
+    base: 0x80030000
+    size: 0x00004000
+    port: APB_M12
+    kind: peripheral
+  - name: pwm
+    base: 0x80034000
+    size: 0x00004000
+    port: APB_M13
+    kind: peripheral
+    note: A separate apb_adv_timer instance, not a pad function of the timers.
+  - name: dma_cfg
+    base: 0x80038000
+    size: 0x00004000
+    port: APB_M14
+    kind: peripheral
+    note: Register interface of the DMA. Its data path is an AXI master on AXI_S2.
+
+  - name: sysdbg
+    base: 0xF0000000
+    size: 0x0000000C          # 12 B -- CTRL, STATUS, ID
+    port: none
+    kind: jtag_only
+    note: >
+      Decoded inside the debug block and never placed on S_BUS, so software
+      running on the core cannot halt it or grant itself debug access. The
+      crossbar must leave this region unmapped and answer DECERR -- a slave here
+      would shadow the registers.
+
+# -----------------------------------------------------------------------------
+# Interrupts. Source: QNSC_Interrupt_Map_MAS section 5.3 -- and that is now the
+# ONLY prose source. QSOC_HAS_Report_EN_v4_final carries a '# Interrupt map'
+# heading with nothing under it: Table 8-1 (fast line assignment) and Table 8-2
+# (source count per block) were lost in that revision. Until the HAS is repaired,
+# this file and the INTMAP specification are the contract, and a disagreement
+# should be resolved in their favour rather than by the empty section.
+#
+# INTMAP is an OR tree: one OR per peripheral, no state, no address, no bus port.
+# The line index IS the priority -- Ibex resolves the lowest index first -- so
+# this list fixes the default priority order as well as the wiring, and changing
+# it means re-synthesising.
+#
+# Order follows the rule "data loss first, human time last": a missed SPI or
+# UART event loses a byte that cannot be recovered, while a missed timer tick
+# arrives again next period.
+# -----------------------------------------------------------------------------
+interrupts:
+  fast_lines_available: 15       # Ibex irq_fast_i width, unconditional
+  lines:
+    - line: 0
+      peripheral: dma
+      sources: 1
+      shape: level
+      note: Held by DMA_ISR write-1-to-clear flags -- QNSC_iDMA V2.0.
+    - line: 1
+      peripheral: spi_device
+      sources: 8
+      shape: level
+    - line: 2
+      peripheral: spi_host
+      sources: 2
+      shape: level
+    - line: 3
+      peripheral: i2c
+      sources: 1
+      shape: level
+    - line: 4
+      peripheral: uart_0
+      sources: 1
+      shape: level
+    - line: 5
+      peripheral: uart_1
+      sources: 1
+      shape: level
+    - line: 6
+      peripheral: timer_1
+      sources: 2
+      shape: pulse
+    - line: 7
+      peripheral: pwm
+      sources: 4
+      shape: pulse
+      note: Four event lines, each a 4-of-16 multiplexer over the channel outputs.
+    - line: 8
+      peripheral: wdt_wakeup
+      sources: 1
+      shape: level
+    - line: 9
+      peripheral: gpio
+      sources: 4
+      shape: pulse
+      note: Four instances OR to one line; per-pin identity is in each INTSTATUS.
+    - line: 10
+      peripheral: timer_0
+      sources: 1
+      shape: pulse
+  nmi:
+    peripheral: wdt_bark
+    mcause: 31
+    sources: 1
+    shape: level
+    note: >
+      Feed-through to irq_nm_i, never through INTMAP, because an NMI cannot be
+      masked -- if firmware hangs with interrupts disabled the bark still lands.
+  tied_low:
+    - irq_external_i
+    - irq_timer_i
+    - irq_software_i
+  note: >
+    mcause is 16 + line, and the vector is mtvec + 4 * mcause. The privileged
+    specification allocates causes 16 and above to platform use, so the core
+    identifies the source by itself and no claim register is read.
+
+# -----------------------------------------------------------------------------
+# Clock and reset domains. Source: QSOC_HAS Table 4-2, confirmed in
+# QNSC_RAM_MAS 5.2, QNSC_SYSDBG_MAS 4.2 and QNSC_PWM_MAS.
+#
+# One clock frequency for the whole chip, so nothing here crosses a frequency
+# boundary; a domain is a gate plus a soft-reset bit, not a separate clock.
+# -----------------------------------------------------------------------------
+clock_domains:
+  # The chip has ONE frequency -- no PLL, no divider, because the SMIC 28 nm PDK
+  # carries no analogue IP. A "domain" is therefore a clock gate plus a reset
+  # synchroniser, not a separate frequency.
+  #
+  # One root buffer fans out BY CLUSTER, and the cluster name is what goes into
+  # the port name the naming rule requires: i_clk_<domain> / i_rst_n_<domain>.
+  clusters:
+    - name: cpu
+      port_suffix: cpu
+      blocks: [cpu, bus, sysdbg]
+      gateable: false
+      note: >
+        Gating the core or either bus removes the agent that would have to
+        re-enable it -- nothing is left awake to recover. Gate enables are
+        hardwired active so no software mistake can stop them.
+    - name: mem
+      port_suffix: mem
+      blocks: [rom, isram, dsram]
+      gateable: false
+      note: Same reason as the cpu cluster -- hardwired on, not writable.
+    - name: peri
+      port_suffix: peri
+      blocks: [wdt, timer_0, timer_1, uart_0, uart_1, spi, i2c, gpio, dma, pwm]
+      gateable: true
+      gate_register: CLK_EN
+      gate_owner: scrc
+      note: >
+        The only blocks whose clock may be stopped for power without stranding
+        the system. A gated peripheral must still answer the bus: an
+        always-powered responder inside SCRC watches CLK_EN and returns an error
+        immediately rather than letting the transfer hang. It does not re-enable
+        the clock and does not retry -- software reads the error, writes CLK_EN,
+        then repeats the access.
+
+  # Two blocks carry a rule of their own that a wrapper author must honour.
+  special:
+    - block: sysdbg
+      rule: gate open out of reset, and not closable by software
+      why: >
+        The TAP runs on tck_i, so gating clk_i would leave the host able to shift
+        commands in with nothing executing them -- a silent way to disable the
+        debugger.
+    - block: pwm
+      rule: never gate a running block
+      why: >
+        out_filter only updates while ctrl_active_i is high, so a gated channel
+        freezes at its current level. For a power stage a held level is not a
+        neutral state.
+
+# -----------------------------------------------------------------------------
+# Reset sources. Source: Day005 review of 2026-09-18.
+# Debug reset was removed explicitly, which is why SYSDBG has no ndmreset.
+# -----------------------------------------------------------------------------
+reset_sources: [power_on, watchdog, software]
+
+# -----------------------------------------------------------------------------
+# Not yet agreed. Named so the gap is visible.
+# -----------------------------------------------------------------------------
+tbd:
+  - item: CLK_EN and SOFT_RST_CTRL bit positions per peripheral
+    owner: SCRC owner
+    note: >
+      The cluster each block belongs to is settled above, which is what the
+      i_clk_<domain> port name needs. What is still missing is the BIT NUMBER
+      each peripheral occupies in SCRC's CLK_EN and SOFT_RST_CTRL registers --
+      that belongs to the SCRC register map, not here.
+  - item: one APB paddr width for every peripheral slave
+    owner: bus owner
+    note: >
+      Not an open design question so much as one number to confirm. The pulp APB
+      IPs all declare APB_ADDR_WIDTH = 12 and decode only their low bits
+      (apb_timer_unit PADDR[5:0], apb_gpio PADDR[6:2], apb_i2c PADDR[5:2]), while
+      the memory map gives each peripheral a 16 KiB window, which is 14 bits. So
+      the bus must supply at least 12; 14 covers the window. The one width the HAS
+      does state is 16 bits, for SYSCSR (Table 9-1, "three registers in one 16 KiB
+      window"), which is wider than the window needs. The bus owner picks one
+      number and it applies to all peripheral slaves.

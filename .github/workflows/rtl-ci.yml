@@ -59,6 +59,28 @@ jobs:
         run: bash flow/lint/lint_all.sh
 
   # ---------------------------------------------------------------------------
+  contract:
+    name: Inter-block contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install PyYAML
+        run: pip install --quiet pyyaml
+
+      # Regenerate design/top/rtl/qnsc_pkg.sv from util/qsoc_contract.yml and fail
+      # if the committed file differs. Every number in that package is shared by
+      # more than one block, and each defect this project has paid for was one
+      # fact written twice: ROM 8 KiB against 2 KiB, APB_M11 against APB_S11,
+      # eleven interrupt sources against twelve. Generating instead of retyping
+      # makes the disagreement impossible rather than merely detectable.
+      - name: Check the generated package matches the contract
+        run: python3 util/gen_qnsc_pkg.py --check
+
+  # ---------------------------------------------------------------------------
   naming:
     name: RTL naming rule
     runs-on: ubuntu-latest
