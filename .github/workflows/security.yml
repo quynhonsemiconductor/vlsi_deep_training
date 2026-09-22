@@ -27,5 +27,12 @@ permissions:
   contents: read
 
 jobs:
-  actions:
+  # Job id is `actions-security` on purpose: the checks from a reusable workflow
+  # report as `<caller job id> / <inner job name>`, so this makes the required
+  # contexts read `actions-security / Workflow lint (actionlint)` and
+  # `actions-security / Actions security (zizmor)` -- identical to every other
+  # repo in the org (see rova's main-protection ruleset). The ruleset must name
+  # these exactly; a mismatch means the required check never reports and blocks
+  # every merge.
+  actions-security:
     uses: quynhonsemiconductor/ci/.github/workflows/actions-security.yml@v1
