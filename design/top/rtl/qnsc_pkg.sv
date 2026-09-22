@@ -31,8 +31,8 @@ package qnsc_pkg;
   localparam int unsigned             C_ISRAM_SIZE = 61440;  // 60 KiB
   localparam logic [C_ADDR_WIDTH-1:0] C_DSRAM_BASE = 32'h30000000;
   localparam int unsigned             C_DSRAM_SIZE = 32768;  // 32 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_SYSCTL_BASE = 32'h80000000;
-  localparam int unsigned             C_SYSCTL_SIZE = 16384;  // 16 KiB
+  localparam logic [C_ADDR_WIDTH-1:0] C_SCRC_BASE = 32'h80000000;
+  localparam int unsigned             C_SCRC_SIZE = 16384;  // 16 KiB
   localparam logic [C_ADDR_WIDTH-1:0] C_SYSCSR_BASE = 32'h80004000;
   localparam int unsigned             C_SYSCSR_SIZE = 16384;  // 16 KiB
   localparam logic [C_ADDR_WIDTH-1:0] C_WDT_BASE = 32'h80008000;
@@ -92,14 +92,24 @@ package qnsc_pkg;
   localparam int unsigned C_INT_MCAUSE_BASE = 16;
   localparam int unsigned C_INT_MCAUSE_NMI  = 31;   // wdt_bark, on irq_nm_i, never through INTMAP
 
-  // ---- clock and reset domains ---------------------------------------------
-  // Source: QSOC_HAS Table 4-2. One clock for the whole chip, so a domain is
-  // a gate plus a soft-reset bit rather than a separate frequency.
-  localparam int unsigned C_SOFT_RST_BIT_D12 = 11;   // rom
-  localparam int unsigned C_SOFT_RST_BIT_D13 = 12;   // isram, dsram
-  localparam int unsigned C_SOFT_RST_BIT_D15 = 14;   // sysdbg
-  localparam int unsigned C_SOFT_RST_BIT_D18 = 15;   // pwm
+  // ---- clock and reset clusters ---------------------------------------------
+  // Source: QSOC_HAS v4 section 'Clock and Reset'. One frequency for the whole
+  // chip -- no PLL, the PDK has no analogue IP -- so a domain is a gate plus a
+  // reset synchroniser, not a separate frequency.
+  //
+  // The cluster name is what goes into the port name the naming rule requires:
+  //   i_clk_<domain> / i_rst_n_<domain>
+  //   i_clk_cpu   hardwired on, not writable
+  //     cpu, bus, sysdbg
+  //   i_clk_mem   hardwired on, not writable
+  //     rom, isram, dsram
+  //   i_clk_peri  gateable via CLK_EN in SCRC
+  //     wdt, timer_0, timer_1, uart_0, uart_1, spi, i2c, gpio, dma, pwm
+  localparam int unsigned C_CLK_CLUSTERS = 3;
 
   localparam int unsigned C_RST_SOURCES = 3;   // power_on, watchdog, software
+
+  // The CLK_EN and SOFT_RST_CTRL bit positions per peripheral belong to the
+  // SCRC register map and are not duplicated here -- see tbd: in the contract.
 
 endpackage : qnsc_pkg

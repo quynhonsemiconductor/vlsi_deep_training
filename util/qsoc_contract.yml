@@ -74,11 +74,12 @@ memory_map:
       Stack, heap and variables. Separate from ISRAM so a stack overflow cannot
       overwrite the running program -- the only protection available without an MPU.
 
-  - name: sysctl
+  - name: scrc
     base: 0x80000000
     size: 0x00004000
     port: APB_M0
     kind: peripheral
+    note: System clock and reset control registers. Renamed from SYSCTL.
   - name: syscsr
     base: 0x80004000
     size: 0x00004000
@@ -256,34 +257,54 @@ interrupts:
 # boundary; a domain is a gate plus a soft-reset bit, not a separate clock.
 # -----------------------------------------------------------------------------
 clock_domains:
-  - name: D12
-    blocks: [rom]
-    soft_reset_bit: 11
-    note: ROM is its own domain, separate from the RAMs.
-  - name: D13
-    blocks: [isram, dsram]
-    soft_reset_bit: 12
-    note: >
-      Both RAMs share one bit. A soft reset of D13 resets the memory holding the
-      code that issued the write, so firmware running from ISRAM cannot reset
-      this domain and survive -- safe only from ROM. SOFT_RST_CTRL bits [15:14]
-      are reserved as the escape hatch if the two ever need splitting.
-  - name: D15
-    blocks: [sysdbg]
-    soft_reset_bit: 14
-    gate_open_after_reset: true
-    gate_closable_by_software: false
-    note: >
-      Must be open out of reset and not closable by software. The TAP runs on
-      tck_i, so gating clk_i would leave the host able to shift commands in with
-      nothing executing them -- a silent way to disable the debugger.
-  - name: D18
-    blocks: [pwm]
-    soft_reset_bit: 15
-    note: >
-      Closing this gate freezes the channel outputs at their current level --
-      out_filter only updates while ctrl_active_i is high. For a power stage a
-      held level is not a neutral state, so a running block is never gated.
+  # The chip has ONE frequency -- no PLL, no divider, because the SMIC 28 nm PDK
+  # carries no analogue IP. A "domain" is therefore a clock gate plus a reset
+  # synchroniser, not a separate frequency.
+  #
+  # One root buffer fans out BY CLUSTER, and the cluster name is what goes into
+  # the port name the naming rule requires: i_clk_<domain> / i_rst_n_<domain>.
+  clusters:
+    - name: cpu
+      port_suffix: cpu
+      blocks: [cpu, bus, sysdbg]
+      gateable: false
+      note: >
+        Gating the core or either bus removes the agent that would have to
+        re-enable it -- nothing is left awake to recover. Gate enables are
+        hardwired active so no software mistake can stop them.
+    - name: mem
+      port_suffix: mem
+      blocks: [rom, isram, dsram]
+      gateable: false
+      note: Same reason as the cpu cluster -- hardwired on, not writable.
+    - name: peri
+      port_suffix: peri
+      blocks: [wdt, timer_0, timer_1, uart_0, uart_1, spi, i2c, gpio, dma, pwm]
+      gateable: true
+      gate_register: CLK_EN
+      gate_owner: scrc
+      note: >
+        The only blocks whose clock may be stopped for power without stranding
+        the system. A gated peripheral must still answer the bus: an
+        always-powered responder inside SCRC watches CLK_EN and returns an error
+        immediately rather than letting the transfer hang. It does not re-enable
+        the clock and does not retry -- software reads the error, writes CLK_EN,
+        then repeats the access.
+
+  # Two blocks carry a rule of their own that a wrapper author must honour.
+  special:
+    - block: sysdbg
+      rule: gate open out of reset, and not closable by software
+      why: >
+        The TAP runs on tck_i, so gating clk_i would leave the host able to shift
+        commands in with nothing executing them -- a silent way to disable the
+        debugger.
+    - block: pwm
+      rule: never gate a running block
+      why: >
+        out_filter only updates while ctrl_active_i is high, so a gated channel
+        freezes at its current level. For a power stage a held level is not a
+        neutral state.
 
 # -----------------------------------------------------------------------------
 # Reset sources. Source: Day005 review of 2026-09-18.
@@ -295,15 +316,19 @@ reset_sources: [power_on, watchdog, software]
 # Not yet agreed. Named so the gap is visible.
 # -----------------------------------------------------------------------------
 tbd:
-  - item: clock domains for the remaining peripherals
+  - item: CLK_EN and SOFT_RST_CTRL bit positions per peripheral
     owner: SCRC owner
     note: >
-      D12, D13, D15 and D18 are fixed. The domain and soft-reset bit for UART,
-      SPI, I2C, GPIO, WDT, DMA, TIMER and the buses are not recorded in any
-      specification this file was built from.
-  - item: APB/AXI port signal names
+      The cluster each block belongs to is settled above, which is what the
+      i_clk_<domain> port name needs. What is still missing is the BIT NUMBER
+      each peripheral occupies in SCRC's CLK_EN and SOFT_RST_CTRL registers --
+      that belongs to the SCRC register map, not here.
+  - item: one APB paddr width for every peripheral slave
     owner: bus owner
     note: >
-      QNSC_RTL_Design_Naming_Rule V1.0 fixes the form -- i_bus_apb_<signal> and
-      i_bus_axi_<channel>_<signal> -- but the per-port width list belongs to the
-      bus specification and is not duplicated here yet.
+      Not an open design question so much as one number to confirm. The pulp APB
+      IPs all declare APB_ADDR_WIDTH = 12 and decode only their low bits
+      (apb_timer_unit PADDR[5:0], apb_gpio PADDR[6:2], apb_i2c PADDR[5:2]), while
+      the memory map gives each peripheral a 16 KiB window, which is 14 bits. So
+      the bus must supply at least 12; 14 covers the window. The bus owner picks
+      one and it applies to all peripheral slaves.

@@ -109,16 +109,26 @@ def emit(c: dict) -> str:
     a("")
 
     # ---- clock domains ---------------------------------------------------
-    a("  // ---- clock and reset domains ---------------------------------------------")
-    a("  // Source: QSOC_HAS Table 4-2. One clock for the whole chip, so a domain is")
-    a("  // a gate plus a soft-reset bit rather than a separate frequency.")
-    for d in c["clock_domains"]:
-        blocks = ", ".join(d["blocks"])
-        a(f"  localparam int unsigned C_SOFT_RST_BIT_{d['name']} = {d['soft_reset_bit']};"
-          f"   // {blocks}")
+    a("  // ---- clock and reset clusters ---------------------------------------------")
+    a("  // Source: QSOC_HAS v4 section 'Clock and Reset'. One frequency for the whole")
+    a("  // chip -- no PLL, the PDK has no analogue IP -- so a domain is a gate plus a")
+    a("  // reset synchroniser, not a separate frequency.")
+    a("  //")
+    a("  // The cluster name is what goes into the port name the naming rule requires:")
+    a("  //   i_clk_<domain> / i_rst_n_<domain>")
+    cl = c["clock_domains"]["clusters"]
+    for cluster in cl:
+        blocks = ", ".join(cluster["blocks"])
+        gate = "gateable via CLK_EN in SCRC" if cluster["gateable"] else "hardwired on, not writable"
+        a(f"  //   i_clk_{cluster['port_suffix']:<5} {gate}")
+        a(f"  //     {blocks}")
+    a(f"  localparam int unsigned C_CLK_CLUSTERS = {len(cl)};")
     a("")
     a(f"  localparam int unsigned C_RST_SOURCES = {len(c['reset_sources'])};"
       f"   // {', '.join(c['reset_sources'])}")
+    a("")
+    a("  // The CLK_EN and SOFT_RST_CTRL bit positions per peripheral belong to the")
+    a("  // SCRC register map and are not duplicated here -- see tbd: in the contract.")
     a("")
     a("endpackage : qnsc_pkg")
     return "\n".join(L) + "\n"

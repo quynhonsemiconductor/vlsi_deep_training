@@ -1,19 +1,21 @@
-# Generated documentation artifacts — NOT tracked.
+# What is ignored here is narrow on purpose: only the files this repository
+# GENERATES. Documents authored directly in Word -- the HAS, and each owner's
+# block specification -- have no markdown source, so git is the only copy there
+# is and they must be tracked.
 #
-# The source of truth for the specifications is doc/src/*.md plus the diagram
-# sources (doc/drawio/*.drawio, doc/tools/*.py) and the pandoc template
-# (doc/template/QNSC_Technical_Document_Format.docx). The .docx specifications
-# are produced from those by build_docs.py and must never be committed:
-#   - binary, so they cannot be diffed or reviewed;
-#   - they go stale the moment the .md changes but the .docx is not rebuilt,
-#     which reintroduces exactly the source-vs-output drift this project avoids.
-# Run `python3 build_docs.py` in doc/ to (re)generate them locally.
+#   authored in Word, TRACKED        QSOC_HAS_Report_*.docx, <Owner>_<Block>.docx
+#   generated from doc/src/*.md      the five QNSC_*_MAS.docx below, IGNORED
+#
+# The five below are ignored rather than committed because they are build output:
+# they are binary, so a review cannot read them, and they go stale the moment the
+# markdown changes without a rebuild -- which reintroduces the source-versus-output
+# drift this project is built to avoid. Run `python3 build_docs.py` to produce them.
+#
+# Listed by name rather than as /*.docx so that adding an authored document does
+# not silently make it untracked.
 
-# Generated .docx specs (produced by build_docs.py from src/*.md)
-/*.docx
-
-# Build intermediate: the numbering-stripped reference doc build_docs.py derives
-# from the template on each run.
+# Build intermediate: the numbering-stripped reference document build_docs.py
+# derives from the template on each run.
 template/QNSC_Reference_NoAutoNum.docx
 
 # Python bytecode
