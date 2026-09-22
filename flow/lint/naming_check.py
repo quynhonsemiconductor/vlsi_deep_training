@@ -206,6 +206,16 @@ def check_file(path: Path) -> list[Finding]:
         name, ln = m.group(0), lineno_of(m.start())
         if name in KEYWORDS or (ln, name) in seen:
             continue
+
+        # An identifier written after a dot is not ours to name: in
+        #     ibex_top u_cpu_0 ( .irq_fast_i (o_int_fast) );
+        # the left-hand `irq_fast_i` is the vendored module's port. Renaming it
+        # would mean editing vendor/, which vendor_guard.sh forbids -- so
+        # checking it here would put two CI checks in direct contradiction.
+        # The same applies to struct and package member access.
+        if m.start() > 0 and src[m.start() - 1] == ".":
+            continue
+
         seen.add((ln, name))
 
         if CAMEL.search(name) and not PARAM_OK.match(name):
