@@ -31,6 +31,7 @@
 # ruleset. A CODEOWNERS entry naming a user who cannot read the repo silently
 # matches nothing, which makes the required review unsatisfiable.
 /design/ram/                @quynhonsemiconductor/vlsi-maintainers
+/design/rom/                @quynhonsemiconductor/vlsi-maintainers
 /design/sysdbg/             @quynhonsemiconductor/vlsi-maintainers
 /design/intmap/             @quynhonsemiconductor/vlsi-maintainers
 /design/timer/              @quynhonsemiconductor/vlsi-maintainers

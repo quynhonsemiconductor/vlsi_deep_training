@@ -403,7 +403,7 @@ both `CMP` registers, or track which alarms it armed, to tell which of the two f
 
 Because each instance has its own gate, firmware can stop TIMER1 without stopping the
 timebase. **Gating TIMER0 stops the timebase**, which is a way to lose time silently:
-the counter does not advance and nothing records that it paused. If `SYSCTL` closes
+the counter does not advance and nothing records that it paused. If `SCRC` closes
 bit 3, firmware must treat every timestamp taken across the gap as invalid.
 
 ## 5.5 What QSOC gives up by having no `mtime`
@@ -454,9 +454,9 @@ happens. It is also the test that would have caught the hazard before silicon.
 
 | Item | Owner | What this document proposes |
 |---|---|---|
-| `ref_clk_i` source | `SYSCTL` | tie to the domain clock unless a slower tick is wanted; the IP samples it, so any frequency is legal |
+| `ref_clk_i` source | `SCRC` | tie to the domain clock unless a slower tick is wanted; the IP samples it, so any frequency is legal |
 | `event_lo_i` / `event_hi_i` | system | **tie 0** unless a use is identified, and say so rather than leaving them floating |
-| Clock gate bits 3 and 4 | `SYSCTL` | open out of reset, so the timebase runs before firmware configures anything |
+| Clock gate bits 3 and 4 | `SCRC` | open out of reset, so the timebase runs before firmware configures anything |
 | 16 KiB region with a 64-byte decode | bus owner | accept the aliasing, document it, do not add a narrower decode |
 | Three interrupt sources | `INTMAP` | already assumed by `QNSC_Interrupt_Map_MAS`; no change |
 
@@ -480,7 +480,7 @@ exists. Tying an unused input is required either way; leaving it unconnected is 
 **Decided -- TIMER0's clock gate is open out of reset, TIMER1's is closed.** These are
 different because their jobs are different. TIMER0 is the timebase, and time should
 advance without firmware having to ask; a gate that starts closed means every timestamp
-before the first `SYSCTL` write is silently wrong. TIMER1 does nothing until its compare
+before the first `SCRC` write is silently wrong. TIMER1 does nothing until its compare
 and configuration are written, so it starts closed and costs nothing until used.
 
 **Decided -- no RTOS is in scope, so section 5.5 stands as written.** QSOC has no

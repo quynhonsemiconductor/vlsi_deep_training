@@ -38,7 +38,7 @@ Honest status, so nobody has to guess:
 | | |
 |---|---|
 | Architecture and memory map | **agreed** — one contract file, checked by CI |
-| Specifications | **5 of 16 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM |
+| Specifications | **5 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM |
 | RTL | **not started.** The scaffold, naming rules and CI are in place; wrappers are next |
 | Verification | not started |
 | Physical design | not started |

@@ -657,7 +657,7 @@ bit 14, mặc định mở, software không đóng được; em đã ký xác nh
 
 **Halt-on-reset có cần không?**
 Cần, và nó là **yêu cầu về thứ tự reset** chứ không phải tính năng của khối em:
-`debug_req` phải đã cao lúc core ra khỏi reset, nên `SYSCTL` thả `SYSDBG` **trước**
+`debug_req` phải đã cao lúc core ra khỏi reset, nên `SCRC` thả `SYSDBG` **trước**
 core, không có handshake để chờ. Lý do quyết định: ROM chứa **serial bootloader**
 thật, nên lỗi ROM là lỗi trong code thật. Cùng tiền đề đó làm hardware trigger
 thành cần thiết, vì breakpoint mềm không ghi được vào ROM.
