@@ -35,4 +35,14 @@ jobs:
   # these exactly; a mismatch means the required check never reports and blocks
   # every merge.
   actions-security:
+    # The reusable workflow's zizmor job declares `security-events: write` to
+    # upload SARIF. A called workflow can only REDUCE the caller's permissions,
+    # never elevate them, so the caller must grant this here or the run fails at
+    # startup (startup_failure) and the required check sits "Expected" forever,
+    # blocking every merge. This mirrors rova's working caller.
+    permissions:
+      contents: read
+      security-events: write
     uses: quynhonsemiconductor/ci/.github/workflows/actions-security.yml@v1
+    with:
+      blocking: true

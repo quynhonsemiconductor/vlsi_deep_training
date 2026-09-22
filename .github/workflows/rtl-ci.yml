@@ -42,7 +42,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Install Verilator
         run: |
@@ -62,12 +64,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Refuse edits to vendored IP outside a manifest update
-        run: bash flow/lint/vendor_guard.sh "${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+        # Pass the base SHA through env rather than interpolating the GitHub
+        # expression directly into the shell command (template-injection).
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: bash flow/lint/vendor_guard.sh "${BASE_SHA:-HEAD~1}"
 
   # ---------------------------------------------------------------------------
   docs:
@@ -75,7 +82,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Install pandoc
         run: |
