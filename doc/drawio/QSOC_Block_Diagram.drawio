@@ -1,0 +1,151 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="QSOC block diagram" id="pg0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="qsoc" value="QSOC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#999999;fontSize=15;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="30" y="20" width="1450" height="950" as="geometry"/>
+        </mxCell>
+        <mxCell id="jtag" value="JTAG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="60" y="196" width="110" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="cpu" value="CPU" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="430" y="62" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="irq" value="INTMAP&#10;OR tree, in house&#10;0 flip-flops, no bus port&#10;27 IRQ from 8 blocks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1285" y="570" width="176" height="118" as="geometry"/>
+        </mxCell>
+        <mxCell id="dbg" value="SYSDBG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="290" y="190" width="150" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2a" value="CPU2AXI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="470" y="190" width="150" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="rom" value="ROM" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="680" y="190" width="130" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="isram" value="ISRAM" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="840" y="190" width="130" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="dsram" value="DSRAM" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="190" width="130" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="sbus" value="S_BUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="290" y="320" width="840" height="88" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2a" value="AXI2APB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="462" width="140" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="dma" value="DMA" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="480" y="462" width="140" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="pwm" value="PWM&#10;apb_adv_timer" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="655" y="462" width="130" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="i2c" value="I2C" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="820" y="462" width="120" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="spi" value="SPI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="980" y="462" width="120" height="64" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus" value="P_BUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="590" width="900" height="88" as="geometry"/>
+        </mxCell>
+        <mxCell id="sysctl" value="SYSCTL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="730" width="130" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="syscsr" value="SYSCSR" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="450" y="730" width="130" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="wdt" value="WDT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="600" y="730" width="130" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="gpio" value="GPIO&#10;0/1/2/3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="750" y="730" width="140" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="timer" value="TIMER 0/1&#10;apb_timer_unit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="905" y="730" width="140" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="uart" value="UART&#10;0/1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1060" y="730" width="140" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="iomux" value="IO MUX" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="860" width="900" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="jtag_dbg_0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="jtag" target="dbg">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="irq_cpu_1" value="irq_fast[10:0] (mcause 16-26) | irq_nm (NMI)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0.0;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="irq" target="cpu">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="spi_irq_2" value="IRQ: DMA PWM I2C SPI" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.4000000000000004;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="spi" target="irq">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="uart_irq_3" value="IRQ: WDT GPIO TIMER UART" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.8800000000000002;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="uart" target="irq">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="cpu_c2a_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cpu" target="c2a">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="dbg_cpu_5" value="debug_req" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0.0;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="cpu">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="dbg_sbus_6" value="AXI_S0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.089;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="sbus">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2a_sbus_7" value="AXI_S1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.304;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="c2a" target="sbus">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="sbus_rom_8" value="AXI_M0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.541;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sbus" target="rom">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="sbus_isram_9" value="AXI_M1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.732;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sbus" target="isram">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="sbus_dsram_10" value="AXI_M2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.9230000000000002;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sbus" target="dsram">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="sbus_a2a_11" value="AXI_M3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.107;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sbus" target="a2a">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="dma_sbus_12" value="AXI_S2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0.0;entryX=0.321;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dma" target="sbus">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2a_pbus_13" value="APB_S0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.07799999999999999;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="a2a" target="pbus">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_dma_14" value="APB_M14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.278;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="dma">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_pwm_15" value="APB_M13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.46699999999999997;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="pwm">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_i2c_16" value="APB_M12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.644;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="i2c">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_spi_17" value="APB_M11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.822;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="spi">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_sysctl_18" value="APB_M0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.07200000000000001;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="sysctl">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_syscsr_19" value="APB_M1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.23900000000000002;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="syscsr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_wdt_20" value="APB_M2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.4060000000000001;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="wdt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_gpio_21" value="APB_M3/4/5/6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.578;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="gpio">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_timer_22" value="APB_M7/8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.75;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="timer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_uart_23" value="APB_M9/10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.9170000000000001;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="uart">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

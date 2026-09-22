@@ -14,6 +14,7 @@ author: "QUY NHON SEMICONDUCTORS -- QNSC"
 | V1.3    | 2026-09-21 | Nghia VT     | **Three open questions closed, one narrowed.** The eight pad channels are fixed as `ch_0_o` and `ch_1_o` of **each** module, for four independent frequencies at the pins rather than two; the four `TIM_EXT` pads attach to `ext_sig_i[3:0]` **in pad order**, so the mapping reads off the pinout; and centre-aligned output is recorded as **available but unverified** -- `up_down_counter.sv` shows it is one bit, `cfg_sawtooth_i`, so removing it would be work rather than saving. The idle-level question is narrowed to a proposal plus the RTL reason it matters: `out_filter.sv` only updates while `ctrl_active_i` is high, so a stopped or gated channel **holds its last level** and does not return to a safe one by itself. |
 | V1.4    | 2026-09-21 | Nghia VT     | The idle-level item is closed by **changing whose problem it is**. `out_filter.sv` only updates its stored output while `ctrl_active_i` is high, so the block has **no idle level to configure** -- a stopped channel holds the last level it drove. Section 5.9 therefore specifies a **four-step firmware procedure** ending in *never gate a running block*, and what remains for the pad owner shrinks to a one-line check that no pad pull fights the rest level. The document now has **no open questions**. |
 | V1.5    | 2026-09-22 | Nghia VT     | Removes an internal inconsistency: section 5.6 still called the `ext_sig_i` bit mapping a *proposal* left to settle, while section 5.9 had already **decided** it as `ext_sig_i[3:0]` in pad order. Section 5.6 now points at the decision. |
+| V1.6    | 2026-09-22 | Nghia VT     | **Corrects the pad-channel mapping against the RTL.** V1.3 stated the eight pad channels were `ch_0_o` and `ch_1_o` *of each of the four modules*, for **four** independent frequencies. Reading `apb_adv_timer.sv` shows the channels are grouped **by module** -- `u_tim0.pwm_o -> ch_0_o`, `u_tim1.pwm_o -> ch_1_o`, `u_tim2.pwm_o -> ch_2_o`, `u_tim3.pwm_o -> ch_3_o` -- so `ch_i_o[3:0]` is the four channels of module `i`. Bringing out `ch_0_o` and `ch_1_o` is therefore **all four channels of modules 0 and 1**, giving **two** independent base frequencies (four channels each), not four. Sections 4.x pad-mapping paragraph, 5.9 and the requirements table are corrected; `QSOC_HAS` already uses the two-frequency figure. |
 
 # Table of Tables
 
@@ -337,15 +338,16 @@ Sixteen channels exist; eight leave the chip. The pad assignment is fixed by
 | `PWM_7` | PIN_36 | `GPIO2_2` |
 
 **Which eight of the sixteen reach these pads is a decision this document must
-record and `QSOC_HAS` does not yet fix.** The proposal is **two channels from each of
-the four modules** -- `ch_0_o` and `ch_1_o` of each -- rather than all four channels of
-two modules. The reason is that channels on one module share a counter, so taking two
-from each module gives firmware four independent frequencies at the pads instead of
-two. Motor drive and LED dimming want different frequencies at the same time, and the
-alternative grouping cannot provide that.
+record and `QSOC_HAS` does not yet fix.** In the RTL the channels are grouped **by
+module**: `u_tim0.pwm_o -> ch_0_o`, `u_tim1.pwm_o -> ch_1_o`, and so on, so
+`ch_i_o[3:0]` is the four channels of module `i`. Bringing out `ch_0_o` and `ch_1_o`
+therefore means **all four channels of module 0 and all four of module 1** -- two
+modules at the pads. Because channels within one module share that module's counter
+and prescaler, this gives firmware **two independent base frequencies** at the pins,
+four channels (independent duty/phase) under each.
 
-The remaining eight channels stay inside the chip and are still useful: any of the
-sixteen can be selected as an event source, section 4.5.
+The remaining eight channels (modules 2 and 3) stay inside the chip and are still
+useful: any of the sixteen can be selected as an event source, section 4.5.
 
 ## 5.3 Clock and reset domain
 
@@ -480,7 +482,7 @@ block that interrupts before firmware is ready is hard to debug from the symptom
 
 | Item | Owner | What this document proposes |
 |---|---|---|
-| Which 8 of 16 channels reach pads | pad and IO mux owner | `ch_0_o` and `ch_1_o` of each of the four modules, for four independent frequencies |
+| Which 8 of 16 channels reach pads | pad and IO mux owner | `ch_0_o` and `ch_1_o` -- all four channels of modules 0 and 1, for two independent base frequencies |
 | `ext_sig_i` wiring | pad / IO MUX owner | **Four pads already exist** (`TIM_EXT0`--`3`, `PIN_37`--`40`). This block proposes they attach to `ext_sig_i[3:0]` in pad order; remaining 28 bits tied low. No selection register needed -- the IP selects per module |
 | `dft_cg_enable_i` | DFT owner | **tie 0 for v1** -- no test-mode pin exists, Day005. Revisit if a DFT strategy is adopted; do not record QSOC as having no scan |
 | `low_speed_clk_i` | `SYSCTL` | tie to the domain clock; the IP samples it |
@@ -490,12 +492,14 @@ block that interrupts before firmware is ready is hard to debug from the symptom
 
 ## 5.9 Decisions taken
 
-**Decided -- the eight pad channels are `ch_0_o` and `ch_1_o` of each of the four
-modules.** Not four channels from two modules. Channels on one module share a counter, so
-taking two from each gives firmware **four independent frequencies at the pins** instead
-of two, and motor drive and LED dimming want different frequencies at the same time. The
-eight that stay inside are not wasted: any of the sixteen can still be selected as an
-event source, section 4.5, or as another module's trigger, section 5.6.
+**Decided -- the eight pad channels are `ch_0_o` and `ch_1_o`, i.e. all four channels
+of module 0 and all four of module 1.** In the RTL each module drives its own
+`ch_i_o` bus (`u_tim0.pwm_o -> ch_0_o`, `u_tim1.pwm_o -> ch_1_o`), so `ch_i_o[3:0]`
+is the four channels of module `i`. Channels within a module share that module's
+counter, so two modules at the pads give firmware **two independent base frequencies**,
+four channels each. The eight that stay inside (modules 2 and 3) are not wasted: any of
+the sixteen can still be selected as an event source, section 4.5, or as another
+module's trigger, section 5.6.
 
 **Decided -- the four `TIM_EXT` pads attach to `ext_sig_i[3:0]` in pad order.** So
 `PIN_37` is bit 0, `PIN_38` bit 1, `PIN_39` bit 2, `PIN_40` bit 3, and the remaining 28
