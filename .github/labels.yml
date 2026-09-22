@@ -1,0 +1,79 @@
+# =============================================================================
+# Label definitions — QSOC
+#
+# The labeler workflow can only APPLY a label that already exists in the repo;
+# a label named in labeler.yml but absent here is silently dropped. This file
+# is the source of truth for the label set. Bootstrap and re-sync commands are
+# in .github/README.md.
+#
+# Every label here must have a match in .github/labeler.yml, and every label in
+# labeler.yml must appear here. Keep the two in step.
+# =============================================================================
+
+# ---- blocks (area/<block>) --------------------------------------------------
+# One per block directory under design/. Colour is shared across all area/*
+# so the eye groups them; the block name carries the distinction.
+- name: area/ram
+  color: "1d76db"
+  description: RAM/ROM controller block
+- name: area/sysdbg
+  color: "1d76db"
+  description: System debug block (self-designed)
+- name: area/intmap
+  color: "1d76db"
+  description: Interrupt map block (self-designed)
+- name: area/timer
+  color: "1d76db"
+  description: Timer block (pulp apb_timer_unit)
+- name: area/pwm
+  color: "1d76db"
+  description: PWM block (pulp apb_adv_timer)
+- name: area/scrc
+  color: "1d76db"
+  description: System clock/reset control block
+- name: area/dma
+  color: "1d76db"
+  description: DMA block (pulp idma backend)
+- name: area/bus
+  color: "1d76db"
+  description: Bus fabric (APB router / AXI xbar)
+- name: area/spi
+  color: "1d76db"
+  description: SPI block (opentitan spi_host/device)
+- name: area/iomux
+  color: "1d76db"
+  description: IO multiplexer block
+
+# ---- shared contract surfaces -----------------------------------------------
+# Warmer colour: a change here can move another block's contract.
+- name: area/top
+  color: "d93f0b"
+  description: design/top — qsoc_top and qsoc_pkg
+- name: area/vendor
+  color: "d93f0b"
+  description: Upstream IP under vendor/
+- name: area/gen
+  color: "d93f0b"
+  description: Generator inputs under util/ (source of truth)
+
+# ---- flow and documents -----------------------------------------------------
+- name: area/pd
+  color: "5319e7"
+  description: Physical design and synthesis flow
+- name: area/fpga
+  color: "5319e7"
+  description: FPGA bring-up
+- name: area/doc
+  color: "0e8a16"
+  description: MAS/HAS specifications
+- name: area/ci
+  color: "fbca04"
+  description: CI, workflows, lint scripts
+
+# ---- cross-cutting flag -----------------------------------------------------
+# Deliberately red. Raised when a PR touches a contract surface (qsoc_pkg,
+# generator input, or the vendor manifest) so a reviewer checks that the other
+# side of the contract moved with it.
+- name: contract-change
+  color: "b60205"
+  description: Touches a cross-block contract surface — check both sides moved

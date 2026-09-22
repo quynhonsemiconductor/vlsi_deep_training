@@ -1,0 +1,48 @@
+# =============================================================================
+# Security — the subset of the org's checks that applies to a hardware repo.
+#
+# actions-security pins and audits the GitHub Actions this repo calls. It applies
+# unchanged: the risk it addresses is a compromised third-party action, which is
+# the same whether the repo builds software or RTL.
+#
+# The org's dependency-scanning workflow is deliberately NOT called here. It scans
+# npm and Python manifests, and this repo has neither as a product dependency.
+# Adding it would produce a permanently green check that proves nothing, and a
+# check that cannot fail is worse than no check because it invites trust.
+#
+# What this repo needs instead, and does not have yet: a licence audit over
+# vendor/manifest.yml. Recorded in .github/README.md as the next CI item.
+# =============================================================================
+name: Security
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 3 * * 1" # Monday 03:00 UTC, so a new advisory is seen within a week
+
+permissions:
+  contents: read
+
+jobs:
+  # Job id is `actions-security` on purpose: the checks from a reusable workflow
+  # report as `<caller job id> / <inner job name>`, so this makes the required
+  # contexts read `actions-security / Workflow lint (actionlint)` and
+  # `actions-security / Actions security (zizmor)` -- identical to every other
+  # repo in the org (see rova's main-protection ruleset). The ruleset must name
+  # these exactly; a mismatch means the required check never reports and blocks
+  # every merge.
+  actions-security:
+    # The reusable workflow's zizmor job declares `security-events: write` to
+    # upload SARIF. A called workflow can only REDUCE the caller's permissions,
+    # never elevate them, so the caller must grant this here or the run fails at
+    # startup (startup_failure) and the required check sits "Expected" forever,
+    # blocking every merge. This mirrors rova's working caller.
+    permissions:
+      contents: read
+      security-events: write
+    uses: quynhonsemiconductor/ci/.github/workflows/actions-security.yml@v1
+    with:
+      blocking: true

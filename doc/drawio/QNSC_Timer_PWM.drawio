@@ -1,0 +1,108 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="TIMER0 and TIMER1 in QSOC" id="pg0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="pbus" value="P_BUS  (APB, 20 MHz)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="900" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="t0" value="TIMER0&#10;apb_timer_unit&#10;APB_M7   0x8001_C000&#10;D04, bit 3&#10;MODE_64 = 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="90" y="190" width="330" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="t1" value="TIMER1&#10;apb_timer_unit&#10;APB_M8   0x8002_0000&#10;D05, bit 4&#10;MODE_64 = 0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="560" y="190" width="330" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="c0" value="counter_lo&#10;32-bit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="120" y="400" width="120" height="54" as="geometry"/>
+        </mxCell>
+        <mxCell id="c1" value="counter_hi&#10;32-bit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="265" y="400" width="120" height="54" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2" value="counter_lo&#10;32-bit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="590" y="400" width="120" height="54" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3" value="counter_hi&#10;32-bit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="735" y="400" width="120" height="54" as="geometry"/>
+        </mxCell>
+        <mxCell id="intmap" value="INTMAP  (OR tree)&#10;3 sources -&gt; 2 fast lines" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="330" y="530" width="320" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_t0_0" value="APB_M7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.17;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="t0">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_t1_1" value="APB_M8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.69;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="t1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="t0_c0_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.1;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="t0" target="c0">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="t0_c1_3" value="carry when lo = FFFF_FFFF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.55;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="t0" target="c1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="t1_c2_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.1;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="t1" target="c2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="t1_c3_5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.55;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="t1" target="c3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="t0_intmap_6" value="irq_lo_o   1 source" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.92;exitY=1.0;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t0" target="intmap">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="t1_intmap_7" value="irq_lo_o + irq_hi_o   2 sources" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.92;exitY=1.0;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t1" target="intmap">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="The PWM block and where its outputs go" id="pg1">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="pbus2" value="P_BUS  (APB, 20 MHz)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="900" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="pwm" value="PWM   apb_adv_timer   APB_M13   0x8003_4000   D18, bit 15&#10;TIMER_NBITS = 16      EXTSIG_NUM = 32" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="60" y="170" width="860" height="210" as="geometry"/>
+        </mxCell>
+        <mxCell id="m0" value="timer_module 0&#10;16-bit counter&#10;4 comparators" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="100" y="250" width="180" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="m1" value="timer_module 1&#10;16-bit counter&#10;4 comparators" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="250" width="180" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="m2" value="timer_module 2&#10;16-bit counter&#10;4 comparators" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="500" y="250" width="180" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="m3" value="timer_module 3&#10;16-bit counter&#10;4 comparators" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="700" y="250" width="180" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="ch" value="16 channel outputs&#10;ch_0_o[3:0] .. ch_3_o[3:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="60" y="440" width="420" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="evt" value="events_o[3:0]&#10;mux 4-of-16 + edge detect" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="540" y="440" width="380" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="pads" value="IO MUX -&gt; 8 pads&#10;PWM_0 .. PWM_7" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="60" y="580" width="420" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="intmap2" value="INTMAP -&gt; fast line 7&#10;4 sources, 1-cycle pulses" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="540" y="580" width="380" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus2_pwm_0" value="APB_M13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus2" target="pwm">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ch_evt_1" value="the 16 channels are the event source" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="ch" target="evt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ch_pads_2" value="8 of 16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ch" target="pads">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="evt_intmap2_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="evt" target="intmap2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

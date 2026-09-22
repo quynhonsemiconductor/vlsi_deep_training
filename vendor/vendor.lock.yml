@@ -1,0 +1,47 @@
+# Lock file for vendored IP -- DO NOT EDIT BY HAND.
+# Written by util/vendor_ip.py. Records the exact upstream commit each
+# vendored tree was imported from, so the import is reproducible. Commit
+# this together with the vendored files and vendor/manifest.yml.
+
+lowRISC/ibex:
+  commit: e9f55342edbd27e9e17a0e41b1c95a81abb5eac8
+  url: https://github.com/lowRISC/ibex
+lowRISC/opentitan:
+  commit: aecc39ba9a49e277662fd528a6b3018a05b7d06f
+  url: https://github.com/lowRISC/opentitan
+nguyenquanicd/APB-BUS-Generator:
+  commit: 5661aecf96f8349987e600fe4e8a124c35e3d836
+  url: https://github.com/nguyenquanicd/APB-BUS-Generator
+nguyenquanicd/APB-CSR-Generator:
+  commit: ee80ff5415edc409743f58b99f28881c04a44ee1
+  url: https://github.com/nguyenquanicd/APB-CSR-Generator
+nguyenquanicd/AXI4-SRAM-CONTROLLER:
+  commit: 503d7cd98352378c09dff3930f7fdb0590ea643d
+  url: https://github.com/nguyenquanicd/AXI4-SRAM-CONTROLLER
+nguyenquanicd/MRV-CPU:
+  commit: eea0028c969015e8fac911278e51e7beca27175e
+  url: https://github.com/nguyenquanicd/MRV-CPU
+pulp-platform/apb_adv_timer:
+  commit: c8faec1e1755386d0e0f31a55ebd80612a3dcea9
+  url: https://github.com/pulp-platform/apb_adv_timer
+pulp-platform/apb_gpio:
+  commit: f82caeb7f7d89427f05e9af5ed31e0675efe0d83
+  url: https://github.com/pulp-platform/apb_gpio
+pulp-platform/apb_i2c:
+  commit: 84855413cc2c8e70209ee7f168a0225d3c5914a1
+  url: https://github.com/pulp-platform/apb_i2c
+pulp-platform/apb_uart:
+  commit: 8182a85d234417db46fe833533f8536644d3bee3
+  url: https://github.com/pulp-platform/apb_uart
+pulp-platform/axi:
+  commit: 70b8e54fd460e3308e58be596ceb3566a6e3576e
+  url: https://github.com/pulp-platform/axi
+pulp-platform/idma:
+  commit: 2e0b0fe53b6f8823319e2428e2e9abc2db149b7d
+  url: https://github.com/pulp-platform/idma
+pulp-platform/riscv-dbg:
+  commit: 643607e19df3435cfd77cc56143e2637f5900a6e
+  url: https://github.com/pulp-platform/riscv-dbg
+pulp-platform/timer_unit:
+  commit: 4c69615c89db9397a9747d6f6d6a36727854f0bc
+  url: https://github.com/pulp-platform/timer_unit

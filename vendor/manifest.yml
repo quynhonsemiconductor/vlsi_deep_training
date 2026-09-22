@@ -1,0 +1,254 @@
+# =============================================================================
+# Upstream IP manifest — QSOC
+#
+# Every third-party block is VENDORED into vendor/, not submoduled. Three reasons,
+# all specific to this project rather than general preference:
+#
+#   1. The IP comes from four upstreams and eight separate pulp-platform repos.
+#      Eleven submodules to assemble one chip is a git exercise, not an RTL one.
+#   2. OpenTitan is gigabyte-scale and QSOC needs three blocks from it.
+#   3. Tape-out needs a frozen, auditable source. Every upstream fact the
+#      specifications rely on is commit-specific -- riscv-dbg's IdcodeValue,
+#      aon_timer's five interrupt outputs, apb_timer_unit's MODE_64 bit position,
+#      apb_adv_timer's 4-of-16 event multiplexer. Without a recorded commit none of
+#      those claims can be re-checked.
+#
+# RULES, enforced by flow/lint/vendor_guard.sh in RTL · CI:
+#   - Do not edit files under vendor/. Local fixes go in vendor/patches/ with a
+#     reason, so the next upstream bump does not silently revert them.
+#   - Any change under vendor/ must update this file in the same PR.
+#
+# `commit:` is left as TODO where the tree has not been vendored yet. Fill it at
+# the moment of vendoring -- a manifest with a placeholder is worse than no
+# manifest, because it looks authoritative. util/vendor_ip.py records the SHA
+# here and in vendor/vendor.lock.yml automatically.
+#
+# LICENCE VALUES:
+#   Apache-2.0, SHL-0.51        -- SPDX / upstream licence, as published.
+#   MentorProvided-QNSC-Course  -- the nguyenquanicd/* repos carry no LICENSE
+#                                  file, but they are the course mentor's own
+#                                  code, provided for use in this training. This
+#                                  token records that understanding explicitly
+#                                  rather than leaving the field undefined.
+# =============================================================================
+
+upstreams:
+- name: lowRISC/ibex
+  url: https://github.com/lowRISC/ibex
+  commit: e9f55342edbd27e9e17a0e41b1c95a81abb5eac8
+  license: Apache-2.0
+  used_by:
+  - design/cpu
+  notes: 'RV32IMC core. Facts the specifications depend on and that must be re-checked against whatever
+    commit is pinned: fetch_addr_n = {boot_addr_i[31:8], 8''h80} in ibex_if_stage.sv, so the reset vector
+    is boot_addr + 0x80 and the low byte of boot_addr_i is declared unused with an assertion that it is
+    zero; mip is purely combinational (assign mip.irq_fast = irq_fast_i), so the core latches no pending
+    bit; irq_fast_i is 15 bits unconditional; mtvec bit 0 is forced to 1 for plain RV32IMC, so vectored
+    mode is not configurable; fast-line priority resolves lowest index first; dscratch0 and dscratch1
+    exist as real flops.
+
+    '
+  files:
+  - rtl/**
+  - LICENSE
+  - NOTICE
+- name: lowRISC/opentitan
+  url: https://github.com/lowRISC/opentitan
+  commit: aecc39ba9a49e277662fd528a6b3018a05b7d06f
+  license: Apache-2.0
+  used_by:
+  - design/spi
+  - design/wdt
+  partial: true
+  files:
+  - hw/ip/spi_host/rtl/**
+  - hw/ip/spi_device/rtl/**
+  - hw/ip/aon_timer/rtl/**
+  - hw/ip/tlul/rtl/**
+  - hw/ip/prim/rtl/**
+  - hw/ip/prim_generic/rtl/**
+  - LICENSE
+  notes: 'Vendored subset for SPI (spi_host/spi_device) and the AON timer used as WDT. Taking whole rtl/
+    dirs plus all of tlul/rtl and prim/rtl + prim_generic/rtl is deliberate: spi_host references tlul_socket_1n,
+    tlul_cmd_intg_chk and other tlul_* beyond tlul_adapter_host, and prim packages such as prim_ram_1p_pkg
+    live in prim_generic, not prim. A hand-picked minimal set breaks at the next bump; the whole-dir set
+    is self-contained and buildable. All three blocks are TL-UL and need an APB-to-TL-UL wrapper. aon_timer
+    connects intr_wkup_timer_expired_o and nmi_wdog_timer_bark_o; alert_*, racl_* and lc_escalate_en_i
+    are tied off in the wrapper.'
+- name: pulp-platform/timer_unit
+  url: https://github.com/pulp-platform/timer_unit
+  commit: 4c69615c89db9397a9747d6f6d6a36727854f0bc
+  license: SHL-0.51
+  used_by:
+  - design/timer
+  files:
+  - rtl/apb_timer_unit.sv
+  - rtl/timer_unit_counter.sv
+  - rtl/timer_unit_counter_presc.sv
+  notes: 'The repository is named timer_unit; the module QSOC instantiates is apb_timer_unit. Searching
+    for a repo named after the module returns nothing. Two instances: TIMER0 with MODE_64 = 1, TIMER1
+    with MODE_64 = 0. The comparator is registered and NOT gated by the counter enable, which is why one-shot
+    mode yields a held level rather than a pulse. Compare is on equality, not greater-or-equal.
+
+    '
+- name: pulp-platform/apb_adv_timer
+  url: https://github.com/pulp-platform/apb_adv_timer
+  commit: c8faec1e1755386d0e0f31a55ebd80612a3dcea9
+  license: SHL-0.51
+  used_by:
+  - design/pwm
+  notes: 'One instance, the PWM block. TIMER_NBITS = 16, EXTSIG_NUM = 32. The four events_o are a 4-of-16
+    multiplexer over the channel outputs, edge-detected to one cycle, and inert until EVENT_CFG is programmed.
+    The per-timer status_o is connected to nothing readable. out_filter only updates while ctrl_active_i
+    is high, so a stopped channel holds its last level.
+
+    '
+  files:
+  - rtl/**
+  - LICENSE*
+- name: pulp-platform/axi
+  url: https://github.com/pulp-platform/axi
+  commit: 70b8e54fd460e3308e58be596ceb3566a6e3576e
+  license: SHL-0.51
+  used_by:
+  - design/bus
+  - design/sysdbg
+  files:
+  - src/axi_xbar.sv
+  - src/axi_to_axi_lite.sv
+  - src/axi_lite_to_apb.sv
+  - src/axi_from_mem.sv
+  - src/axi_lite_from_mem.sv
+  - src/axi_lite_to_axi.sv
+  notes: 'axi_xbar is fully connected -- every slave port reaches every master port through one shared
+    address map -- which is what lets SYSDBG''s master read ROM. Each slave port has a private decode-error
+    slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi, used by SYSDBG
+    with MaxRequests = 1.
+
+    '
+- name: pulp-platform/riscv-dbg
+  url: https://github.com/pulp-platform/riscv-dbg
+  commit: 643607e19df3435cfd77cc56143e2637f5900a6e
+  license: SHL-0.51
+  used_by: []
+  reference_only: true
+  notes: 'READ AS REFERENCE, NOT INSTANTIATED. SYSDBG is designed in house; this tree is vendored so the
+    claims made against it stay checkable. Its dm_sba.sv uses the same memory-style port SYSDBG''s master
+    exposes, and the repo ships an OBI wrapper and no AXI wrapper. Its IdcodeValue default is 32''h00000DB3,
+    which QSOC deliberately does NOT reuse -- QSOC''s IDCODE is 0x0515_3001.
+
+    '
+  files:
+  - src/**
+  - debug_rom/**
+  - LICENSE*
+- name: pulp-platform/idma
+  url: https://github.com/pulp-platform/idma
+  commit: 2e0b0fe53b6f8823319e2428e2e9abc2db149b7d
+  license: SHL-0.51
+  used_by:
+  - design/dma
+  notes: 'Backend only. The frontend is in house per QNSC_iDMA V2.0: neither desc64 nor reg is used, because
+    desc64''s CSRs are hardwired to a 64-bit APB and QSOC''s is 32-bit. One dma_irq_o, held by write-1-to-clear
+    flags in DMA_ISR.
+
+    '
+  files:
+  - src/**
+  - LICENSE*
+- name: pulp-platform/apb_uart
+  url: https://github.com/pulp-platform/apb_uart
+  commit: 8182a85d234417db46fe833533f8536644d3bee3
+  license: SHL-0.51
+  used_by:
+  - design/uart
+  files:
+  - src/**
+  - LICENSE*
+- name: pulp-platform/apb_gpio
+  url: https://github.com/pulp-platform/apb_gpio
+  commit: f82caeb7f7d89427f05e9af5ed31e0675efe0d83
+  license: SHL-0.51
+  used_by:
+  - design/gpio
+  notes: 'Four instances, one `interrupt` output each, OR''d to one fast line by INTMAP. Per-pin INTSTATUS
+    at offset 0x24 is READ-TO-CLEAR and set beats clear, so a handler gets exactly one look and must service
+    every bit it reads.
+
+    '
+  files:
+  - rtl/**
+  - LICENSE*
+- name: pulp-platform/apb_i2c
+  url: https://github.com/pulp-platform/apb_i2c
+  commit: 84855413cc2c8e70209ee7f168a0225d3c5914a1
+  license: SHL-0.51
+  used_by:
+  - design/i2c
+  files:
+  - '*.sv'
+  notes: No standalone LICENSE file upstream; licence terms are in the source file headers (OpenCores-derived
+    I2C master). SHL-0.51 recorded per the pulp-platform packaging.
+- name: nguyenquanicd/AXI4-SRAM-CONTROLLER
+  url: https://github.com/nguyenquanicd/AXI4-SRAM-CONTROLLER
+  commit: 503d7cd98352378c09dff3930f7fdb0590ea643d
+  license: MentorProvided-QNSC-Course
+  used_by:
+  - design/ram
+  notes: 'Licence: no LICENSE file upstream, but this is the course mentor''s own repository (nguyenquanicd),
+    provided for use in this training. Recorded as MentorProvided-QNSC-Course rather than left undefined.
+    Also used by ROM. Known finding to report to the mentor: WRAP is declared and not implemented. The
+    controller has no WSTRB path, which QSOC adds in the RAM wrapper.
+
+    '
+  files:
+  - rtl/**
+  - README.md
+- name: nguyenquanicd/APB-BUS-Generator
+  url: https://github.com/nguyenquanicd/APB-BUS-Generator
+  commit: 5661aecf96f8349987e600fe4e8a124c35e3d836
+  license: MentorProvided-QNSC-Course
+  used_by:
+  - design/bus
+  generator: true
+  notes: 'Produces m_vlsi_apb_router from a spreadsheet. Genuinely multi-master with per-slave round-robin
+    arbitration, which is what lets MRV-CPU and AXI2APB share P_BUS. Generated RTL is committed alongside
+    its spreadsheet input in util/gen -- committing only one of the two loses either reproducibility or
+    the source of truth.
+
+    '
+  files:
+  - RTL/**
+  - '*.py'
+  - '*.xlsx'
+  - README.md
+- name: nguyenquanicd/APB-CSR-Generator
+  url: https://github.com/nguyenquanicd/APB-CSR-Generator
+  commit: ee80ff5415edc409743f58b99f28881c04a44ee1
+  license: MentorProvided-QNSC-Course
+  used_by:
+  - design/scrc
+  generator: true
+  files:
+  - RTL/**
+  - models/**
+  - '*.py'
+  - '*.xlsx'
+  - README.md
+- name: nguyenquanicd/MRV-CPU
+  url: https://github.com/nguyenquanicd/MRV-CPU
+  commit: eea0028c969015e8fac911278e51e7beca27175e
+  license: MentorProvided-QNSC-Course
+  used_by:
+  - design/scrc
+  notes: 'Mini RV32I core, single-cycle, 13-instruction subset, used inside SCRC to sequence clock enables
+    and reset release instead of a hand-written FSM. It has its own instruction memory port, so its RESET_VECTOR
+    of 0x0000_1000 is in its private space and not in the QSOC memory map. It is an APB master and has
+    an i_interrupt input driven by the APB write strobe on SOFT_RST_CTRL.
+
+    '
+  files:
+  - rtl/**
+  - docs/MRV-CPU-SPEC.md
+  - README.md
+  - utils/**
