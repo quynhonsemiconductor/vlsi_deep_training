@@ -1,0 +1,75 @@
+# =============================================================================
+# CODEOWNERS — QSOC
+#
+# Enforced by the `main-protection` ruleset (require_code_owner_review), the same
+# way rova does it. Two org teams are used:
+#
+#   @quynhonsemiconductor/vlsi-maintainers  review authority over everything
+#   @quynhonsemiconductor/vlsi-devs         the block owners
+#
+# WHY DIRECTORY OWNERSHIP RATHER THAN ONE REPO PER IP:
+# the deliverable is one chip, and the defects that cost this project the most time
+# were cross-block contract drift -- ROM 8 KiB against 2 KiB, APB_M11 against
+# APB_S11, eleven interrupt sources against twelve, apb_adv_timer against
+# apb_timer_unit. In one repo a contract change is a single atomic PR touching both
+# sides. Across repos it is two PRs and a version bump, and drift is the default
+# state between them. CODEOWNERS gives the per-owner review that separate repos are
+# usually reached for.
+#
+# Last line wins in CODEOWNERS. Order below is deliberate: broad defaults first,
+# then blocks, then the paths that need two pairs of eyes.
+# =============================================================================
+
+# ---- default ---------------------------------------------------------------
+*                           @quynhonsemiconductor/vlsi-maintainers
+
+# ---- every RTL change is seen by a maintainer, plus the block owner below ---
+/design/                    @quynhonsemiconductor/vlsi-maintainers
+
+# ---- blocks: owner + maintainer -------------------------------------------
+# Replace the placeholder handles with GitHub usernames before enabling the
+# ruleset. A CODEOWNERS entry naming a user who cannot read the repo silently
+# matches nothing, which makes the required review unsatisfiable.
+/design/ram/                @quynhonsemiconductor/vlsi-maintainers
+/design/sysdbg/             @quynhonsemiconductor/vlsi-maintainers
+/design/intmap/             @quynhonsemiconductor/vlsi-maintainers
+/design/timer/              @quynhonsemiconductor/vlsi-maintainers
+/design/pwm/                @quynhonsemiconductor/vlsi-maintainers
+/design/scrc/               @quynhonsemiconductor/vlsi-maintainers
+/design/dma/                @quynhonsemiconductor/vlsi-maintainers
+/design/bus/                @quynhonsemiconductor/vlsi-maintainers
+/design/spi/                @quynhonsemiconductor/vlsi-maintainers
+/design/uart/               @quynhonsemiconductor/vlsi-maintainers
+/design/i2c/                @quynhonsemiconductor/vlsi-maintainers
+/design/gpio/               @quynhonsemiconductor/vlsi-maintainers
+/design/wdt/                @quynhonsemiconductor/vlsi-maintainers
+/design/iomux/              @quynhonsemiconductor/vlsi-maintainers
+/design/cpu/                @quynhonsemiconductor/vlsi-maintainers
+
+# ---- shared surfaces: maintainers only ------------------------------------
+# design/top holds qsoc_top and qsoc_pkg. qsoc_pkg carries the cross-block
+# contracts, so a change here can silently move another block's address map or
+# interrupt index. It is not a block owner's file.
+/design/top/                @quynhonsemiconductor/vlsi-maintainers
+
+# Upstream IP. A vendor bump changes code every block instantiates, and this
+# project has already been bitten by upstream facts that depend on the exact
+# commit: riscv-dbg's IdcodeValue, aon_timer's port list, apb_timer_unit's
+# MODE_64. Two reviewers, and the manifest must be updated in the same PR.
+/vendor/                    @quynhonsemiconductor/vlsi-maintainers
+
+# The generator inputs are the source of truth for the APB router and the CSR
+# blocks. Editing the spreadsheet regenerates other people's RTL.
+/util/                      @quynhonsemiconductor/vlsi-maintainers
+
+# CI, ownership and the rulesets themselves.
+/.github/                   @quynhonsemiconductor/vlsi-maintainers
+
+# Physical design and the flow scripts affect tape-out, not just simulation.
+/pd/                        @quynhonsemiconductor/vlsi-maintainers
+/flow/                      @quynhonsemiconductor/vlsi-maintainers
+
+# ---- documents -------------------------------------------------------------
+# Specifications are reviewed by maintainers because they are the contract the
+# RTL is checked against, not commentary on it.
+/doc/                       @quynhonsemiconductor/vlsi-maintainers

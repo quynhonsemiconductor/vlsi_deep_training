@@ -1,0 +1,15 @@
+# Path-based PR labels, delegated to the org's shared CI so the behaviour matches
+# every other repo. Config lives in .github/labeler.yml.
+name: Labeler
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    uses: quynhonsemiconductor/ci/.github/workflows/labeler.yml@v1

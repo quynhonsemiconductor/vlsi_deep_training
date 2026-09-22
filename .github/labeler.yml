@@ -1,0 +1,84 @@
+# PR auto-labeler config — maps file path patterns to labels.
+# Used by the labeler workflow (labeler.yml).
+# Labels must exist in the repo before they can be applied: see
+# .github/labels.yml and the bootstrap commands in .github/README.md.
+
+# ---- blocks ----------------------------------------------------------------
+area/ram:
+  - changed-files:
+    - any-glob-to-any-file: ["design/ram/**", "dv/ram/**"]
+
+area/sysdbg:
+  - changed-files:
+    - any-glob-to-any-file: ["design/sysdbg/**", "dv/sysdbg/**"]
+
+area/intmap:
+  - changed-files:
+    - any-glob-to-any-file: ["design/intmap/**", "dv/intmap/**"]
+
+area/timer:
+  - changed-files:
+    - any-glob-to-any-file: ["design/timer/**", "dv/timer/**"]
+
+area/pwm:
+  - changed-files:
+    - any-glob-to-any-file: ["design/pwm/**", "dv/pwm/**"]
+
+area/scrc:
+  - changed-files:
+    - any-glob-to-any-file: ["design/scrc/**"]
+
+area/dma:
+  - changed-files:
+    - any-glob-to-any-file: ["design/dma/**"]
+
+area/bus:
+  - changed-files:
+    - any-glob-to-any-file: ["design/bus/**"]
+
+area/spi:
+  - changed-files:
+    - any-glob-to-any-file: ["design/spi/**"]
+
+area/iomux:
+  - changed-files:
+    - any-glob-to-any-file: ["design/iomux/**"]
+
+# ---- shared surfaces -------------------------------------------------------
+# These three get their own labels because a change to any of them can move
+# another block's contract without touching that block's directory.
+area/top:
+  - changed-files:
+    - any-glob-to-any-file: ["design/top/**"]
+
+area/vendor:
+  - changed-files:
+    - any-glob-to-any-file: ["vendor/**"]
+
+area/gen:
+  - changed-files:
+    - any-glob-to-any-file: ["util/**"]
+
+# ---- flow and documents ----------------------------------------------------
+area/pd:
+  - changed-files:
+    - any-glob-to-any-file: ["pd/**", "flow/syn/**"]
+
+area/fpga:
+  - changed-files:
+    - any-glob-to-any-file: ["fpga/**"]
+
+area/doc:
+  - changed-files:
+    - any-glob-to-any-file: ["doc/**"]
+
+area/ci:
+  - changed-files:
+    - any-glob-to-any-file: [".github/**", "flow/lint/**"]
+
+# ---- cross-cutting flag ----------------------------------------------------
+# Raised when a PR touches the contract surfaces at the same time as a block.
+# Not a substitute for review, just a prompt to check the other side moved too.
+contract-change:
+  - changed-files:
+    - any-glob-to-any-file: ["design/top/qsoc_pkg.sv", "util/gen/**", "vendor/manifest.yml"]

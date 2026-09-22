@@ -1,0 +1,49 @@
+# =============================================================================
+# PR title — Conventional Commits.
+#
+# Copied from rova deliberately, including the reason it is its own workflow.
+# The check itself lives in quynhonsemiconductor/ci as a composite action, so the
+# rule is written once for the org rather than once per repo.
+#
+# WHY ITS OWN WORKFLOW rather than a job inside RTL · CI:
+#
+# 1. A FALSE GREEN. A workflow that listens for the `edited` pull_request action so
+#    a retitled PR re-checks, while also setting `cancel-in-progress: true` and
+#    guarding heavy jobs with `if: github.event.action != 'edited'`, will have a
+#    title edit CANCEL the real run and replace it with one where every real job
+#    skipped. GitHub counts a skipped required check as PASSING. The PR shows
+#    all-green having executed nothing. This was observed three times on another
+#    repo in this org before it was understood.
+#
+# 2. The check ran twice per PR, once from each CI workflow, byte-identical.
+#
+# WHY THE ACTION AND NOT ci's REUSABLE WORKFLOW: a job that calls a reusable
+# workflow reports its check as `<caller job>/<called job>`, which renames the check
+# and leaves the ruleset requiring a name that matches nothing. A required check
+# that never reports does not fail -- it blocks every merge.
+# =============================================================================
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+concurrency:
+  # Deliberately NOT the rtl-ci group. Sharing one is what let a title edit cancel
+  # a lint run.
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read # required by the action's underlying semantic-pull-request step
+
+jobs:
+  pr-title:
+    # This name IS the required check. Do not rename it.
+    name: PR title (conventional commits)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # No checkout: the action reads the title from the event payload.
+      - uses: quynhonsemiconductor/ci/actions/pr-title-conventional-commits@v1
