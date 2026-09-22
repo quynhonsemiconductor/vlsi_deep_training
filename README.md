@@ -69,6 +69,9 @@ python3 util/vendor_ip.py <name>                 # (re)import one upstream
 
 ## Contributing
 
+Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) — the order of work, the five
+steps for writing a block, and the checks that gate a pull request.
+
 `main` is protected: no direct pushes, PRs require a passing CI run and code-owner
 review. Ownership is per-directory in [`.github/CODEOWNERS`](.github/CODEOWNERS);
 `vendor/` and the shared contract surfaces need a maintainer because a change there
