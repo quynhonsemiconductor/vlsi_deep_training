@@ -53,7 +53,7 @@ Honest status, so nobody has to guess:
 | `util/` | The inter-block contract, its generator, and the vendoring tool |
 | `flow/` | Lint and the checks that gate a pull request |
 | `dv/` · `pd/` · `fpga/` | Verification, physical design, FPGA bring-up |
-| `.github/` | CI, ownership and repository policy — see [`.github/README.md`](.github/README.md) |
+| `.github/` | CI, ownership and repository policy — see [`.github/POLICY.md`](.github/POLICY.md) |
 
 ## Getting started
 

@@ -11,7 +11,7 @@
 # check that cannot fail is worse than no check because it invites trust.
 #
 # What this repo needs instead, and does not have yet: a licence audit over
-# vendor/manifest.yml. Recorded in .github/README.md as the next CI item.
+# vendor/manifest.yml. Recorded in .github/POLICY.md as the next CI item.
 # =============================================================================
 name: Security
 

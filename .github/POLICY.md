@@ -1,5 +1,11 @@
 # `.github/` — CI, ownership, and repository policy for QSOC
 
+> This file is **`POLICY.md`, not `README.md`, on purpose.** GitHub prefers
+> `.github/README.md` over the one at the repository root, so naming it README
+> made the landing page show the CI policy instead of what QSOC is. The root
+> [`README.md`](../README.md) describes the chip; this file describes how the
+> repository is governed.
+
 This directory holds everything about *how the repo is governed*, not what it
 builds. It is owned by `@quynhonsemiconductor/vlsi-maintainers` (see
 [`CODEOWNERS`](CODEOWNERS)) because a change here can weaken a required check or
