@@ -65,6 +65,36 @@ and not checked. `find` is not used, for three reasons that are already true her
 The same convention is used by the reference workspace (`MCU_guide_ws` ships
 `filelist.f` for its CPU and VCS setups) and by the mentor's own IP.
 
+## Never retype a shared number — import it
+
+Base addresses, region sizes, interrupt line indices and clock-domain reset bits
+are **shared between blocks**. Import them from `qnsc_pkg` instead of typing the
+number into your wrapper:
+
+```systemverilog
+import qnsc_pkg::*;
+// ... C_UART_0_BASE, C_INT_LINE_UART_0, C_SOFT_RST_BIT_D13
+```
+
+`design/top/rtl/qnsc_pkg.sv` is **generated** from `util/qsoc_contract.yml`, which is
+the single source of truth. To change a number:
+
+```bash
+vim util/qsoc_contract.yml
+python3 util/gen_qnsc_pkg.py        # regenerate the package
+# commit both files together
+```
+
+CI regenerates and compares, so the committed package cannot drift from the
+contract. That check exists because every cross-block defect this project has paid
+for was one fact written twice: ROM 8 KiB against 2 KiB, `APB_M11` against
+`APB_S11`, eleven interrupt sources against twelve, `apb_adv_timer` against
+`apb_timer_unit`. Generating makes the disagreement impossible rather than merely
+detectable.
+
+Numbers not yet agreed are listed under `tbd:` in the contract, named rather than
+omitted so the gap is visible instead of being filled in by whoever needs it first.
+
 ## Naming
 
 **`QNSC_RTL_Design_Naming_Rule` V1.0 is mandatory.** The full document is

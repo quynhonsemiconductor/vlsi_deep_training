@@ -22,4 +22,7 @@
 # ../../vendor/<upstream>/rtl/<top_of_ip>.sv
 
 # ---- ours -------------------------------------------------------------------
+# The contract package comes first: it is imported by every wrapper, and a
+# package must compile before whatever imports it.
+rtl/qnsc_pkg.sv
 # rtl/<wrapper>.sv
