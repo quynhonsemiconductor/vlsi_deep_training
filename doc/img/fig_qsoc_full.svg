@@ -112,7 +112,7 @@
 <text x="880.0" y="497.7" font-size="11" text-anchor="middle" fill="#111">I2C</text>
 <text x="1040.0" y="497.7" font-size="11" text-anchor="middle" fill="#111">SPI</text>
 <text x="750.0" y="638.7" font-size="14" text-anchor="middle" fill="#111" font-weight="bold">P_BUS</text>
-<text x="365.0" y="768.7" font-size="11" text-anchor="middle" fill="#111">SYSCTL</text>
+<text x="365.0" y="768.7" font-size="11" text-anchor="middle" fill="#111">SCRC</text>
 <text x="515.0" y="768.7" font-size="11" text-anchor="middle" fill="#111">SYSCSR</text>
 <text x="665.0" y="768.7" font-size="11" text-anchor="middle" fill="#111">WDT</text>
 <text x="820.0" y="761.7" font-size="11" text-anchor="middle" fill="#111">GPIO</text>
