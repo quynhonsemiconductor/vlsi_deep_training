@@ -113,6 +113,13 @@ upstreams:
   used_by:
   - design/bus
   - design/sysdbg
+  ownership_note: >
+    Listed against both because both instantiate from it, but the protocol
+    adapters are the BUS owner's to write and verify -- QNSC_SYSDBG_MAS section
+    4.1 places axi_lite_to_axi at the crossbar rather than inside the debug block,
+    so that every protocol conversion in the chip has one owner. SYSDBG's own
+    master port is memory-style (req/gnt/rsp_valid); axi_from_mem is what turns
+    that into AXI, and it lives at AXI_S0.
   files:
   - src/axi_xbar.sv
   - src/axi_to_axi_lite.sv
@@ -195,6 +202,7 @@ upstreams:
   license: MentorProvided-QNSC-Course
   used_by:
   - design/ram
+  - design/rom
   notes: 'Licence: no LICENSE file upstream, but this is the course mentor''s own repository (nguyenquanicd),
     provided for use in this training. Recorded as MentorProvided-QNSC-Course rather than left undefined.
     Also used by ROM. Known finding to report to the mentor: WRAP is declared and not implemented. The
