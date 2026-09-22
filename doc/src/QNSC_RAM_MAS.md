@@ -626,7 +626,7 @@ should know what the number was bought with.
 
    | Item | RV32IMC, `-Os` |
    |---|---:|
-   | `SYSCTL`, `SYSCSR`, `WDT` -- register writes and little else | ~1 KiB |
+   | `SCRC`, `SYSCSR`, `WDT` -- register writes and little else | ~1 KiB |
    | `GPIO` -- one driver, four instances | 0.5 KiB |
    | `TIMER` -- `apb_timer_unit`, 64-bit mode | 1 KiB |
    | `UART` -- ring buffer and interrupt handler | 1.5 KiB |

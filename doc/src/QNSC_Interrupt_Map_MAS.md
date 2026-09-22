@@ -212,7 +212,7 @@ assignment sheet**, and Appendix C records which claim was verified where.
 | PWM | `pulp-platform/apb_adv_timer` | **Nghia VT**, `QNSC_PWM_MAS` | `events_o[3:0]` -- 4, **rising-edge detected on a channel output selected by a 4-of-16 multiplexer, so a pulse**. `QNSC_PWM_MAS` section 4.5 gives the RTL: the event source is `{ch_3_o, ch_2_o, ch_1_o, ch_0_o}`, the channel outputs, not the raw comparators. **`QSOC_HAS` v4_r1 confirms this is a separate instance at `APB_M13` with its own clock domain `D18`**, not a pad function of TIMER 0/1 | 1 | **4**, corroborated |
 | WDT | OpenTitan `aon_timer` | Tai Quach Huynh Huu | **Five outputs**, two connected as interrupts: `intr_wkup_timer_expired_o` and `nmi_wdog_timer_bark_o`. `intr_wdog_timer_bark_o` is left open because it is **the same wire** as the NMI -- section 5.6. **`QSOC_HAS` Table 8-1 counts the same two and excludes the bite, which is a reset** | 1 | **2**, corroborated |
 | DMA | `pulp-platform/idma` backend with a **unified in-house frontend**, `QNSC_iDMA` V2.0 | Vinh Ong Bao | **`dma_irq_o` -- 1, and it is a level held by `DMA_ISR`**, Table 5. **`QSOC_HAS` v4_r1 selects `desc64` and describes this source as the AXI B-channel handshake on descriptor write-back**, matching the RTL read here. Still to be confirmed by the DMA owner -- question 2 | 1 | **1**, corroborated |
-| SYSCTL (`SCRC`) | self-designed | Nam Nguyen Hao | **No interrupt of any kind** -- reasoned below, then confirmed against the register table in `QSOC_HAS` | 1 | **0** |
+| `SCRC` | self-designed | Nam Nguyen Hao | **No interrupt of any kind** -- reasoned below, then confirmed against the register table in `QSOC_HAS` | 1 | **0** |
 | SYSCSR | `nguyenquanicd/APB-CSR-Generator` | -- | A generated register file, and its register table in `QSOC_HAS` is status only | 1 | **0** |
 | ROM | `nguyenquanicd/AXI4-SRAM-CONTROLLER` | Nam Nguyen Hao | none -- memories raise no interrupts | 1 | 0 |
 | ISRAM, DSRAM | `nguyenquanicd/AXI4-SRAM-CONTROLLER` | Nghia Van Trong | none | 2 | 0 |
@@ -222,8 +222,8 @@ assignment sheet**, and Appendix C records which claim was verified where.
 | **Interrupt controller** | **designed in house** -- an OR tree, section 5.1 | Nghia Van Trong | This block | 1 | -- |
 | **Total** | | | | | **27** |
 
-**`SYSCTL` raises nothing, and the reason is worth recording** because a clock and
-reset controller usually does. The instructor's assignment scopes `SYSCTL` -- `SCRC`
+**`SCRC` raises nothing, and the reason is worth recording** because a clock and
+reset controller usually does. The instructor's assignment scopes `SCRC` -- `SCRC`
 on the IP sheet -- as three sub-modules: a **clock divider**, a **reset filter** and
 a **main FSM controller**. **QSOC has no PLL**, confirmed on the sheet. Each event
 such a block might report was checked against that scope:
@@ -242,7 +242,7 @@ So the count is **0**, and the total stands at 27.
 
 **This is now confirmed rather than argued.** `QSOC_HAS` publishes the register
 tables of both blocks, and neither contains an interrupt register of any kind.
-`SYSCTL` has `SOFT_RST_CTRL` and a read-only `CLK_EN`; `SYSCSR` has `RESET_CAUSE`
+`SCRC` has `SOFT_RST_CTRL` and a read-only `CLK_EN`; `SYSCSR` has `RESET_CAUSE`
 as write-one-to-clear, plus read-only `DOMAIN_RST_STATUS` and `CHIP_ID_REV`. Five
 registers, all of them either written by software or polled by it. In particular
 there is no completion or *done* flag for a divider change, which was the one
@@ -576,7 +576,7 @@ compare outputs on TIMER1** become one line, for the same reason.
 consequence. Each instance has its own `INTSTATUS`, so a shared line means the handler
 reads up to four registers to find the source. Giving each instance its own line would
 cost three more lines and leave only one spare. Four spare lines are worth more than
-three saved register reads on a chip where `SYSCTL` and `SYSCSR` are confirmed to add
+three saved register reads on a chip where `SCRC` and `SYSCSR` are confirmed to add
 none, but where the SPI and TL-UL questions are still open. **If the spares are never
 needed, splitting GPIO later is a four-line edit and no change to anything else.**
 
@@ -1202,7 +1202,7 @@ OpenTitan ships `hw/ip/tlul/rtl/tlul_adapter_host.sv`, whose host side is a memo
 | PLIC | Platform Level Interrupt Controller, the standard RISC-V aggregator. **Not used in QSOC** -- section 6 |
 | QSOC | The MCU built in this training project |
 | `reg_bus` | PULP's lightweight register bus, `reg_req_t` / `reg_rsp_t` |
-| `SCRC` | System Clock and Reset Control -- the IP sheet's name for `SYSCTL` |
+| `SCRC` | System Clock and Reset Control. Formerly `SYSCTL` on the block diagram |
 | TL-UL | TileLink Uncached Lightweight, OpenTitan's register bus |
 | W1C | Write 1 to Clear |
 | WDT | Watchdog Timer |

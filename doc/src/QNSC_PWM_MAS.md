@@ -485,8 +485,8 @@ block that interrupts before firmware is ready is hard to debug from the symptom
 | Which 8 of 16 channels reach pads | pad and IO mux owner | `ch_0_o` and `ch_1_o` -- all four channels of modules 0 and 1, for two independent base frequencies |
 | `ext_sig_i` wiring | pad / IO MUX owner | **Four pads already exist** (`TIM_EXT0`--`3`, `PIN_37`--`40`). This block proposes they attach to `ext_sig_i[3:0]` in pad order; remaining 28 bits tied low. No selection register needed -- the IP selects per module |
 | `dft_cg_enable_i` | DFT owner | **tie 0 for v1** -- no test-mode pin exists, Day005. Revisit if a DFT strategy is adopted; do not record QSOC as having no scan |
-| `low_speed_clk_i` | `SYSCTL` | tie to the domain clock; the IP samples it |
-| Clock gate bit 15 | `SYSCTL` | may start **closed**; the block does nothing useful until programmed |
+| `low_speed_clk_i` | `SCRC` | tie to the domain clock; the IP samples it |
+| Clock gate bit 15 | `SCRC` | may start **closed**; the block does nothing useful until programmed |
 | **No pad pull fights the rest level** | pad owner | Section 5.9 -- firmware leaves each channel at a chosen level before the gate closes; a pull in the opposite direction would fight it. One-line check against the pad list |
 | Four interrupt sources on one line | `INTMAP` | already assumed by `QNSC_Interrupt_Map_MAS`; no change |
 
@@ -545,7 +545,7 @@ So the rule is a firmware procedure, and it is the same for every pad:
 | 1 | Set the channel's `CHn_TH` so the output reaches its intended rest level |
 | 2 | Let at least one full period elapse, so the level is actually driven |
 | 3 | Stop the module through `CMD` |
-| 4 | Only then may `SYSCTL` close the domain gate |
+| 4 | Only then may `SCRC` close the domain gate |
 
 **Never gate a running block.** Doing so freezes the pad at an arbitrary point in the
 waveform, which for an LED is harmless and for a motor driver may mean *conducting*.

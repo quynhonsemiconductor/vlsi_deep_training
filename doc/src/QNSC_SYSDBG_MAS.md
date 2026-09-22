@@ -225,8 +225,10 @@ combine has two inputs, POR and the watchdog request, and its reset-cause regist
 has three causes with no `DEBUG` among them.
 
 (That block is **SCRC**, System Clock and Reset Control. Earlier revisions of this
-document called it `SYSCTL` after the QSOC block diagram; `SYSCTL` and `SYSCSR` are
-now the two register files *inside* SCRC, so the name used here is SCRC.)
+document called it `SYSCTL` after the QSOC block diagram. The current name is
+**SCRC**, and it is the *control* half at `APB_M0`; **SYSCSR** is the separate
+*status* half at `APB_M1` -- two APB slaves rather than two register files inside
+one block.)
 
 **What this costs, stated plainly.** A non-debug-module reset exists in the RISC-V
 Debug Specification so that a host can restart a target while keeping its JTAG
@@ -867,7 +869,7 @@ They are grouped by who has to answer.
    core *before* it executes the first ROM instruction is a standard expectation of
    a GDB session. It is not a feature of `SYSDBG` so much as a **reset-ordering
    requirement**: `debug_req` must already be high when the core leaves reset, which
-   means `SYSCTL` releases `SYSDBG` from reset **before** the core, and there is no
+   means `SCRC` releases `SYSDBG` from reset **before** the core, and there is no
    handshake to wait on -- a request that arrives late arrives after the core has
    already run. Section 4.2 records that QSOC has no debug reset at all, so this
    ordering requirement is the only reset-tree constraint this block places on SCRC. `QSOC_HAS` now
@@ -876,7 +878,7 @@ They are grouped by who has to answer.
    (`QNSC_RAM_MAS` section 5.1), so a fault in the ROM is a fault in real code, and
    without halt-on-reset the core has already run into it before the debugger can
    attach. This is the same premise that makes the hardware trigger necessary,
-   section 4.11. **What remains is sequencing, and it belongs to the `SYSCTL`
+   section 4.11. **What remains is sequencing, and it belongs to the `SCRC`
    owner**, not to this block.
 
 **For the instructor, or the project:**
