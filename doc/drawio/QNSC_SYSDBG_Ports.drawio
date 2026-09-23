@@ -1,40 +1,43 @@
 <mxfile host="app.diagrams.net" type="device">
-  <diagram name="What one bus port can and cannot reach" id="pg0">
+  <diagram name="What one bus port reaches" id="pg0">
     <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="dbg" value="SYSDBG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="40" y="200" width="200" height="170" as="geometry"/>
+        <mxCell id="dbg" value="SYSDBG&#10;master only" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="210" width="210" height="150" as="geometry"/>
         </mxCell>
-        <mxCell id="cpu" value="Ibex CPU" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="640" y="60" width="200" height="90" as="geometry"/>
+        <mxCell id="cpu" value="Ibex CPU&#10;master only" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="660" y="40" width="210" height="100" as="geometry"/>
         </mxCell>
-        <mxCell id="bus" value="S_BUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="640" y="240" width="200" height="130" as="geometry"/>
+        <mxCell id="bus" value="S_BUS&#10;crossbar" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="660" y="210" width="210" height="150" as="geometry"/>
         </mxCell>
-        <mxCell id="mem" value="ROM, RAMs&#10;peripherals" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="640" y="450" width="200" height="80" as="geometry"/>
+        <mxCell id="isram" value="ISRAM&#10;dispatch loop + sequences" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="540" y="450" width="230" height="90" as="geometry"/>
         </mxCell>
-        <mxCell id="can" value="STAGE 1, master port alone | halt, resume, reset, read and write memory, load firmware" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="40" y="570" width="800" height="62" as="geometry"/>
+        <mxCell id="rest" value="ROM, DSRAM&#10;peripherals" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="800" y="450" width="230" height="90" as="geometry"/>
         </mxCell>
-        <mxCell id="cant" value="STAGE 2, needs a slave port | read a CPU register, single-step, attach GDB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="40" y="652" width="800" height="62" as="geometry"/>
+        <mxCell id="key" value="No slave port anywhere in this block.&#10;Two masters cannot address each other, so a CPU register is read by making&#10;the core store it to ISRAM, then reading ISRAM through the same master port." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="610" width="990" height="86" as="geometry"/>
         </mxCell>
-        <mxCell id="dbg_cpu_0" value="debug_req  (dedicated wire)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0.0;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="cpu">
+        <mxCell id="dbg_cpu_0" value="debug_req" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.3;exitY=0.0;entryX=0.0;entryY=0.35;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="cpu">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="dbg_bus_1" value="AXI_S0 master | in Stage 1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.25;entryX=0.0;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="bus">
+        <mxCell id="cpu_dbg_1" value="debug_mode" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.75;entryX=0.75;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="cpu" target="dbg">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="bus_dbg_2" value="slave port | Stage 2 only" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.75;entryX=1.0;entryY=0.75;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="bus" target="dbg">
+        <mxCell id="dbg_bus_2" value="AXI_S0 master" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.6;entryX=0.0;entryY=0.6;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="bus">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="cpu_bus_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cpu" target="bus">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="bus_mem_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="mem">
+        <mxCell id="bus_isram_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.25;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="isram">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="bus_rest_5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.75;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="bus" target="rest">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
       </root>

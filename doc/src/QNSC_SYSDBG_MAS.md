@@ -344,7 +344,7 @@ One, instantiated in `design/top`. Parameters as section 5.
 
 # 9. What is not provided here, and who provides it
 
-![What one bus port can and cannot reach](../img/fig_sysdbg_ports.png){width=6.2in}
+![What one bus port reaches](../img/fig_sysdbg_ports.png){width=6.2in}
 
 : Functions this block does not provide
 
