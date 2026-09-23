@@ -31,9 +31,21 @@ author: "QUY NHON SEMICONDUCTORS -- QNSC"
 
 # Revision history
 
-<!-- One line per version. Not one paragraph -- the reasoning goes in
-     _DECISIONS.md, which this sentence should point to. Keep the five columns:
-     they are the team template's. -->
+<!-- One line per version, never one paragraph.
+
+     Keep this table SHORT. Measured on the interrupt map, twenty-two rows came
+     to 13% of the whole document and sat in front of section 1 -- the same
+     proportion the old prose changelog had, so nothing had been gained. A reader
+     opens a specification to learn the design, not to learn how many times the
+     author changed their mind.
+
+     Two rules that keep it short:
+       - the row says WHAT changed, in one clause. WHY goes in _DECISIONS.md.
+       - after a rewrite, start the table again at the new version and point to
+         _DECISIONS.md for what came before. A rewritten document's old history
+         describes a document that no longer exists.
+
+     Keep the five columns: they are the team template's. -->
 
 The reasoning behind each change is in
 [`QNSC_<BLOCK>_DECISIONS.md`](QNSC_<BLOCK>_DECISIONS.md).

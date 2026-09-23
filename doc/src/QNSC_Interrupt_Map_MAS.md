@@ -18,32 +18,14 @@ the contract.
 
 # Revision history
 
-One line per version. The reasoning behind each change, and the evidence it rests
-on, is in [`QNSC_Interrupt_Map_DECISIONS.md`](QNSC_Interrupt_Map_DECISIONS.md).
+`V2.0` is a rewrite, so the history starts again here. The twenty versions before
+it, `V1.0` to `V11.10`, describe a document that no longer exists in this shape;
+they are listed in full, with the reasoning and the evidence behind each, in
+[`QNSC_Interrupt_Map_DECISIONS.md`](QNSC_Interrupt_Map_DECISIONS.md).
 
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
-| V1.0 | 2026-09-13 | Nghia VT | -- | First issue, against a candidate IP set: 74 sources |
-| V2.0 | 2026-09-17 | Nghia VT | -- | Rewritten for the IP set actually selected: 28 |
-| V3.0 | 2026-09-17 | Nghia VT | -- | Specified as registered, wrongly -- see V11.3 |
-| V4.0 | 2026-09-17 | Nghia VT | -- | Port list and parameters added; derived figures reconciled |
-| V5.0 | 2026-09-17 | Nghia VT | -- | Audited against the IP assignment sheet and each IP's RTL |
-| V6.0 | 2026-09-17 | Nghia VT | -- | GPIO corrected to `pulp-platform/apb_gpio`: total 27 |
-| V7.0 | 2026-09-17 | Nghia VT | -- | `rv_plic` considered and rejected; Ibex fast lines kept |
-| V9.0 | 2026-09-18 | Nghia VT | -- | Reconciled against `QSOC_HAS` and the DMA, TIMER, WDT specs |
-| V10.0 | 2026-09-18 | Nghia VT | -- | `QSOC_HAS` v4_r1 settles four open items, all in favour of this |
-| V10.1 | 2026-09-18 | Nghia VT | -- | Two source counts closed; one correction here |
-| V11.1 | 2026-09-21 | Nghia VT | -- | TIMER0, TIMER1, PWM ownership transfers in; each gets its own MAS |
-| V11.2 | 2026-09-21 | Nghia VT | Day005 | GPIO ruled one line for four instances -- action item closed |
-| V11.3 | 2026-09-21 | Nghia VT | -- | Five questions closed from Ibex RTL. **Block is combinational** |
-| V11.4 | 2026-09-22 | Nghia VT | -- | Question 2 reframed after reading the bus owner's three specs |
-| V11.5 | 2026-09-22 | Nghia VT | -- | Question 2 rewritten from the IPs' RTL, not `QSOC_HAS` |
-| V11.6 | 2026-09-22 | Nghia VT | -- | Two questions closed, one narrowed, from the SPI owner's specs |
-| V11.7 | 2026-09-22 | Nghia VT | -- | Stale reset-cause table corrected: `ndmreset` is gone |
-| V11.8 | 2026-09-22 | Nghia VT | -- | Question 2 restated as a shaped request, not a gap |
-| V11.9 | 2026-09-22 | Nghia VT | -- | Last two questions take positions; specification complete |
-| V11.10 | 2026-09-22 | Nghia VT | -- | DMA answered by its owner: level, not pulse. Central limit removed |
-| **V2.0** | **2026-09-23** | **Nghia VT** | -- | **Rewritten as specification only: 1284 lines to 220. History and rationale moved to `_DECISIONS`. Tables in 7.2, 7.3 and 10 are now generated from `util/qsoc_contract.yml`** |
+| V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only: 1284 lines to 327. History and reasoning moved to `_DECISIONS`. Tables in 7.2, 7.3 and 10 generated from `util/qsoc_contract.yml` |
 
 # 1. Overview
 
