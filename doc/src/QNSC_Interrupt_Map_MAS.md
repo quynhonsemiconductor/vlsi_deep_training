@@ -12,6 +12,35 @@ the contract.
 
 ---
 
+## Revision history
+
+One line per version. The reasoning behind each change, and the evidence it rests
+on, is in [`QNSC_Interrupt_Map_DECISIONS.md`](QNSC_Interrupt_Map_DECISIONS.md).
+
+| Version | Date | Author | Reviewer | Description of change |
+|---|---|---|---|---|
+| V1.0 | 2026-09-13 | Nghia VT | -- | First issue, against a candidate IP set: 74 sources |
+| V2.0 | 2026-09-17 | Nghia VT | -- | Rewritten for the IP set actually selected: 28 |
+| V3.0 | 2026-09-17 | Nghia VT | -- | Specified as registered, wrongly -- see V11.3 |
+| V4.0 | 2026-09-17 | Nghia VT | -- | Port list and parameters added; derived figures reconciled |
+| V5.0 | 2026-09-17 | Nghia VT | -- | Audited against the IP assignment sheet and each IP's RTL |
+| V6.0 | 2026-09-17 | Nghia VT | -- | GPIO corrected to `pulp-platform/apb_gpio`: total 27 |
+| V7.0 | 2026-09-17 | Nghia VT | -- | `rv_plic` considered and rejected; Ibex fast lines kept |
+| V9.0 | 2026-09-18 | Nghia VT | -- | Reconciled against `QSOC_HAS` and the DMA, TIMER, WDT specs |
+| V10.0 | 2026-09-18 | Nghia VT | -- | `QSOC_HAS` v4_r1 settles four open items, all in favour of this |
+| V10.1 | 2026-09-18 | Nghia VT | -- | Two source counts closed; one correction here |
+| V11.1 | 2026-09-21 | Nghia VT | -- | TIMER0, TIMER1, PWM ownership transfers in; each gets its own MAS |
+| V11.2 | 2026-09-21 | Nghia VT | Day005 | GPIO ruled one line for four instances -- action item closed |
+| V11.3 | 2026-09-21 | Nghia VT | -- | Five questions closed from Ibex RTL. **Block is combinational** |
+| V11.4 | 2026-09-22 | Nghia VT | -- | Question 2 reframed after reading the bus owner's three specs |
+| V11.5 | 2026-09-22 | Nghia VT | -- | Question 2 rewritten from the IPs' RTL, not `QSOC_HAS` |
+| V11.6 | 2026-09-22 | Nghia VT | -- | Two questions closed, one narrowed, from the SPI owner's specs |
+| V11.7 | 2026-09-22 | Nghia VT | -- | Stale reset-cause table corrected: `ndmreset` is gone |
+| V11.8 | 2026-09-22 | Nghia VT | -- | Question 2 restated as a shaped request, not a gap |
+| V11.9 | 2026-09-22 | Nghia VT | -- | Last two questions take positions; specification complete |
+| V11.10 | 2026-09-22 | Nghia VT | -- | DMA answered by its owner: level, not pulse. Central limit removed |
+| **V2.0** | **2026-09-23** | **Nghia VT** | -- | **Rewritten as specification only: 1284 lines to 220. History and rationale moved to `_DECISIONS`. Tables in 6.2, 6.3 and 9 are now generated from `util/qsoc_contract.yml`** |
+
 ## 1. Scope
 
 `INTMAP` groups the interrupt sources of fourteen blocks onto the CPU's fast
@@ -96,24 +125,35 @@ The line index **is** the priority: Ibex resolves the lowest index first. This
 table therefore fixes the default priority order as well as the wiring, and
 changing it requires re-synthesis.
 
+<!-- gen:interrupt_lines -->
 | Line | mcause | Vector | Peripheral | Sources | Shape |
 |---:|---:|---|---|---:|---|
-| 0 | 16 | `mtvec + 0x40` | DMA | 1 | level |
-| 1 | 17 | `mtvec + 0x44` | SPI device | 8 | level |
-| 2 | 18 | `mtvec + 0x48` | SPI host | 2 | level |
-| 3 | 19 | `mtvec + 0x4C` | I²C | 1 | level |
-| 4 | 20 | `mtvec + 0x50` | UART0 | 1 | level |
-| 5 | 21 | `mtvec + 0x54` | UART1 | 1 | level |
-| 6 | 22 | `mtvec + 0x58` | TIMER1 | 2 | pulse |
-| 7 | 23 | `mtvec + 0x5C` | PWM | 4 | pulse |
-| 8 | 24 | `mtvec + 0x60` | WDT wake-up | 1 | level |
-| 9 | 25 | `mtvec + 0x64` | GPIO0–3 | 4 | pulse |
-| 10 | 26 | `mtvec + 0x68` | TIMER0 | 1 | pulse |
-| 11–14 | 27–30 | — | spare, tied to 0 | 0 | — |
-| — | **31** | `mtvec + 0x7C` | **WDT bark**, on `irq_nm_i` | 1 | level |
+| 0 | 16 | `mtvec + 0x40` | dma | 1 | level |
+| 1 | 17 | `mtvec + 0x44` | spi_device | 8 | level |
+| 2 | 18 | `mtvec + 0x48` | spi_host | 2 | level |
+| 3 | 19 | `mtvec + 0x4C` | i2c | 1 | level |
+| 4 | 20 | `mtvec + 0x50` | uart_0 | 1 | level |
+| 5 | 21 | `mtvec + 0x54` | uart_1 | 1 | level |
+| 6 | 22 | `mtvec + 0x58` | timer_1 | 2 | pulse |
+| 7 | 23 | `mtvec + 0x5C` | pwm | 4 | pulse |
+| 8 | 24 | `mtvec + 0x60` | wdt_wakeup | 1 | level |
+| 9 | 25 | `mtvec + 0x64` | gpio | 4 | pulse |
+| 10 | 26 | `mtvec + 0x68` | timer_0 | 1 | pulse |
+| 11-14 | 27-30 | -- | spare, tied to 0 | 0 | -- |
+| -- | **31** | `mtvec + 0x7C` | **wdt_bark**, on `irq_nm_i` | 1 | level |
+<!-- /gen -->
 
-**26 sources on 11 lines, plus the NMI: 27.** Ibex provides 15 fast lines, so
-four are spare.
+<!-- gen:interrupt_totals -->
+|  | Count |
+|---|---:|
+| Sources aggregated onto fast lines | 26 |
+| Sources on the non-maskable input | 1 |
+| **Total interrupt sources** | **27** |
+| Fast lines driven | 11 |
+| Fast lines Ibex provides | 15 |
+| Fast lines spare | 4 |
+<!-- /gen -->
+
 
 Order follows one rule: **data loss first, human time last.** A missed SPI or UART
 event loses a byte that cannot be recovered; a missed timer tick arrives again next
@@ -175,12 +215,14 @@ One. It is instantiated in `design/top` and has no parameters.
 
 ## 9. Tie-offs
 
+<!-- gen:core_tie_offs -->
 | Port | Tied to | Why |
 |---|---|---|
 | `irq_fast_i[14:11]` | `4'b0` | QSOC drives 11 of the 15 lines |
-| `irq_external_i` | `0` | nothing aggregates onto it; there is no external controller |
-| `irq_timer_i` | `0` | no CLINT, so `mip.MTIP` is never set. TIMER0 is an ordinary fast line |
+| `irq_external_i` | `0` | nothing aggregates onto it; there is no external interrupt controller |
+| `irq_timer_i` | `0` | no CLINT, so `mip.MTIP` is never set -- TIMER0 is an ordinary fast line |
 | `irq_software_i` | `0` | permitted on a single-hart system |
+<!-- /gen -->
 
 **Consequence for firmware:** an RTOS ported to QSOC must supply its own timer
 driver rather than the standard `mtime`/`mtimecmp` one.
@@ -218,3 +260,31 @@ Ten checks, none requiring a bus model:
 10. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
     `always_ff`. If any appears, the design has drifted back into being a
     controller.
+
+## Appendix A. Acronyms
+
+| Acronym | Description |
+|---|---|
+| CLINT | Core Local Interruptor -- the RISC-V standard timer and software interrupt block. **Not present in QSOC** |
+| INTMAP | Interrupt Map -- this block |
+| ISR | Interrupt Service Routine |
+| `mcause` | Machine Cause register: why the core trapped |
+| `mie` | Machine Interrupt Enable register: per-source mask |
+| `mip` | Machine Interrupt Pending register |
+| `mstatus.MIE` | The global interrupt enable bit |
+| `mtvec` | Machine Trap Vector: base of the trap table |
+| NMI | Non-Maskable Interrupt -- `irq_nm_i` on Ibex |
+| PLIC | Platform Level Interrupt Controller. Considered in V7.0 and **rejected** |
+| SCRC | System Clock Reset Control. Formerly `SYSCTL` on the block diagram |
+| W1C | Write-1-to-Clear |
+| WDT | Watchdog Timer |
+
+## Appendix B. First review
+
+| Item | Reviewer | Response |
+|---|---|---|
+| GPIO: one line for four instances, or four lines? | Day005, 2026-09-18 | One line. Which pin fired is in the instance's `INTSTATUS`. Closed in V11.2 |
+| Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by `DMA_ISR` W1C. Closed in V11.10 |
+| Does this block need to latch pending? | -- | No. Section 6.5: no source destroys information |
+| Priority order justified? | -- | Section 6.2: data loss first, human time last |
+| Open | | |
