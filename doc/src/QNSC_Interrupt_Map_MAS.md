@@ -13,13 +13,13 @@ they are listed in full, with the reasoning and the evidence behind each, in
 
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
-| V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only: 1284 lines to 327. History and reasoning moved to `_DECISIONS`. Tables in 7.2 and 10 generated from `util/qsoc_contract.yml` |
+| V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only. History and reasoning moved to `_DECISIONS`; tables in 7.2 and 10 generated from `util/qsoc_contract.yml` |
 
 # 1. Overview
 
 Twenty-seven interrupt sources reach the CPU as twelve wires. `INTMAP` is the
-combinational OR tree that does the reduction: it groups the sources of fourteen
-blocks onto the core's fast interrupt lines, one line per peripheral, and passes
+combinational OR tree that does the reduction: it groups the sources of twelve
+peripherals, in eight blocks, onto the core's fast interrupt lines, one line per peripheral, and passes
 the watchdog bark straight through to the non-maskable input.
 
 **It does not**: hold state, decode an address, appear on any bus, prioritise
@@ -54,9 +54,9 @@ One combinational layer. No sub-blocks, no clock domain, no reset domain.
 
 : Upstream IP used
 
-| From | Module | Commit |
-|------|--------|--------|
-| — | — | — |
+| From | Module | Commit | Licence |
+|---|---|---|---|
+| -- | -- | -- | -- |
 
 **Designed in house.** The block instantiates nothing; it is `assign` statements.
 
@@ -70,14 +70,14 @@ Every port. Naming follows `QNSC_RTL_Design_Naming_Rule` V1.0 section 3.6,
 | Signal | Dir | Width | Description |
 |---|---|---:|---|
 | `i_int_dma` | in | 1 | DMA completion. Level, held by `DMA_ISR` |
-| `i_int_spi_dev` | in | 8 | `spi_device` `intr_*_o`, in declaration order |
+| `i_int_spi_device` | in | 8 | `spi_device` `intr_*_o`, in declaration order |
 | `i_int_spi_host` | in | 2 | `spi_host` error, event |
 | `i_int_i2c` | in | 1 | I²C |
 | `i_int_uart_0` | in | 1 | UART0. Driven by the IP's `INT` port |
 | `i_int_uart_1` | in | 1 | UART1 |
 | `i_int_timer_1` | in | 2 | TIMER1 `irq_lo_o`, `irq_hi_o` |
 | `i_int_pwm` | in | 4 | PWM `events_o` |
-| `i_int_wdt_wkup` | in | 1 | `aon_timer` wake-up expiry |
+| `i_int_wdt_wakeup` | in | 1 | `aon_timer` wake-up expiry |
 | `i_int_gpio` | in | 4 | one per GPIO instance |
 | `i_int_timer_0` | in | 1 | TIMER0 `irq_lo_o` only — 64-bit mode |
 | `i_int_wdt_bark` | in | 1 | `aon_timer` `nmi_wdog_timer_bark_o` |
@@ -100,14 +100,14 @@ Acknowledging is done at each peripheral's own status register.
 
 ```systemverilog
 assign o_int_fast[0]  =  i_int_dma;
-assign o_int_fast[1]  = |i_int_spi_dev;
+assign o_int_fast[1]  = |i_int_spi_device;
 assign o_int_fast[2]  = |i_int_spi_host;
 assign o_int_fast[3]  =  i_int_i2c;
 assign o_int_fast[4]  =  i_int_uart_0;
 assign o_int_fast[5]  =  i_int_uart_1;
 assign o_int_fast[6]  = |i_int_timer_1;
 assign o_int_fast[7]  = |i_int_pwm;
-assign o_int_fast[8]  =  i_int_wdt_wkup;
+assign o_int_fast[8]  =  i_int_wdt_wakeup;
 assign o_int_fast[9]  = |i_int_gpio;
 assign o_int_fast[10] =  i_int_timer_0;
 assign o_int_nm       =  i_int_wdt_bark;
@@ -214,6 +214,29 @@ line or keeps a record:
 
 **No source destroys information.** This is the condition the design depends on.
 
+## 7.6 A gated peripheral holds its line
+
+All ten interrupt-producing peripheral blocks are in the **`peri` cluster**, which
+`SCRC` may stop through `CLK_EN`. Stopping a clock **retains flip-flop state**, so a
+peripheral gated with its status register set **keeps driving its line high**, and
+this block passes that through -- it has no clock of its own to notice with.
+
+The consequence is an order-of-operations rule, not a design change here:
+
+- With `mie` set for that line, the core re-enters the handler for as long as the
+  line is asserted.
+- The handler clears the source by writing the peripheral's status register, and
+  that write needs the peripheral's clock. Gated, it cannot complete.
+
+**Firmware must clear a peripheral's interrupt before gating it**, and ungate before
+attempting to clear one. `QSOC_HAS` already states the analogous rule for PWM in the
+contract -- *never gate a running block*, because `out_filter` freezes at its current
+level -- so this is the same hazard on the interrupt path rather than a new one.
+
+This block cannot prevent it: with no clock and no register, it has nothing to
+qualify the input with. Whether `SCRC` should refuse to gate a peripheral whose
+interrupt is asserted is the SCRC owner's decision, recorded in section 11.
+
 # 8. Instances
 
 One. It is instantiated in `design/top` and has no parameters.
@@ -244,6 +267,11 @@ One. It is instantiated in `design/top` and has no parameters.
 | `irq_software_i` | `0` | needs a second hart to send the inter-processor interrupt. QSOC has one |
 <!-- /gen -->
 
+These tie-offs are made in `design/top`, not here: this block drives eleven bits
+and the core's port is fifteen wide, so the remaining four are tied where the core
+is instantiated. The rows are in this specification because it is the document that
+accounts for every interrupt input the core has.
+
 **Consequence for firmware:** an RTOS ported to QSOC must supply its own timer
 driver rather than the standard `mtime`/`mtimecmp` one.
 
@@ -257,6 +285,7 @@ driver rather than the standard `mtime`/`mtimecmp` one.
 | Watchdog stoppable while `debug_mode` is asserted, **or** firmware told to disable it | WDT owner | a long debug session otherwise ends in a reset with nothing recording why |
 | Vector table at `mtvec + 0x40` … `+0x68`, plus `+0x7C`; `mie` bits 16–26 | firmware owner | — |
 | Handlers installed **before** `mstatus.MIE` is set | firmware owner | the block is transparent out of reset, so every source is live from the first cycle |
+| Decide whether `CLK_EN` may gate a peripheral whose interrupt is asserted, or whether the ordering is left to firmware | SCRC owner | nothing in RTL. If left to firmware it must be written into the programming guide, because the failure is a handler that cannot clear its own source -- section 7.6 |
 
 **Accepted limits**, stated rather than hidden:
 
@@ -265,10 +294,12 @@ driver rather than the standard `mtime`/`mtimecmp` one.
 2. Priority is fixed at elaboration. Changing it is a re-synthesis.
 3. `mcause` 16–30 is platform-use space, so the numbering is a local convention
    rather than a portable one.
+4. A peripheral gated with its interrupt asserted holds the line, and this block
+   cannot qualify it away — 7.6. The rule is an ordering constraint on firmware.
 
 # 12. Verification
 
-Ten checks, none requiring a bus model:
+Eleven checks, none requiring a bus model:
 
 1. Each single-source input raises exactly its own line.
 2. Each OR group raises its line for every member, individually.
@@ -279,7 +310,9 @@ Ten checks, none requiring a bus model:
 7. Simultaneous inputs on different groups raise both lines.
 8. Output follows input combinationally, with no cycle of delay.
 9. `mcause`/vector mapping matches section 7.2 against `qnsc_pkg`.
-10. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
+10. A held input keeps its line asserted for as long as it is held, which is what
+    makes the gating case in 7.6 behave as described.
+11. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
     `always_ff`. If any appears, the design has drifted back into being a
     controller.
 
@@ -313,4 +346,4 @@ Ten checks, none requiring a bus model:
 | Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by `DMA_ISR` W1C. Closed in V11.10 |
 | Does this block need to latch pending? | -- | No. Section 7.5: no source destroys information |
 | Priority order justified? | -- | Section 7.2: data loss first, human time last |
-| Open | | |
+| What happens to a line whose peripheral is clock-gated? | -- | Section 7.6. **Open**: the ordering rule is a request on the SCRC owner |
