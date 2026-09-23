@@ -115,32 +115,43 @@ def interrupt_totals(c):
 
 
 def core_tie_offs(c):
-    """The core interrupt inputs QSOC does not drive, and why.
+    """Every interrupt input the core has, driven or tied.
 
-    The reason each is tied off is the same question as why only the fast lines
-    are used, so it is answered here rather than in a section of its own: each of
-    the three standard RISC-V lines needs a block QSOC does not have, and the fast
-    lines need nothing."""
+    This listed only the tied-off inputs while the text below it claimed to account
+    for every interrupt input on the core, which left out the eleven fast bits this
+    block drives and the non-maskable input -- raised in review. Listing all five
+    makes the claim true and puts the whole interrupt boundary of the core in one
+    table.
+
+    The reason a standard line is tied off is the same question as why only the fast
+    lines are used, so it is answered here rather than in a section of its own."""
     i = c["interrupts"]
+    used, avail = len(i["lines"]), i["fast_lines_available"]
+    rows = [
+        ["`irq_fast_i[%d:0]`" % (used - 1), used, "**`o_int_fast`, this block**",
+         "%d peripherals, one line each, `mcause` 16-%d" % (used, 15 + used)],
+        ["`irq_fast_i[%d:%d]`" % (avail - 1, used), avail - used,
+         "tied `%d'b0`" % (avail - used),
+         "spare: QSOC drives %d of the %d lines the core offers" % (used, avail)],
+        ["`%s`" % i["nmi"]["port"], 1, "**`o_int_nm`, this block**",
+         "%s, `mcause` %d, outside `mie` and `mstatus.MIE`"
+         % (i["nmi"]["peripheral"], i["nmi"]["mcause"])],
+    ]
     why = {
         "irq_external_i": "needs a **PLIC** -- a bus slave with priority, "
                           "per-source enable and claim/complete registers. QSOC "
-                          "has none, and 11 lines fit in the 15 the core offers "
-                          "without one",
+                          "has none, and %d lines fit in the %d the core offers "
+                          "without one" % (used, avail),
         "irq_timer_i": "needs a **CLINT** for `mtime` and `mtimecmp`. QSOC has "
                        "none, so `mip.MTIP` is never set and TIMER0 is an "
                        "ordinary fast line",
         "irq_software_i": "needs a second hart to send the inter-processor "
                           "interrupt. QSOC has one",
     }
-    rows = [["`irq_fast_i[%d:%d]`" % (i["fast_lines_available"] - 1,
-                                      len(i["lines"])),
-             "`%d'b0`" % (i["fast_lines_available"] - len(i["lines"])),
-             "QSOC drives %d of the %d lines the core offers"
-             % (len(i["lines"]), i["fast_lines_available"])]]
-    rows += [["`%s`" % p, "`0`", why.get(p, "not used")] for p in i["tied_low"]]
-    return table(["Port", "Tied to", "Why"], rows,
-                 caption="Core interrupt inputs tied off")
+    rows += [["`%s`" % p, 1, "tied `0`", why.get(p, "not used")]
+             for p in i["tied_low"]]
+    return table(["Core input", "Width", "Driven by", "Why"], rows, align="lrll",
+                 caption="Every interrupt input on the core")
 
 
 def memory_map(c):

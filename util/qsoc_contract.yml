@@ -239,6 +239,7 @@ interrupts:
       shape: pulse
   nmi:
     peripheral: wdt_bark
+    port: irq_nm_i
     mcause: 31
     sources: 1
     shape: level

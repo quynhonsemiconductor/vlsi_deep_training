@@ -255,23 +255,26 @@ One. It is instantiated in `design/top` and has no parameters.
 | Per-source enable | `mie` bits 16–26, in the core |
 | Acknowledge | writing the peripheral's status register |
 
-# 10. Tie-offs
+# 10. Every interrupt input on the core
 
 <!-- gen:core_tie_offs -->
-: Core interrupt inputs tied off
+: Every interrupt input on the core
 
-| Port | Tied to | Why |
-|---|---|---|
-| `irq_fast_i[14:11]` | `4'b0` | QSOC drives 11 of the 15 lines the core offers |
-| `irq_external_i` | `0` | needs a **PLIC** -- a bus slave with priority, per-source enable and claim/complete registers. QSOC has none, and 11 lines fit in the 15 the core offers without one |
-| `irq_timer_i` | `0` | needs a **CLINT** for `mtime` and `mtimecmp`. QSOC has none, so `mip.MTIP` is never set and TIMER0 is an ordinary fast line |
-| `irq_software_i` | `0` | needs a second hart to send the inter-processor interrupt. QSOC has one |
+| Core input | Width | Driven by | Why |
+|---|---:|---|---|
+| `irq_fast_i[10:0]` | 11 | **`o_int_fast`, this block** | 11 peripherals, one line each, `mcause` 16-26 |
+| `irq_fast_i[14:11]` | 4 | tied `4'b0` | spare: QSOC drives 11 of the 15 lines the core offers |
+| `irq_nm_i` | 1 | **`o_int_nm`, this block** | wdt_bark, `mcause` 31, outside `mie` and `mstatus.MIE` |
+| `irq_external_i` | 1 | tied `0` | needs a **PLIC** -- a bus slave with priority, per-source enable and claim/complete registers. QSOC has none, and 11 lines fit in the 15 the core offers without one |
+| `irq_timer_i` | 1 | tied `0` | needs a **CLINT** for `mtime` and `mtimecmp`. QSOC has none, so `mip.MTIP` is never set and TIMER0 is an ordinary fast line |
+| `irq_software_i` | 1 | tied `0` | needs a second hart to send the inter-processor interrupt. QSOC has one |
 <!-- /gen -->
 
-These tie-offs are made in `design/top`, not here: this block drives eleven bits
-and the core's port is fifteen wide, so the remaining four are tied where the core
-is instantiated. The rows are in this specification because it is the document that
-accounts for every interrupt input the core has.
+**The tie-offs are made in `design/top`, not here.** This block drives twelve of the
+core's nineteen interrupt bits -- eleven fast plus the NMI -- and the other seven are
+tied where the core is instantiated. The whole table is in this specification because
+this is the document that accounts for the core's interrupt boundary, whether a bit is
+driven from here or tied elsewhere.
 
 **Consequence for firmware:** an RTOS ported to QSOC must supply its own timer
 driver rather than the standard `mtime`/`mtimecmp` one.
@@ -365,4 +368,5 @@ Eleven checks, none requiring a bus model:
 | Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by `DMA_ISR` W1C. Closed in V11.10 |
 | Does this block need to latch pending? | -- | No. Section 7.5: no source destroys information |
 | Priority order justified? | -- | Section 7.2: data loss first, human time last |
+| Is the non-maskable interrupt missing from the totals and the tie-off table? | Teacher, 2026-09-23 | Not from the totals, which count it and reach 27. It **was** missing from the tie-off table, which listed only tied inputs while the text claimed to account for every core input. The table now lists all five -- section 10 |
 | What happens to a line whose peripheral is clock-gated? | -- | Section 7.6. **Open**: the ordering rule is a request on the SCRC owner |
