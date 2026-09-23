@@ -107,12 +107,25 @@ def make_reference():
                               '<w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/>'
                               "</w:rPr></w:style></w:styles>")
 
-        # TOC1 is defined with w:caps, so every contents entry renders in capitals
-        # -- including the ones Word generates into the real contents field.
-        xml = re.sub(r'(<w:style [^>]*w:styleId="TOC1">)(.*?)(</w:style>)',
-                     lambda m: m.group(1) + m.group(2).replace("<w:caps/>", "")
-                     .replace('<w:caps w:val="true"/>', "") + m.group(3),
-                     xml, flags=re.S)
+        # TOC1 is defined with w:caps and w:b, so every contents entry rendered in
+        # bold capitals and read as a heading rather than a list. Note the source
+        # writes these as "<w:b />" with a space, so the patterns have to tolerate
+        # it -- matching "<w:b/>" exactly silently does nothing.
+        def fix_toc1(m):
+            body = m.group(2)
+            for tag in ("caps", "b", "bCs", "smallCaps"):
+                body = re.sub(r"<w:%s\s*/>" % tag, "", body)
+                body = re.sub(r'<w:%s w:val="(?:true|1|on)"\s*/>' % tag, "", body)
+            # Children of w:rPr are ordered too: rFonts comes before sz, so the
+            # size is appended at the end of the run properties rather than put
+            # in front of them.
+            if "<w:rPr>" in body and "<w:sz " not in body:
+                body = body.replace("</w:rPr>",
+                                    '<w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr>', 1)
+            return m.group(1) + body + m.group(3)
+
+        xml = re.sub(r'(<w:style [^>]*w:styleId="TOC1"[^>]*>)(.*?)(</w:style>)',
+                     fix_toc1, xml, flags=re.S)
 
         # TOCHeading carries Word's default blue. Every other heading in the
         # template is black, and the template's own front-matter headings do not
@@ -246,6 +259,12 @@ def insert_front_lists(xml, tables, figures):
         para = m.group(0)
         if _style(para) != "TOCHeading" or "<w:pPr>" not in para:
             return para
+        # Pandoc puts this heading and the field inside a w:sdt content control,
+        # and WPS leaves paragraphs inside one out of the navigation pane. Giving
+        # it Heading1, the style the two lists below it use, is what makes it
+        # appear -- an outline level on its own was not enough.
+        para = re.sub(r'<w:pStyle w:val="TOCHeading"\s*/>',
+                      '<w:pStyle w:val="Heading1"/>', para)
         if "<w:outlineLvl" in para:
             return re.sub(r'<w:outlineLvl w:val="\d+"\s*/>',
                           '<w:outlineLvl w:val="0"/>', para)
