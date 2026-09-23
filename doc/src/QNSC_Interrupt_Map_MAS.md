@@ -4,8 +4,6 @@ subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.0"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
-# QNSC_Interrupt_Map_MAS
-
 **Block** `intmap` · **Owner** Nghia Van Trong · **Version** 2.0 · **2026-09-23**
 
 Twenty-seven interrupt sources reach the CPU as twelve wires. `INTMAP` is the
@@ -18,7 +16,7 @@ the contract.
 
 ---
 
-## Revision history
+# Revision history
 
 One line per version. The reasoning behind each change, and the evidence it rests
 on, is in [`QNSC_Interrupt_Map_DECISIONS.md`](QNSC_Interrupt_Map_DECISIONS.md).
@@ -45,9 +43,9 @@ on, is in [`QNSC_Interrupt_Map_DECISIONS.md`](QNSC_Interrupt_Map_DECISIONS.md).
 | V11.8 | 2026-09-22 | Nghia VT | -- | Question 2 restated as a shaped request, not a gap |
 | V11.9 | 2026-09-22 | Nghia VT | -- | Last two questions take positions; specification complete |
 | V11.10 | 2026-09-22 | Nghia VT | -- | DMA answered by its owner: level, not pulse. Central limit removed |
-| **V2.0** | **2026-09-23** | **Nghia VT** | -- | **Rewritten as specification only: 1284 lines to 220. History and rationale moved to `_DECISIONS`. Tables in 6.2, 6.3 and 9 are now generated from `util/qsoc_contract.yml`** |
+| **V2.0** | **2026-09-23** | **Nghia VT** | -- | **Rewritten as specification only: 1284 lines to 220. History and rationale moved to `_DECISIONS`. Tables in 7.2, 7.3 and 10 are now generated from `util/qsoc_contract.yml`** |
 
-## 1. Scope
+# 1. Overview
 
 `INTMAP` groups the interrupt sources of fourteen blocks onto the CPU's fast
 interrupt lines, one line per peripheral, and passes the watchdog bark straight
@@ -56,13 +54,26 @@ through to the non-maskable input.
 **It does not**: hold state, decode an address, appear on any bus, prioritise
 (the core does that), or latch a pulse. It has no clock and no reset.
 
-## 2. Block diagram
+# 2. Features
+
+- Twenty-seven interrupt sources reduced to **eleven fast lines plus one NMI**
+- **One line per peripheral**: a peripheral owns its line and no other block
+  shares it, so a handler never has to ask who interrupted
+- **Combinational**: no clock, no reset, no flip-flop, no bus port. The delay
+  from a source asserting to the core seeing it is one layer of logic
+- **Priority is the line index**, resolved by the core, ordered data-loss-first
+- **The watchdog bark bypasses the block** onto `irq_nm_i`, so it survives
+  firmware having disabled interrupts
+- **No state**: nothing to configure, nothing to acknowledge here, and nothing
+  to save or restore across a reset
+
+# 3. Block diagram
 
 ![INTMAP — 27 sources, one OR per peripheral, 12 wires to the CPU](../img/fig_intr_map.png)
 
 One combinational layer. No sub-blocks, no clock domain, no reset domain.
 
-## 3. IP used
+# 4. IP used
 
 : Upstream IP used
 
@@ -72,7 +83,7 @@ One combinational layer. No sub-blocks, no clock domain, no reset domain.
 
 **Designed in house.** The block instantiates nothing; it is `assign` statements.
 
-## 4. Interface
+# 5. Interface
 
 Every port. Naming follows `QNSC_RTL_Design_Naming_Rule` V1.0 section 3.6,
 `i_int_<source>` / `o_int_<source>`.
@@ -98,7 +109,7 @@ Every port. Naming follows `QNSC_RTL_Design_Naming_Rule` V1.0 section 3.6,
 
 **27 inputs, 12 outputs, and no other ports.** No `i_clk_*`, no `i_rst_n_*`.
 
-## 5. Register map
+# 6. Register map
 
 None. The block has no address and is not a bus slave, so there is nothing for
 software to read or write.
@@ -106,9 +117,9 @@ software to read or write.
 Enabling and masking is done in the core: `mie` bits 16–26 for the fast lines.
 Acknowledging is done at each peripheral's own status register.
 
-## 6. Functional behaviour
+# 7. Functional behaviour
 
-### 6.1 One OR gate per peripheral
+## 7.1 One OR gate per peripheral
 
 ```systemverilog
 assign o_int_fast[0]  =  i_int_dma;
@@ -129,7 +140,7 @@ A peripheral with one source is wired straight through; one with several is
 OR-reduced. **Zero flip-flops**, so the delay from a source asserting to the core
 seeing it is combinational.
 
-### 6.2 Line assignment
+## 7.2 Line assignment
 
 The line index **is** the priority: Ibex resolves the lowest index first. This
 table therefore fixes the default priority order as well as the wiring, and
@@ -174,7 +185,7 @@ event loses a byte that cannot be recovered; a missed timer tick arrives again n
 period. DMA takes line 0 because the rest of the system waits on a transfer
 completing.
 
-### 6.3 The core identifies the source, not a register
+## 7.3 The core identifies the source, not a register
 
 Fast line *n* raises `mcause` `16 + n`, and Ibex is permanently in vectored mode,
 so the trap address is `mtvec + 4 × mcause`. The core therefore enters the
@@ -184,7 +195,7 @@ transaction occurs on the interrupt path.**
 `mcause` 16 and above is platform-use space in the RISC-V privileged
 specification, so this numbering is a local convention the specification permits.
 
-### 6.4 The NMI bypasses this block
+## 7.4 The NMI bypasses this block
 
 `i_int_wdt_bark` goes to `o_int_nm` unmodified. The bark must reach the core even
 if firmware has hung with interrupts disabled, and `irq_nm_i` is outside
@@ -194,7 +205,7 @@ Ibex ignores the NMI in Debug Mode. A bark raised while `SYSDBG` has the core
 halted therefore traps on resume, not when it occurs — and only because
 `aon_timer` holds the bark as a level.
 
-### 6.5 A pulse can be missed, and what that costs
+## 7.5 A pulse can be missed, and what that costs
 
 `mip` in Ibex is combinational: `assign mip.irq_fast = irq_fast_i`. The core
 latches nothing, and neither does this block. A one-cycle pulse arriving while
@@ -214,24 +225,24 @@ line or keeps a record:
 
 **No source destroys information.** This is the condition the design depends on.
 
-## 7. Instances
+# 8. Instances
 
 One. It is instantiated in `design/top` and has no parameters.
 
-## 8. What is not provided here, and who provides it
+# 9. What is not provided here, and who provides it
 
 : Functions this block does not provide
 
 | Function | Where it lives |
 |---|---|
-| Pending latch | the peripheral's status register, or nowhere — 6.5 |
+| Pending latch | the peripheral's status register, or nowhere — 7.5 |
 | Which event fired | the peripheral's status register |
 | Which peripheral fired | `mcause`, via the vectored trap address |
 | Priority resolution | Ibex, by fast-line index |
 | Per-source enable | `mie` bits 16–26, in the core |
 | Acknowledge | writing the peripheral's status register |
 
-## 9. Tie-offs
+# 10. Tie-offs
 
 <!-- gen:core_tie_offs -->
 : Core interrupt inputs tied off
@@ -247,7 +258,7 @@ One. It is instantiated in `design/top` and has no parameters.
 **Consequence for firmware:** an RTOS ported to QSOC must supply its own timer
 driver rather than the standard `mtime`/`mtimecmp` one.
 
-## 10. Requirements on others, and open items
+# 11. Requirements on others, and open items
 
 : Requirements on other owners
 
@@ -261,12 +272,12 @@ driver rather than the standard `mtime`/`mtimecmp` one.
 **Accepted limits**, stated rather than hidden:
 
 1. A pulse arriving while `mstatus.MIE` is clear is lost. Recoverable for every
-   source — 6.5.
+   source — 7.5.
 2. Priority is fixed at elaboration. Changing it is a re-synthesis.
 3. `mcause` 16–30 is platform-use space, so the numbering is a local convention
    rather than a portable one.
 
-## Verification
+# 12. Verification
 
 Ten checks, none requiring a bus model:
 
@@ -278,12 +289,12 @@ Ten checks, none requiring a bus model:
 6. Simultaneous inputs on one group raise the line once.
 7. Simultaneous inputs on different groups raise both lines.
 8. Output follows input combinationally, with no cycle of delay.
-9. `mcause`/vector mapping matches section 6.2 against `qnsc_pkg`.
+9. `mcause`/vector mapping matches section 7.2 against `qnsc_pkg`.
 10. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
     `always_ff`. If any appears, the design has drifted back into being a
     controller.
 
-## Appendix A. Acronyms
+# Appendix A. Acronyms
 
 : Acronyms
 
@@ -303,7 +314,7 @@ Ten checks, none requiring a bus model:
 | W1C | Write-1-to-Clear |
 | WDT | Watchdog Timer |
 
-## Appendix B. First review
+# Appendix B. First review
 
 : First review
 
@@ -311,6 +322,6 @@ Ten checks, none requiring a bus model:
 |---|---|---|
 | GPIO: one line for four instances, or four lines? | Day005, 2026-09-18 | One line. Which pin fired is in the instance's `INTSTATUS`. Closed in V11.2 |
 | Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by `DMA_ISR` W1C. Closed in V11.10 |
-| Does this block need to latch pending? | -- | No. Section 6.5: no source destroys information |
-| Priority order justified? | -- | Section 6.2: data loss first, human time last |
+| Does this block need to latch pending? | -- | No. Section 7.5: no source destroys information |
+| Priority order justified? | -- | Section 7.2: data loss first, human time last |
 | Open | | |

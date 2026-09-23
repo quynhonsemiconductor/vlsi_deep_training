@@ -23,6 +23,10 @@ import zipfile
 TEMPLATE = "template/QNSC_Technical_Document_Format.docx"
 REFERENCE = "template/QNSC_Reference_NoAutoNum.docx"
 DOCS = [
+    # The template is built with the specifications on purpose. It is the file
+    # everybody copies, so if it stops rendering the whole team is blocked, and
+    # CI should be what notices.
+    ("QNSC_TEMPLATE_MAS", "TEMPLATE"),
     ("QNSC_RAM_MAS", "RAM"),
     ("QNSC_SYSDBG_MAS", "SYSDBG -- Debugger"),
     ("QNSC_Interrupt_Map_MAS", "Interrupt Map"),
@@ -44,6 +48,23 @@ def rewrite(path, transforms):
                     data = func(data.decode("utf-8")).encode("utf-8")
                     break
             out.writestr(info, data)
+
+
+def _center(xml, style_id, drop_border=False):
+    """Centre a paragraph style, replacing any alignment it already declares."""
+    def fix(m):
+        block = m.group(0)
+        if drop_border:
+            block = re.sub(r"<w:pBdr>.*?</w:pBdr>", "", block, flags=re.S)
+        if re.search(r'<w:jc w:val="\w+"\s*/>', block):
+            return re.sub(r'<w:jc w:val="\w+"\s*/>', '<w:jc w:val="center"/>', block)
+        if "<w:pPr>" in block:
+            return block.replace("<w:pPr>", '<w:pPr><w:jc w:val="center"/>', 1)
+        return re.sub(r"(<w:name [^>]*/>)",
+                      r'\1<w:pPr><w:jc w:val="center"/></w:pPr>', block, count=1)
+
+    return re.sub(r'<w:style [^>]*w:styleId="%s">.*?</w:style>' % style_id,
+                  fix, xml, flags=re.S)
 
 
 def make_reference():
@@ -69,6 +90,35 @@ def make_reference():
                                 m.group(2), count=1)
                 ) + m.group(3),
                 xml, flags=re.S)
+        # The cover. Reading the template's own first page, it centres every line
+        # with direct formatting and leaves the styles alone -- so Title is
+        # defined left aligned, Subtitle right aligned with a border, and Author
+        # does not exist at all. Pandoc renders the metadata block through those
+        # three styles, which is why the generated cover came out ragged.
+        xml = _center(xml, "Title")
+        xml = _center(xml, "Subtitle", drop_border=True)
+        if 'w:styleId="Author"' not in xml:
+            xml = xml.replace("</w:styles>",
+                              '<w:style w:type="paragraph" w:styleId="Author">'
+                              '<w:name w:val="Author"/>'
+                              '<w:basedOn w:val="Normal"/>'
+                              '<w:pPr><w:jc w:val="center"/>'
+                              '<w:spacing w:before="240"/></w:pPr>'
+                              '<w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/>'
+                              "</w:rPr></w:style></w:styles>")
+
+        # TOC1 is defined with w:caps, so every contents entry renders in capitals
+        # -- including the ones Word generates into the real contents field.
+        xml = re.sub(r'(<w:style [^>]*w:styleId="TOC1">)(.*?)(</w:style>)',
+                     lambda m: m.group(1) + m.group(2).replace("<w:caps/>", "")
+                     .replace('<w:caps w:val="true"/>', "") + m.group(3),
+                     xml, flags=re.S)
+
+        # TOCHeading carries Word's default blue. Every other heading in the
+        # template is black, and the template's own front-matter headings do not
+        # use this style, so the colour is inherited rather than chosen.
+        xml = re.sub(r'(<w:style [^>]*w:styleId="TOCHeading">.*?)<w:color w:val="\w+"[^/]*/>',
+                     r"\1", xml, flags=re.S)
         return xml
 
     rewrite(REFERENCE, {r"word/styles\.xml": styles})
@@ -110,7 +160,7 @@ def _text(para):
 
 
 def _para(text, style=None, size=None, bold=False, align="left",
-          page_break=False, indent=0):
+          page_break=False, indent=0, outline=None):
     """One paragraph. Formatting is direct rather than by style, because the
     template justifies Normal and these need their own alignment."""
     ppr = ['<w:pPr>']
@@ -118,6 +168,8 @@ def _para(text, style=None, size=None, bold=False, align="left",
         ppr.append('<w:pStyle w:val="%s"/>' % style)
     if indent:
         ppr.append('<w:ind w:left="%d"/>' % indent)
+    if outline is not None:
+        ppr.append('<w:outlineLvl w:val="%d"/>' % outline)
     ppr.append('<w:jc w:val="%s"/>' % align)
     rpr = ""
     if bold or size:
@@ -192,7 +244,11 @@ def insert_front_lists(xml, tables, figures):
                              ("Table of Figures", figures)):
         if not entries:
             continue
-        block.append(_para(heading, style="TOCHeading"))
+        # Heading1 with an explicit outline level, not TOCHeading: the front
+        # headings have to appear in the navigation pane and be collectable by
+        # the contents field, and no front-matter style in the template carries
+        # an outline level -- not even the ones the template uses itself.
+        block.append(_para(heading, style="Heading1", outline=0))
         block += [_para(e, style="TOC1", indent=180) for e in entries]
     return xml.replace(anchor, anchor + "".join(block), 1)
 
@@ -232,7 +288,16 @@ def verify(path):
         raise SystemExit("XML KHONG HOP LE trong %s:\n  " % path + "\n  ".join(broken))
 
 
+def source_version(stem):
+    """Read the version out of the metadata subtitle, which is where each source
+    declares it and what the cover renders."""
+    head = open("src/%s.md" % stem, encoding="utf-8").read(600)
+    m = re.search(r"subtitle:.*?V([\d.]+)", head)
+    return m.group(1) if m else "0.1"
+
+
 def build(stem, title):
+    version = source_version(stem)
     subprocess.run(["pandoc", "src/%s.md" % stem, "-o", "%s.docx" % stem,
                     "--reference-doc=" + REFERENCE, "--toc", "--toc-depth=2",
                     "--resource-path=.:src:img"], check=True)
@@ -246,8 +311,36 @@ def build(stem, title):
                       else m.group(0), xml)
 
     def header(xml):
-        return re.sub(r"(<w:t(?:\s[^>]*)?>)&lt;IP name&gt;([^<]*)(</w:t>)",
-                      lambda m: m.group(1) + title + m.group(2) + m.group(3), xml)
+        """Fill the IP name, and correct the version.
+
+        The template types the version into the running header as literal text,
+        so every document carried V1.0 in its header regardless of what its own
+        revision table said. It is typed as four separate runs -- "V", "1", ".",
+        "0" -- so it cannot be matched inside a single run: the paragraph's runs
+        are joined, tested, then the first is set to the whole version and the
+        rest blanked."""
+        xml = re.sub(r"(<w:t(?:\s[^>]*)?>)&lt;IP name&gt;([^<]*)(</w:t>)",
+                     lambda m: m.group(1) + title + m.group(2) + m.group(3), xml)
+
+        def fix_version(m):
+            para = m.group(0)
+            runs = re.findall(r"<w:t(?:\s[^>]*)?>([^<]*)</w:t>", para)
+            if not re.search(r"V\s*\d+\s*\.\s*\d+\s*$", "".join(runs)):
+                return para
+            seen = [False]
+
+            def one(r):
+                text = r.group(1)
+                if not seen[0] and text.strip().upper() == "V":
+                    seen[0] = True
+                    return "<w:t>V%s</w:t>" % version
+                if seen[0] and (text.strip().isdigit() or text.strip() == "."):
+                    return "<w:t></w:t>"
+                return r.group(0)
+
+            return re.sub(r"<w:t(?:\s[^>]*)?>([^<]*)</w:t>", one, para)
+
+        return re.sub(r"<w:p\b[^>]*>.*?</w:p>", fix_version, xml, flags=re.S)
 
     LEFT_STYLES = ("SourceCode", "Compact", "ImageCaption", "CaptionedFigure")
     counts = {"tables": 0, "figures": 0}
