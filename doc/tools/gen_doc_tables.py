@@ -67,6 +67,10 @@ def table(header, rows=None, align="", caption=None):
 def interrupt_lines(c):
     """Fast-line assignment, including the spare lines and the NMI.
 
+    The CPU port column is what a reader traces the row to in the RTL, and was
+    asked for in review: without it the table names a line number but never the
+    wire it is.
+
     The vector address is derived here rather than written down, because
     mtvec + 4 * mcause is a property of Ibex being in vectored mode, not a
     choice this project gets to make."""
@@ -74,20 +78,22 @@ def interrupt_lines(c):
     rows = []
     for l in i["lines"]:
         n = l["line"]
-        rows.append([n, 16 + n, "`mtvec + 0x%02X`" % (4 * (16 + n)),
+        rows.append([n, "`irq_fast_i[%d]`" % n, 16 + n,
+                     "`mtvec + 0x%02X`" % (4 * (16 + n)),
                      l["peripheral"], l["sources"], l["shape"]])
     used, avail = len(i["lines"]), i["fast_lines_available"]
     if used < avail:
         rows.append(["%d-%d" % (used, avail - 1),
+                     "`irq_fast_i[%d:%d]`" % (avail - 1, used),
                      "%d-%d" % (16 + used, 16 + avail - 1),
                      "--", "spare, tied to 0", 0, "--"])
     n = i["nmi"]
-    rows.append(["--", "**%d**" % n["mcause"],
+    rows.append(["--", "`irq_nm_i`", "**%d**" % n["mcause"],
                  "`mtvec + 0x%02X`" % (4 * n["mcause"]),
-                 "**%s**, on `irq_nm_i`" % n["peripheral"],
+                 "**%s**" % n["peripheral"],
                  n["sources"], n["shape"]])
-    return table(["Line", "mcause", "Vector", "Peripheral", "Sources", "Shape"],
-                 rows, align="rrllrl",
+    return table(["Line", "CPU port", "mcause", "Vector", "Peripheral",
+                  "Sources", "Shape"], rows, align="rlrllrl",
                  caption="Fast interrupt line assignment")
 
 
