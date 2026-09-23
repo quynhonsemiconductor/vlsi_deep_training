@@ -9,13 +9,13 @@ author: "QUY NHON SEMICONDUCTORS -- QNSC"
 | Version | Date       | Author/Owner | Description of Change |
 |---------|------------|--------------|-----------------------|
 | V1.0    | 2026-09-16 | Nghia VT     | First issue as a standalone document. Supersedes the Debugger half of `QNSC_RAM_Debugger_MAS` V1.2. Content is unchanged from that issue: `SYSDBG` is an in-house block converting JTAG to AXI and controlling the CPU's `debug_req`, with `riscv-dbg` used as reference material only. |
-| V1.1    | 2026-09-17 | Nghia VT     | Follows the instructor's ruling of 2026-09-17: the debug program lives inside `ISRAM` rather than on a dedicated slave port, so no port is added to `S_BUS` for it and none to this block in either stage. Table 11 gains the debug memory window and the four `Dm*` values derived from it; Table 12 restated so the two stages differ in software and memory contents, not in ports. All four `Dm*` values are unchanged from V1.0. |
-| V1.2    | 2026-09-17 | Nghia VT     | Follows the agreed memory map: the debug window moves to `0x2000_0000` -- `0x2000_0FFF` and all four `Dm*` values follow (Table 11), which also now reserves a 256 B debug data scratch for Stage 2. **Stage 2 confirmed in scope**; section 4.12 restated, and section 5.2 rewritten around the questions that only arise once it is. Two Stage 2 dependencies resolved by reading the core rather than by request: `dscratch0`/`dscratch1` are unconditional in `ibex_cs_registers.sv`, and Ibex forces its instruction cache off in Debug Mode. Table of Tables rebuilt -- the V1.1 list was misnumbered from Table 11 onward. |
+| V1.1    | 2026-09-17 | Nghia VT     | Follows the instructor's ruling of 2026-09-17: the debug program lives inside `ISRAM` rather than on a dedicated slave port, so no port is added to `S_BUS` for it and none to this block in either stage. the window table in 4.11 gains the debug memory window and the four `Dm*` values derived from it; the capability table in 4.12 restated so the two stages differ in software and memory contents, not in ports. All four `Dm*` values are unchanged from V1.0. |
+| V1.2    | 2026-09-17 | Nghia VT     | Follows the agreed memory map: the debug window moves to `0x2000_0000` -- `0x2000_0FFF` and all four `Dm*` values follow (the window table in 4.11), which also now reserves a 256 B debug data scratch for Stage 2. **Stage 2 confirmed in scope**; section 4.12 restated, and section 5.2 rewritten around the questions that only arise once it is. Two Stage 2 dependencies resolved by reading the core rather than by request: `dscratch0`/`dscratch1` are unconditional in `ibex_cs_registers.sv`, and Ibex forces its instruction cache off in Debug Mode. Table of Tables rebuilt -- the V1.1 list was misnumbered from the window table in 4.11 onward. |
 | V1.3    | 2026-09-18 | Nghia VT     | **Aligned with `QSOC_HAS`, which had already answered two of this document's open questions.** Nothing in the design changes; two questions close and one rationale is added. **The AXI4-Lite to AXI4 conversion at `AXI_S0` is settled and mandatory**: the HAS lists it in Table 5-5 among the project's required protocol conversions, because `S_BUS` is AXI4 full while this block is an AXI4-Lite master, so a direct connection fails at elaboration. The adapter named is now **`axi_lite_to_axi` from `pulp-platform/axi`** -- the library already chosen for `S_BUS` -- in place of the third-party `axi_axil_adapter` V1.2 suggested. Section 4.1 also now answers *why* AXI4-Lite was chosen at all, since the adapter makes it a fair question: this block moves one word per JTAG scan and never bursts, so full AXI4 would mean writing and verifying burst length, size and type, IDs with response ordering, `WLAST` alignment and the 4 KiB boundary rule -- all dead logic in the one block that must be trustworthy when nothing else is. The adapter costs nothing: it is **pure combinational wiring with no flip-flops**, so no latency and no area. **Hardware triggers are confirmed**: `DbgTriggerEn = 1'b1` with `DbgHwBreakNum = 1`, which the HAS specifies for read-only memory where a software breakpoint cannot be written. That answer is now *stronger* than V1.2's reasoning, because the corrected boot flow (`QNSC_RAM_MAS` V1.3) puts a real serial bootloader in ROM -- frame parsing, CRC32, a copy loop -- and it is the program most likely to need a breakpoint during bring-up, since nothing else runs until it works. Halt-on-reset remains open; the HAS records it as TBD for the same reset-ordering reason given here. |
 | V1.4    | 2026-09-18 | Nghia VT     | **Bus master changed from AXI4-Lite to a memory-style `req`/`gnt`/`rsp_valid` port with byte enables**, section 4.1, after reading the System Bus Access port of `pulp-platform/riscv-dbg` and finding that neither it nor OpenTitan's `rv_dm` emits AXI, and that `axi_from_mem` contains the same `axi_lite_to_axi` this document already cited -- so the AXI4-Lite layer is not avoided, only moved out of this block's state machine. **Two defects fixed at the same time.** The timeout abandoned a granted request, which on a bus with no cancel would deliver its response to the *next* command as a silent wrong answer; it now reports and drains, section 4.8, with `STATUS.bus_timeout` added. And the `ACCESS` register claimed byte writes while carrying no way to express them; a 2-bit `size` field is added, 66 to 68 bits, with lane alignment done in hardware and misaligned access rejected before any request is issued |
 | V1.5    | 2026-09-18 | Nghia VT     | **Cross-checked against `QSOC_HAS` EN v1.1 and signed off the two items that document marks as pending this author.** Halt-on-reset is accepted as mandatory and open question 2 closes, the deciding reason being that the ROM holds a real bootloader rather than a spin loop. The `D15` clock gate rule is confirmed and, more importantly, **the gap it exposed in this document is filled**: section 4.2 had never said anything about clock gating, and gating `clk_i` while the TAP keeps running on `tck_i` is a silent way to disable the debugger, so the gate must be open out of reset and not closable by software |
-| V1.6    | 2026-09-18 | Nghia VT     | **Stage 2 is committed and specified here rather than deferred**, so both stages are now complete in this document. Section 4.12 adds the mechanism: a dispatch loop at `DmHaltAddr` polling a command word, instruction sequences written into the window through the master port that already exists, results published before the command word is cleared, and returns by jump rather than `ebreak` so that the first sequence needs nothing configured. Verified from Ibex RTL that **`dscratch0` and `dscratch1` exist**, which is what lets a sequence read a register without destroying it. Table 11 now fixes one window layout for both stages. **Two open questions close**: the debug window is enforced by a PMP region, which `QSOC_HAS` settles, and `SYSDBG` writes the dispatch loop itself |
-| V1.7    | 2026-09-18 | Nghia VT     | **The two-stage framing is removed.** Both stages were committed, so the staging had become scaffolding that made a single design read as two. Everything is now one feature set: section 4.12 is *Reading a CPU register* rather than *Staged scope*, and Table 12 lists capability against "does it need an extra port" -- where every row reads **no**, which is the architectural point the staging used to carry. The technical content is unchanged; 26 places stopped saying Stage 1 or Stage 2 |
+| V1.6    | 2026-09-18 | Nghia VT     | **Stage 2 is committed and specified here rather than deferred**, so both stages are now complete in this document. Section 4.12 adds the mechanism: a dispatch loop at `DmHaltAddr` polling a command word, instruction sequences written into the window through the master port that already exists, results published before the command word is cleared, and returns by jump rather than `ebreak` so that the first sequence needs nothing configured. Verified from Ibex RTL that **`dscratch0` and `dscratch1` exist**, which is what lets a sequence read a register without destroying it. the window table in 4.11 now fixes one window layout for both stages. **Two open questions close**: the debug window is enforced by a PMP region, which `QSOC_HAS` settles, and `SYSDBG` writes the dispatch loop itself |
+| V1.7    | 2026-09-18 | Nghia VT     | **The two-stage framing is removed.** Both stages were committed, so the staging had become scaffolding that made a single design read as two. Everything is now one feature set: section 4.12 is *Reading a CPU register* rather than *Staged scope*, and the capability table in 4.12 lists capability against "does it need an extra port" -- where every row reads **no**, which is the architectural point the staging used to carry. The technical content is unchanged; 26 places stopped saying Stage 1 or Stage 2 |
 | V1.8    | 2026-09-19 | Nghia VT     | **A defect in the resume path is fixed.** Section 4.7 claimed that writing `resumereq` released the core; it does not. Reading `ibex_controller.sv` shows `debug_mode_d` is cleared in **exactly one place**, the `dret` branch, so a core in Debug Mode stays there until it executes `dret` -- and since the halted core is running the dispatch loop, nothing in the previous revision ever told that loop to do so. As written, resume could never have happened. A **resume flag** is added to the window at `0x2000_0F0C`, the dispatch loop now polls it as well as the command word, and section 4.12 specifies the **order** of the two host writes with the reason: setting the flag while `debug_req_o` is still high makes the core `dret` and then halt again at the next instruction boundary, which from the host looks like resume being ignored |
 | V1.9    | 2026-09-21 | Nghia VT     | **`ndmreset` removed.** The Day005 review of 2026-09-18 fixed the chip's reset sources at three -- POR, watchdog, software -- and **removed debug reset explicitly**; SCRC confirms two global sources and three reset causes with no `DEBUG`. `CTRL[2]`, the `ndmreset_o` port and the fan-out exclusion are all gone, and section 4.2 now **publishes the cost**: with the core wedged, recovery falls to the watchdog or to power cycling. `CTRL[2]` is left **reserved rather than reassigned** so an older host cannot silently trigger a different function. Also renames the clock and reset owner from `SYSCTL` to **SCRC**, since `SYSCTL` and `SYSCSR` are now register files inside it. |
 | V1.10   | 2026-09-21 | Nghia VT     | ROM range corrected to `0x0000_0000` -- `0x0000_07FF`, **2 KiB**, following the Day005 review of 2026-09-18 and the ROM owner's own specification. Earlier revisions carried 8 KiB from `QSOC_HAS`. Only the read-only-memory argument of section 4.11 depends on the range, and it is unchanged: a smaller ROM is still ROM. |
@@ -23,39 +23,6 @@ author: "QUY NHON SEMICONDUCTORS -- QNSC"
 | V1.12   | 2026-09-21 | Nghia VT     | **Four open questions closed now that QSOC is confirmed a training device with no external acceptance criterion.** Host-side debug: the custom 68-bit `ACCESS` register stands and the in-house host software is the deliverable; **stock OpenOCD cannot drive this block** and that is now recorded as a consequence, together with the GDB stub as optional work and the exact sections that would change if the criterion ever appeared. Production debug lockout closed as not applicable. Peripherals **keep running** while halted -- gating them would cost every other owner a gate -- with the **watchdog named as the one exception** the watchdog owner must resolve. `IDCODE`: a shape is proposed and `riscv-dbg`'s own default is **explicitly not reused**, since this is a self-designed module. |
 | V1.13   | 2026-09-21 | Nghia VT     | **Two integration rows closed against the bus owner's specification.** The system bus is `axi_xbar`, **fully connected** -- every slave port reaches every master port through one shared address map -- so the bus master on `AXI_S0` reaches `ROM` on `AXI_M0`, which answers the ROM-readback item the ROM owner's document raised as unconfirmed. And each slave port has a private decode-error slave returning `32'hBADCAB1E`, so an out-of-map access is **reported rather than hung** -- the behaviour `STATUS[1]` and the bus timeout of section 4.8 already assumed but could not cite. |
 | V1.14   | 2026-09-21 | Nghia VT     | **The last two items that did not need anyone else are closed by deciding.** The linker boundary was never a question: `QNSC_RAM_MAS` reserves the first 4 KiB of `ISRAM`, so `0x2000_1000` is a **consequence**, and it moves to the integration checklist as a firmware obligation. `IDCODE` is **decided as `0x0515_3001`** -- part number `0x5153` reading hex-ASCII \"QS\", version as the silicon revision, manufacturer honestly `0x000` since QSOC has no JEDEC ID, and bit 0 set as the standard requires. `riscv-dbg`'s default is explicitly not borrowed. |
-
-# Table of Tables
-
-| Table | Title |
-|-------|-------|
-| Table 1 | Sourcing decision |
-| Table 2 | SYSDBG sub-blocks |
-| Table 3 | SYSDBG clock and reset domains |
-| Table 4 | SYSDBG port list |
-| Table 5 | SYSDBG parameters |
-| Table 6 | JTAG instruction registers |
-| Table 7 | ACCESS data register fields |
-| Table 8 | SYSDBG register map |
-| Table 9 | Command FSM states |
-| Table 10 | Core debug CSRs and parameters required from the CPU |
-| Table 11 | Debug memory window, and the CPU parameters derived from it |
-| Table 12 | What each part of the block delivers |
-| Table 13 | Host software deliverables |
-| Table 14 | SYSDBG verification plan |
-| Table 15 | Interfaces to agree with the team |
-| Table 16 | Acronyms |
-
-# Table of Figures
-
-| Figure | Title |
-|--------|-------|
-| Figure 1 | Where the debugger sits in QSOC |
-| Figure 2 | Internal structure, the two clock domains, and the crossing |
-| Figure 3 | The ACCESS register, bit by bit |
-| Figure 4 | Command FSM |
-| Figure 5 | Halting the CPU, end to end |
-| Figure 6 | What one bus port can and cannot reach |
-| Figure 7 | Host software stack |
 
 ---
 
@@ -71,7 +38,7 @@ The RAM is the author's second block and is specified separately in
 work, and the difference is the point of this document: the RAM is an
 **integration** of an existing IP, while `SYSDBG` is **designed in house**.
 
-**Table 1 -- Sourcing decision**
+: Sourcing decision
 
 | Item | Source | Why |
 |---|---|---|
@@ -84,7 +51,7 @@ to take the address constants that the Ibex integration must declare.
 
 ## 1.2 Position in the system
 
-![Figure 1 -- Where the debugger sits in QSOC](../img/fig_qsoc_mem.png){width=6.4in}
+![Where the debugger sits in QSOC](../img/fig_qsoc_mem.png){width=6.4in}
 
 Three blocks issue transactions on `S_BUS`: `CPU2AXI` on `AXI_S1`, `SYSDBG` on
 `AXI_S0`, and `DMA` on `AXI_S2`. Three memories answer them: `ROM` on `AXI_M0`,
@@ -152,7 +119,7 @@ prefer the hand-written one.
 
 **The reference implementations agree.** The System Bus Access port of
 `pulp-platform/riscv-dbg`, the module this document reads as its reference in
-Table 1, is exactly this interface: `master_req_o`, `master_add_o`, `master_we_o`,
+the sourcing table in 1.1, is exactly this interface: `master_req_o`, `master_add_o`, `master_we_o`,
 `master_wdata_o`, `master_be_o`, `master_gnt_i`, `master_r_valid_i`,
 `master_r_err_i`, `master_r_rdata_i`. That project also ships an OBI wrapper,
 which is another request/response protocol, and **no AXI wrapper at all**.
@@ -171,7 +138,7 @@ port it already has. The function is the same; the port is not needed, and **no
 
 # 3. Block Diagram
 
-![Figure 2 -- Internal structure, the two clock domains, and the crossing between them](../img/fig_sysdbg_internal.png){width=6.5in}
+![Internal structure, the two clock domains, and the crossing between them](../img/fig_sysdbg_internal.png){width=6.5in}
 
 # 4. Micro-architecture Details
 
@@ -180,12 +147,12 @@ port it already has. The function is the same; the port is not needed, and **no
 `SYSDBG` splits into two clock domains, described in section 4.2. The boundary
 between them is the part of the design most likely to be got wrong.
 
-Figure 2 in section 3 is the same design as Table 2, drawn as a loop: a command
+The figure in section 3 is the same design as the sub-block table below, drawn as a loop: a command
 travels left to right across the top, the answer returns right to left along the
 bottom, and both directions pass through the one CDC. The numbered steps are walked
 through in section 4.9.
 
-**Table 2 -- SYSDBG sub-blocks**
+: SYSDBG sub-blocks
 
 | Domain | Sub-block | Role |
 |---|---|---|
@@ -205,7 +172,7 @@ through in section 4.9.
 The block spans two clocks and **three** reset domains, and the third is the one
 easiest to get wrong.
 
-**Table 3 -- SYSDBG clock and reset domains**
+: SYSDBG clock and reset domains
 
 | Domain | Clocked by | Reset by |
 |---|---|---|
@@ -213,7 +180,7 @@ easiest to get wrong.
 | System | `clk_i`, the chip clock, always running | `rst_ni`, the chip's power-on reset |
 | The crossing | both | neither -- the handshake of section 4.10 survives either reset asserting alone |
 
-Table 2 says which sub-block sits in which domain.
+the sub-block table in 4.1 says which sub-block sits in which domain.
 
 **QSOC has no debug reset, and this block therefore cannot restart the chip.** The
 Day005 review of 2026-09-18 fixed the chip's reset sources at **three -- power-on
@@ -236,7 +203,7 @@ the CPU to be running: if the core is wedged with interrupts disabled, no softwa
 reset can be issued, so recovery falls to the watchdog or to removing power.
 
 **What survives.** The debugger can still halt the core, resume it, read and write
-any address while the core runs, and load firmware -- see Table 12. Only the
+any address while the core runs, and load firmware -- see the capability table in 4.12. Only the
 *restart* capability is absent, and nothing in this block depends on it.
 
 `tck_i` may **stop** between commands, so no system-side logic may wait on a `TCK`
@@ -261,14 +228,14 @@ decision does not reach this block.** It governs the clocks QSOC *generates*: on
 divided system clock, no per-domain frequencies, no PLL. `tck_i` is not generated
 by QSOC at all -- it is an **input pin driven by the debug adapter**, at whatever
 rate the host chooses, starting and stopping whenever the host likes. So the two
-domains in Table 3 are not an exception to the decision; they are outside its
+domains in the domain table in 4.2 are not an exception to the decision; they are outside its
 scope, and the crossing of section 4.10 is required regardless of how many clocks
 the chip makes for itself. `SYSDBG` is the only block in QSOC with a genuinely
 asynchronous input clock.
 
 ## 4.3 Block interface
 
-**Table 4 -- SYSDBG port list**
+: SYSDBG port list
 
 | Group | Signal | Dir | Width | Notes |
 |---|---|---|---:|---|
@@ -351,7 +318,7 @@ integration checklist of section 5.1 alongside the clock-gate rule.
 
 ## 4.4 Parameters
 
-**Table 5 -- SYSDBG parameters**
+: SYSDBG parameters
 
 | Parameter | Default | Meaning |
 |---|---|---|
@@ -365,7 +332,7 @@ integration checklist of section 5.1 alongside the clock-gate rule.
 
 ## 4.5 JTAG instruction registers
 
-**Table 6 -- JTAG instruction registers**
+: JTAG instruction registers
 
 | IR value | Name | DR width | Purpose |
 |---|---|---:|---|
@@ -377,9 +344,9 @@ integration checklist of section 5.1 alongside the clock-gate rule.
 
 One data register carries a whole command, so **one scan is one operation**.
 
-![Figure 3 -- The ACCESS register, bit by bit](../img/fig_jtag_cmd.png){width=6.3in}
+![The ACCESS register, bit by bit](../img/fig_jtag_cmd.png){width=6.3in}
 
-**Table 7 -- ACCESS data register fields**
+: ACCESS data register fields
 
 | Direction | Field | Width | Meaning |
 |---|---|---:|---|
@@ -403,7 +370,7 @@ map is reachable with no special cases.
 
 ## 4.7 Register map
 
-**Table 8 -- SYSDBG register map**
+: SYSDBG register map
 
 | Address | Name | Access | Bits |
 |---|---|---|---|
@@ -438,9 +405,9 @@ itself or grant itself debug access.
 
 ## 4.8 Command FSM
 
-![Figure 4 -- Command FSM](../img/fig_sysdbg_fsm.png){width=6.0in}
+![Command FSM](../img/fig_sysdbg_fsm.png){width=6.0in}
 
-**Table 9 -- Command FSM states**
+: Command FSM states
 
 | State | What happens |
 |---|---|
@@ -482,7 +449,7 @@ system bus at all -- and knows a slave is not answering. `dm_sba` in
 The sections above describe the blocks. This is the same design followed as a
 single path, and it exercises every one of them.
 
-![Figure 5 -- Halting the CPU, end to end](../img/fig_halt_flow.png){width=6.3in}
+![Halting the CPU, end to end](../img/fig_halt_flow.png){width=6.3in}
 
 Reading a memory word is the same path with `op = READ` and an address that is
 not `0xF...`, so that step 5 enters `BUS` rather than `LOCAL`. Resuming is the
@@ -524,7 +491,7 @@ correctness, which is the reason only two single-bit signals are allowed to cros
 `SYSDBG` cannot be specified independently of the core. Five items must be agreed
 with the owner of the Ibex integration.
 
-**Table 10 -- Core debug CSRs and parameters required from the CPU**
+: Core debug CSRs and parameters required from the CPU
 
 | Item | Where it lives | Why `SYSDBG` cares |
 |---|---|---|
@@ -596,7 +563,7 @@ size**. `DmAddrMask` is the size minus one. Ibex's default mask, `0x0000_0FFF`,
 makes that **4 KiB**, which is also comfortably more than the offsets `riscv-dbg`
 uses inside the region (the debug ROM begins at `0x800`).
 
-**Table 11 -- Debug memory window, and the CPU parameters derived from it**
+: Debug memory window, and the CPU parameters derived from it
 
 | Parameter | Value | Where it comes from |
 |---|---|---|
@@ -627,7 +594,7 @@ and nothing more -- an address convention. The CPU reaches it by fetching, and
 added to `SYSDBG` and no new master appears anywhere.
 
 **It is the first 4 KiB and not the last, and that is a decision rather than a
-default.** All four parameters in Table 11 are **compile-time parameters of
+default.** All four parameters in the window table in 4.11 are **compile-time parameters of
 `ibex_top`**; changing one means re-elaborating the CPU. Anchored to the bottom of
 `ISRAM` they depend on the base address alone, which does not move. Anchored to
 the top they would be `base + size - 0x1000`, so every change to `ISRAM`'s
@@ -654,9 +621,9 @@ the same.
 
 ## 4.12 Reading a CPU register
 
-![Figure 6 -- What one bus port can and cannot reach](../img/fig_sysdbg_ports.png){width=6.2in}
+![What one bus port can and cannot reach](../img/fig_sysdbg_ports.png){width=6.2in}
 
-**Table 12 -- What each part of the block delivers**
+: What each part of the block delivers
 
 | Capability | What it needs | Extra port? |
 |---|---|---|
@@ -760,9 +727,9 @@ needs no halt; reading a register always does.
 A debugger cannot be demonstrated without software on the host side. This is a
 deliverable of the block, not an afterthought.
 
-![Figure 7 -- Host software stack](../img/fig_host_stack.png){width=5.6in}
+![Host software stack](../img/fig_host_stack.png){width=5.6in}
 
-**Table 13 -- Host software deliverables**
+: Host software deliverables
 
 | Layer or item | Contents |
 |---|---|
@@ -787,7 +754,7 @@ The RAM arrives with 46 tests already written (`QNSC_RAM_MAS`, section 4.9).
 `SYSDBG` arrives with none, because nobody has written it yet -- so the
 verification plan is part of the design rather than an afterthought.
 
-**Table 14 -- SYSDBG verification plan**
+: SYSDBG verification plan
 
 | Level | What is checked | How |
 |---|---|---|
@@ -815,7 +782,7 @@ it proves a piece; that step is the first that proves the block.
 
 ## 5.1 Interfaces to agree with the team
 
-**Table 15 -- Interfaces to agree with the team**
+: Interfaces to agree with the team
 
 | Item | Owner of the other side | Why it matters |
 |---|---|---|
@@ -825,10 +792,10 @@ it proves a piece; that step is the first that proves the block.
 | The memory map | memory map owner | `QNSC_RAM_MAS` Table 10: `0x2000_0000` for the debug window, `0xF000_0000` for these registers |
 | JTAG `IDCODE` for QSOC | project level | Hard-coded in the TAP and checked by the host software |
 | **Export of `debug_mode` from `ibex_top`** | CPU owner | Removes the need for a debug ROM, and is how `SYSDBG` knows an instruction sequence has finished, section 4.11 |
-| All four `Dm*` parameters | CPU owner | Derived in Table 11; **not** the Ibex defaults |
-| 4 KiB reserved at `0x2000_0000` | memory map owner | Table 11 -- so the parameters never have to move |
+| All four `Dm*` parameters | CPU owner | Derived in the window table in 4.11; **not** the Ibex defaults |
+| 4 KiB reserved at `0x2000_0000` | memory map owner | the window table in 4.11 -- so the parameters never have to move |
 | `0xF000_0000` left **unmapped** on `S_BUS`, answering `DECERR` | bus owner | Section 4.7 -- these registers live in the JTAG command space only; a bus slave claiming that region would shadow them |
-| `ISRAM` reserving its first 4 KiB for the debug program | RAM owner (this author) and the firmware linker script | Table 11 -- the main image must start at `0x2000_1000` |
+| `ISRAM` reserving its first 4 KiB for the debug program | RAM owner (this author) and the firmware linker script | the window table in 4.11 -- the main image must start at `0x2000_1000` |
 | **`SYSDBG` released from reset before the CPU** | SCRC owner | Section 4.2 and open question 3 -- halt-on-reset fails if `debug_req` is not already high when the core leaves reset. SCRC's own boot flow now states this requirementebug connection |
 | **Firmware links the main image at `0x2000_1000`** | firmware owner | Section 5.2 item 6 -- forced by the 4 KiB debug window in `QNSC_RAM_MAS`, and enforced by a PMP region |
 | **Reach of the bus master: settled** | bus owner | The system bus is `axi_xbar` from `pulp-platform/axi`, **fully connected** -- *"every slave port has a direct wired datapath to every master port"* -- with one shared address map, so `AXI_S0` reaches **every** subordinate including `ROM` on `AXI_M0`. This answers the ROM-readback item the ROM owner's specification raised. `QuachHuynhHuuTai_AXI4_System_Bus_Crossbar` section 2.1 |
@@ -891,7 +858,7 @@ They are grouped by who has to answer.
    block, so no tool built on it -- GDB through OpenOCD, or an IDE through either --
    attaches without work. What *is* reachable, and costs no RTL: GDB speaks the
    **Remote Serial Protocol** to a stub on the host, and a stub over the `SYSDBG` API
-   of Table 13 would give `x1`--`x31` and `dpc` in a real GDB session. That is
+   of the deliverables table in 4.13 would give `x1`--`x31` and `dpc` in a real GDB session. That is
    optional future work, not a requirement of this block.
 
    **What would force an architecture change**, if the criterion ever appears: a
@@ -976,13 +943,13 @@ They are grouped by who has to answer.
    here (section 4.13) rather than assumed.
 5. This block and the RAM are specified from opposite directions, deliberately.
    `SYSDBG` is a **design**: nothing is instantiated, `riscv-dbg` is read only to
-   learn what a debug module must do, and every block inside Figure 2 is written
+   learn what a debug module must do, and every block inside the figure in section 3 is written
    for QSOC. Both, in the end, came down to the same activity -- reading somebody
    else's RTL closely enough to know exactly where it stops.
 
 # Appendix A. Acronyms
 
-**Table 16 -- Acronyms**
+: Acronyms
 
 | Acronym | Description |
 |---------|-------------|
