@@ -20,7 +20,7 @@ chỉ vẽ **hai** khối, từ hồi em chưa nhận `INTMAP`.
 
 | Hình | File | Là hình nào trong tài liệu | Lúc nào |
 |---|---|---|---|
-| **A** | `img/fig_dbg_simple.png` | **Figure 2** — The SYSDBG block | Phần 2 tới 4 |
+| **A** | `img/fig_sysdbg_internal.png` | **Figure 2** — Cấu trúc trong, hai clock domain, và chỗ giao nhau | Phần 2 tới 4 |
 | **B** | `img/fig_sysdbg_internal.png` | **Figure 3** — Internal structure, and the two clock domains | Phần 4 |
 | **C** | `img/fig_jtag_cmd.png` | **Figure 4** — The ACCESS register, bit by bit | Khi nói thanh ghi 68 bit |
 | **D** | `img/fig_halt_flow.png` | **Figure 6** — Halting the CPU, end to end | Phần 5, chín bước |

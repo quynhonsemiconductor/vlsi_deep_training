@@ -50,13 +50,12 @@ author: "QUY NHON SEMICONDUCTORS -- QNSC"
 | Figure | Title |
 |--------|-------|
 | Figure 1 | Where the debugger sits in QSOC |
-| Figure 2 | The SYSDBG block |
-| Figure 3 | Internal structure, and the two clock domains |
-| Figure 4 | The ACCESS register, bit by bit |
-| Figure 5 | Command FSM |
-| Figure 6 | Halting the CPU, end to end |
-| Figure 7 | What one bus port can and cannot reach |
-| Figure 8 | Host software stack |
+| Figure 2 | Internal structure, the two clock domains, and the crossing |
+| Figure 3 | The ACCESS register, bit by bit |
+| Figure 4 | Command FSM |
+| Figure 5 | Halting the CPU, end to end |
+| Figure 6 | What one bus port can and cannot reach |
+| Figure 7 | Host software stack |
 
 ---
 
@@ -172,7 +171,7 @@ port it already has. The function is the same; the port is not needed, and **no
 
 # 3. Block Diagram
 
-![Figure 2 -- The SYSDBG block](../img/fig_dbg_simple.png){width=6.4in}
+![Figure 2 -- Internal structure, the two clock domains, and the crossing between them](../img/fig_sysdbg_internal.png){width=6.5in}
 
 # 4. Micro-architecture Details
 
@@ -181,11 +180,10 @@ port it already has. The function is the same; the port is not needed, and **no
 `SYSDBG` splits into two clock domains, described in section 4.2. The boundary
 between them is the part of the design most likely to be got wrong.
 
-![Figure 3 -- Internal structure, and the two clock domains](../img/fig_sysdbg_internal.png){width=6.5in}
-
-Figure 3 is the same design as Table 2, drawn as a loop: a command travels left to
-right along the top, the answer returns right to left along the bottom. The
-numbered steps are walked through in section 4.9.
+Figure 2 in section 3 is the same design as Table 2, drawn as a loop: a command
+travels left to right across the top, the answer returns right to left along the
+bottom, and both directions pass through the one CDC. The numbered steps are walked
+through in section 4.9.
 
 **Table 2 -- SYSDBG sub-blocks**
 
@@ -379,7 +377,7 @@ integration checklist of section 5.1 alongside the clock-gate rule.
 
 One data register carries a whole command, so **one scan is one operation**.
 
-![Figure 4 -- The ACCESS register, bit by bit](../img/fig_jtag_cmd.png){width=6.3in}
+![Figure 3 -- The ACCESS register, bit by bit](../img/fig_jtag_cmd.png){width=6.3in}
 
 **Table 7 -- ACCESS data register fields**
 
@@ -440,7 +438,7 @@ itself or grant itself debug access.
 
 ## 4.8 Command FSM
 
-![Figure 5 -- Command FSM](../img/fig_sysdbg_fsm.png){width=6.0in}
+![Figure 4 -- Command FSM](../img/fig_sysdbg_fsm.png){width=6.0in}
 
 **Table 9 -- Command FSM states**
 
@@ -484,7 +482,7 @@ system bus at all -- and knows a slave is not answering. `dm_sba` in
 The sections above describe the blocks. This is the same design followed as a
 single path, and it exercises every one of them.
 
-![Figure 6 -- Halting the CPU, end to end](../img/fig_halt_flow.png){width=6.3in}
+![Figure 5 -- Halting the CPU, end to end](../img/fig_halt_flow.png){width=6.3in}
 
 Reading a memory word is the same path with `op = READ` and an address that is
 not `0xF...`, so that step 5 enters `BUS` rather than `LOCAL`. Resuming is the
@@ -656,7 +654,7 @@ the same.
 
 ## 4.12 Reading a CPU register
 
-![Figure 7 -- What one bus port can and cannot reach](../img/fig_sysdbg_ports.png){width=6.2in}
+![Figure 6 -- What one bus port can and cannot reach](../img/fig_sysdbg_ports.png){width=6.2in}
 
 **Table 12 -- What each part of the block delivers**
 
@@ -762,7 +760,7 @@ needs no halt; reading a register always does.
 A debugger cannot be demonstrated without software on the host side. This is a
 deliverable of the block, not an afterthought.
 
-![Figure 8 -- Host software stack](../img/fig_host_stack.png){width=5.6in}
+![Figure 7 -- Host software stack](../img/fig_host_stack.png){width=5.6in}
 
 **Table 13 -- Host software deliverables**
 
