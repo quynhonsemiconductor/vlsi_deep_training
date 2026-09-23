@@ -297,6 +297,24 @@ driver rather than the standard `mtime`/`mtimecmp` one.
 4. A peripheral gated with its interrupt asserted holds the line, and this block
    cannot qualify it away — 7.6. The rule is an ordering constraint on firmware.
 
+**Open on this block**, blocking nobody, and listed so a reviewer can see they were
+not overlooked:
+
+1. **Propagation delay.** The worst path is the eight-input OR on `spi_device`,
+   three levels of two-input gates. At 20 MHz on 28 nm this is expected to be far
+   inside the period, but **it is an expectation, not a number** -- there is no
+   synthesis yet. It becomes a number with the first run, and it is the one thing
+   that could ever make this block need a register.
+2. **Area.** Eleven OR gates with twenty-six inputs between them. Same answer: the
+   figure comes from synthesis.
+3. **X propagation.** A reduction OR passes X through, so a peripheral driving X
+   before its own reset completes would drive its line X. The core already catches
+   it: `ibex_top.sv` line 1591 asserts
+   `ASSERT_KNOWN(IbexIrqX, {irq_software_i, irq_timer_i, irq_external_i, irq_fast_i, irq_nm_i})`,
+   which fires in simulation at the boundary this block feeds. **Open**: whether
+   that is sufficient, or whether this block should assert its own inputs known and
+   fail nearer the cause. The core's assertion names the bundle, not the source.
+
 # 12. Verification
 
 Eleven checks, none requiring a bus model:
