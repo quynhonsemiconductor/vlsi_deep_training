@@ -32,7 +32,7 @@ Nếu chỉ được hai hình thì lấy **A** và **D**: một cái cho thấy
 cho thấy một lệnh đi hết vòng. Năm hình còn lại để trả lời câu hỏi.
 
 Tài liệu SYSDBG có **8 Figure**; bài này dùng 7. Cái không dùng là Figure 1, vì nó
-là hình toàn chip và phần mở đầu chung đã có `fig_qsoc_full.png` rồi.
+là hình toàn chip và phần mở đầu chung đã có `fig_qsoc_full_mono.png` rồi.
 
 Phần trong ngoặc vuông là chỉ dẫn, không đọc.
 

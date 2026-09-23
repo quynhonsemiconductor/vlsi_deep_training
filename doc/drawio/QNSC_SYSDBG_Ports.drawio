@@ -4,22 +4,22 @@
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="dbg" value="SYSDBG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="dbg" value="SYSDBG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=14;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="40" y="200" width="200" height="170" as="geometry"/>
         </mxCell>
-        <mxCell id="cpu" value="Ibex CPU" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="cpu" value="Ibex CPU" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="640" y="60" width="200" height="90" as="geometry"/>
         </mxCell>
-        <mxCell id="bus" value="S_BUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="bus" value="S_BUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="640" y="240" width="200" height="130" as="geometry"/>
         </mxCell>
-        <mxCell id="mem" value="ROM, RAMs&#10;peripherals" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="mem" value="ROM, RAMs&#10;peripherals" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="640" y="450" width="200" height="80" as="geometry"/>
         </mxCell>
-        <mxCell id="can" value="STAGE 1, master port alone | halt, resume, reset, read and write memory, load firmware" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="can" value="STAGE 1, master port alone | halt, resume, reset, read and write memory, load firmware" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="40" y="570" width="800" height="62" as="geometry"/>
         </mxCell>
-        <mxCell id="cant" value="STAGE 2, needs a slave port | read a CPU register, single-step, attach GDB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="cant" value="STAGE 2, needs a slave port | read a CPU register, single-step, attach GDB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="40" y="652" width="800" height="62" as="geometry"/>
         </mxCell>
         <mxCell id="dbg_cpu_0" value="debug_req  (dedicated wire)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0.0;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="cpu">

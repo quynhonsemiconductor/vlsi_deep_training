@@ -1,28 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="848" height="702" viewBox="16 36 848 702" font-family="Helvetica,Arial,sans-serif">
-<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#333"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#333"/></marker></defs>
+<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
 <rect x="16" y="36" width="848" height="702" fill="#ffffff"/>
-<rect x="40" y="200" width="200" height="170" rx="3" fill="#f8cecc" stroke="#b85450" stroke-width="1.4"/>
-<rect x="640" y="60" width="200" height="90" rx="3" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.4"/>
-<rect x="640" y="240" width="200" height="130" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="640" y="450" width="200" height="80" rx="3" fill="#d5e8d4" stroke="#82b366" stroke-width="1.4"/>
-<rect x="40" y="570" width="800" height="62" rx="3" fill="#d5e8d4" stroke="#82b366" stroke-width="1.4"/>
-<rect x="40" y="652" width="800" height="62" rx="3" fill="#f8cecc" stroke="#b85450" stroke-width="1.4"/>
-<polyline points="140.0,200.0 140.0,105.0 640.0,105.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="56.0" y="144.5" width="168.0" height="14" fill="#fff"/>
-<text x="140.0" y="155.5" font-size="10" fill="#444" text-anchor="middle">debug_req  (dedicated wire)</text>
-<polyline points="240.0,242.5 440.0,242.5 440.0,272.5 640.0,272.5" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="359.0" y="249.5" width="162.0" height="14" fill="#fff"/>
-<text x="440.0" y="260.5" font-size="10" fill="#444" text-anchor="middle">AXI_S0 master | in Stage 1</text>
-<polyline points="640.0,337.5 440.0,337.5 440.0,327.5 240.0,327.5" fill="none" stroke="#333" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ah)"/>
-<rect x="362.0" y="324.5" width="156.0" height="14" fill="#fff"/>
-<text x="440.0" y="335.5" font-size="10" fill="#444" text-anchor="middle">slave port | Stage 2 only</text>
-<polyline points="740.0,150.0 740.0,240.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="740.0,370.0 740.0,450.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<text x="140.0" y="289.7" font-size="14" text-anchor="middle" fill="#111" font-weight="bold">SYSDBG</text>
-<text x="740.0" y="109.0" font-size="12" text-anchor="middle" fill="#111">Ibex CPU</text>
-<text x="740.0" y="309.3" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">S_BUS</text>
-<text x="740.0" y="486.7" font-size="11" text-anchor="middle" fill="#111">ROM, RAMs</text>
-<text x="740.0" y="500.7" font-size="11" text-anchor="middle" fill="#111">peripherals</text>
-<text x="440.0" y="604.7" font-size="11" text-anchor="middle" fill="#111">STAGE 1, master port alone | halt, resume, reset, read and write memory, load firmware</text>
-<text x="440.0" y="686.7" font-size="11" text-anchor="middle" fill="#111">STAGE 2, needs a slave port | read a CPU register, single-step, attach GDB</text>
+<rect x="40" y="200" width="200" height="170" rx="3" fill="#ffffff" stroke="#000000" stroke-width="2.8"/>
+<rect x="640" y="60" width="200" height="90" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="640" y="240" width="200" height="130" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="640" y="450" width="200" height="80" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="570" width="800" height="62" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="652" width="800" height="62" rx="3" fill="#ffffff" stroke="#000000" stroke-width="2.8"/>
+<polyline points="140.0,200.0 140.0,105.0 640.0,105.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="56.0" y="144.5" width="168.0" height="14" fill="#ffffff"/>
+<text x="140.0" y="155.5" font-size="10" fill="#000000" text-anchor="middle">debug_req  (dedicated wire)</text>
+<polyline points="240.0,242.5 440.0,242.5 440.0,272.5 640.0,272.5" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="359.0" y="249.5" width="162.0" height="14" fill="#ffffff"/>
+<text x="440.0" y="260.5" font-size="10" fill="#000000" text-anchor="middle">AXI_S0 master | in Stage 1</text>
+<polyline points="640.0,337.5 440.0,337.5 440.0,327.5 240.0,327.5" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ah)"/>
+<rect x="362.0" y="324.5" width="156.0" height="14" fill="#ffffff"/>
+<text x="440.0" y="335.5" font-size="10" fill="#000000" text-anchor="middle">slave port | Stage 2 only</text>
+<polyline points="740.0,150.0 740.0,240.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="740.0,370.0 740.0,450.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<text x="140.0" y="289.7" font-size="14" text-anchor="middle" fill="#000000" font-weight="bold">SYSDBG</text>
+<text x="740.0" y="109.0" font-size="12" text-anchor="middle" fill="#000000">Ibex CPU</text>
+<text x="740.0" y="309.3" font-size="13" text-anchor="middle" fill="#000000" font-weight="bold">S_BUS</text>
+<text x="740.0" y="486.7" font-size="11" text-anchor="middle" fill="#000000">ROM, RAMs</text>
+<text x="740.0" y="500.7" font-size="11" text-anchor="middle" fill="#000000">peripherals</text>
+<text x="440.0" y="604.7" font-size="11" text-anchor="middle" fill="#000000">STAGE 1, master port alone | halt, resume, reset, read and write memory, load firmware</text>
+<text x="440.0" y="686.7" font-size="11" text-anchor="middle" fill="#000000">STAGE 2, needs a slave port | read a CPU register, single-step, attach GDB</text>
 </svg>

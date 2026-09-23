@@ -1,61 +1,61 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1028" height="634" viewBox="-4 16 1028 634" font-family="Helvetica,Arial,sans-serif">
-<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#333"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#333"/></marker></defs>
+<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
 <rect x="-4" y="16" width="1028" height="634" fill="#ffffff"/>
-<rect x="20" y="160" width="120" height="70" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="390" y="40" width="180" height="70" rx="3" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.4"/>
-<rect x="170" y="160" width="180" height="70" rx="3" fill="#f8cecc" stroke="#b85450" stroke-width="1.4"/>
-<rect x="390" y="160" width="180" height="70" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="610" y="160" width="180" height="70" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="100" y="300" width="900" height="64" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="120" y="425" width="150" height="92" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="300" y="425" width="185" height="92" rx="3" fill="#d5e8d4" stroke="#82b366" stroke-width="1.4"/>
-<rect x="515" y="425" width="150" height="92" rx="3" fill="#d5e8d4" stroke="#82b366" stroke-width="1.4"/>
-<rect x="695" y="425" width="215" height="92" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="20" y="560" width="880" height="66" rx="3" fill="#ffffff" stroke="#333333" stroke-width="1.4"/>
-<polyline points="140.0,195.0 170.0,195.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="480.0,110.0 480.0,160.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="260.0,160.0 260.0,75.0 390.0,75.0" fill="none" stroke="#333" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ah)"/>
-<rect x="230.0" y="109.5" width="60.0" height="14" fill="#fff"/>
-<text x="260.0" y="120.5" font-size="10" fill="#444" text-anchor="middle">debug_req</text>
-<polyline points="260.0,230.0 260.2,300.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="239.1" y="257.0" width="42.0" height="14" fill="#fff"/>
-<text x="260.1" y="268.0" font-size="10" fill="#444" text-anchor="middle">AXI_S0</text>
-<polyline points="480.0,230.0 479.8,300.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="458.9" y="257.0" width="42.0" height="14" fill="#fff"/>
-<text x="479.9" y="268.0" font-size="10" fill="#444" text-anchor="middle">AXI_S1</text>
-<polyline points="700.0,230.0 700.3,300.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="679.2" y="257.0" width="42.0" height="14" fill="#fff"/>
-<text x="700.2" y="268.0" font-size="10" fill="#444" text-anchor="middle">AXI_S2</text>
-<polyline points="195.4,364.0 195.0,425.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="174.2" y="386.5" width="42.0" height="14" fill="#fff"/>
-<text x="195.2" y="397.5" font-size="10" fill="#444" text-anchor="middle">AXI_M0</text>
-<polyline points="387.1,364.0 387.1,394.5 392.5,394.5 392.5,425.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="368.8" y="386.5" width="42.0" height="14" fill="#fff"/>
-<text x="389.8" y="397.5" font-size="10" fill="#444" text-anchor="middle">AXI_M1</text>
-<polyline points="589.6,364.0 590.0,425.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="568.8" y="386.5" width="42.0" height="14" fill="#fff"/>
-<text x="589.8" y="397.5" font-size="10" fill="#444" text-anchor="middle">AXI_M2</text>
-<polyline points="802.0,364.0 802.5,425.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="781.2" y="386.5" width="42.0" height="14" fill="#fff"/>
-<text x="802.2" y="397.5" font-size="10" fill="#444" text-anchor="middle">AXI_M3</text>
-<text x="80.0" y="191.8" font-size="10" text-anchor="middle" fill="#111">JTAG pads</text>
-<text x="80.0" y="204.8" font-size="10" text-anchor="middle" fill="#111">TCK TMS TDI TDO</text>
-<text x="480.0" y="79.0" font-size="12" text-anchor="middle" fill="#111" font-weight="bold">Ibex CPU</text>
-<text x="260.0" y="199.0" font-size="12" text-anchor="middle" fill="#111" font-weight="bold">SYSDBG</text>
-<text x="480.0" y="198.7" font-size="11" text-anchor="middle" fill="#111">CPU2AXI</text>
-<text x="700.0" y="198.7" font-size="11" text-anchor="middle" fill="#111">DMA</text>
-<text x="550.0" y="336.3" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">S_BUS   (AXI)</text>
-<text x="195.0" y="467.7" font-size="11" text-anchor="middle" fill="#111">ROM  8 KiB</text>
-<text x="195.0" y="481.7" font-size="11" text-anchor="middle" fill="#111">0x0000_0000</text>
-<text x="392.5" y="460.7" font-size="11" text-anchor="middle" fill="#111" font-weight="bold">ISRAM  64 KiB</text>
-<text x="392.5" y="474.7" font-size="11" text-anchor="middle" fill="#111" font-weight="bold">0x2000_0000</text>
-<text x="392.5" y="488.7" font-size="11" text-anchor="middle" fill="#111" font-weight="bold">debug = first 4 KiB</text>
-<text x="590.0" y="460.7" font-size="11" text-anchor="middle" fill="#111" font-weight="bold">DSRAM  32 KiB</text>
-<text x="590.0" y="474.7" font-size="11" text-anchor="middle" fill="#111" font-weight="bold">0x3000_0000</text>
-<text x="590.0" y="488.7" font-size="11" text-anchor="middle" fill="#111" font-weight="bold">data</text>
-<text x="802.5" y="461.3" font-size="10" text-anchor="middle" fill="#111">AXI2APB  -&gt;  P_BUS</text>
-<text x="802.5" y="474.3" font-size="10" text-anchor="middle" fill="#111">0x8000_0000</text>
-<text x="802.5" y="487.3" font-size="10" text-anchor="middle" fill="#111">UART SPI I2C TIMER GPIO</text>
-<text x="460.0" y="589.8" font-size="10" text-anchor="middle" fill="#111">Coloured = the blocks specified by this author  |  SYSDBG is a bus MASTER, the two RAMs are SLAVES</text>
-<text x="460.0" y="602.8" font-size="10" text-anchor="middle" fill="#111">The debug program is the first 4 KiB of ISRAM, 0x2000_0000 -- 0x2000_0FFF, an address convention, not a block of its own</text>
+<rect x="20" y="160" width="120" height="70" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="390" y="40" width="180" height="70" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="170" y="160" width="180" height="70" rx="3" fill="#ffffff" stroke="#000000" stroke-width="2.8"/>
+<rect x="390" y="160" width="180" height="70" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="610" y="160" width="180" height="70" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="100" y="300" width="900" height="64" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="120" y="425" width="150" height="92" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="300" y="425" width="185" height="92" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="515" y="425" width="150" height="92" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="695" y="425" width="215" height="92" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="560" width="880" height="66" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<polyline points="140.0,195.0 170.0,195.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="480.0,110.0 480.0,160.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="260.0,160.0 260.0,75.0 390.0,75.0" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ah)"/>
+<rect x="230.0" y="109.5" width="60.0" height="14" fill="#ffffff"/>
+<text x="260.0" y="120.5" font-size="10" fill="#000000" text-anchor="middle">debug_req</text>
+<polyline points="260.0,230.0 260.2,300.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="239.1" y="257.0" width="42.0" height="14" fill="#ffffff"/>
+<text x="260.1" y="268.0" font-size="10" fill="#000000" text-anchor="middle">AXI_S0</text>
+<polyline points="480.0,230.0 479.8,300.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="458.9" y="257.0" width="42.0" height="14" fill="#ffffff"/>
+<text x="479.9" y="268.0" font-size="10" fill="#000000" text-anchor="middle">AXI_S1</text>
+<polyline points="700.0,230.0 700.3,300.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="679.2" y="257.0" width="42.0" height="14" fill="#ffffff"/>
+<text x="700.2" y="268.0" font-size="10" fill="#000000" text-anchor="middle">AXI_S2</text>
+<polyline points="195.4,364.0 195.0,425.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="174.2" y="386.5" width="42.0" height="14" fill="#ffffff"/>
+<text x="195.2" y="397.5" font-size="10" fill="#000000" text-anchor="middle">AXI_M0</text>
+<polyline points="387.1,364.0 387.1,394.5 392.5,394.5 392.5,425.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="368.8" y="386.5" width="42.0" height="14" fill="#ffffff"/>
+<text x="389.8" y="397.5" font-size="10" fill="#000000" text-anchor="middle">AXI_M1</text>
+<polyline points="589.6,364.0 590.0,425.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="568.8" y="386.5" width="42.0" height="14" fill="#ffffff"/>
+<text x="589.8" y="397.5" font-size="10" fill="#000000" text-anchor="middle">AXI_M2</text>
+<polyline points="802.0,364.0 802.5,425.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="781.2" y="386.5" width="42.0" height="14" fill="#ffffff"/>
+<text x="802.2" y="397.5" font-size="10" fill="#000000" text-anchor="middle">AXI_M3</text>
+<text x="80.0" y="191.8" font-size="10" text-anchor="middle" fill="#000000">JTAG pads</text>
+<text x="80.0" y="204.8" font-size="10" text-anchor="middle" fill="#000000">TCK TMS TDI TDO</text>
+<text x="480.0" y="79.0" font-size="12" text-anchor="middle" fill="#000000" font-weight="bold">Ibex CPU</text>
+<text x="260.0" y="199.0" font-size="12" text-anchor="middle" fill="#000000" font-weight="bold">SYSDBG</text>
+<text x="480.0" y="198.7" font-size="11" text-anchor="middle" fill="#000000">CPU2AXI</text>
+<text x="700.0" y="198.7" font-size="11" text-anchor="middle" fill="#000000">DMA</text>
+<text x="550.0" y="336.3" font-size="13" text-anchor="middle" fill="#000000" font-weight="bold">S_BUS   (AXI)</text>
+<text x="195.0" y="467.7" font-size="11" text-anchor="middle" fill="#000000">ROM  8 KiB</text>
+<text x="195.0" y="481.7" font-size="11" text-anchor="middle" fill="#000000">0x0000_0000</text>
+<text x="392.5" y="460.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">ISRAM  64 KiB</text>
+<text x="392.5" y="474.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">0x2000_0000</text>
+<text x="392.5" y="488.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">debug = first 4 KiB</text>
+<text x="590.0" y="460.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">DSRAM  32 KiB</text>
+<text x="590.0" y="474.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">0x3000_0000</text>
+<text x="590.0" y="488.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">data</text>
+<text x="802.5" y="461.3" font-size="10" text-anchor="middle" fill="#000000">AXI2APB  -&gt;  P_BUS</text>
+<text x="802.5" y="474.3" font-size="10" text-anchor="middle" fill="#000000">0x8000_0000</text>
+<text x="802.5" y="487.3" font-size="10" text-anchor="middle" fill="#000000">UART SPI I2C TIMER GPIO</text>
+<text x="460.0" y="589.8" font-size="10" text-anchor="middle" fill="#000000">Coloured = the blocks specified by this author  |  SYSDBG is a bus MASTER, the two RAMs are SLAVES</text>
+<text x="460.0" y="602.8" font-size="10" text-anchor="middle" fill="#000000">The debug program is the first 4 KiB of ISRAM, 0x2000_0000 -- 0x2000_0FFF, an address convention, not a block of its own</text>
 </svg>

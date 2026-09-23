@@ -14,15 +14,27 @@ import html
 import os
 import subprocess
 
+# Monochrome only. These diagrams are printed and photocopied, they go into
+# documents that are read on screens with every kind of colour rendering, and
+# colour carries no meaning a reader can rely on.
+#
+# The names are kept because the diagram scripts use them and because they still
+# say what a box is, but they no longer select a colour: every box is white with
+# a black outline. The two distinctions that do carry meaning are kept, and both
+# survive a black and white photocopy -- a heavier outline for the exceptional
+# path, and a dashed outline for a grouping box that is not a block.
+_BLACK, _WHITE = "#000000", "#ffffff"
 STYLES = {
-    "box":    dict(fill="#ffffff", stroke="#333333", dash=None),
-    "blue":   dict(fill="#dae8fc", stroke="#6c8ebf", dash=None),
-    "green":  dict(fill="#d5e8d4", stroke="#82b366", dash=None),
-    "yellow": dict(fill="#fff2cc", stroke="#d6b656", dash=None),
-    "red":    dict(fill="#f8cecc", stroke="#b85450", dash=None),
-    "purple": dict(fill="#e1d5e7", stroke="#9673a6", dash=None),
-    "grey":   dict(fill="#f5f5f5", stroke="#666666", dash=None),
-    "group":  dict(fill="none",    stroke="#999999", dash="6 4"),
+    "box":    dict(fill=_WHITE, stroke=_BLACK, dash=None, width=1.4),
+    "blue":   dict(fill=_WHITE, stroke=_BLACK, dash=None, width=1.4),
+    "green":  dict(fill=_WHITE, stroke=_BLACK, dash=None, width=1.4),
+    "yellow": dict(fill=_WHITE, stroke=_BLACK, dash=None, width=1.4),
+    "purple": dict(fill=_WHITE, stroke=_BLACK, dash=None, width=1.4),
+    "grey":   dict(fill=_WHITE, stroke=_BLACK, dash=None, width=1.4),
+    # The exception on the diagram -- the non-maskable path, the error case.
+    "red":    dict(fill=_WHITE, stroke=_BLACK, dash=None, width=2.8),
+    # Not a block: a boundary drawn around several.
+    "group":  dict(fill="none",  stroke=_BLACK, dash="6 4", width=1.4),
 }
 SIDES = {"l": (0, .5), "r": (1, .5), "t": (.5, 0), "b": (.5, 1)}
 
@@ -76,25 +88,25 @@ def to_svg(nodes, edges, title, pad=24, draw_title=False):
          f'viewBox="{minx:.0f} {miny:.0f} {W:.0f} {H:.0f}" '
          f'font-family="Helvetica,Arial,sans-serif">',
          '<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" '
-         'orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#333"/></marker>'
+         'orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker>'
          '<marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" '
-         'orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#333"/></marker></defs>',
+         'orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>',
          f'<rect x="{minx}" y="{miny}" width="{W}" height="{H}" fill="#ffffff"/>']
     if draw_title:
         o.append(f'<text x="{minx+pad}" y="{miny+20}" font-size="13" font-weight="bold" '
-                 f'fill="#111">{html.escape(title)}</text>')
+                 f'fill="#000000">{html.escape(title)}</text>')
     idx = {n.id: n for n in nodes}
     for n in nodes:
         st = STYLES[n.style]
         d = f' stroke-dasharray="{st["dash"]}"' if st["dash"] else ""
         o.append(f'<rect x="{n.x}" y="{n.y}" width="{n.w}" height="{n.h}" rx="3" '
-                 f'fill="{st["fill"]}" stroke="{st["stroke"]}" stroke-width="1.4"{d}/>')
+                 f'fill="{st["fill"]}" stroke="{st["stroke"]}" stroke-width="{st["width"]}"{d}/>')
     for e in edges:
         pts = route(idx[e.src], idx[e.dst], e.ss, e.ds, e.mid)
         p = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
         d = ' stroke-dasharray="5 3"' if e.dashed else ""
         st = ' marker-start="url(#ahs)"' if e.bidir else ""
-        o.append(f'<polyline points="{p}" fill="none" stroke="#333" stroke-width="1.4"'
+        o.append(f'<polyline points="{p}" fill="none" stroke="#000000" stroke-width="1.4"'
                  f'{d} marker-end="url(#ah)"{st}/>')
         if e.label:
             mi = len(pts) // 2
@@ -102,8 +114,8 @@ def to_svg(nodes, edges, title, pad=24, draw_title=False):
             my = (pts[mi - 1][1] + pts[mi][1]) / 2
             tw = 6.0 * len(e.label) + 6
             o.append(f'<rect x="{mx-tw/2:.1f}" y="{my-8:.1f}" width="{tw:.1f}" '
-                     f'height="14" fill="#fff"/>')
-            o.append(f'<text x="{mx:.1f}" y="{my+3:.1f}" font-size="10" fill="#444" '
+                     f'height="14" fill="#ffffff"/>')
+            o.append(f'<text x="{mx:.1f}" y="{my+3:.1f}" font-size="10" fill="#000000" '
                      f'text-anchor="middle">{html.escape(e.label)}</text>')
     for n in nodes:
         lines = n.label.split("\n")
@@ -113,7 +125,7 @@ def to_svg(nodes, edges, title, pad=24, draw_title=False):
         fw = ' font-weight="bold"' if n.bold else ""
         for i, ln in enumerate(lines):
             o.append(f'<text x="{n.x+n.w/2:.1f}" y="{y0+i*lh:.1f}" font-size="{n.fs}" '
-                     f'text-anchor="middle" fill="#111"{fw}>{html.escape(ln)}</text>')
+                     f'text-anchor="middle" fill="#000000"{fw}>{html.escape(ln)}</text>')
     o.append("</svg>")
     return "\n".join(o)
 

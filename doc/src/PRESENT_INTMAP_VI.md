@@ -22,7 +22,7 @@ lúc mở đầu — nên những gì thầy thấy trên màn hình khớp đú
 
 | Hình | File | Là hình nào trong tài liệu | Lúc nào |
 |---|---|---|---|
-| **A** | `img/fig_qsoc_full.png` | sơ đồ khối QSOC (dùng chung) | mục 1 |
+| **A** | `img/fig_qsoc_full_mono.png` | sơ đồ khối QSOC (dùng chung) | mục 1 |
 | **B** | `img/fig_intr_map.png` | **Figure 1** — 27 nguồn, một OR mỗi peripheral, 12 dây vào CPU | mục 3 tới 6 |
 | **C** | `img/fig_intr_levels.png` | **Figure 2** — ba thiết kế, và cái bản này đánh đổi | mục 7 và 8 |
 
