@@ -4,18 +4,6 @@ subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.0"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
-**Block** `intmap` · **Owner** Nghia Van Trong · **Version** 2.0 · **2026-09-23**
-
-Twenty-seven interrupt sources reach the CPU as twelve wires. `INTMAP` is the
-combinational OR tree that does the reduction.
-
-Why the specification says what it says — the two designs that were dropped, the
-evidence read out of Ibex, the questions that closed — is in
-[`QNSC_Interrupt_Map_DECISIONS.md`](QNSC_Interrupt_Map_DECISIONS.md). This file is
-the contract.
-
----
-
 # Revision history
 
 `V2.0` is a rewrite, so the history starts again here. The twenty versions before
@@ -29,12 +17,19 @@ they are listed in full, with the reasoning and the evidence behind each, in
 
 # 1. Overview
 
-`INTMAP` groups the interrupt sources of fourteen blocks onto the CPU's fast
-interrupt lines, one line per peripheral, and passes the watchdog bark straight
-through to the non-maskable input.
+Twenty-seven interrupt sources reach the CPU as twelve wires. `INTMAP` is the
+combinational OR tree that does the reduction: it groups the sources of fourteen
+blocks onto the core's fast interrupt lines, one line per peripheral, and passes
+the watchdog bark straight through to the non-maskable input.
 
 **It does not**: hold state, decode an address, appear on any bus, prioritise
 (the core does that), or latch a pulse. It has no clock and no reset.
+
+Block directory `design/intmap`, module `m_qnsc_intmap`, owner Nghia Van Trong.
+Why the specification says what it says -- the two designs that were dropped, the
+evidence read out of Ibex, how each question closed -- is in
+[`QNSC_Interrupt_Map_DECISIONS.md`](QNSC_Interrupt_Map_DECISIONS.md). This file is
+the contract.
 
 # 2. Features
 

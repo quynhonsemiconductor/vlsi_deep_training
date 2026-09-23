@@ -20,6 +20,12 @@ author: "QUY NHON SEMICONDUCTORS -- QNSC"
   (template/QNSC_Technical_Document_Format.docx) and are mandatory. Sections 4 to
   12 are what verification needs and the team template leaves to the author.
 
+  Write NOTHING before the first heading. Pandoc puts the contents, the table of
+  tables and the table of figures immediately after the cover, so any text above
+  the first heading lands between the table of figures and the revision history,
+  belonging to no section and looking like part of the figure list. Anything you
+  want to say first goes in section 1.
+
   STYLE -- the one rule. Every sentence must be a claim somebody can write a test
   for. A specification is the contract between design and DV, so a sentence that
   cannot be tested is commentary and belongs in QNSC_<BLOCK>_DECISIONS.md, not
