@@ -14,6 +14,83 @@ Nothing here was deleted from the specification without being kept here first.
 
 ---
 
+# V3.0 decisions (2026-09-23)
+
+The teacher's review of 2026-09-23 asked three things: who loads the 4 KiB debug
+program, and when; that the debugger control the CPU reset; and that an external
+pin select debug mode. Reading V2.0 against Ibex and the HAS while answering them
+turned up four defects. Each row gives the decision and the reason for it.
+
+| # | Decision | Why |
+|---|---|---|
+| D1 | **`DBG_EN` pin**, captured once after power-on | Which mode the chip is in has to be known before the first JTAG edge, because `SCRC` releases the CPU a few microseconds after power-on and the host connects much later. A `SYSDBG` register cannot carry that information: reset to "hold", the chip never boots without a probe; reset to "run", the CPU has already run before the host can write it. Only a static input from outside the chip is known at t = 0. This is the same idea as a boot-mode strap (STM32 `BOOT0`) or the probe's `nSRST` |
+| D2 | **`CTRL.cpu_hold`**, effective only while `DBG_EN = 1`, OR-ed into the CPU reset **inside `SCRC`, ahead of its synchroniser** | This is the teacher's requirement. It holds the CPU only, so the Day005 decision (no debug reset, three reset sources) still stands. An OR placed after the synchroniser could glitch when `SCRC` releases the reset in the same cycle that the host sets the hold |
+| D3 | **No CPU clock control** | HAS Table 4-1: the `cpu` cluster is hardwired on. Holding the CPU in reset stops it just as well, with one mechanism instead of two |
+| D4 | **Boot address mux on `o_dbg_en`**: ROM `0x0000_0000` or `ISRAM` `0x2000_1000` | Without it, a CPU released in debug boot runs the ROM bootloader, which waits on UART0 and never reaches the image the host loaded. As a side effect it satisfies the HAS line "the debug interface is the second load path when the ROM is faulty" |
+| D5 | **IO MUX forces the JTAG pins while `DBG_EN = 1`** | Replaces V2.0's three-option table. One gate, and debug boot can no longer be broken by firmware remapping the pins |
+| D6 | **`haltreq` clears itself when `i_cpu_debug_mode` rises; `resumereq` removed** | Fixes a V2.0 defect. V2.0 7.7 set the resume flag first and lowered `debug_req` second. That is the wrong order: after `dret`, Ibex re-enters Debug Mode whenever `debug_req_i` is still high, because `enter_debug_mode` is qualified only by `!debug_mode_q`. V1.8 of this file already had the right order, so the two documents disagreed. Clearing the request in hardware removes the ordering rule altogether |
+| D7 | **Debug window re-laid out**: mailbox at `0x700`--`0x70C`, `TRAP` at `0x810`, and the entry, trap and loop code fixed | Fixes three V2.0 defects. (a) `sw t1, 0xF00(t0)` does not assemble: the offset is beyond the 12-bit signed immediate (maximum `0x7FF`). (b) The sequence used `dscratch0` and `dscratch1`, but the dispatch loop also needs a register, and Ibex has only those two scratch CSRs. The loop now owns `s0` and `s1`. (c) `DmExceptionAddr = 0x2000_0810` from the HAS had no code behind it |
+| D8 | **Scan status gains `TIMEOUT`; `STATUS.busy`, `error` and `bus_timeout` removed** | Fixes a V2.0 defect. V2.0 said a host would diagnose a stuck slave by reading `STATUS`. But that read is itself a command, and the FSM is stuck in `BUS`, so it would never have run. The scan status is produced on the `TCK` side, so it answers even while the FSM is stuck |
+| D9 | **Bus command aborted while `i_rst_n_sysbus = 0`** | A watchdog or software reset resets `axi_from_mem` with the bus. V2.0's "keep waiting" would then have waited forever for a response that can no longer come |
+| D10 | **CDC reduced to `cmd_req`, `cmd_ack`, `timeout`** | V2.0 named four toggles and then said only two cross. The response rides on `cmd_ack`, so a separate `rsp_req`/`rsp_ack` pair is not needed. The `TCK`-side handshake is reset by power-on only, so a JTAG reset cannot break a command in flight |
+| D11 | **Port names to `QNSC_RTL_Design_Naming_Rule`** (`i_`/`o_`, `i_clk_cpu`) | The template requires it; V2.0 used the Ibex suffix style |
+
+The reset table of 7.3 also answers a question raised in review: during a
+debug-boot load the CPU is held and the watchdog is disabled, so no reset except
+a power loss can reach `ISRAM` mid-load.
+
+Open with the HAS owner: HAS Table 4-2 puts the watchdog on the same OR gate as
+power-on, so `SYSDBG` needs a separate power-on-only reset (MAS section 11). The
+HAS also gives the breakpoint count as 1 in Features and 2 in Table 6-4.
+
+## Debug window code
+
+This is host software, not `SYSDBG` RTL, so it lives here rather than in the MAS.
+The addresses are those of MAS 7.8. The fixed part is written once per session:
+
+```asm
+0x800  ENTRY: csrw  dscratch0, s0
+              csrw  dscratch1, s1
+              lui   s0, 0x20000           # s0 = window base
+              j     LOOP
+0x810  TRAP:  addi  s1, zero, 1
+              sw    s1, 0x704(s0)         # EXC = 1
+              sw    zero, 0x708(s0)       # CMD = 0
+              j     LOOP
+0x820  LOOP:  lw    s1, 0x708(s0)
+              bnez  s1, 0x20000000        # CMD != 0: run SEQ
+              lw    s1, 0x70C(s0)
+              beqz  s1, LOOP
+              sw    zero, 0x70C(s0)       # RESUME = 0
+              csrr  s1, dscratch1
+              csrr  s0, dscratch0
+              dret
+```
+
+**A sequence** may change `s1` and the register it was asked to write, and nothing
+else. It reads the program's `s0` and `s1` from `dscratch0` and `dscratch1`. It ends
+by writing `DATA` if it has a result, then `CMD` = 0, then `j LOOP`, in that order.
+It uses no `ebreak`. Reading `dpc`:
+
+```asm
+       csrr  s1, dpc
+       sw    s1, 0x700(s0)       # DATA first
+       sw    zero, 0x708(s0)     # then CMD = 0
+       j     0x20000820
+```
+
+**The host runs a sequence** as follows:
+
+1. Write `EXC` = 0.
+2. Write `SEQ`, and `DATA` if the sequence takes an input.
+3. Write `CMD` = 1.
+4. Poll `CMD` until it reads 0.
+5. Read `EXC`, then `DATA`.
+
+`SYSDBG` has one outstanding request, so its writes land in the order issued.
+
+---
+
 # Reversion and History
 
 | Version | Date       | Author/Owner | Description of Change |

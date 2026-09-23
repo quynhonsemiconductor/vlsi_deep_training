@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1518" height="578" viewBox="-4 36 1518 578" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
+<rect x="-4" y="36" width="1518" height="578" fill="#ffffff"/>
+<rect x="20" y="190" width="130" height="150" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="540" width="130" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="190" y="60" width="370" height="400" rx="3" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="6 4"/>
+<rect x="210" y="100" width="330" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="210" y="190" width="330" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="360" y="280" width="180" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="210" y="370" width="330" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="600" y="180" width="120" height="270" rx="3" fill="#ffffff" stroke="#000000" stroke-width="2.8"/>
+<rect x="750" y="60" width="470" height="460" rx="3" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="6 4"/>
+<rect x="770" y="100" width="190" height="80" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="770" y="300" width="190" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1010" y="100" width="190" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1010" y="190" width="190" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="2.8"/>
+<rect x="1010" y="300" width="190" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="770" y="420" width="190" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1010" y="420" width="190" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1340" y="170" width="150" height="100" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1340" y="300" width="150" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1340" y="420" width="150" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<polyline points="150.0,220.0 180.0,220.0 180.0,130.0 210.0,130.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="168.0" y="167.0" width="24.0" height="14" fill="#ffffff"/>
+<text x="180.0" y="178.0" font-size="10" fill="#000000" text-anchor="middle">TMS</text>
+<polyline points="150.0,265.0 180.0,265.0 180.0,220.0 210.0,220.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="168.0" y="234.5" width="24.0" height="14" fill="#ffffff"/>
+<text x="180.0" y="245.5" font-size="10" fill="#000000" text-anchor="middle">TDI</text>
+<polyline points="457.5,250.0 457.5,265.0 450.0,265.0 450.0,280.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="423.8" y="257.0" width="60.0" height="14" fill="#ffffff"/>
+<text x="453.8" y="268.0" font-size="10" fill="#000000" text-anchor="middle">Update-DR</text>
+<polyline points="540.0,310.0 570.0,310.0 570.0,234.0 600.0,234.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="600.0,396.0 570.0,396.0 570.0,400.0 540.0,400.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="210.0,400.0 180.0,400.0 180.0,317.5 150.0,317.5" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="168.0" y="350.8" width="24.0" height="14" fill="#ffffff"/>
+<text x="180.0" y="361.8" font-size="10" fill="#000000" text-anchor="middle">TDO</text>
+<polyline points="720.0,234.0 745.0,234.0 745.0,140.0 770.0,140.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="770.0,330.0 745.0,330.0 745.0,396.0 720.0,396.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="865.0,180.0 865.0,300.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="850.0" y="232.0" width="30.0" height="14" fill="#ffffff"/>
+<text x="865.0" y="243.0" font-size="10" fill="#000000" text-anchor="middle">DONE</text>
+<polyline points="960.0,124.0 985.0,124.0 985.0,130.0 1010.0,130.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="967.0" y="119.0" width="36.0" height="14" fill="#ffffff"/>
+<text x="985.0" y="130.0" font-size="10" fill="#000000" text-anchor="middle">LOCAL</text>
+<polyline points="960.0,164.0 985.0,164.0 985.0,330.0 1010.0,330.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="973.0" y="239.0" width="24.0" height="14" fill="#ffffff"/>
+<text x="985.0" y="250.0" font-size="10" fill="#000000" text-anchor="middle">BUS</text>
+<polyline points="1105.0,160.0 1105.0,190.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="1081.0" y="167.0" width="48.0" height="14" fill="#ffffff"/>
+<text x="1105.0" y="178.0" font-size="10" fill="#000000" text-anchor="middle">haltreq</text>
+<polyline points="1200.0,208.0 1340.0,208.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="1222.0" y="200.0" width="96.0" height="14" fill="#ffffff"/>
+<text x="1270.0" y="211.0" font-size="10" fill="#000000" text-anchor="middle">o_cpu_debug_req</text>
+<polyline points="1340.0,240.0 1200.0,239.8" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="1219.0" y="231.9" width="102.0" height="14" fill="#ffffff"/>
+<text x="1270.0" y="242.9" font-size="10" fill="#000000" text-anchor="middle">i_cpu_debug_mode</text>
+<polyline points="1200.0,330.0 1340.0,330.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="1246.0" y="322.0" width="48.0" height="14" fill="#ffffff"/>
+<text x="1270.0" y="333.0" font-size="10" fill="#000000" text-anchor="middle">o_mem_*</text>
+<polyline points="150.0,565.0 865.0,565.0 865.0,480.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="480.5" y="557.0" width="54.0" height="14" fill="#ffffff"/>
+<text x="507.5" y="568.0" font-size="10" fill="#000000" text-anchor="middle">i_dbg_en</text>
+<polyline points="960.0,450.0 1010.0,450.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="1200.0,450.0 1340.0,450.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<text x="85.0" y="255.3" font-size="10" text-anchor="middle" fill="#000000">JTAG pads</text>
+<text x="85.0" y="268.3" font-size="10" text-anchor="middle" fill="#000000">TCK  TMS  TDI</text>
+<text x="85.0" y="281.3" font-size="10" text-anchor="middle" fill="#000000">TDO  TRST_N</text>
+<text x="85.0" y="568.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">DBG_EN pad</text>
+<text x="375.0" y="77.0" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">TCK domain  ·  i_jtag_tck</text>
+<text x="375.0" y="126.8" font-size="10" text-anchor="middle" fill="#000000">TAP controller  ·  IR 4 bit</text>
+<text x="375.0" y="139.8" font-size="10" text-anchor="middle" fill="#000000">IDCODE  ·  BYPASS</text>
+<text x="375.0" y="223.3" font-size="10" text-anchor="middle" fill="#000000">ACCESS shift register  68 bit</text>
+<text x="450.0" y="306.8" font-size="10" text-anchor="middle" fill="#000000">cmd_hold  68 bit</text>
+<text x="450.0" y="319.8" font-size="10" text-anchor="middle" fill="#000000">cmd_req</text>
+<text x="375.0" y="396.8" font-size="10" text-anchor="middle" fill="#000000">Capture-DR mux</text>
+<text x="375.0" y="409.8" font-size="10" text-anchor="middle" fill="#000000">rsp_hold  or  BUSY / TIMEOUT</text>
+<text x="660.0" y="279.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">CDC</text>
+<text x="660.0" y="292.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold"></text>
+<text x="660.0" y="305.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">cmd_req  -&gt;</text>
+<text x="660.0" y="318.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">&lt;-  cmd_ack</text>
+<text x="660.0" y="331.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">&lt;-  timeout</text>
+<text x="660.0" y="344.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold"></text>
+<text x="660.0" y="357.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">2FF each</text>
+<text x="985.0" y="77.0" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">system domain  ·  i_clk_cpu  ·  i_rst_n_por</text>
+<text x="865.0" y="130.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">Command FSM</text>
+<text x="865.0" y="143.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">IDLE  DECODE</text>
+<text x="865.0" y="156.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">LOCAL  BUS  DONE</text>
+<text x="865.0" y="326.8" font-size="10" text-anchor="middle" fill="#000000">rsp_hold</text>
+<text x="865.0" y="339.8" font-size="10" text-anchor="middle" fill="#000000">rdata  ·  status</text>
+<text x="1105.0" y="133.3" font-size="10" text-anchor="middle" fill="#000000">CTRL  ·  STATUS  ·  ID</text>
+<text x="1105.0" y="223.3" font-size="10" text-anchor="middle" fill="#000000">halt logic</text>
+<text x="1105.0" y="326.8" font-size="10" text-anchor="middle" fill="#000000">bus master</text>
+<text x="1105.0" y="339.8" font-size="10" text-anchor="middle" fill="#000000">req  gnt  rsp</text>
+<text x="865.0" y="446.8" font-size="10" text-anchor="middle" fill="#000000">DBG_EN</text>
+<text x="865.0" y="459.8" font-size="10" text-anchor="middle" fill="#000000">2FF + capture</text>
+<text x="1105.0" y="446.8" font-size="10" text-anchor="middle" fill="#000000">o_dbg_en</text>
+<text x="1105.0" y="459.8" font-size="10" text-anchor="middle" fill="#000000">o_cpu_hold</text>
+<text x="1415.0" y="223.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">Ibex CPU</text>
+<text x="1415.0" y="326.8" font-size="10" text-anchor="middle" fill="#000000">S_BUS  AXI_S0</text>
+<text x="1415.0" y="339.8" font-size="10" text-anchor="middle" fill="#000000">axi_from_mem</text>
+<text x="1415.0" y="446.8" font-size="10" text-anchor="middle" fill="#000000">SCRC  ·  boot mux</text>
+<text x="1415.0" y="459.8" font-size="10" text-anchor="middle" fill="#000000">IO MUX</text>
+</svg>

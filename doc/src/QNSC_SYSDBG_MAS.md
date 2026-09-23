@@ -1,79 +1,51 @@
 ---
 title: "SYSDBG"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.0"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
 # Revision history
 
-`V2.0` is a rewrite. The fourteen versions before it, and the reasoning and
-evidence behind every decision recorded here, are in
+The reasoning behind each change, and every version before V3.0, is in
 [`QNSC_SYSDBG_DECISIONS.md`](QNSC_SYSDBG_DECISIONS.md).
 
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
-| V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only. Two block diagrams disagreed about where the CDC sits; the wrong one is deleted. Tables and figures are numbered by the build instead of by hand. Host software, the sourcing argument and the closed questions move to `_DECISIONS` |
+| V3.0 | 2026-09-23 | Nghia VT | -- | Rewritten. Adds the `DBG_EN` pin and CPU hold, the debug window contract, and the CDC as signals. `haltreq` now clears itself; `resumereq` removed |
 
 # 1. Overview
 
-`SYSDBG` is the QSOC debugger: it terminates a JTAG connection from the host, turns
-each command arriving on it into one bus transaction on `AXI_S0`, drives the Ibex
-`debug_req` input, and reports status back over the same JTAG scan.
+`SYSDBG` is the QSOC debugger. It takes JTAG from the host, turns each JTAG command
+into one bus transaction on `AXI_S0` or one access to its own registers, and drives
+the Ibex `debug_req` input.
 
-**Designed in house.** `pulp-platform/riscv-dbg` is read as a reference and for the
-address constants Ibex needs; no part of it is instantiated.
+One external pin, `DBG_EN`, decides who starts the CPU after power-on:
 
-Two facts about its position shape the whole design:
+- `DBG_EN = 0`, **normal boot**: `SCRC` releases the CPU, which runs the ROM
+  bootloader. The debugger can attach later.
+- `DBG_EN = 1`, **debug boot**: the CPU stays in reset until the host, over JTAG,
+  has loaded the debug window and the program into `ISRAM` and released it.
 
-- **It is a bus master, and only a master.** Nothing gives this block a slave port.
-  It reads and writes memory and peripherals with no CPU involvement, which is how
-  firmware is loaded.
-- **The CPU cannot be reached over the bus.** Ibex exposes only master interfaces,
-  so no master can address it, and two masters cannot talk to each other. Reading a
-  CPU register therefore means making the core store the value to memory and
-  reading that -- section 7.6, and the reason section 11 asks for a reserved
-  memory window.
-
-Outside any bus, `SYSDBG` carries one wire into the core, `debug_req_o`, and one
-back, `debug_mode_i`.
+`SYSDBG` does **not** reset the chip, gate a clock, or hold a debug ROM. The code
+the CPU runs while halted lives in the first 4 KiB of `ISRAM`, and the host writes it.
 
 Block directory `design/sysdbg`, module `m_qnsc_sysdbg`, owner Nghia Van Trong.
 
 # 2. Features
 
-- **JTAG Test Access Port** to IEEE 1149.1, with `IDCODE`, `BYPASS` and one command
-  register.
-- **One 68-bit command register**, so one JTAG scan is one read or one write.
-- **Run control**: halt and resume the Ibex hart through `debug_req_o` and
-  `debug_mode_i`.
-- **Bus master on `AXI_S0`**: any address in the system memory map, byte, halfword
-  or word, **including while the CPU runs**.
-- **CPU register access with no extra port**, by having the halted core execute a
-  short sequence from a reserved memory window.
-- **A slave that never answers is reported, not abandoned** -- section 7.4.
+- JTAG TAP to IEEE 1149.1: `IDCODE`, `BYPASS`, and one 68-bit command register, `ACCESS`.
+- One scan carries one command: a byte, halfword or word read or write, anywhere in
+  the memory map, **including while the CPU runs**.
+- Debug boot: `DBG_EN` pin, CPU held in reset until the host clears `CTRL.cpu_hold`.
+- Halt through `debug_req`. The request clears itself once the core is halted.
+- CPU register access with no extra port, through a host-written debug window in `ISRAM`.
 
 # 3. Block diagram
 
-![Internal structure, the two clock domains, and the crossing between them](../img/fig_sysdbg_internal.png){width=6.5in}
+![SYSDBG block diagram](../img/fig_sysdbg_block.png){width=6.5in}
 
-A command travels left to right across the top, the answer returns right to left
-along the bottom, and **both directions pass through the one CDC**. The numbered
-steps are the path of section 7.3.
-
-: SYSDBG sub-blocks
-
-| Domain | Sub-block | Role |
-|---|---|---|
-| `tck` | TAP controller | The IEEE 1149.1 state machine, driven by `tms_i` |
-| `tck` | IR, 4 bit | Selects which data register is in the scan chain |
-| `tck` | `IDCODE`, 32 bit | Identifies QSOC to the host |
-| `tck` | `BYPASS`, 1 bit | Required by the standard |
-| `tck` | `ACCESS`, 68 bit | The command register, section 7.2 |
-| boundary | `m_sysdbg_cdc` | Request/acknowledge handshake, section 7.5 |
-| system | Command FSM | Decodes and executes one command, section 7.3 |
-| system | Register file | `CTRL`, `STATUS`, `ID`, section 6 |
-| system | `debug_req` logic | Drives the CPU input, samples `debug_mode_i` |
-| system | Bus master | Issues transactions towards `AXI_S0` |
+Clock `i_clk_cpu`, from the `cpu` cluster, which is never gated. The system domain
+is reset by power-on only. `SYSDBG` is a bus master only: it has no slave port.
 
 # 4. IP used
 
@@ -83,291 +55,287 @@ steps are the path of section 7.3.
 |---|---|---|---|
 | -- | -- | -- | -- |
 
-**Nothing is instantiated.** Two upstream sources are used without being built in:
-
-- `pulp-platform/riscv-dbg` -- read to learn what a debug module must do, and for
-  the `Dm*` address constants the Ibex integration declares. Its abstract commands,
-  program buffer and spec-compliant DMI are all far larger than QSOC needs.
-- `pulp-platform/axi` -- `axi_from_mem` converts this block's port to AXI4 at the
-  crossbar. **It is the bus owner's to deliver**, so that every protocol conversion
-  in the chip has one owner; this block's testbench instantiates it only to check
-  the AXI4 side. `MaxRequests = 1`, because one command is outstanding at a time.
+In house. Nothing is instantiated. `pulp-platform/riscv-dbg` is read as a
+reference only. `axi_from_mem` (`pulp-platform/axi`), which converts the bus port
+to AXI4, is the bus owner's -- section 11.
 
 # 5. Interface
 
-: SYSDBG port list
+: SYSDBG interface
 
-| Group | Signal | Dir | Width | Notes |
-|---|---|---|---:|---|
-| Clock, reset | `clk_i`, `rst_ni` | in | 1 | System domain |
-| JTAG | `tck_i`, `tms_i`, `tdi_i` | in | 1 | From the pads |
-| | `tdo_o` | out | 1 | Driven only in a Shift state |
-| | `tdo_oe_o` | out | 1 | Output enable for the pad |
-| | `trst_ni` | in | 1 | Optional by the standard; provided |
-| CPU | `debug_req_o` | out | 1 | Level-sensitive, held until resume |
-| | `debug_mode_i` | in | 1 | From `ibex_top`, section 11 |
-| Bus master | `mem_req_o`, `mem_addr_o`, `mem_we_o` | out | 1 / 32 / 1 | Request, address, direction |
-| | `mem_wdata_o`, `mem_be_o` | out | 32 / 4 | Write data and its byte enables |
-| | `mem_gnt_i` | in | 1 | Request accepted |
-| | `mem_rsp_valid_i` | in | 1 | Response, once per request, read **or** write |
-| | `mem_rsp_rdata_i`, `mem_rsp_error_i` | in | 32 / 1 | Read data, and the bus error flag |
+| Signal | Dir | Width | Description |
+|---|---|---:|---|
+| `i_clk_cpu` | in | 1 | System clock, 20 MHz, never gated |
+| `i_rst_n_por` | in | 1 | Power-on reset only. Asserted asynchronously, released synchronously to `i_clk_cpu` |
+| `i_rst_n_sysbus` | in | 1 | `S_BUS` domain reset, as a level. Used only to abort a bus command -- 7.3 |
+| `i_jtag_tck` | in | 1 | JTAG clock. Asynchronous to `i_clk_cpu`, may stop at any time |
+| `i_jtag_tms` | in | 1 | JTAG mode select, sampled on rising `TCK` |
+| `i_jtag_tdi` | in | 1 | JTAG data in, sampled on rising `TCK` |
+| `i_jtag_trst_n` | in | 1 | JTAG reset. Resets the TAP and IR only |
+| `o_jtag_tdo` | out | 1 | JTAG data out, changes on falling `TCK` |
+| `o_jtag_tdo_oe` | out | 1 | 1 in Shift-DR and Shift-IR only |
+| `i_dbg_en` | in | 1 | From the `DBG_EN` pad. Asynchronous, captured once -- 7.1 |
+| `o_dbg_en` | out | 1 | Captured `DBG_EN`. Selects the Ibex boot address and forces the JTAG pins |
+| `o_cpu_hold` | out | 1 | 1 holds the CPU in reset. Into the `SCRC` CPU reset synchroniser |
+| `o_cpu_debug_req` | out | 1 | To Ibex `debug_req_i`. Level |
+| `i_cpu_debug_mode` | in | 1 | Ibex is in Debug Mode. Same clock as `i_clk_cpu` |
+| `o_mem_req` | out | 1 | Request. Held until `i_mem_gnt` |
+| `o_mem_addr` | out | 32 | Byte address, aligned to the access size |
+| `o_mem_we` | out | 1 | 1 write, 0 read |
+| `o_mem_wdata` | out | 32 | Write data, already shifted into its byte lane |
+| `o_mem_be` | out | 4 | Byte enables, from `size` and `addr[1:0]` -- 7.4 |
+| `i_mem_gnt` | in | 1 | Request accepted |
+| `i_mem_rsp_valid` | in | 1 | One response per granted request, read or write |
+| `i_mem_rsp_rdata` | in | 32 | Read data |
+| `i_mem_rsp_error` | in | 1 | Bus error (`SLVERR` or `DECERR`) |
 
-`tdo_oe_o` exists because the standard requires `TDO` to be tri-stated outside the
-Shift states so several devices can share one chain. QSOC has one TAP today;
-omitting the enable would make adding a second device a change to this block rather
-than to the pad ring.
-
-The bus port names are those of `axi_from_mem` with the directions flipped, so the
-instantiation is a straight connection with no renaming table to get wrong.
+At most one bus request is outstanding. The `o_mem_*` and `i_mem_*` names are the
+`axi_from_mem` port names with the direction flipped.
 
 : SYSDBG parameters
 
 | Parameter | Default | Meaning |
 |---|---|---|
-| `IdcodeValue` | `0x0515_3001` | Part number `0x5153` is hex-ASCII "QS"; manufacturer `0x000`, QSOC having no JEDEC ID; bit 0 set as the standard requires |
-| `AddrWidth` | 32 | Must match `S_BUS` |
-| `DataWidth` | 32 | The `ACCESS` register width follows from it |
-| `RegBaseAddr` | `0xF000_0000` | Base of the `SYSDBG` register window |
-| `RegAddrMatch` | `addr[31:28] == 4'hF` | The decode rule of section 7.3 |
-| `SyncStages` | 2 | Flip-flops per CDC synchroniser. Raise to 3 only if timing analysis asks |
-| `BusTimeout` | 1024 | System-clock cycles before an unanswered request is **reported** -- never abandoned, section 7.4 |
+| `IdcodeValue` | `0x0515_3001` | Part `0x5153` ("QS"), manufacturer `0x000`, bit 0 = 1 |
+| `SyncStages` | 2 | Flip-flops per synchroniser |
+| `BusTimeout` | 1024 | `i_clk_cpu` cycles in `BUS` before `timeout` is set |
 
 # 6. Register map
 
-Reachable **over JTAG only**. They are deliberately absent from the system bus, so
-software running on the CPU cannot halt itself or grant itself debug access.
+Reached over JTAG only, at `0xF000_0000`. The registers are not on `S_BUS`, so the
+CPU cannot reach them.
 
 : SYSDBG register map
 
-| Address | Name | Access | Bits |
-|---|---|---|---|
-| `0xF000_0000` | `CTRL` | RW | `[0]` `haltreq` · `[1]` `resumereq` · `[2]` reserved, reads 0 |
-| `0xF000_0004` | `STATUS` | RO | `[0]` `busy` · `[1]` `error` · `[2]` `cpu_halted` · `[3]` `bus_timeout` |
-| `0xF000_0008` | `ID` | RO | Version and build identifier |
+| Offset | Register | Field | Bits | Access | Reset | Description |
+|---|---|---|---|---|---|---|
+| `0x0` | `CTRL` | `haltreq` | 0 | RW | 0 | Drives `o_cpu_debug_req`. Hardware clears it in every cycle that `i_cpu_debug_mode = 1` |
+| | | -- | 1 | RSVD | 0 | Reads 0 |
+| | | `cpu_hold` | 2 | RW | 1 | Holds the CPU in reset when `o_dbg_en = 1`. No effect when `o_dbg_en = 0` |
+| | | -- | 31:3 | RSVD | 0 | Reads 0 |
+| `0x4` | `STATUS` | `halted` | 0 | RO | 0 | `i_cpu_debug_mode` |
+| | | `dbg_en` | 1 | RO | 0 | `o_dbg_en` |
+| | | `cpu_hold` | 2 | RO | 1 | `o_cpu_hold` |
+| | | -- | 31:3 | RSVD | 0 | Reads 0 |
+| `0x8` | `ID` | `version` | 31:0 | RO | `0x0000_0300` | Specification version, 3.0 |
 
-Halting the CPU is `write(0xF000_0000, 1)`; confirming it halted is
-`read(0xF000_0004)` and testing bit 2.
-
-The three `CTRL` bits **do not behave alike**, and a driver written against the
-wrong assumption fails in a way that looks like the CPU ignoring the debugger:
-
-: CTRL bit behaviour
-
-| Bit | Behaviour | Why |
-|---|---|---|
-| `[0]` `haltreq` | **Held.** Written 1, stays 1, cleared only by writing `resumereq` | `debug_req_o` is level-sensitive. A self-clearing bit would drop the request before the core had acted on it |
-| `[1]` `resumereq` | **Write 1, self-clearing**, reads back 0 | It is an event, not a state: its effect is to clear `haltreq` |
-| `[2]` | Reserved, reads 0, writes ignored | QSOC has no debug reset -- section 7.1. The position is left unused rather than reassigned, so a host built against an earlier revision cannot trigger something else |
-
-**Writing `resumereq` lowers `debug_req_o`; it does not restart the core.** Once in
-Debug Mode the core stays there until it executes `dret` -- `ibex_controller.sv`
-clears `debug_mode_d` in exactly one place, the `dret` branch. Section 7.7 gives the
-mechanism and the order the two steps must be taken in.
+- Register accesses must be word size. Any other size, or any address from
+  `0xF000_000C` to `0xFFFF_FFFF`, returns `ERROR`, and no bus request is issued.
+- Writes to `STATUS` and `ID` are ignored and return `OK`.
 
 # 7. Functional behaviour
 
-## 7.1 Clock and reset domains
+## 7.1 Debug enable and CPU hold
 
-`SYSDBG` is **the only block in QSOC with a genuinely asynchronous input clock**.
-It spans two clocks and three reset domains.
+The system domain synchronises `i_dbg_en` through `SyncStages` flip-flops and
+captures it **once**, in the first cycle after the synchroniser has filled following
+the release of `i_rst_n_por`. The captured value is `o_dbg_en`. It holds until the
+next power-on reset, whatever the pad does.
 
-: SYSDBG clock and reset domains
+```
+captured   = 0 from i_rst_n_por, 1 once DBG_EN has been captured
+o_cpu_hold = !captured | (o_dbg_en & CTRL.cpu_hold)
+```
 
-| Domain | Clocked by | Reset by |
+- Until the capture, `o_cpu_hold = 1`. The CPU cannot start before the mode is known.
+- **`DBG_EN = 0`:** after the capture, `o_cpu_hold = 0` permanently. `SCRC` alone
+  decides when the CPU leaves reset. `CTRL.cpu_hold` has no effect.
+- **`DBG_EN = 1`:** `o_cpu_hold` follows `CTRL.cpu_hold`, which is 1 at reset.
+  The host starts the CPU by writing 0. Writing 1 again puts the CPU back in reset
+  with `ISRAM` untouched.
+
+`o_cpu_hold` holds the CPU **only**. It is not a reset source: it resets no other
+domain and sets no bit in `RESET_CAUSE`.
+
+## 7.2 Boot flows
+
+![Debug boot wiring](../img/fig_sysdbg_boot_wiring.png){width=6.0in}
+
+: Effect of `DBG_EN`
+
+| | `DBG_EN = 0`, normal boot | `DBG_EN = 1`, debug boot |
 |---|---|---|
-| JTAG | `tck_i`, supplied by the adapter and **free to stop** | `trst_ni`, plus the TAP's Test-Logic-Reset state |
-| System | `clk_i`, always running | `rst_ni`, the chip power-on reset |
-| The crossing | both | neither -- the handshake of 7.5 survives either reset asserting alone |
+| CPU leaves reset | When `SCRC` releases it | When `SCRC` releases it **and** `CTRL.cpu_hold = 0` |
+| Ibex `boot_addr_i` | `0x0000_0000`, ROM | `0x2000_1000`, `ISRAM` |
+| First instruction | `0x0000_0080`, bootloader | `0x2000_1080`, loaded image |
+| JTAG pins `PIN_8`--`PIN_12` | IO MUX register, default JTAG | Forced to JTAG |
 
-**QSOC has no debug reset, so this block cannot restart the chip.** The Day005
-review of 2026-09-18 fixed the reset sources at three -- power-on, watchdog,
-software -- and removed debug reset to keep the reset tree simple; `SCRC` confirms
-it, its global combine having two inputs and its cause register three causes with no
-`DEBUG` among them.
+**Normal boot.** `SCRC` releases the domains, the CPU runs the bootloader, and the
+bootloader loads the program over UART0. To attach, the host writes the debug window
+(7.8) over `AXI_S0` while the CPU runs, then sets `CTRL.haltreq`.
 
-The cost, stated plainly: the only ways to restart QSOC are power cycling, the
-watchdog, or a software reset written by the CPU. The last needs the CPU running, so
-a core wedged with interrupts disabled leaves only the watchdog or removing power.
+**Debug boot.** The host takes these steps, in order:
 
-## 7.2 The ACCESS command register
+1. Power on. `SCRC` releases the bus, ROM, RAM and peripherals. The CPU stays in reset.
+2. Write the debug window, `0x2000_0000`--`0x2000_0FFF` (7.8).
+3. Write the program image from `0x2000_1000`.
+4. Optional: set `CTRL.haltreq`. The core then halts before its first instruction,
+   with `dpc = 0x2000_1080`.
+5. Write `CTRL.cpu_hold = 0`. The CPU starts.
+6. Halt, resume, set breakpoints, read and write memory and registers.
+7. To run again: `CTRL.cpu_hold = 1`, change the image, `CTRL.cpu_hold = 0`.
 
-![The ACCESS register, bit by bit](../img/fig_jtag_cmd.png){width=6.3in}
+## 7.3 Reset behaviour
 
-: ACCESS data register fields
+: What each reset does to SYSDBG
 
-| Field | Bits | Meaning |
-|---|---:|---|
-| `op` | `[67:66]` | `00` NOP · `01` READ · `10` WRITE |
-| `size` | `[65:64]` | `00` byte · `01` halfword · `10` word · `11` reserved |
-| `addr` | `[63:32]` | Byte address |
-| `data` | `[31:0]` | Write data, or read data on the way back |
+| Event | TAP, IR | Handshake, `CTRL`, `DBG_EN` capture | Command in `BUS` | CPU |
+|---|---|---|---|---|
+| Power-on | Reset | Reset | Lost | Reset, then 7.1 |
+| Watchdog bite, software reset | -- | -- | Aborted, `ERROR` | Per `SCRC`, then 7.1 |
+| `i_jtag_trst_n` or Test-Logic-Reset | Reset, IR = `IDCODE` | -- | -- | -- |
 
-One scan is one access. **A read takes two scans**: the first delivers the command,
-the second collects the result, because the answer cannot be shifted out of a
-register that is still being shifted in.
+- **Handshake flip-flops.** The `TCK` side of the handshake (`cmd_req`, `cmd_hold`,
+  the `cmd_ack` and `timeout` synchronisers) is reset by `i_rst_n_por` only.
+- **Bus reset during a command.** While `i_rst_n_sysbus = 0`, a command in `BUS`
+  drops `o_mem_req` and goes to `DONE` with `ERROR`. A new bus command goes from
+  `DECODE` to `DONE` with `ERROR` and no request is issued.
 
-**Byte enables and lane alignment.** `mem_be_o` is derived from `size` and the low
-address bits, as `dm_sba` derives its `be_mask`: a byte sets one bit chosen by
-`addr[1:0]`, a halfword two chosen by `addr[1]`, a word all four. Sub-word access is
-not a luxury -- QSOC is RV32I**MC**, so planting a breakpoint over a compressed
-instruction is a **halfword** write. The block also does the lane shift **in
-hardware**: the host always puts the value in the low bits of `data` and never needs
-to know the shift. Stated explicitly because a silent disagreement about it is a bug
-that looks like corrupted memory.
+## 7.4 The ACCESS register
 
-## 7.3 Command FSM
+: `ACCESS` fields
 
-![Command FSM](../img/fig_sysdbg_fsm.png){width=6.0in}
+| Field | Bits | Shifted in | Shifted out |
+|---|---:|---|---|
+| `op` | 67:66 | `00` NOP, `01` READ, `10` WRITE, `11` NOP | 0 |
+| `size` | 65:64 | `00` byte, `01` halfword, `10` word, `11` reserved | 0 |
+| `addr` | 63:32 | Byte address | 0 |
+| `status` | 33:32 | -- | `00` OK, `01` BUSY, `10` ERROR, `11` TIMEOUT |
+| `data` | 31:0 | Write data | Read data of the previous command |
+
+- One scan is one command. The answer shifted out belongs to the **previous**
+  command, so a read takes two scans.
+- `data` always uses the low bits. The block shifts write data into its lane and
+  shifts read data back down. `o_mem_be` is `0001 << addr[1:0]` for a byte,
+  `0011 << addr[1:0]` for a halfword, and `1111` for a word.
+- A halfword at an odd address, a word at an address that is not a multiple of
+  4, or `size = 11` returns `ERROR` with no request issued.
+
+## 7.5 Command FSM
+
+![Command FSM](../img/fig_sysdbg_cmd_fsm.png){width=6.3in}
 
 : Command FSM states
 
-| State | What happens |
-|---|---|
-| `IDLE` | Wait for Update-DR with `op != NOP` |
-| `DECODE` | Inspect `addr[31:28]`: local register file or system bus. A misaligned access or reserved `size` is rejected here, with no request issued |
-| `LOCAL` | Read or write `CTRL` / `STATUS` / `ID`; one cycle |
-| `BUS` | Drive `mem_req_o`; wait for `mem_gnt_i`, then `mem_rsp_valid_i` |
-| `DONE` | Latch `rdata` and `status` for the next scan to collect |
+| State | Action | Next |
+|---|---|---|
+| `IDLE` | Wait for a `cmd_req` edge from the CDC | `DECODE` |
+| `DECODE` | Check the command against 7.4 and 7.3 | `LOCAL` if `addr[31:28] = 0xF`; `DONE` with `ERROR` if rejected; else `BUS` |
+| `LOCAL` | Read or write a register of section 6, one cycle | `DONE` |
+| `BUS` | Hold `o_mem_req` until `i_mem_gnt`, then wait for `i_mem_rsp_valid`. Count cycles | `DONE` |
+| `DONE` | Load `rsp_hold` = {`status`, `rdata`}, then toggle `cmd_ack` one cycle later | `IDLE` |
 
-`addr[31:28] = 0xF` selects the register file; **every other address is handed to
-the bus master unchanged**, so the whole memory map is reachable with no special
-cases.
+- **In `BUS`:**
+  - When the counter reaches `BusTimeout`, `timeout` goes to 1 and the FSM **stays
+    in `BUS`**. A granted request cannot be cancelled, so leaving early would pair
+    its late response with the next command.
+  - A response that arrives after the timeout ends the command with `ERROR`.
+  - `i_mem_rsp_error = 1` gives `ERROR`.
+- **On leaving `BUS`:** the counter and `timeout` return to 0.
 
-While the FSM is not in `IDLE`, `status` reads back `BUSY`. A host that issues a
-command early gets `BUSY` rather than a corrupted result, which makes the protocol
-safe to drive from a program with no timing model of the target.
+## 7.6 Clock domain crossing
 
-## 7.4 A slave that never answers is reported, not abandoned
+Three single-bit signals cross, each through `SyncStages` flip-flops. Nothing else
+is sampled across the boundary.
 
-An unmapped address, or a block whose clock is stopped, would leave the FSM waiting
-forever. Giving up after `BusTimeout` and returning `ERROR` looks like the fix and
-**is wrong**: no bus here -- AXI, TL-UL or `req`/`gnt` -- can cancel a granted request,
-so the response still arrives and would be **attached to the next command**. The host
-would get data from an address it never asked about, with `status = OK`.
+: Crossing signals
 
-So on expiry the FSM latches `status = ERROR`, sets `STATUS.bus_timeout`, and
-**keeps waiting**. `busy` stays high, so a further command is answered `BUSY` and
-never handed a mismatched result. A late response is **discarded** and the FSM
-returns to `IDLE`. If none arrives, `busy` and `bus_timeout` both stay set, and that
-pair is a diagnosis rather than a hang: the host reads `STATUS` over JTAG, a path
-that does not touch the system bus, and knows a slave is not answering. `dm_sba` in
-`riscv-dbg` takes the same position, exposing `sbbusy_o` and never cancelling.
+| Signal | From, to | Kind | Meaning |
+|---|---|---|---|
+| `cmd_req` | `TCK` to system | Toggle | A new command is in `cmd_hold` |
+| `cmd_ack` | system to `TCK` | Toggle | The command is done; `rsp_hold` is valid |
+| `timeout` | system to `TCK` | Level | The current bus command has passed `BusTimeout` |
 
-## 7.5 Clock domain crossing
+`cmd_hold` (68 bits) and `rsp_hold` (34 bits) are read across the boundary
+**without** a synchroniser. The handshake keeps each one stable whenever the other
+side reads it:
 
-Three rules, and **nothing else crosses the boundary**:
+1. **Update-DR**, with `op` not NOP and the `TCK` side not busy: load `cmd_hold`
+   from `ACCESS` and toggle `cmd_req`.
+2. The system side sees the synchronised `cmd_req` change and reads `cmd_hold`.
+   `cmd_hold` does not change until `cmd_ack` is seen.
+3. **`DONE`:** load `rsp_hold`, then toggle `cmd_ack`. `rsp_hold` does not change
+   until the next command.
+4. The `TCK` side is **busy** while `cmd_req` differs from the synchronised
+   `cmd_ack`. **Update-DR while busy drops the command.** That scan has already
+   shifted out `BUSY`.
+5. **Capture-DR:** if not busy, load `rsp_hold` into `ACCESS`. If busy, load
+   `status` = `TIMEOUT` when the synchronised `timeout` is 1, otherwise `BUSY`,
+   with `data` = 0.
 
-1. The 68-bit command is **captured once**, at Update-DR, and passed across as one
-   unit with a request/acknowledge pair. The shift register is never sampled from
-   the system side; it is moving.
-2. `rdata` and `status` cross back the same way and are **captured at Capture-DR**,
-   so the value the host shifts out is stable for the whole scan.
-3. **Two-flop synchronisers** on the request and acknowledge lines.
+Toggles are levels, so the handshake works for any clock ratio and survives `TCK`
+stopping at any point. The `TCK` side only learns `cmd_ack` on `TCK` edges, so a
+host that polls must keep `TCK` running.
 
-The classic slow-to-fast handshake, in a separate module `m_sysdbg_cdc` so it can be
-verified alone. The four crossing signals are named here so the figure and the
-testbench agree: **`cmd_req`**, **`cmd_ack`** inbound, **`rsp_req`**, **`rsp_ack`**
-outbound. Each is one bit and each is **toggled, not pulsed**, so a level-change
-detector on the far side works however long `TCK` stays stopped.
-
-**A timing constraint must accompany it**, or the tool will try to close timing
-between two unrelated clocks and report failures that mean nothing:
+The two clocks are declared asynchronous:
 
 ```tcl
-set_false_path -from [get_clocks tck] -to [get_clocks clk]
-set_false_path -from [get_clocks clk] -to [get_clocks tck]
+set_clock_groups -asynchronous -group [get_clocks tck] -group [get_clocks clk_cpu]
 ```
 
-With it, the handshake is what guarantees correctness -- which is the reason only
-two single-bit signals are allowed to cross.
+`cmd_hold` and `rsp_hold` are stable for at least `SyncStages` cycles of the
+reading clock before they are read. Their routing delay across the boundary must
+therefore stay below one `i_clk_cpu` period. Check this in the timing report.
 
-## 7.6 Reading a CPU register
+## 7.7 Halt and resume
 
-A CPU register has **no bus address**, so no amount of bus mastering reaches it. The
-only defined route is to make the core **execute a store**, then read where it
-stored.
+- **Halt.** `o_cpu_debug_req = CTRL.haltreq`. The host writes 1. Ibex enters Debug
+  Mode, saves the PC in `dpc`, and jumps to `DmHaltAddr` = `0x2000_0800`.
+  `i_cpu_debug_mode` rises, and the hardware clears `haltreq` in that cycle.
+  `STATUS.halted` = 1.
+- **Halt before starting.** If `haltreq` is 1 while the CPU is in reset, it stays 1.
+  The core halts before executing its first instruction.
+- **Resume.** The host writes `RESUME` = 1 in the debug window (7.8). The dispatch
+  loop clears it and executes `dret`. `haltreq` is already 0, so the core does not
+  halt again. No `SYSDBG` register is written.
 
-: Debug memory window
+## 7.8 Debug window
 
-| Address | Contents |
-|---|---|
-| `0x2000_0000` | Instruction sequence the halted core jumps to |
-| `0x2000_0800` | `DmHaltAddr` -- the dispatch loop, entered on every halt |
-| `0x2000_0F00` | Result word the sequence publishes |
-| `0x2000_0F08` | Command word: non-zero means a sequence is waiting |
-| `0x2000_0F0C` | Resume flag |
+The first 4 KiB of `ISRAM`. **The host writes all of it through `AXI_S0`**:
+- in debug boot, while the CPU is held (7.2 step 2);
+- in normal boot, at any time before the first halt.
 
-**The dispatch loop** at `DmHaltAddr` polls the command word and the resume flag.
-Non-zero command: jump to `0x2000_0000`. Non-zero resume flag: clear it and execute
-`dret`, which restores the PC from `dpc` and leaves Debug Mode. Both zero: spin.
+Firmware places nothing here.
 
-**A sequence must destroy nothing**, including the register it needs for an address.
-Ibex implements `dscratch0` at `0x7b2` and `dscratch1` at `0x7b3` for exactly this,
-and ordinary firmware never touches them:
+: Debug window layout
 
-```asm
-        csrw    dscratch0, t0       # park t0 where firmware cannot see it
-        csrw    dscratch1, t1
-        lui     t0, 0x20000         # window base
-        csrr    t1, dpc             # the value being fetched
-        sw      t1, 0xF00(t0)       # publish the result
-        sw      zero, 0xF08(t0)     # clear the command word LAST
-        csrr    t1, dscratch1       # restore, in reverse order
-        csrr    t0, dscratch0
-        j       0x2000_0800         # back to the dispatch loop
-```
+| Address | Name | Content |
+|---|---|---|
+| `0x2000_0000`--`0x2000_06FF` | `SEQ` | The sequence for the current command, written by the host |
+| `0x2000_0700` | `DATA` | Word passed in either direction |
+| `0x2000_0704` | `EXC` | Set to 1 when a sequence traps |
+| `0x2000_0708` | `CMD` | Host writes 1 to run `SEQ`; the core writes 0 when done |
+| `0x2000_070C` | `RESUME` | Host writes 1 to leave Debug Mode; the core writes 0 |
+| `0x2000_0800` | `ENTRY` | `DmHaltAddr`. Entered on every halt |
+| `0x2000_0810` | `TRAP` | `DmExceptionAddr`. Entered on an exception in Debug Mode |
+| `0x2000_0820` | `LOOP` | Dispatch loop |
+| `0x2000_0840`--`0x2000_0FFF` | -- | Unused |
 
-**The result is written before the command word is cleared**, and that order is the
-handshake: the host polls the command word, and a zero means the result beside it is
-already valid.
-
-## 7.7 Resume, and why the order of the two steps matters
-
-Resuming is two writes, and **reversing them re-halts the core immediately**:
-
-1. Set the **resume flag** at `0x2000_0F0C`, so the dispatch loop will execute
-   `dret`.
-2. Then write `resumereq`, which lowers `debug_req_o`.
-
-Do it the other way and `debug_req_o` falls while the core is still spinning in the
-loop; the loop has nothing to tell it to leave, and the next thing it sees is a
-fresh halt request. Ordering only, no RTL: the block cannot enforce it, so it is a
-host-software obligation and a verification case in section 12.
+The code at `ENTRY`, `TRAP` and `LOOP`, the sequence rules, and the host protocol
+are host software. They are in `_DECISIONS`, "Debug window code".
 
 # 8. Instances
 
-One, instantiated in `design/top`. Parameters as section 5.
+One, in `design/top`, with the default parameters.
 
 # 9. What is not provided here, and who provides it
-
-![What one bus port reaches](../img/fig_sysdbg_ports.png){width=6.2in}
 
 : Functions this block does not provide
 
 | Function | Where it lives |
 |---|---|
-| AXI4 conversion at `AXI_S0` | `axi_from_mem`, delivered by the **bus owner** -- section 4 |
-| A debug ROM | Nowhere. The dispatch loop is ordinary code in `ISRAM` -- 7.6 |
-| A program buffer | Nowhere. Sequences are in `ISRAM`, not inside this block |
-| `dret` | The dispatch loop executes it; this block only lowers `debug_req_o` |
-| The instruction sequences, and the resume ordering | **Host software**, specified in `_DECISIONS` |
-| Protection of the JTAG pins and the debug clock gate | IO MUX and SCRC owners -- section 11 |
+| Reset of the chip or of any domain | Nowhere. `o_cpu_hold` holds the CPU only |
+| CPU clock control | Not needed. The `cpu` cluster is never gated |
+| Debug ROM, program buffer | Nowhere. The debug window in `ISRAM`, 7.8 |
+| `dret`, stepping, breakpoints | Ibex, driven by code in the debug window |
 
-**Every capability is delivered through one master port**, which is the point of the
-figure. A standard debug module would put a program buffer inside itself and let the
-core fetch from it; here the instructions go in `ISRAM` instead, so register access
-needs no slave port.
+# 10. Tie-offs
 
-# 10. Constraints this block imposes
+: Tie-offs
 
-: Constraints on synthesis, memory and host software
-
-| On | Constraint | Consequence if missed |
+| Port | Tied to | Why |
 |---|---|---|
-| Synthesis | The two `set_false_path` statements of 7.5 | Meaningless timing failures between unrelated clocks |
-| `ISRAM` | First 4 KiB reserved at `0x2000_0000` | The debug window and firmware overlap |
-| Firmware | Main image linked at `0x2000_1000` | Same overlap, from the other side |
-| Host software | Resume ordering of 7.7 | The core re-halts instead of resuming |
+| -- | -- | None. Every port is connected |
 
 # 11. Requirements on others, and open items
 
@@ -375,76 +343,52 @@ needs no slave port.
 
 | Item | Owner | What it blocks |
 |---|---|---|
-| **Export `debug_mode` from `ibex_top`** | CPU owner | How this block knows a sequence finished. Removes the need for a debug ROM |
-| All four `Dm*` parameters, **not** the Ibex defaults | CPU owner | The window of 7.6 |
-| `axi_from_mem` at `AXI_S0`, `MaxRequests = 1` | bus owner | Every bus access this block makes |
-| `0xF000_0000` left **unmapped** on `S_BUS`, answering `DECERR` | bus owner | A slave claiming that region would shadow the registers of section 6 |
-| 4 KiB reserved at `0x2000_0000`; main image at `0x2000_1000` | memory map owner, firmware owner | The window of 7.6 |
-| **Debug clock gate open out of reset and not closable by software** | SCRC owner | Software able to close it disables the debugger **silently**: the TAP keeps working on `tck_i` while the FSM is frozen |
-| **`SYSDBG` released from reset before the CPU** | SCRC owner | Halt-on-reset fails if `debug_req_o` is not already high when the core leaves reset |
-| **IO MUX must not be able to steal the JTAG pins** | IO MUX owner | See below |
+| `DBG_EN` on one of the three no-connect pads, pull-down on the board | Top, pad owner | Debug boot |
+| `i_rst_n_por` from power-on only, not from the watchdog | `SCRC` | Session and `CTRL.cpu_hold` surviving a watchdog bite |
+| CPU reset = `SCRC` CPU reset OR `o_cpu_hold`, through the CPU reset synchroniser | `SCRC` | Debug boot. An OR after the synchroniser can glitch |
+| `i_rst_n_sysbus` provided | `SCRC` | Abort of 7.3 |
+| `boot_addr_i = o_dbg_en ? 0x2000_1000 : 0x0000_0000` | CPU owner | Debug boot running the loaded image |
+| Export Ibex `debug_mode` as `i_cpu_debug_mode` | CPU owner | `haltreq` clearing, `STATUS.halted` |
+| `DmHaltAddr = 0x2000_0800`, `DmExceptionAddr = 0x2000_0810`, window `0x2000_0000` / 4 KiB | CPU owner | 7.8 |
+| `fetch_enable_i` asserted whenever the CPU reset is released, in both modes | CPU owner, `SCRC` | Open. Proposed: tie on |
+| `axi_from_mem` at `AXI_S0`, `MaxRequests = 1`; `0xF000_0000` region unmapped, `DECERR` | Bus owner | Every bus access |
+| `PIN_8`--`PIN_12` forced to JTAG while `o_dbg_en = 1` | IO MUX owner | Debug boot with firmware that remaps pins |
+| `ISRAM` array has no reset and no clear-on-reset | RAM owner | Image surviving a watchdog or software reset |
+| Image linked at `0x2000_1000` with its reset entry at `0x2000_1080`; bootloader jumps to `0x2000_1080` | Firmware owner | The same image in both boot modes |
 
-**The JTAG pins are shared with GPIO, and that is the block's worst hazard.**
-`IOPAD_Pin_Summary` of 2026-09-20 places all five on `PIN_8`--`PIN_12` with **b00,
-the JTAG function, as the reset default**, so the debugger works before firmware
-runs. But each is shared with `GPIO0[7:3]` and the selection is a register firmware
-can write: one write disconnects the adapter. **The failure is silent** -- the host
-keeps shifting, nothing reports an error, `TDO` stops answering, and a dead adapter
-is indistinguishable from a dead chip. With no debug reset, recovery is the watchdog
-or power cycling the board.
+**Accepted limits:**
 
-Three acceptable answers, in order of preference:
-
-: Acceptable rules for protecting the JTAG pins
-
-| | Rule |
-|---|---|
-| Preferred | The IO MUX **ignores writes** that would move `PIN_8`--`PIN_12` out of b00 |
-| Acceptable | Those five fields are writable only after a **lock bit** is cleared, the lock being set at reset |
-| Minimum | Any reset reaching the IO MUX register returns the five fields to b00, so a watchdog bite restores debug access |
-
-The minimum is listed separately because it costs nothing at design time and is the
-difference between a recoverable board and one that needs its power removed.
-
-**Accepted limits**, stated rather than hidden:
-
-1. No debug reset. A wedged core is recovered by watchdog or power only -- 7.1.
-2. A read costs two JTAG scans -- 7.2.
-3. Reading a CPU register requires the core halted **and** the dispatch loop
-   present; it is not available on a core that never reached `DmHaltAddr`.
-4. Resume ordering cannot be enforced in RTL -- 7.7.
-
-**Open on this block:** timing closure across the CDC, and the gate count, both of
-which wait on synthesis. `SyncStages = 2` is the assumption to revisit first.
+1. In normal boot, firmware can take the JTAG pins, and the host cannot recover
+   them. Use debug boot.
+2. The watchdog keeps counting while the core is halted. Leave it disabled when
+   debugging.
+3. A slave that never answers keeps the FSM in `BUS` until a bus reset or power-on.
+4. Stock OpenOCD cannot drive the `ACCESS` register. The host software is in house.
 
 # 12. Verification
 
-The RAM arrived with 46 tests already written. `SYSDBG` arrives with none, so the
-plan is part of the design.
+1. TAP: all 16 states from every state; `IDCODE` after reset; `BYPASS` 1 bit; IR
+   changes only at Update-IR; `i_jtag_trst_n` mid-command does not lose the command.
+2. `DBG_EN`: `o_cpu_hold` = 1 until the capture; then 0 for `DBG_EN = 0`, or
+   `CTRL.cpu_hold` for `DBG_EN = 1`; toggling the pad afterwards changes nothing.
+3. Register map: reset values and access types of section 6; non-word access and
+   `0xF000_000C` return `ERROR` with no `o_mem_req`.
+4. `haltreq` drives `o_cpu_debug_req` and clears in the cycle `i_cpu_debug_mode` = 1.
+5. Every size and offset, read and write: `o_mem_be`, lane placement, read-back;
+   misaligned and `size = 11` return `ERROR` with no request.
+6. Bus port SVA: `o_mem_req` held until `i_mem_gnt`; one request outstanding;
+   `o_mem_be` never 0 on a write. `i_mem_rsp_error` gives `ERROR`.
+7. Late slave: `TIMEOUT` while waiting, `ERROR` at the end, next command correct.
+   `i_rst_n_sysbus` low in `BUS`: request drops, `ERROR`, next command correct.
+8. CDC: unrelated clocks, `TCK` 10x slower to 10x faster, `TCK` stopped 10,000
+   cycles after Update-DR; every command executes exactly once. CDC lint: only
+   `cmd_hold`, `rsp_hold` and the three synchronisers cross.
+9. With Ibex, debug boot: load, `haltreq`, `cpu_hold = 0`; halts with `dpc =
+   0x2000_1080`; resumes through `RESUME` without halting again. Normal boot:
+   attach while running, halt, resume.
 
-: SYSDBG verification plan
-
-| Level | What is checked | How |
-|---|---|---|
-| `m_sysdbg_cdc` alone | No data sampled while moving; the handshake completes; `TCK` stopping mid-sequence | Two independent, deliberately unrelated clocks, including a `TCK` that stops after Update-DR |
-| TAP alone | The 16-state walk from every state; `IDCODE` after reset; `BYPASS` is one bit; IR takes effect only at Update-IR | Directed `TMS` patterns |
-| Command FSM alone | Every transition; `BUSY` while not `IDLE`; misaligned and reserved `size` rejected in `DECODE` | Stub slave with programmable grant and response latency |
-| **`BusTimeout`** | On expiry: `ERROR` and `bus_timeout` set, `busy` stays high, no new command accepted; a response arriving **after** expiry is discarded, never returned | Stub slave answering only after `BusTimeout`. This is the test that proves the hazard of 7.4 is closed |
-| Bus master port | `req` held until `gnt`; exactly one response per granted request; no second request while one is outstanding; `mem_be_o` never zero on a write and equal to the size-and-address decode | Four SVA properties, modelled on `sva/dm_sba_sva.sv` in `riscv-dbg` |
-| With its adapter | AXI4 legality at `AXI_S0`; `SLVERR` and `DECERR` both arrive as `mem_rsp_error_i` and become `status = ERROR` | AXI checker applied to `SYSDBG` + `axi_from_mem` together, since that pair is what the crossbar sees |
-| **Resume ordering** | The wrong order re-halts immediately; the specified order resumes once and stays running | Directed test driving both orders, checking `debug_mode_i` and `STATUS[2]` |
-| Block level | One scan in produces the right transaction out; a read needs two scans; byte and halfword land in the right lane both ways; `debug_req_o` rises and is held | Behavioural JTAG driver plus a memory model |
-| Lane alignment | Host always uses the low bits of `data`, both directions, for all three sizes | Part of the block-level test; called out because a disagreement here looks like memory corruption |
-
-Two properties are **assertions, not test cases**, being invariants a directed test
-can only sample:
-
-1. `debug_req_o` never falls while `CTRL[0]` is set.
-2. The system side never reads the `ACCESS` register while `shift_dr` is active.
-
-**Acceptance criterion for the whole block:** write `CTRL.haltreq` over JTAG, poll
-`STATUS[2]`, see it go high. Everything before proves a piece; that step is the
-first that proves the block.
+**Acceptance:** in debug boot, load an image that toggles a GPIO, release the CPU,
+halt it, read `dpc`, resume it, and see the GPIO toggle again.
 
 # Appendix A. Acronyms
 
@@ -453,15 +397,12 @@ first that proves the block.
 | Acronym | Description |
 |---|---|
 | CDC | Clock Domain Crossing |
-| CSR | Control and Status Register |
-| `dpc` | Debug Program Counter: the PC `dret` restores |
-| `dret` | The instruction that leaves Debug Mode |
-| `dscratch0`, `dscratch1` | Debug scratch CSRs, `0x7b2` and `0x7b3` |
-| DMI | Debug Module Interface, in the RISC-V Debug Specification |
-| `DmHaltAddr` | Address the core jumps to on halt |
-| GPR | General Purpose Register |
+| `dpc` | Debug PC: where `dret` returns |
+| `dret` | Instruction that leaves Debug Mode |
+| `dscratch0`, `dscratch1` | Ibex debug scratch CSRs, `0x7b2`, `0x7b3` |
 | IR, DR | JTAG Instruction and Data Register |
-| SCRC | System Clock Reset Control. Formerly `SYSCTL` on the block diagram |
+| POR | Power-On Reset |
+| SCRC | System Clock Reset Control |
 | TAP | Test Access Port, IEEE 1149.1 |
 
 # Appendix B. First review
@@ -470,7 +411,7 @@ first that proves the block.
 
 | Item | Reviewer | Response |
 |---|---|---|
-| The block diagram does not show which domain the FSM is in, and puts the CDC in the wrong place | Teacher, 2026-09-23 | Correct, and it also drew the return path with no synchroniser. That figure is deleted; section 3 uses the one that was right, so two drawings cannot disagree again |
-| Too long, and the redundancy causes wrong information | Teacher, 2026-09-23 | V2.0 is the answer: 998 lines to this, with the record kept whole in `_DECISIONS` |
-| Does the block need a slave port for register access? | -- | No. Section 9: every capability goes through one master port |
-| Should the bus timeout abandon the request? | -- | No, and section 7.4 gives the reason: a granted request cannot be cancelled, so the response would land on the next command |
+| The block diagram does not show where the FSM and the CDC are | Teacher, 2026-09-23 | Section 3 shows both domains and the three crossing signals. 7.5 gives the FSM, 7.6 the crossing rules |
+| Too long, and the repetition causes errors | Teacher, 2026-09-23 | Rewritten as V3.0. The reasoning moved to `_DECISIONS` |
+| Who loads the 4 KiB debug program, and when? | Teacher, 2026-09-23 | The host, over JTAG. In debug boot, while the CPU is held; in normal boot, before the first halt -- 7.2, 7.8 |
+| The debugger must control the CPU reset, selected by an external pin | Teacher, 2026-09-23 | `DBG_EN` and `CTRL.cpu_hold` -- 7.1. CPU clock control is not added: the `cpu` cluster is never gated |
