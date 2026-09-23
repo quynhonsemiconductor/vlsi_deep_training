@@ -115,19 +115,28 @@ def interrupt_totals(c):
 
 
 def core_tie_offs(c):
-    """The core interrupt inputs QSOC does not drive, and why."""
+    """The core interrupt inputs QSOC does not drive, and why.
+
+    The reason each is tied off is the same question as why only the fast lines
+    are used, so it is answered here rather than in a section of its own: each of
+    the three standard RISC-V lines needs a block QSOC does not have, and the fast
+    lines need nothing."""
     i = c["interrupts"]
     why = {
-        "irq_external_i": "nothing aggregates onto it; there is no external "
-                          "interrupt controller",
-        "irq_timer_i": "no CLINT, so `mip.MTIP` is never set -- TIMER0 is an "
+        "irq_external_i": "needs a **PLIC** -- a bus slave with priority, "
+                          "per-source enable and claim/complete registers. QSOC "
+                          "has none, and 11 lines fit in the 15 the core offers "
+                          "without one",
+        "irq_timer_i": "needs a **CLINT** for `mtime` and `mtimecmp`. QSOC has "
+                       "none, so `mip.MTIP` is never set and TIMER0 is an "
                        "ordinary fast line",
-        "irq_software_i": "permitted on a single-hart system",
+        "irq_software_i": "needs a second hart to send the inter-processor "
+                          "interrupt. QSOC has one",
     }
     rows = [["`irq_fast_i[%d:%d]`" % (i["fast_lines_available"] - 1,
                                       len(i["lines"])),
              "`%d'b0`" % (i["fast_lines_available"] - len(i["lines"])),
-             "QSOC drives %d of the %d lines"
+             "QSOC drives %d of the %d lines the core offers"
              % (len(i["lines"]), i["fast_lines_available"])]]
     rows += [["`%s`" % p, "`0`", why.get(p, "not used")] for p in i["tied_low"]]
     return table(["Port", "Tied to", "Why"], rows,

@@ -1301,3 +1301,34 @@ repeated here.
 repository in September 2026. Line numbers are deliberately **not** cited because they
 drift; the logic is quoted instead. `pulp-platform/rv_plic` was last pushed
 **2024-04**. Pinning commit hashes is recommended and not yet done -- question 8.
+
+## Why only the fast lines are used
+
+Asked in review, and the answer is rationale rather than specification, so it lives
+here. The specification states the outcome in section 10: three of the core's five
+interrupt inputs are tied off, with the reason against each.
+
+Ibex has five interrupt inputs, and four of them are the RISC-V standard ones.
+Each of the three standard lines needs a block QSOC does not have.
+
+| Input | mcause | What it needs before it can be used | In QSOC |
+|---|---:|---|---|
+| `irq_software_i` | 3 | another hart to send the inter-processor interrupt | single hart, so nothing could ever drive it |
+| `irq_timer_i` | 7 | a **CLINT**: `mtime` and `mtimecmp` as memory-mapped registers | no CLINT. TIMER0 is on a fast line instead |
+| `irq_external_i` | 11 | a **PLIC**: a bus slave with priority, per-source enable and claim/complete registers | no PLIC. V8.0 adopted `pulp-platform/rv_plic` and it was dropped again |
+| `irq_fast_i[14:0]` | 16-30 | **nothing** -- fifteen wires straight into the core | all eleven QSOC lines |
+| `irq_nm_i` | 31 | nothing | the watchdog bark |
+
+The fast lines are Ibex's own extension, not part of the RISC-V standard, and need
+no supporting block: the core resolves priority in hardware and dispatches through
+the vector table. Twenty-seven sources reduce to eleven and Ibex offers fifteen, so
+the whole job fits in wires and OR gates. A PLIC would add a bus slave, a register
+file, a clock domain and an acknowledge protocol to achieve the same thing.
+
+Had QSOC more than fifteen interrupt lines, or needed software-settable priority, a
+PLIC would be the answer and `INTMAP` would not exist.
+
+Every number here is from the vendored RTL rather than a manual: the five input
+ports from `ibex_top.sv` lines 117 to 122, the `mcause` values 3, 7, 11 and 31 from
+the `ExcCauseIrq*` parameters in `ibex_pkg.sv`, and bits 16 to 30 from
+`CSR_MFIX_BIT_LOW` and `CSR_MFIX_BIT_HIGH`.

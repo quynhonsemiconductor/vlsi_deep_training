@@ -13,7 +13,7 @@ they are listed in full, with the reasoning and the evidence behind each, in
 
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
-| V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only: 1284 lines to 327. History and reasoning moved to `_DECISIONS`. Tables in 7.3 and 10 generated from `util/qsoc_contract.yml` |
+| V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only: 1284 lines to 327. History and reasoning moved to `_DECISIONS`. Tables in 7.2 and 10 generated from `util/qsoc_contract.yml` |
 
 # 1. Overview
 
@@ -117,42 +117,7 @@ A peripheral with one source is wired straight through; one with several is
 OR-reduced. **Zero flip-flops**, so the delay from a source asserting to the core
 seeing it is combinational.
 
-## 7.2 Why only the fast lines are used
-
-Ibex has five interrupt inputs, and four of them are the RISC-V standard ones.
-QSOC drives one and ties three off, because **the three standard lines each
-require a block that QSOC does not have**:
-
-: What each Ibex interrupt input would cost
-
-| Input | mcause | What it needs before it can be used | In QSOC |
-|---|---:|---|---|
-| `irq_software_i` | 3 | another hart to send the inter-processor interrupt | single hart, so nothing could ever drive it |
-| `irq_timer_i` | 7 | a **CLINT**: `mtime` and `mtimecmp` as memory-mapped registers | no CLINT. TIMER0 is on a fast line instead |
-| `irq_external_i` | 11 | a **PLIC**: a bus slave with priority, per-source enable and claim/complete registers | no PLIC. That is a block on its own, and it was rejected |
-| `irq_fast_i[14:0]` | 16-30 | **nothing** -- fifteen wires straight into the core | all eleven QSOC lines |
-| `irq_nm_i` | 31 | nothing | the watchdog bark |
-
-The fast lines are Ibex's own extension, not part of the RISC-V standard, and they
-need no supporting block at all: the core resolves priority in hardware and
-dispatches through the vector table. Twenty-seven sources reduce to eleven, and
-Ibex offers fifteen, so **the whole job fits in wires and OR gates**. A PLIC would
-add a bus slave, a register file, a clock domain and an acknowledge protocol to
-achieve the same thing.
-
-Two consequences of the choice, stated because they are real:
-
-- **It is Ibex-specific.** `mcause` 16 to 30 is platform-use space in the RISC-V
-  privileged specification, so the numbering is a local convention. A different
-  core would need this block and the vector table rewritten.
-- **Firmware cannot use a standard timer driver.** With no CLINT there is no
-  `mtime`, so an RTOS port has to drive TIMER0 through its own registers -- see
-  section 10.
-
-Had QSOC more than fifteen interrupt lines, or needed software-settable priority,
-a PLIC would be the answer and this block would not exist.
-
-## 7.3 Line assignment
+## 7.2 Line assignment
 
 **Line** is the index of the wire in `irq_fast_i[14:0]`, the fifteen-bit input
 port on the core. Line 3 means `irq_fast_i[3]`, nothing more. The index **is** the
@@ -209,7 +174,7 @@ event loses a byte that cannot be recovered; a missed timer tick arrives again n
 period. DMA takes line 0 because the rest of the system waits on a transfer
 completing.
 
-## 7.4 The core identifies the source, not a register
+## 7.3 The core identifies the source, not a register
 
 Fast line *n* raises `mcause` `16 + n`, and Ibex is permanently in vectored mode,
 so the trap address is `mtvec + 4 × mcause`. The core therefore enters the
@@ -219,7 +184,7 @@ transaction occurs on the interrupt path.**
 `mcause` 16 and above is platform-use space in the RISC-V privileged
 specification, so this numbering is a local convention the specification permits.
 
-## 7.5 The NMI bypasses this block
+## 7.4 The NMI bypasses this block
 
 `i_int_wdt_bark` goes to `o_int_nm` unmodified. The bark must reach the core even
 if firmware has hung with interrupts disabled, and `irq_nm_i` is outside
@@ -229,7 +194,7 @@ Ibex ignores the NMI in Debug Mode. A bark raised while `SYSDBG` has the core
 halted therefore traps on resume, not when it occurs — and only because
 `aon_timer` holds the bark as a level.
 
-## 7.6 A pulse can be missed, and what that costs
+## 7.5 A pulse can be missed, and what that costs
 
 `mip` in Ibex is combinational: `assign mip.irq_fast = irq_fast_i`. The core
 latches nothing, and neither does this block. A one-cycle pulse arriving while
@@ -259,7 +224,7 @@ One. It is instantiated in `design/top` and has no parameters.
 
 | Function | Where it lives |
 |---|---|
-| Pending latch | the peripheral's status register, or nowhere — 7.6 |
+| Pending latch | the peripheral's status register, or nowhere — 7.5 |
 | Which event fired | the peripheral's status register |
 | Which peripheral fired | `mcause`, via the vectored trap address |
 | Priority resolution | Ibex, by fast-line index |
@@ -273,10 +238,10 @@ One. It is instantiated in `design/top` and has no parameters.
 
 | Port | Tied to | Why |
 |---|---|---|
-| `irq_fast_i[14:11]` | `4'b0` | QSOC drives 11 of the 15 lines |
-| `irq_external_i` | `0` | nothing aggregates onto it; there is no external interrupt controller |
-| `irq_timer_i` | `0` | no CLINT, so `mip.MTIP` is never set -- TIMER0 is an ordinary fast line |
-| `irq_software_i` | `0` | permitted on a single-hart system |
+| `irq_fast_i[14:11]` | `4'b0` | QSOC drives 11 of the 15 lines the core offers |
+| `irq_external_i` | `0` | needs a **PLIC** -- a bus slave with priority, per-source enable and claim/complete registers. QSOC has none, and 11 lines fit in the 15 the core offers without one |
+| `irq_timer_i` | `0` | needs a **CLINT** for `mtime` and `mtimecmp`. QSOC has none, so `mip.MTIP` is never set and TIMER0 is an ordinary fast line |
+| `irq_software_i` | `0` | needs a second hart to send the inter-processor interrupt. QSOC has one |
 <!-- /gen -->
 
 **Consequence for firmware:** an RTOS ported to QSOC must supply its own timer
@@ -296,7 +261,7 @@ driver rather than the standard `mtime`/`mtimecmp` one.
 **Accepted limits**, stated rather than hidden:
 
 1. A pulse arriving while `mstatus.MIE` is clear is lost. Recoverable for every
-   source — 7.6.
+   source — 7.5.
 2. Priority is fixed at elaboration. Changing it is a re-synthesis.
 3. `mcause` 16–30 is platform-use space, so the numbering is a local convention
    rather than a portable one.
@@ -313,7 +278,7 @@ Ten checks, none requiring a bus model:
 6. Simultaneous inputs on one group raise the line once.
 7. Simultaneous inputs on different groups raise both lines.
 8. Output follows input combinationally, with no cycle of delay.
-9. `mcause`/vector mapping matches section 7.3 against `qnsc_pkg`.
+9. `mcause`/vector mapping matches section 7.2 against `qnsc_pkg`.
 10. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
     `always_ff`. If any appears, the design has drifted back into being a
     controller.
@@ -346,6 +311,6 @@ Ten checks, none requiring a bus model:
 |---|---|---|
 | GPIO: one line for four instances, or four lines? | Day005, 2026-09-18 | One line. Which pin fired is in the instance's `INTSTATUS`. Closed in V11.2 |
 | Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by `DMA_ISR` W1C. Closed in V11.10 |
-| Does this block need to latch pending? | -- | No. Section 7.6: no source destroys information |
-| Priority order justified? | -- | Section 7.3: data loss first, human time last |
+| Does this block need to latch pending? | -- | No. Section 7.5: no source destroys information |
+| Priority order justified? | -- | Section 7.2: data loss first, human time last |
 | Open | | |
