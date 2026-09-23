@@ -240,14 +240,10 @@ safe to drive from a program with no timing model of the target.
 ## 7.4 A slave that never answers is reported, not abandoned
 
 An unmapped address, or a block whose clock is stopped, would leave the FSM waiting
-forever -- and a debugger that hangs takes with it the only tool for finding out
-why. The tempting fix is to give up after `BusTimeout` and return `ERROR`. **That is
-wrong, and quietly so:** neither AXI, nor TL-UL, nor a `req`/`gnt` bus can cancel a
-granted request. A block that stops waiting still has a response coming, and it
-would be delivered to the **next** command -- the host receiving data from an
-address it never asked about, with `status = OK`. A silent wrong answer from the
-debugger is worse than a visible stall, because every conclusion drawn after it is
-also wrong.
+forever. Giving up after `BusTimeout` and returning `ERROR` looks like the fix and
+**is wrong**: no bus here -- AXI, TL-UL or `req`/`gnt` -- can cancel a granted request,
+so the response still arrives and would be **attached to the next command**. The host
+would get data from an address it never asked about, with `status = OK`.
 
 So on expiry the FSM latches `status = ERROR`, sets `STATUS.bus_timeout`, and
 **keeps waiting**. `busy` stays high, so a further command is answered `BUSY` and

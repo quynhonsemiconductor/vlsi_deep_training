@@ -205,13 +205,12 @@ so every write is full width. That is a **stated boundary of the IP, not a defec
 -- its README says so -- and for `ROM` it does not matter at all, a ROM never being
 written.
 
-For RAM it matters, because RV32 has `sb` and `sh`. Any C code touching a `uint8_t`,
-a packed struct field or a string emits them. Without this path such a store writes
-the whole 32-bit word and **destroys the three bytes beside the one the program meant
-to change -- silently, with no error response**.
+For RAM it matters, because RV32 has `sb` and `sh`, which any C code touching a
+`uint8_t`, a packed struct field or a string emits. Without this path such a store
+writes the whole word and **destroys the three bytes beside the one it meant to
+change, silently**, `RRESP` being tied `OKAY`.
 
-The information does reach this block; it is dropped **here and nowhere earlier**,
-which is worth checking rather than assuming:
+The information does reach this block and is dropped **here and nowhere earlier**:
 
 : Where the byte enables are lost
 

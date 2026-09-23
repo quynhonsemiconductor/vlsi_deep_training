@@ -95,7 +95,7 @@ missed wrap corrupts every later measurement. A PWM block never needs a long cou
 
 | Signal | Dir | Width | Note |
 |---|---|---:|---|
-| `HCLK` | in | 1 | `peri` cluster clock -- section 7.5 |
+| `HCLK` | in | 1 | `peri` cluster clock, gateable by `SCRC` -- section 10 |
 | `HRESETn` | in | 1 | active low |
 | `PADDR` | in | 12 | **only `PADDR[5:0]` is decoded** -- section 7.6 |
 | `PWDATA` | in | 32 | |
@@ -198,12 +198,11 @@ end
 **In 64-bit mode `irq_hi_o` is never driven**, so the instance contributes one source,
 not two. That is why `TIMER0` contributes one line and `TIMER1` two.
 
-**The 64-bit compare is correct, and it is worth showing why**, because the expression
-looks as though two unrelated events must coincide. `target_reached_hi` is high for the
-whole epoch in which `counter_hi` equals its target, and that epoch lasts one full wrap
-of `counter_lo`. Within it, `counter_lo` passes through every value exactly once, so it
-equals its own target for exactly one tick. The AND therefore produces **exactly one
-pulse**, at the intended 64-bit value.
+**The AND is correct, though it looks as though two unrelated events must coincide.**
+`target_reached_hi` is high for the whole epoch in which `counter_hi` equals its target
+-- one full wrap of `counter_lo` -- and within that epoch `counter_lo` equals its own
+target for exactly one tick. So the AND gives **exactly one pulse**, at the intended
+64-bit value.
 
 ## 7.4 The compare is equality, not greater-or-equal
 

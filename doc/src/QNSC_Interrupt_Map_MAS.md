@@ -18,9 +18,10 @@ they are listed in full, with the reasoning and the evidence behind each, in
 # 1. Overview
 
 Twenty-seven interrupt sources reach the CPU as twelve wires. `INTMAP` is the
-combinational OR tree that does the reduction: it groups the sources of twelve
-peripherals, in eight blocks, onto the core's fast interrupt lines, one line per peripheral, and passes
-the watchdog bark straight through to the non-maskable input.
+combinational OR tree that does the reduction: **eleven peripherals get one fast
+interrupt line each**, and the twelfth, the watchdog bark, passes straight through to
+the non-maskable input. A peripheral with several sources is OR-reduced onto its own
+line; no line is shared between peripherals.
 
 **It does not**: hold state, decode an address, appear on any bus, prioritise
 (the core does that), or latch a pulse. It has no clock and no reset.
