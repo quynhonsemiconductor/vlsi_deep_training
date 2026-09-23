@@ -34,6 +34,15 @@ turned up four defects. Each row gives the decision and the reason for it.
 | D9 | **Bus command aborted while `i_rst_n_sysbus = 0`** | A watchdog or software reset resets `axi_from_mem` with the bus. V2.0's "keep waiting" would then have waited forever for a response that can no longer come |
 | D10 | **CDC reduced to `cmd_req`, `cmd_ack`, `timeout`** | V2.0 named four toggles and then said only two cross. The response rides on `cmd_ack`, so a separate `rsp_req`/`rsp_ack` pair is not needed. The `TCK`-side handshake is reset by power-on only, so a JTAG reset cannot break a command in flight |
 | D11 | **Port names to `QNSC_RTL_Design_Naming_Rule`** (`i_`/`o_`, `i_clk_cpu`) | The template requires it; V2.0 used the Ibex suffix style |
+| D12 | **JTAG internals follow the teacher's reference, `drawio/VLSI_SYSDBG.drawio`** (2026-09-23): IR plus separate data registers (`ADDR` 33, `DATA` 32, `STATUS` 3, `CPUDBG`, `IDCODE`, `BYPASS`) in place of the 68-bit `ACCESS` register and command FSM | This is the teacher's design. The data registers are the interface, so the `CTRL`/`STATUS`/`ID` window at `0xF000_0000`, its decode, and its `LOCAL` state all go away |
+| D13 | **Native AXI4 manager** (one beat, 4 bytes, fixed attributes) in place of the `req`/`gnt` port and `axi_from_mem` | Also from the reference. One adapter fewer at `AXI_S0`. Word only: breakpoints use the Ibex triggers, and a halfword patch is a read-modify-write |
+| D14 | **4-phase handshake**, separate `read_req`/`read_ack` and `write_req`/`write_ack`, data buses crossing under `set_max_delay` | Supersedes D10. `busy` is simply "handshake not back to idle", and Update-DR is ignored while busy, which is what keeps `addr_reg` and `wdata_reg` stable for the unsynchronised crossing |
+| D15 | **No bus timeout. The AXI domain is reset by the `S_BUS` reset, and a request still held is re-issued on release** | Supersedes D8 and D9. `S_BUS` answers `DECERR` for unmapped addresses and `SCRC` answers for gated peripherals, so every access gets a response. The one case that loses a response, a bus reset, is covered by the re-issue, which is harmless for a single-word read or write |
+| D16 | **`CPUDBG` is a host-set level; the host clears it before resume** | Supersedes D6. Clearing it automatically would need a cross-domain write into the TCK register. The ordering rule comes back, and the MAS states it (7.7) |
+| D17 | **`CPUHOLD` data register, IR `1000`**, reset 1 by TRST and POR | Replaces `CTRL.cpu_hold` (D2) in the data-register style. A JTAG reset re-holds the CPU in debug boot, and has no effect in normal boot |
+| D18 | **Five choices where the teacher's example, drawn for a different SoC, is adapted to QSOC**: `CPUDBG` at `0111` (the example reuses `1110`, the `IDCODE` code); unused codes act as `BYPASS`, not X (IEEE 1149.1); a read starts at Update-DR of `ADDR` (the example's `update_ir` cannot start a bus access, and its write page uses `update_dr`); `AxiIdWidth` = 5, the HAS `S_BUS` slave-port width (the example shows 4); `STATUS` = {`busy`, `resp[1:0]`} (the example gives only the width) | Each one is either a clash, a rule from a standard, or a QSOC fact from the HAS. None needs the teacher's ruling |
+| D19 | **`HALTED` flag in the debug window instead of an `i_cpu_debug_mode` port** | `ibex_top` does not export `debug_mode`; only `rvfi_ext_debug_mode` exists, and only when RVFI is compiled in. Bringing it out would mean patching vendored RTL, which the repository rule forbids. The window code already runs on every halt, so it can report the halt itself. The teacher's drawing has no halted signal either |
+| D20 | **`o_cpu_hold` is a flip-flop output** | It is the OR of three terms that change in the same cycle at `DBG_EN` capture. As a combinational output it could glitch low, which would briefly release the CPU reset |
 
 The reset table of 7.3 also answers a question raised in review: during a
 debug-boot load the CPU is held and the watchdog is disabled, so no reset except
@@ -52,16 +61,19 @@ The addresses are those of MAS 7.8. The fixed part is written once per session:
 0x800  ENTRY: csrw  dscratch0, s0
               csrw  dscratch1, s1
               lui   s0, 0x20000           # s0 = window base
-              j     LOOP
+              j     PARK
 0x810  TRAP:  addi  s1, zero, 1
               sw    s1, 0x704(s0)         # EXC = 1
               sw    zero, 0x708(s0)       # CMD = 0
               j     LOOP
-0x820  LOOP:  lw    s1, 0x708(s0)
+0x820  PARK:  addi  s1, zero, 1
+              sw    s1, 0x710(s0)         # HALTED = 1
+0x828  LOOP:  lw    s1, 0x708(s0)
               bnez  s1, 0x20000000        # CMD != 0: run SEQ
               lw    s1, 0x70C(s0)
               beqz  s1, LOOP
               sw    zero, 0x70C(s0)       # RESUME = 0
+              sw    zero, 0x710(s0)       # HALTED = 0
               csrr  s1, dscratch1
               csrr  s0, dscratch0
               dret
@@ -76,7 +88,7 @@ It uses no `ebreak`. Reading `dpc`:
        csrr  s1, dpc
        sw    s1, 0x700(s0)       # DATA first
        sw    zero, 0x708(s0)     # then CMD = 0
-       j     0x20000820
+       j     0x20000828          # LOOP
 ```
 
 **The host runs a sequence** as follows:

@@ -5,8 +5,11 @@
 New file names, so the V1.x figures that QNSC_SYSDBG_DECISIONS.md and the
 presentation still show are left as they were drawn.
 
-Labels are signal and state names only. What they mean is in the specification;
-a sentence in a diagram is a second copy that drifts.
+The structure follows the teacher's reference drawing, drawio/VLSI_SYSDBG.drawio:
+a JTAG TAP in the TCK domain, an AXI manager in the AXI domain, and a 4-phase
+handshake between them.
+
+Labels are signal and state names only. What they mean is in the specification.
 """
 import os
 import sys
@@ -18,77 +21,95 @@ IMG = os.path.join(_DOC, "img")
 DRAWIO = os.path.join(_DOC, "drawio", "QNSC_SYSDBG_MAS.drawio")
 
 # --------------------------------------------------------------- 1. block
-# Two dashed boxes are the two clock domains. Only the CDC column crosses
-# between them, and only two single-bit toggles cross it.
 blk = [
-    N("jpad", 20, 190, 130, 150, "JTAG pads\nTCK  TMS  TDI\nTDO  TRST_N", "blue", 10),
-    N("dpad", 20, 540, 130, 50, "DBG_EN pad", "blue", 10, True),
+    N("jpad", 20, 180, 130, 150, "JTAG pads\nTCK  TMS  TDI\nTDO  TRST_N", "blue", 10),
+    N("dpad", 20, 600, 130, 50, "DBG_EN pad", "blue", 10, True),
 
-    N("ztck", 190, 60, 370, 400, "TCK domain  ·  i_jtag_tck", "group", 11, True, "top"),
-    N("tap", 210, 100, 330, 60, "TAP controller  ·  IR 4 bit\nIDCODE  ·  BYPASS", "purple", 10),
-    N("acc", 210, 190, 330, 60, "ACCESS shift register  68 bit", "green", 10),
-    N("cmdh", 360, 280, 180, 60, "cmd_hold  68 bit\ncmd_req", "green", 10),
-    N("cap", 210, 370, 330, 60, "Capture-DR mux\nrsp_hold  or  BUSY / TIMEOUT", "green", 10),
-
-    N("cdc", 600, 180, 120, 270, "CDC\n\ncmd_req  ->\n<-  cmd_ack\n<-  timeout\n\n2FF each", "red", 10, True),
-
-    N("zsys", 750, 60, 470, 460, "system domain  ·  i_clk_cpu  ·  i_rst_n_por",
+    N("ztck", 190, 60, 400, 420, "TCK domain  ·  i_jtag_tck  ·  TRST_N & POR",
       "group", 11, True, "top"),
-    N("fsm", 770, 100, 190, 80, "Command FSM\nIDLE  DECODE\nLOCAL  BUS  DONE", "yellow", 10, True),
-    N("rsph", 770, 300, 190, 60, "rsp_hold\nrdata  ·  status", "green", 10),
-    N("regs", 1010, 100, 190, 60, "CTRL  ·  STATUS  ·  ID", "box", 10),
-    N("halt", 1010, 190, 190, 60, "halt logic", "red", 10),
-    N("bm", 1010, 300, 190, 60, "bus master\nreq  gnt  rsp", "green", 10),
-    N("latch", 770, 420, 190, 60, "DBG_EN\n2FF + capture", "box", 10),
-    N("outs", 1010, 420, 190, 60, "o_dbg_en\no_cpu_hold", "box", 10),
+    N("tap", 210, 100, 170, 60, "TAP FSM\n16 states", "yellow", 10, True),
+    N("ctl", 400, 100, 170, 60, "control signals\ncapture  shift  update", "box", 10),
+    N("ir", 210, 190, 170, 50, "IR  4 bit", "purple", 10),
+    N("drs", 210, 270, 360, 80,
+      "ADDR 33  ·  DATA 32  ·  STATUS 3\nCPUDBG 1  ·  CPUHOLD 1\nIDCODE 32  ·  BYPASS 1",
+      "green", 10),
+    N("tdo", 210, 390, 170, 60, "TDO mux\nfalling-edge flop", "box", 10),
+    N("hs", 400, 390, 170, 60, "read_req  ·  write_req\nbusy", "red", 10),
 
-    N("cpu", 1340, 170, 150, 100, "Ibex CPU", "blue", 11, True),
-    N("sbus", 1340, 300, 150, 60, "S_BUS  AXI_S0\naxi_from_mem", "yellow", 10),
-    N("top", 1340, 420, 150, 60, "SCRC  ·  boot mux\nIO MUX", "box", 10),
+    N("cdc", 620, 160, 130, 320,
+      "CDC\n\nread_req  ->\n<-  read_ack\nwrite_req  ->\n<-  write_ack\n"
+      "dbgreq  ->\ncpu_hold  ->\n2FF each\n\naddr  wdata  ->\n<-  rdata  resp\nset_max_delay",
+      "red", 10, True),
+
+    N("zaxi", 780, 60, 420, 250, "AXI domain  ·  i_clk_cpu  ·  i_rst_n_sysbus",
+      "group", 11, True, "top"),
+    N("edge", 800, 100, 180, 70, "2FF + edge\nset_ar  ·  set_aw", "box", 10),
+    N("axim", 1000, 100, 180, 70, "AXI manager\nAR  R  ·  AW  W  B", "green", 10, True),
+    N("rsp", 800, 220, 180, 60, "rdata_reg  ·  resp_reg\nread_ack  ·  write_ack", "box", 10),
+
+    N("zpor", 780, 350, 420, 200, "system domain  ·  i_clk_cpu  ·  i_rst_n_por",
+      "group", 11, True, "top"),
+    N("sync", 800, 390, 180, 60, "dbgreq  ·  cpu_hold\n2FF", "box", 10),
+    N("dben", 800, 470, 180, 60, "DBG_EN\n2FF + capture", "box", 10),
+    N("outs", 1000, 430, 180, 60, "o_cpu_debug_req\no_dbg_en  ·  o_cpu_hold", "box", 10),
+
+    N("sbus", 1250, 100, 150, 70, "S_BUS  AXI_S0", "yellow", 10),
+    N("cpu", 1250, 230, 150, 90, "Ibex CPU", "blue", 11, True),
+    N("top", 1250, 430, 150, 60, "SCRC  ·  boot mux\nIO MUX", "box", 10),
 ]
 blk_e = [
     E("jpad", "r@0.2", "tap", "l", "TMS"),
-    E("jpad", "r@0.5", "acc", "l", "TDI"),
-    E("acc", "b@0.75", "cmdh", "t", "Update-DR"),
-    E("cmdh", "r", "cdc", "l@0.2", "", False, False, 570),
-    E("cdc", "l@0.8", "cap", "r"),
-    E("cap", "l", "jpad", "r@0.85", "TDO"),
-    E("cdc", "r@0.2", "fsm", "l"),
-    E("rsph", "l", "cdc", "r@0.8"),
-    E("fsm", "b", "rsph", "t", "DONE"),
-    E("fsm", "r@0.3", "regs", "l", "LOCAL"),
-    E("fsm", "r@0.8", "bm", "l", "BUS", False, False, 985),
-    E("regs", "b", "halt", "t", "haltreq"),
-    E("halt", "r@0.3", "cpu", "l@0.38", "o_cpu_debug_req"),
-    E("cpu", "l@0.7", "halt", "r@0.83", "i_cpu_debug_mode"),
-    E("bm", "r", "sbus", "l", "o_mem_*"),
-    E("dpad", "r", "latch", "b", "i_dbg_en"),
-    E("latch", "r", "outs", "l"),
-    E("outs", "r", "top", "l"),
+    E("jpad", "r@0.45", "ir", "l", "TDI"),
+    E("tdo", "l", "jpad", "r@0.85", "TDO"),
+    E("tap", "r", "ctl", "l"),
+    E("ctl", "b", "drs", "t@0.764"),
+    E("ir", "b", "drs", "t@0.236", "select"),
+    E("drs", "b@0.236", "tdo", "t"),
+    E("drs", "b@0.764", "hs", "t", "Update-DR"),
+    E("hs", "r", "cdc", "l@0.781"),
+    E("cdc", "r@0.2", "edge", "l"),
+    E("edge", "r", "axim", "l"),
+    E("axim", "r", "sbus", "l", "AXI4"),
+    E("axim", "b", "rsp", "r", "R  B"),
+    E("rsp", "l", "cdc", "r@0.28"),
+    E("cdc", "r@0.8", "sync", "l"),
+    E("sync", "r", "outs", "l@0.3"),
+    E("dben", "r", "outs", "l@0.8"),
+    E("outs", "r@0.2", "cpu", "l@0.8", "debug_req"),
+    E("outs", "r@0.7", "top", "l@0.7"),
+    E("dpad", "r", "dben", "b", "i_dbg_en"),
 ]
 
-# --------------------------------------------------------------- 2. FSM
-fsm = [
-    N("idle", 60, 180, 170, 80, "IDLE", "blue", 12, True),
-    N("dec", 330, 180, 170, 80, "DECODE", "yellow", 12, True),
-    N("loc", 330, 40, 170, 76, "LOCAL\nCTRL  STATUS  ID", "purple", 10),
-    N("bus", 600, 180, 170, 80, "BUS\ntimer counts", "green", 12, True),
-    N("done", 930, 180, 170, 80, "DONE\nload rsp_hold", "grey", 12, True),
-    N("note", 60, 380, 1040, 70,
-      "timer = BusTimeout  ->  timeout = 1, stay in BUS\n"
-      "leave BUS  ->  timer = 0, timeout = 0",
+# --------------------------------------------------------------- 2. read handshake
+def b(nid, x, y, text, style="box", bold=False):
+    return N(nid, x, y, 170, 60, text, style, 10, bold)
+
+hsk = [
+    N("zt", 20, 20, 400, 300, "TCK domain", "group", 11, True, "top"),
+    N("za", 460, 20, 590, 300, "AXI domain", "group", 11, True, "top"),
+    b("t1", 40, 70, "Update-DR  ADDR\naddr[32] = 0,  not busy", "blue"),
+    b("t2", 230, 70, "read_req_reg", "red", True),
+    b("a1", 480, 70, "2FF  ·  dly"),
+    b("a2", 670, 70, "set_ar\nsync & !dly"),
+    b("a3", 860, 70, "AR  ·  R", "green", True),
+    b("a4", 860, 220, "rdata_reg\nresp_reg"),
+    b("a5", 670, 220, "read_ack_reg\ndly & !rready", "red", True),
+    b("t3", 230, 220, "2FF  ·  dly"),
+    b("t4", 40, 220, "Data register\nResponse register", "blue"),
+    N("note", 20, 360, 1030, 50,
+      "write:  Update-DR  DATA,  addr[32] = 1   ·   AW  W  B   ·   write_req  /  write_ack",
       "group", 10),
 ]
-fsm_e = [
-    E("idle", "r", "dec", "l", "cmd_req edge"),
-    E("dec", "t", "loc", "b", "addr[31:28] = F"),
-    E("dec", "r", "bus", "l", "else"),
-    E("loc", "r", "done", "t@0.3", "OK / ERROR"),
-    E("bus", "r@0.3", "done", "l@0.3", "rsp_valid"),
-    E("bus", "r@0.7", "done", "l@0.7", "sysbus reset"),
-    E("dec", "b", "done", "b@0.3", "misaligned  ·  size 11  ·  sysbus in reset  ->  ERROR",
-      False, False, 330),
-    E("done", "t@0.7", "idle", "t", "toggle cmd_ack", False, False, 22),
+hsk_e = [
+    E("t1", "r", "t2", "l", "set"),
+    E("t2", "r", "a1", "l", "read_req"),
+    E("a1", "r", "a2", "l"),
+    E("a2", "r", "a3", "l"),
+    E("a3", "b", "a4", "t", "rvalid"),
+    E("a4", "l", "a5", "r"),
+    E("a5", "l", "t3", "r", "read_ack"),
+    E("t3", "l", "t4", "r", "rising edge"),
+    E("t3", "t", "t2", "b", "clear"),
 ]
 
 # --------------------------------------------------------------- 3. debug boot wiring
@@ -114,43 +135,12 @@ wire_e = [
     E("mux", "r", "cpu", "l@0.25", "boot_addr_i"),
     E("gate", "r", "cpu", "l@0.75", "rst_ni"),
     E("dbg", "t", "cpu", "t", "debug_req", False, False, 22),
-    E("dbg", "b@0.8", "sbus", "l"),
+    E("dbg", "b@0.8", "sbus", "l", "AXI4"),
     E("cpu", "b", "sbus", "t"),
     E("sbus", "b", "isram", "t"),
 ]
 
-# --------------------------------------------------------------- 4. debug boot sequence
-def s(nid, x, y, text, style="box", w=250, h=56):
-    return N(nid, x, y, w, h, text, style, 10)
-
-seq = [
-    N("l_scrc", 20, 20, 250, 540, "SCRC", "group", 12, True, "top"),
-    N("l_host", 300, 20, 290, 540, "host  ->  SYSDBG", "group", 12, True, "top"),
-    N("l_cpu", 620, 20, 250, 540, "Ibex CPU", "group", 12, True, "top"),
-
-    s("a1", 20, 70, "POR released\nbus  ROM  RAM  peripherals", "yellow"),
-    s("c1", 620, 70, "held in reset\no_cpu_hold = 1", "red"),
-    s("h1", 320, 150, "write window\n0x2000_0000  4 KiB", "blue"),
-    s("h2", 320, 230, "write image\n0x2000_1000", "blue"),
-    s("h3", 320, 310, "optional:  CTRL.haltreq = 1", "blue"),
-    s("h4", 320, 390, "CTRL.cpu_hold = 0", "blue"),
-    s("c2", 620, 390, "first fetch 0x2000_1080\nor halt before it", "green"),
-    s("h5", 320, 480, "halt  ·  resume  ·  breakpoint\nread / write", "blue"),
-    s("c3", 620, 480, "debug mode  <->  running", "green"),
-]
-seq_e = [
-    E("a1", "r", "c1", "l"),
-    E("h1", "b", "h2", "t"),
-    E("h2", "b", "h3", "t"),
-    E("h3", "b", "h4", "t"),
-    E("h4", "r", "c2", "l", "release"),
-    E("c1", "b", "c2", "t", "", True),
-    E("h4", "b", "h5", "t"),
-    E("h5", "r", "c3", "l", "", False, True),
-]
-
 emit([("fig_sysdbg_block", "SYSDBG block diagram", blk, blk_e),
-      ("fig_sysdbg_cmd_fsm", "SYSDBG command FSM", fsm, fsm_e),
-      ("fig_sysdbg_boot_wiring", "Debug boot wiring", wire, wire_e),
-      ("fig_sysdbg_debug_boot", "Debug boot sequence", seq, seq_e)],
+      ("fig_sysdbg_handshake", "Read handshake", hsk, hsk_e),
+      ("fig_sysdbg_boot_wiring", "Debug boot wiring", wire, wire_e)],
      DRAWIO, IMG)
