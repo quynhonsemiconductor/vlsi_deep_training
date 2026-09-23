@@ -1,3 +1,9 @@
+---
+title: "Interrupt Map"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.0"
+author: "QUY NHON SEMICONDUCTORS -- QNSC"
+---
+
 # QNSC_Interrupt_Map_MAS
 
 **Block** `intmap` · **Owner** Nghia Van Trong · **Version** 2.0 · **2026-09-23**
@@ -58,6 +64,8 @@ One combinational layer. No sub-blocks, no clock domain, no reset domain.
 
 ## 3. IP used
 
+: Upstream IP used
+
 | From | Module | Commit |
 |------|--------|--------|
 | — | — | — |
@@ -68,6 +76,8 @@ One combinational layer. No sub-blocks, no clock domain, no reset domain.
 
 Every port. Naming follows `QNSC_RTL_Design_Naming_Rule` V1.0 section 3.6,
 `i_int_<source>` / `o_int_<source>`.
+
+: Interrupt map interface
 
 | Signal | Dir | Width | Description |
 |---|---|---:|---|
@@ -126,6 +136,8 @@ table therefore fixes the default priority order as well as the wiring, and
 changing it requires re-synthesis.
 
 <!-- gen:interrupt_lines -->
+: Fast interrupt line assignment
+
 | Line | mcause | Vector | Peripheral | Sources | Shape |
 |---:|---:|---|---|---:|---|
 | 0 | 16 | `mtvec + 0x40` | dma | 1 | level |
@@ -144,6 +156,8 @@ changing it requires re-synthesis.
 <!-- /gen -->
 
 <!-- gen:interrupt_totals -->
+: Interrupt source totals
+
 |  | Count |
 |---|---:|
 | Sources aggregated onto fast lines | 26 |
@@ -189,6 +203,8 @@ latches nothing, and neither does this block. A one-cycle pulse arriving while
 That costs an interrupt but not information, because every source either holds its
 line or keeps a record:
 
+: How each source recovers a missed pulse
+
 | Source | Shape | Recovery |
 |---|---|---|
 | DMA | level | held by `DMA_ISR`, write-1-to-clear |
@@ -204,6 +220,8 @@ One. It is instantiated in `design/top` and has no parameters.
 
 ## 8. What is not provided here, and who provides it
 
+: Functions this block does not provide
+
 | Function | Where it lives |
 |---|---|
 | Pending latch | the peripheral's status register, or nowhere — 6.5 |
@@ -216,6 +234,8 @@ One. It is instantiated in `design/top` and has no parameters.
 ## 9. Tie-offs
 
 <!-- gen:core_tie_offs -->
+: Core interrupt inputs tied off
+
 | Port | Tied to | Why |
 |---|---|---|
 | `irq_fast_i[14:11]` | `4'b0` | QSOC drives 11 of the 15 lines |
@@ -228,6 +248,8 @@ One. It is instantiated in `design/top` and has no parameters.
 driver rather than the standard `mtime`/`mtimecmp` one.
 
 ## 10. Requirements on others, and open items
+
+: Requirements on other owners
 
 | Item | Owner | What it blocks |
 |---|---|---|
@@ -263,6 +285,8 @@ Ten checks, none requiring a bus model:
 
 ## Appendix A. Acronyms
 
+: Acronyms
+
 | Acronym | Description |
 |---|---|
 | CLINT | Core Local Interruptor -- the RISC-V standard timer and software interrupt block. **Not present in QSOC** |
@@ -280,6 +304,8 @@ Ten checks, none requiring a bus model:
 | WDT | Watchdog Timer |
 
 ## Appendix B. First review
+
+: First review
 
 | Item | Reviewer | Response |
 |---|---|---|

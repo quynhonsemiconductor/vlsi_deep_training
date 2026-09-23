@@ -75,6 +75,146 @@ def make_reference():
     print("built", REFERENCE)
 
 
+# --------------------------------------------------------------------------
+# front matter: title page, numbered captions, table of tables and figures
+#
+# The QNSC template carries all four, and pandoc produces none of them from
+# plain markdown: it has no cover concept, and it writes a caption as the bare
+# text with no "Table 2-1." prefix. They are added here rather than typed into
+# every source, so the numbering cannot go stale when a table is inserted.
+#
+# Word fields are not used. Pandoc's own table of contents is a static list --
+# checked, there is no TOC field in the output -- so a field here would leave a
+# document whose contents page is filled in and whose table of tables says
+# "update this field". Static keeps the three consistent.
+# --------------------------------------------------------------------------
+
+# Caption styles as pandoc actually emits them, confirmed by building a probe
+# document: a table caption becomes Tablecaption0 and sits *above* the table,
+# a figure caption becomes ImageCaption and sits *below* the image. The
+# unsuffixed names are included because the 0 is a collision suffix against the
+# template's own Tablecaption, which pandoc will not add if that changes.
+TABLE_CAPTION = ("Tablecaption0", "Tablecaption", "TableCaption")
+FIGURE_CAPTION = ("ImageCaption", "FigureCaption")
+
+PARA = re.compile(r"<w:p\b[^>]*>.*?</w:p>", re.S)
+
+
+def _style(para):
+    m = re.search(r'w:pStyle w:val="([^"]+)"', para)
+    return m.group(1) if m else ""
+
+
+def _text(para):
+    return "".join(re.findall(r"<w:t(?:\s[^>]*)?>([^<]*)</w:t>", para))
+
+
+def _para(text, style=None, size=None, bold=False, align="left",
+          page_break=False, indent=0):
+    """One paragraph. Formatting is direct rather than by style, because the
+    template justifies Normal and these need their own alignment."""
+    ppr = ['<w:pPr>']
+    if style:
+        ppr.append('<w:pStyle w:val="%s"/>' % style)
+    if indent:
+        ppr.append('<w:ind w:left="%d"/>' % indent)
+    ppr.append('<w:jc w:val="%s"/>' % align)
+    rpr = ""
+    if bold or size:
+        rpr = "<w:rPr>%s%s</w:rPr>" % (
+            "<w:b/>" if bold else "",
+            '<w:sz w:val="%d"/><w:szCs w:val="%d"/>' % (size, size) if size else "")
+    if rpr:
+        ppr.append(rpr)
+    ppr.append("</w:pPr>")
+    run = '<w:r>%s<w:t xml:space="preserve">%s</w:t></w:r>' % (
+        rpr, text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+    brk = ('<w:r><w:br w:type="page"/></w:r>') if page_break else ""
+    return "<w:p>" + "".join(ppr) + run + brk + "</w:p>"
+
+
+def number_captions(xml):
+    """Prefix every caption with "Table N-M." or "Figure N-M.", numbering within
+    the section, and return the two lists for the front matter.
+
+    The section number is read out of the heading text rather than counted,
+    because the markdown sources carry their own numbers and an appendix is
+    lettered, not numbered."""
+    tables, figures = [], []
+    section = "0"
+    counters = {}
+
+    def walk(m):
+        nonlocal section
+        para, st, text = m.group(0), _style(m.group(0)), _text(m.group(0))
+        if st.startswith("Heading"):
+            h = re.match(r"(?:Appendix\s+([A-Z])|(\d+))\s*\.", text.strip())
+            if h:
+                section = h.group(1) or h.group(2)
+            return para
+        kind = ("Table" if st in TABLE_CAPTION else
+                "Figure" if st in FIGURE_CAPTION else None)
+        if not kind or not text.strip():
+            return para
+        key = (kind, section)
+        counters[key] = counters.get(key, 0) + 1
+        label = "%s %s-%d. " % (kind, section, counters[key])
+        (tables if kind == "Table" else figures).append(label + text.strip())
+        # Prefix the first run only, so inline formatting in the rest survives.
+        return re.sub(r"(<w:t(?:\s[^>]*)?>)",
+                      lambda r: r.group(1) + label, para, count=1)
+
+    return PARA.sub(walk, xml), tables, figures
+
+
+def insert_front_lists(xml, tables, figures):
+    """Put Table of Tables and Table of Figures after pandoc's contents.
+
+    Anchored on the paragraph carrying the TOC field instruction, because that is
+    what pandoc emits -- a field for Word to populate, not a list of TOC1
+    paragraphs, so there is no rendered entry to attach to.
+
+    These two lists are static text while the contents above them is a field.
+    That is deliberate: a "TOC \\c Table" field collects SEQ fields, and these
+    captions are plain numbered text, so the field would come up empty. Static
+    also means the lists are right in any reader, without the document having to
+    be opened in Word and refreshed."""
+    if not tables and not figures:
+        return xml
+    anchor = None
+    for para in PARA.findall(xml):
+        if re.search(r"<w:instrText[^>]*>[^<]*TOC", para):
+            anchor = para
+    if anchor is None:
+        return xml
+    block = []
+    for heading, entries in (("Table of Tables", tables),
+                             ("Table of Figures", figures)):
+        if not entries:
+            continue
+        block.append(_para(heading, style="TOCHeading"))
+        block += [_para(e, style="TOC1", indent=180) for e in entries]
+    return xml.replace(anchor, anchor + "".join(block), 1)
+
+
+def cover_page_break(xml):
+    """Put the cover on its own page.
+
+    The cover itself comes from the pandoc metadata block at the top of each
+    source, which renders through the template's own Title, Subtitle and
+    Author styles -- building one here as well produced two covers. Pandoc
+    just does not break the page afterwards."""
+    paras = PARA.findall(xml)
+    last = None
+    for para in paras[:8]:
+        if _style(para) in ("Title", "Subtitle", "Author"):
+            last = para
+    if last is None:
+        return xml
+    return xml.replace(
+        last, last + '<w:p><w:r><w:br w:type="page"/></w:r></w:p>', 1)
+
+
 def verify(path):
     """Every XML part must parse. Word rejects a malformed part outright, while
     some readers silently repair it, so this has to be checked at build time."""
@@ -110,9 +250,16 @@ def build(stem, title):
                       lambda m: m.group(1) + title + m.group(2) + m.group(3), xml)
 
     LEFT_STYLES = ("SourceCode", "Compact", "ImageCaption", "CaptionedFigure")
+    counts = {"tables": 0, "figures": 0}
 
     def document(xml):
         xml = re.sub(r'(<w:tblStyle w:val=")Table(")', r"\1TableGrid\2", xml)
+
+        # Order matters: number the captions first, because the two front lists
+        # are built from the numbered text, and add the cover last so its
+        # paragraphs are not scanned for captions or left alignment.
+        xml, tables, figures = number_captions(xml)
+        xml = insert_front_lists(xml, tables, figures)
 
         # Direct formatting, so alignment does not depend on how the reader
         # resolves style inheritance from Normal (which the template justifies).
@@ -124,7 +271,9 @@ def build(stem, title):
                 return para
             return para.replace("</w:pPr>", '<w:jc w:val="left"/></w:pPr>', 1)
 
-        return re.sub(r"<w:p\b[^>]*>.*?</w:p>", left, xml, flags=re.S)
+        xml = re.sub(r"<w:p\b[^>]*>.*?</w:p>", left, xml, flags=re.S)
+        counts["tables"], counts["figures"] = len(tables), len(figures)
+        return cover_page_break(xml)
 
     def styles(xml):
         # Styles pandoc creates in the output are based on Normal, which the QNSC
@@ -168,7 +317,8 @@ def build(stem, title):
                                r"word/document\.xml": document,
                                r"word/styles\.xml": styles})
     verify("%s.docx" % stem)
-    print("built %s.docx  (%s)" % (stem, title))
+    print("built %s.docx  (%s)  %d table, %d figure"
+          % (stem, title, counts["tables"], counts["figures"]))
 
 
 if __name__ == "__main__":

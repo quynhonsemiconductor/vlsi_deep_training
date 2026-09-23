@@ -42,7 +42,7 @@ MARKER = re.compile(
 )
 
 
-def table(header, rows=None, align=""):
+def table(header, rows=None, align="", caption=None):
     """Render a markdown table. Columns are not padded: the width would change
     with the content and make every regeneration a diff.
 
@@ -50,7 +50,11 @@ def table(header, rows=None, align=""):
     columns read better right-aligned, and the alignment has to be generated
     along with the rows or regenerating would silently drop it."""
     align = (align + "l" * len(header))[:len(header)]
-    out = ["| " + " | ".join(header) + " |",
+    # The caption is generated with the table, not left in the prose: pandoc only
+    # attaches ": caption" to a table it directly abuts, and the <!-- gen --> line
+    # would sit between the two.
+    out = [": " + caption, ""] if caption else []
+    out += ["| " + " | ".join(header) + " |",
            "|" + "|".join("---:" if a == "r" else "---" for a in align) + "|"]
     out += ["| " + " | ".join(str(c) for c in r) + " |" for r in rows]
     return "\n".join(out) + "\n"
@@ -83,7 +87,8 @@ def interrupt_lines(c):
                  "**%s**, on `irq_nm_i`" % n["peripheral"],
                  n["sources"], n["shape"]])
     return table(["Line", "mcause", "Vector", "Peripheral", "Sources", "Shape"],
-                 rows, align="rrllrl")
+                 rows, align="rrllrl",
+                 caption="Fast interrupt line assignment")
 
 
 def interrupt_totals(c):
@@ -92,7 +97,8 @@ def interrupt_totals(c):
     i = c["interrupts"]
     agg = sum(l["sources"] for l in i["lines"])
     nmi = i["nmi"]["sources"]
-    return table(["", "Count"], align="lr", rows=[
+    return table(["", "Count"], align="lr",
+                 caption="Interrupt source totals", rows=[
         ["Sources aggregated onto fast lines", agg],
         ["Sources on the non-maskable input", nmi],
         ["**Total interrupt sources**", "**%d**" % (agg + nmi)],
@@ -118,7 +124,8 @@ def core_tie_offs(c):
              "QSOC drives %d of the %d lines"
              % (len(i["lines"]), i["fast_lines_available"])]]
     rows += [["`%s`" % p, "`0`", why.get(p, "not used")] for p in i["tied_low"]]
-    return table(["Port", "Tied to", "Why"], rows)
+    return table(["Port", "Tied to", "Why"], rows,
+                 caption="Core interrupt inputs tied off")
 
 
 def memory_map(c):
@@ -129,7 +136,8 @@ def memory_map(c):
         human = ("%d KiB" % (size // 1024) if size >= 1024 else "%d B" % size)
         rows.append(["`%s`" % r["base"], human, r["name"],
                      r.get("bus", "--"), r.get("description", "")])
-    return table(["Base", "Size", "Region", "Bus", "Description"], rows)
+    return table(["Base", "Size", "Region", "Bus", "Description"], rows,
+                 caption="QSOC memory map")
 
 
 GENERATORS = {
