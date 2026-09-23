@@ -105,7 +105,7 @@ def emit(c: dict) -> str:
     a("")
     a(f"  localparam int unsigned C_INT_MCAUSE_BASE = 16;")
     a(f"  localparam int unsigned C_INT_MCAUSE_NMI  = {ints['nmi']['mcause']};"
-      f"   // {ints['nmi']['peripheral']}, on irq_nm_i, never through INTMAP")
+      f"   // {ints['nmi']['peripheral']}, on irq_nm_i, a wire through INTMAP, never ORed")
     a("")
 
     # ---- clock domains ---------------------------------------------------

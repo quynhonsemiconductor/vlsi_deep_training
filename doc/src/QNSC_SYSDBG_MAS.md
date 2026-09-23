@@ -174,8 +174,12 @@ runs, then halts it (7.7).
 4. Optional: `CPUDBG = 1`. The core then halts before its first instruction, with
    `dpc = 0x2000_1080`.
 5. `CPUHOLD = 0`. The CPU starts.
-6. Halt, resume, set breakpoints, read and write.
+6. Halt, resume, single-step, `ebreak` in RAM, read and write.
 7. To run again: `CPUHOLD = 1`, change the image, `CPUHOLD = 0`.
+
+To debug the ROM bootloader from its first instruction: debug boot, halt before
+the first instruction (step 4), write `dpc = 0x0000_0080` with a sequence, then
+single-step (`dcsr.step`) or resume. No hardware trigger is needed.
 
 ## 7.3 Reset behaviour
 
@@ -304,7 +308,7 @@ One, in `design/top`, with the default parameters.
 | CPU clock control | Not needed. The `cpu` cluster is never gated |
 | Byte and halfword access, bursts | Nowhere. Word only; the host does read-modify-write |
 | Debug ROM, program buffer | Nowhere. The debug window in `ISRAM`, 7.8 |
-| `dret`, stepping, breakpoints | Ibex, driven by code in the debug window |
+| `dret`, stepping, `ebreak` | Ibex, driven by code in the debug window. No hardware triggers (`DbgTriggerEn = 0`) |
 
 # 10. Tie-offs
 
@@ -331,8 +335,8 @@ One, in `design/top`, with the default parameters.
 | `i_rst_n_por` from power-on only, not from the watchdog | `SCRC` | `DBG_EN` capture and hold surviving a watchdog bite |
 | CPU reset = `SCRC` CPU reset OR `o_cpu_hold`, through the CPU reset synchroniser | `SCRC` | Debug boot |
 | `boot_addr_i = o_dbg_en ? 0x2000_1000 : 0x0000_0000` | CPU owner | Debug boot running the loaded image |
-| `DmBaseAddr = 0x2000_0000`, `DmAddrMask = 0x0000_0FFF`, `DmHaltAddr = 0x2000_0800`, `DmExceptionAddr = 0x2000_0810` | CPU owner | 7.8 |
-| `fetch_enable_i` (`ibex_mubi_t`) on whenever the CPU reset is released | CPU owner, `SCRC` | Open. Proposed: tie to `IbexMuBiOn` |
+| `DmHaltAddr = 0x2000_0800`, `DmExceptionAddr = 0x2000_0810`. `DmBaseAddr`/`DmAddrMask` act only with PMP, which is off | CPU owner | 7.8 |
+| `fetch_enable_i` tied to `IbexMuBiOn`. The CPU is held by reset (`o_cpu_hold`), not by fetch enable | CPU owner | Debug boot; a second hold would need its own release |
 | `AXI_S0` connected to `SYSDBG` directly, AXI4, ID width `AxiIdWidth`. No `axi_from_mem` | Bus owner | Every bus access |
 | Remove the `0xF000_0000` `SYSDBG` register region from HAS Table 7-1 (already gone from `qsoc_contract.yml`) | HAS owner | Consistency. There are no memory-mapped registers |
 | `PIN_8`--`PIN_12` forced to JTAG while `o_dbg_en = 1` | IO MUX owner | Debug boot with firmware that remaps pins |

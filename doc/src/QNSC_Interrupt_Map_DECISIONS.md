@@ -1332,3 +1332,59 @@ Every number here is from the vendored RTL rather than a manual: the five input
 ports from `ibex_top.sv` lines 117 to 122, the `mcause` values 3, 7, 11 and 31 from
 the `ExcCauseIrq*` parameters in `ibex_pkg.sv`, and bits 16 to 30 from
 `CSR_MFIX_BIT_LOW` and `CSR_MFIX_BIT_HIGH`.
+
+# V2.1 cuts (2026-09-24)
+
+The MAS went from 372 to 283 lines in V2.1. What left it, and what it corrected:
+
+**Decisions and corrections**
+
+- **The NMI passes through `INTMAP` as a wire**, `i_int_wdt_bark` to `o_int_nm`, never
+  ORed. The ports were already in the MAS, and the chip block diagram shows 27 sources
+  into `INTMAP`. The old text ("bypasses this block"), the figure, the contract note and
+  HAS lines 69 and 155 said otherwise. The HAS alignment is a request on its owner. The
+  "feed-through" wording earlier in this file records the older view.
+- "11 OR gates" was wrong: 5 groups are OR reductions and 6 are wires, plus the NMI wire.
+- "Acknowledge by writing the status register" was wrong: GPIO `INTSTATUS` clears on
+  read, the UART clears on a register read, and I2C clears through `IACK` in `CMD`.
+- The timer shape is "pulse; level in one-shot with prescaler or ref clock", to agree
+  with the TIMER MAS. In one-shot without a prescaler, `apb_timer_unit` gives a one-cycle pulse.
+- "No source destroys information" overclaimed: a missed TIMER or PWM pulse is lost and
+  only comes back on the next period. `apb_adv_timer` keeps no event status.
+- "One layer of logic" contradicted the 8-input OR, which is three levels of 2-input gates.
+- "Eleven peripherals, one line each" was replaced by "11 source groups": GPIO0-3 are
+  four instances on one line, and the WDT drives line 8 and the NMI.
+
+**Reasoning moved out of the MAS**
+
+- Line order follows "data loss first, human time last": a missed SPI or UART event
+  loses a byte, while a missed timer tick comes back next period. DMA takes line 0
+  because the rest of the system waits on a transfer completing.
+- One line per group, so a handler never has to ask which block interrupted.
+- The bark goes to `irq_nm_i` so it still lands if firmware hangs with interrupts
+  disabled. In Debug Mode it traps on resume only because `aon_timer` holds it as a level.
+- Tie-offs: `irq_external_i` would need a PLIC, `irq_timer_i` a CLINT (`mtime`,
+  `mtimecmp`), and `irq_software_i` a CLINT `msip`. 11 lines fit in the 15 fast lines
+  without either. An RTOS ported to QSOC supplies its own timer driver.
+- The gating hazard is the interrupt-path version of the PWM rule "never gate a running
+  block". Whether `SCRC` refuses to gate a peripheral with its interrupt asserted is for
+  the SCRC owner to decide.
+
+**Items moved to the WDT owner's documents**
+
+- `aon_timer` needs an APB-to-TL-UL wrapper. Its enable is in `WDOG_CTRL` at `0x1C`, so
+  without a bus path the watchdog cannot be enabled and never barks.
+- Ibex does not export `debug_mode`, so firmware disables the watchdog for a debug
+  session. Otherwise a long halt ends in a bite reset.
+
+**Dropped as repetition or speculation**
+
+- The "accepted limits" list, which repeated MAS 7.2, 7.4 and 7.5.
+- "At 20 MHz on 28 nm the OR tree is expected to be far inside the period". This is not
+  a number until the first synthesis run.
+- Version references in the acronyms and review tables (PLIC "considered in V7.0",
+  SCRC "formerly SYSCTL", "closed in V11.x").
+
+## Decided 2026-09-24
+
+- A gated peripheral with its line high is handled by a firmware rule, clear before gating, not by `SCRC` refusing to gate. It is simplest and needs no RTL in `SCRC`.

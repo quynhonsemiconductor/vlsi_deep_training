@@ -15,16 +15,17 @@ here; `rtl/` holds our wrapper and the pieces the IP is missing.
 |------|--------|-------------|
 | nguyenquanicd/AXI4-SRAM-CONTROLLER | AXI4 SRAM controller | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
-**Licence is unresolved** — the upstream repo carries no LICENSE file, so the
-terms are undefined rather than permissive. Tracked in the manifest as an open
-question for the mentor, not left invisible.
+**Licence:** `MentorProvided-QNSC-Course`, as recorded in the manifest. The
+upstream repo carries no LICENSE file; it is the course mentor's own repository,
+provided for this training.
 
 Findings from reading the RTL, handled in our wrapper:
-- The controller has **no `WSTRB` path**; byte-enable handling is added here.
-- `WRAP` burst type is declared but not implemented; the wrapper constrains or
-  rejects it per the spec.
+- The controller has **no `WSTRB` path**; the wrapper adds a strobe FIFO that
+  drives the macro byte enables (MAS 7.3).
+- `WRAP` burst type is declared but not implemented; masters must not issue it
+  (MAS 7.4).
 
 ## The wrapper is the boundary
 
-`rtl/qsoc_ram_wrap.sv` instantiates the vendored controller and adds the WSTRB
-logic. Ours in `rtl/`, borrowed in `vendor/`.
+`rtl/m_qnsc_wrap_axi4_sram.sv` (module `m_qnsc_wrap_axi4_sram`) instantiates the
+vendored controller unmodified and adds the WSTRB logic. Ours in `rtl/`, borrowed in `vendor/`.

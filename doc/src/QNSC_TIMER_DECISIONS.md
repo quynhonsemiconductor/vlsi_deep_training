@@ -576,3 +576,53 @@ Points the author expects to be challenged on, with the answer held ready.
 | Most STM32 timers are 16-bit, a few 32-bit | STMicroelectronics STM32G4 general purpose timer training material |
 | Ports, addresses, domains D04/D05 | `QSOC_HAS` Table 9-1, the APB port table and the clock domain table |
 | Three interrupt sources, all pulses | `QNSC_Interrupt_Map_MAS`, Table 6 |
+
+# V2.1 cuts (2026-09-24)
+
+`QNSC_TIMER_MAS` V2.1 keeps only testable claims. What it dropped, and the corrections
+it made to the record above, are listed here.
+
+**Moved out of the MAS; the reasoning already lives above.**
+
+| Cut from V2.0 | Kept in |
+|---|---|
+| Why the PWM IP (`apb_adv_timer`, 16-bit, 3.28 ms wrap) cannot be the timebase | 4.1 |
+| `PREADY` tied / `PSLVERR` tied: "can never stall, can never report an error" | 4.6 |
+| Why the 64-bit `match_lo & match_hi` AND gives exactly one pulse | 4.7 |
+| Comparison with the RISC-V `mtime >= mtimecmp` rule | 4.7, 5.5 |
+| Recommendation to accept the 64-byte aliasing rather than narrow the decode | 4.8, Appendix B item 3 |
+| What QSOC gives up by having no `mtime`; RTOS ports need their own driver | 5.5 |
+| "Accepted limits" list, duplicating sections 9 and 10 of V2.0 | now MAS section 11 |
+| Appendix B rows with no reviewer (two IPs, the 64-bit AND, status register) | 4.1, 4.7, 4.6 |
+
+**Corrected from the RTL at `4c69615c`.** These replace the statements above
+(4.4, 4.7, 5.4, 5.8 and the Appendix C row on the comparator).
+
+1. **One-shot is a held level only when the counter does not advance every cycle.**
+   `ONE_SHOT` clears `ENABLE` through the combinational `s_cfg_lo`, so the registered
+   `ENABLE` is still 1 in the cycle after the match. With no prescaler (or
+   `PRESC` = 0) the counter steps to `CMP`+1 in that cycle, the comparator sees a
+   mismatch, and the interrupt is a 1-cycle pulse. With `PRESC` >= 1 or `ref_clk_i`
+   there is no tick in that cycle, the count stays on `CMP` and the level is held.
+   With `CMP_CLR` = 1 as well, the counter clears to 0 and the interrupt is a pulse.
+   Not yet simulated; MAS section 12 carries the check. `vendor/manifest.yml` still
+   says "held level" unconditionally.
+2. **Periodic (`CMP_CLR`) pulses are always one `HCLK` cycle**, even prescaled,
+   because the clear follows the match flag at once. Period: `CMP`+1 cycles unprescaled,
+   `CMP` x (`PRESC`+1) with `PRESC` >= 1.
+3. **`CFG_REG_HI[31]` is not ignored.** The `hi` one-shot path reads
+   `s_cfg_hi_reg[MODE_64_BIT]`; with it set in 32-bit mode, counter `hi` no longer
+   clears its own `ENABLE` at its match.
+4. **`TIMER_START_x` alone does not restart a held one-shot**: the one-shot condition
+   is still true and clears `ENABLE` again the next cycle.
+5. **`ref_clk_i` is tied 0, not to the domain clock (5.8).** With `REF_CLK_EN` = 0
+   behaviour is identical, and a constant keeps the clock net off flop data pins.
+6. **"D04, bit 3" / "D05, bit 4" removed from the figure.** Bits 3 and 4 are the
+   `domainrststatus` bits in `QSOC_HAS` Table 9-2, not `CLK_EN` positions; those are
+   still `tbd` in `util/qsoc_contract.yml`.
+7. **New accepted limit**: `TIMER1` ORs two sources onto `irq_fast_i[6]` and has no
+   status register, so in periodic mode firmware cannot tell `lo` from `hi`.
+
+## Decided 2026-09-24
+
+- `paddr` is 12 bits at the wrapper; the IP decodes `[5:0]`. `P_BUS` supplies the offset within the region.

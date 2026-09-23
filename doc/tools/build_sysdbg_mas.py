@@ -67,6 +67,8 @@ blk_e = [
     E("drs", "b@0.236", "tdo", "t"),
     E("drs", "b@0.764", "hs", "t", "Update-DR"),
     E("hs", "r", "cdc", "l@0.781"),
+    E("drs", "r@0.2", "cdc", "l@0.4"),
+    E("cdc", "l@0.55", "drs", "r@0.8"),
     E("cdc", "r@0.2", "edge", "l"),
     E("edge", "r", "axim", "l"),
     E("axim", "r", "sbus", "l", "AXI4"),
@@ -85,8 +87,8 @@ def b(nid, x, y, text, style="box", bold=False):
     return N(nid, x, y, 170, 60, text, style, 10, bold)
 
 hsk = [
-    N("zt", 20, 20, 400, 300, "TCK domain", "group", 11, True, "top"),
-    N("za", 460, 20, 590, 300, "AXI domain", "group", 11, True, "top"),
+    N("zt", 20, 20, 400, 420, "TCK domain", "group", 11, True, "top"),
+    N("za", 460, 20, 590, 420, "AXI domain", "group", 11, True, "top"),
     b("t1", 40, 70, "Update-DR  ADDR\naddr[32] = 0,  not busy", "blue"),
     b("t2", 230, 70, "read_req_reg", "red", True),
     b("a1", 480, 70, "2FF  ·  dly"),
@@ -96,7 +98,9 @@ hsk = [
     b("a5", 670, 220, "read_ack_reg\ndly & !rready", "red", True),
     b("t3", 230, 220, "2FF  ·  dly"),
     b("t4", 40, 220, "Data register\nResponse register", "blue"),
-    N("note", 20, 360, 1030, 50,
+    b("t5", 40, 360, "addr_reg[31:0]", "blue"),
+    b("a6", 860, 360, "araddr", "green"),
+    N("note", 20, 470, 1030, 50,
       "write:  Update-DR  DATA,  addr[32] = 1   ·   AW  W  B   ·   write_req  /  write_ack",
       "group", 10),
 ]
@@ -110,6 +114,8 @@ hsk_e = [
     E("a5", "l", "t3", "r", "read_ack"),
     E("t3", "l", "t4", "r", "rising edge"),
     E("t3", "t", "t2", "b", "clear"),
+    E("a4", "b", "t4", "b", "rdata · resp   set_max_delay 1 TCK", False, False, 315),
+    E("t5", "r", "a6", "l", "set_max_delay 1 AXI clock"),
 ]
 
 # --------------------------------------------------------------- 3. debug boot wiring

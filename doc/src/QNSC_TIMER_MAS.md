@@ -1,69 +1,63 @@
 ---
 title: "TIMER"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
 # Revision history
 
-`V2.0` is a rewrite. The reasoning behind each decision, and how every open question
-closed, is in [`QNSC_TIMER_DECISIONS.md`](QNSC_TIMER_DECISIONS.md).
+The reasoning behind each change is in
+[`QNSC_TIMER_DECISIONS.md`](QNSC_TIMER_DECISIONS.md).
 
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
-| V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, onto the template the other blocks follow. Tables and figures are numbered by the build |
+| V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, on the MAS template |
+| V2.1 | 2026-09-24 | Nghia VT | -- | One-shot and `CFG_REG_HI[31]` behaviour corrected from the RTL; wrapper interface, full register map, tie-offs and two figures added |
 
 # 1. Overview
 
-`TIMER0` and `TIMER1` are the two general-purpose timers of QSOC, each an integration
-of `pulp-platform/apb_timer_unit` behind an APB4 slave. One instance holds **two
-32-bit counters** that can be **chained into one 64-bit counter**.
+`TIMER0` and `TIMER1` are two instances of `pulp-platform/apb_timer_unit`, each an APB
+slave with two 32-bit counters that can be chained into one 64-bit counter. Each
+counter compares on equality and can raise one interrupt. The block has no pad
+connection and no interrupt status register.
 
-**QSOC has no CLINT, so there is no `mtime`.** `TIMER0` is the chip's timebase, and
-firmware reaches it through these registers rather than through the RISC-V standard
-machine timer -- section 11.
-
-Block directory `design/timer`, module `m_qnsc_wrap_apb_timer_unit`, owner Nghia Van
-Trong.
+Block directory `design/timer`, wrapper module `m_qnsc_wrap_apb_timer_unit`, owner
+Nghia Van Trong.
 
 : Instance assignment
 
-| Instance | Region | APB port | Mode | Interrupt lines |
-|---|---|---|---|---|
-| `TIMER0` | `0x8001C000` | `APB_M7` | **64-bit**, both counters chained | 1 -- `irq_lo_o` only |
-| `TIMER1` | `0x80020000` | `APB_M8` | **two independent 32-bit** | 2 -- `irq_lo_o`, `irq_hi_o` |
+| Instance | Base | APB port | Mode | Clock gate out of reset | Interrupt |
+|---|---|---|---|---|---|
+| `TIMER0` | `0x8001_C000` | `APB_M7` | 64-bit, `MODE_64` = 1 | open | `irq_lo_o` to `irq_fast_i[10]` (mcause 26); `irq_hi_o` not connected |
+| `TIMER1` | `0x8002_0000` | `APB_M8` | two 32-bit, `MODE_64` = 0 | closed | `irq_lo_o` and `irq_hi_o` to `irq_fast_i[6]` (mcause 22) |
 
 # 2. Features
 
-- **Two 32-bit counters** per instance, chainable into **one 64-bit** counter.
-- **8-bit prescaler** ahead of each counter, and an optional **reference-clock** input
-  sampled as data.
-- **Periodic or one-shot** at the compare, selected per counter.
-- **Hardware start** from an event input, with no CPU action.
-- **No status register and no interrupt flag** -- section 6, and the fact
-  `QNSC_Interrupt_Map_MAS` depends on.
+- Two 32-bit counters per instance, chainable into one 64-bit counter -- 7.2.
+- 8-bit prescaler ahead of each counter -- 7.1.
+- Periodic, free-running or one-shot operation, selected per counter -- 7.3.
+- Equality compare, one interrupt output per counter -- 7.3, 7.4.
+- Zero-wait-state APB slave that never returns an error -- 7.6.
 
 # 3. Block diagram
 
-![The timer block and its two counters](../img/fig_timer_block.png){width=6.2in}
+![TIMER0 and TIMER1 in QSOC](../img/fig_timer_block.png){width=6.4in}
 
-: TIMER sub-modules
+Both instances are in the `peri` clock cluster. Each has its own clock gate,
+`CLK_EN[TBD]` in `SCRC`, and its own reset, `o_rst_timer0_n` or `o_rst_timer1_n` from
+`SCRC`.
+
+![Inside one TIMER instance](../img/fig_timer_inside.png){width=6.4in}
+
+: TIMER sub-modules, per instance
 
 | Sub-module | Count | Function |
 |---|---:|---|
-| `timer_unit_counter` | 2 | the 32-bit counters, `lo` and `hi` |
+| APB register file | 1 | `CFG`, `TIMER_VAL`, `TIMER_CMP`, `TIMER_START`, `TIMER_RESET` for `lo` and `hi` -- section 6 |
 | `timer_unit_counter_presc` | 2 | 8-bit prescaler ahead of each counter |
-| APB register file | 1 | ten addresses, section 6 |
-| Interrupt logic | 1 | combinational, section 7.3 |
-
-In 64-bit mode the two counters are chained, and the RTL raises the carry explicitly:
-
-```systemverilog
-s_enable_count_hi = ( s_timer_val_lo == 32'hFFFFFFFF );
-```
-
-so `counter_hi` advances **exactly once per wrap** of `counter_lo` -- a true 64-bit
-count, not two loosely coupled halves.
+| `timer_unit_counter` | 2 | 32-bit counter with a registered equality compare, `lo` and `hi` |
+| `ref_clk_i` synchroniser | 1 | four flops and a rising-edge detector on `HCLK` |
+| IRQ logic | 1 | combinational AND of compare flags and `IRQ_EN` -- 7.3 |
 
 # 4. IP used
 
@@ -71,215 +65,162 @@ count, not two loosely coupled halves.
 
 | From | Module | Commit | Licence |
 |---|---|---|---|
-| `pulp-platform/apb_timer_unit` | `apb_timer_unit` and three sub-modules | pinned in `vendor/manifest.yml` | SolderPad 0.51 |
-
-**Why not the PWM IP**, which QSOC also instantiates. An earlier revision specified
-`apb_adv_timer` for this role; it cannot perform it, and the reason is arithmetic:
-
-: Why the PWM IP cannot serve as the timer
-
-| | `apb_adv_timer` (PWM) | `apb_timer_unit` (this block) |
-|---|---|---|
-| Counter width | **16-bit** | 32-bit, or **64-bit** combined |
-| Wrap at 20 MHz, no prescaler | **3.2768 ms** | 214.7 s, or ~29 000 years at 64-bit |
-| Channel output pins | 16 | **none** |
-| Suited to | short repeating waveforms | a timebase that must not wrap |
-
-A timebase wrapping every 3.28 ms forces firmware to count wraps continuously, and one
-missed wrap corrupts every later measurement. A PWM block never needs a long count.
-**The two roles want opposite counter widths, which is why QSOC instantiates both IPs.**
+| `pulp-platform/timer_unit` | `apb_timer_unit`, `timer_unit_counter`, `timer_unit_counter_presc` | `4c69615c` | SolderPad 0.51 |
 
 # 5. Interface
 
-: Block interface
+Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. The IP port each wrapper port drives
+is named in the description.
 
-| Signal | Dir | Width | Note |
+: TIMER interface
+
+| Signal | Dir | Width | Description |
 |---|---|---:|---|
-| `HCLK` | in | 1 | `peri` cluster clock, gateable by `SCRC` -- section 10 |
-| `HRESETn` | in | 1 | active low |
-| `PADDR` | in | 12 | **only `PADDR[5:0]` is decoded** -- section 7.6 |
-| `PWDATA` | in | 32 | |
-| `PWRITE`, `PSEL`, `PENABLE` | in | 1 each | |
-| `PRDATA` | out | 32 | |
-| `PREADY` | out | 1 | **tied** to `PSEL & PENABLE` inside the IP |
-| `PSLVERR` | out | 1 | **tied 0** inside the IP |
-| `ref_clk_i` | in | 1 | sampled as data, **not used as a clock** |
-| `event_lo_i`, `event_hi_i` | in | 1 each | start a counter without CPU action |
-| `irq_lo_o`, `irq_hi_o` | out | 1 each | to `INTMAP` |
-| `busy_o` | out | 1 | either counter enabled |
-
-`PREADY` tied and `PSLVERR` tied pull in opposite directions:
-
-- **The block can never stall `P_BUS`.** No access can hang the bus, which removes it
-  from the list of blocks a watchdog must protect against.
-- **The block can never report an error.** A write to an unimplemented offset is
-  accepted silently and a read returns zero, so firmware gets no signal that it
-  addressed the block wrongly.
+| `i_clk_peri` | in | 1 | gated `peri` clock, to `HCLK` |
+| `i_rst_n_peri` | in | 1 | asynchronous active-low reset from `o_rst_timer0_n` / `o_rst_timer1_n`, to `HRESETn` |
+| `i_bus_apb_paddr` | in | 12 | to `PADDR`; only `[5:0]` decoded -- 7.6 |
+| `i_bus_apb_pwdata` | in | 32 | to `PWDATA` |
+| `i_bus_apb_pwrite`, `i_bus_apb_psel`, `i_bus_apb_penable` | in | 1 each | to `PWRITE`, `PSEL`, `PENABLE` |
+| `i_bus_apb_pstrb` | in | 4 | not connected; every write stores all 32 bits |
+| `i_bus_apb_pprot` | in | 3 | not connected |
+| `o_bus_apb_prdata` | out | 32 | from `PRDATA`; 0 at unimplemented offsets |
+| `o_bus_apb_pready` | out | 1 | from `PREADY` = `PSEL & PENABLE`, zero wait states |
+| `o_bus_apb_pslverr` | out | 1 | from `PSLVERR`, constant 0 |
+| `o_int_timer` | out | 2 | `[0]` = `irq_lo_o`, `[1]` = `irq_hi_o`, to `INTMAP` -- 7.3 |
 
 # 6. Register map
 
-Ten addresses per instance, at the region base.
+All registers reset to 0. `lo` and `hi` registers are identical except `MODE_64`.
 
-: Register map of one instance
+: Register map
 
-| Offset | Name | Access | Function |
-|---|---|---|---|
-| `0x00` | `CFG_REG_LO` | RW | configuration of `lo`; also holds the 64-bit mode bit |
-| `0x04` | `CFG_REG_HI` | RW | configuration of `hi` |
-| `0x08` | `TIMER_VAL_LO` | RW | current count of `lo`; a write loads it |
-| `0x0C` | `TIMER_VAL_HI` | RW | current count of `hi`; a write loads it |
-| `0x10` | `TIMER_CMP_LO` | RW | compare target for `lo` |
-| `0x14` | `TIMER_CMP_HI` | RW | compare target for `hi` |
-| `0x18` | `TIMER_START_LO` | WO | any write starts `lo` |
-| `0x1C` | `TIMER_START_HI` | WO | any write starts `hi` |
-| `0x20` | `TIMER_RESET_LO` | WO | any write clears `lo` |
-| `0x24` | `TIMER_RESET_HI` | WO | any write clears `hi` |
+| Offset | Register | Field | Bits | Access | Reset | Description |
+|---|---|---|---|---|---|---|
+| `0x00` | `CFG_REG_LO` | `ENABLE` | 0 | RW | 0 | 1 = counter `lo` runs |
+| | | `RESET` | 1 | RW | 0 | 1 = clear counter and prescaler `lo`; returns to 0 the next cycle |
+| | | `IRQ_EN` | 2 | RW | 0 | 1 = compare drives `irq_lo_o` |
+| | | `IEM` | 3 | RW | 0 | 1 = `event_lo_i` sets `ENABLE`; no effect in QSOC -- section 10 |
+| | | `CMP_CLR` | 4 | RW | 0 | 1 = clear the counter at the compare |
+| | | `ONE_SHOT` | 5 | RW | 0 | 1 = clear `ENABLE` at the compare |
+| | | `PRESC_EN` | 6 | RW | 0 | 1 = count prescaler ticks |
+| | | `REF_CLK_EN` | 7 | RW | 0 | 1 = count `ref_clk_i` rising edges; counter stops in QSOC -- section 10 |
+| | | `PRESC` | 15:8 | RW | 0 | prescaler divisor, tick every `PRESC`+1 cycles |
+| | | -- | 30:16 | RW | 0 | stored and read back, no function |
+| | | `MODE_64` | 31 | RW | 0 | 1 = chain `lo` and `hi` into one 64-bit counter |
+| `0x04` | `CFG_REG_HI` | bits 0-15 | 15:0 | RW | 0 | as `CFG_REG_LO`, for counter `hi` |
+| | | -- | 30:16 | RW | 0 | stored and read back, no function |
+| | | -- | 31 | RW | 0 | must be 0 -- 7.3 |
+| `0x08` | `TIMER_VAL_LO` | `VAL` | 31:0 | RW | 0 | count of `lo`; a write loads it |
+| `0x0C` | `TIMER_VAL_HI` | `VAL` | 31:0 | RW | 0 | count of `hi`; a write loads it |
+| `0x10` | `TIMER_CMP_LO` | `CMP` | 31:0 | RW | 0 | compare value of `lo` |
+| `0x14` | `TIMER_CMP_HI` | `CMP` | 31:0 | RW | 0 | compare value of `hi` |
+| `0x18` | `TIMER_START_LO` | -- | 31:0 | WO | 0 | any write sets `CFG_REG_LO.ENABLE`; reads 0 |
+| `0x1C` | `TIMER_START_HI` | -- | 31:0 | WO | 0 | any write sets `CFG_REG_HI.ENABLE`; reads 0 |
+| `0x20` | `TIMER_RESET_LO` | -- | 31:0 | WO | 0 | any write clears counter and prescaler `lo`; reads 0 |
+| `0x24` | `TIMER_RESET_HI` | -- | 31:0 | WO | 0 | any write clears counter and prescaler `hi`; reads 0 |
+| `0x28`-`0x3C` | -- | -- | 31:0 | RSVD | 0 | writes ignored, reads 0 |
 
-**Reads return only six of the ten** -- the two `CFG`, the two `VAL`, the two `CMP`.
-The four command addresses are write-only and read as zero.
-
-**There is no status register and no interrupt flag.** This is the fact section 11 and
-`QNSC_Interrupt_Map_MAS` both depend on: nothing in this block records that an
-interrupt happened, so nothing here can acknowledge one either.
-
-: CFG_REG_LO and CFG_REG_HI bit fields
-
-| Bit | Name | Function |
-|---:|---|---|
-| 0 | `ENABLE` | counter runs |
-| 1 | `RESET` | clears the counter; self-clearing |
-| 2 | `IRQ_EN` | allows the compare to raise the interrupt |
-| 3 | `IEM` | lets `event_*_i` set `ENABLE` |
-| 4 | `CMP_CLR` | on compare, clear the counter -- this is what makes it periodic |
-| 5 | `ONE_SHOT` | on compare, clear `ENABLE` |
-| 6 | `PRESC_EN` | insert the prescaler |
-| 7 | `REF_CLK_EN` | count `ref_clk_i` edges instead of every core clock |
-| 15:8 | `PRESC` | 8-bit prescaler divisor |
-| 31 | `MODE_64` | **`CFG_REG_LO` only**: chain both counters into one 64-bit timer |
-
-`MODE_64` is read from `CFG_REG_LO` everywhere the RTL uses it, including the paths
-controlling the `hi` counter. **Writing bit 31 of `CFG_REG_HI` has no effect** and must
-not be relied on.
+In 64-bit mode with `CFG_REG_LO.ENABLE` = 1, `CFG_REG_LO` alone controls the count and
+the interrupt; of `CFG_REG_HI` only `RESET` acts. Firmware keeps `CFG_REG_HI` = 0 in
+64-bit mode: with `CFG_REG_LO.ENABLE` = 0, `CFG_REG_HI.ENABLE` = 1 runs counter `hi`
+alone.
 
 # 7. Functional behaviour
 
 ## 7.1 Counting rate
 
-: Counting rate options
+The counter advances once per **tick**.
 
-| `REF_CLK_EN` | `PRESC_EN` | Counter advances | Wrap of 32 bits at 20 MHz |
+: Tick source
+
+| `REF_CLK_EN` | `PRESC_EN` | Tick | 32-bit wrap at 20 MHz |
 |---|---|---|---|
-| 0 | 0 | every core clock | 214.7 s |
-| 0 | 1 | every `PRESC`+1 core clocks | up to 256 x that |
-| 1 | 0 | on each rising edge of `ref_clk_i` | set by `ref_clk_i` |
-| 1 | 1 | prescaled `ref_clk_i` edges | set by both |
+| 0 | 0 | every `HCLK` cycle | 214.7 s |
+| 0 | 1 | every `PRESC`+1 `HCLK` cycles | 214.7 s x (`PRESC`+1), 15.3 h at most |
+| 1 | 0 or 1 | each, or every `PRESC`+1, rising edge of `ref_clk_i` | never: `ref_clk_i` = 0 in QSOC |
 
-`ref_clk_i` passes through a four-stage shift register and an edge detector inside the
-IP. **It is sampled as data, never used as a clock**, so it creates no second clock
-domain and needs no CDC constraint.
+"The counter advances every cycle" below means `REF_CLK_EN` = 0 and either
+`PRESC_EN` = 0 or `PRESC` = 0.
 
-## 7.2 One counting tick is the interrupt pulse width
+## 7.2 64-bit mode
 
-One counting tick is one `HCLK` cycle with no prescaler and no reference clock,
-`PRESC`+1 cycles with the prescaler, or one `ref_clk_i` period with `REF_CLK_EN` set.
-**The narrowest case is one core clock, and that is the case `INTMAP` must assume.**
+With `CFG_REG_LO.MODE_64` = 1, counter `hi` advances only on a tick in which
+`TIMER_VAL_LO` = `0xFFFF_FFFF`, so `{TIMER_VAL_HI, TIMER_VAL_LO}` is one 64-bit count.
+The 64-bit value matches when `TIMER_VAL_HI` = `TIMER_CMP_HI` and `TIMER_VAL_LO` =
+`TIMER_CMP_LO`, and 7.3 applies to it as to a 32-bit counter. `irq_hi_o` is 0 in this
+mode.
 
-## 7.3 The interrupt is combinational, and 64-bit mode drives only one line
+## 7.3 Compare and interrupt
 
-```systemverilog
-if ( s_cfg_lo_reg[`MODE_64_BIT] == 1'b0 ) begin       // 32-bit mode
-   irq_lo_o = s_target_reached_lo & s_cfg_lo_reg[`IRQ_BIT];
-   irq_hi_o = s_target_reached_hi & s_cfg_hi_reg[`IRQ_BIT];
-end else begin                                        // 64-bit mode
-   irq_lo_o = s_target_reached_lo & s_target_reached_hi & s_cfg_lo_reg[`IRQ_BIT];
-end
-```
+The match flag of each counter is a flop that is 1 in every cycle in which the count
+equals `TIMER_CMP`, whether or not `ENABLE` is set. The interrupt is combinational:
 
-**In 64-bit mode `irq_hi_o` is never driven**, so the instance contributes one source,
-not two. That is why `TIMER0` contributes one line and `TIMER1` two.
+: Interrupt equations
 
-**The AND is correct, though it looks as though two unrelated events must coincide.**
-`target_reached_hi` is high for the whole epoch in which `counter_hi` equals its target
--- one full wrap of `counter_lo` -- and within that epoch `counter_lo` equals its own
-target for exactly one tick. So the AND gives **exactly one pulse**, at the intended
-64-bit value.
-
-## 7.4 The compare is equality, not greater-or-equal
-
-`target_reached` is asserted when the counter **equals** the compare value. The
-standard RISC-V machine timer is specified the other way -- pending while
-`mtime >= mtimecmp` -- specifically so that a target already passed still fires.
-
-**This block has no such protection, and the failure is silent:**
-
-| Mode | If firmware writes a target the counter has just passed |
-|---|---|
-| 32-bit at 20 MHz | next hit after a full wrap, **214.7 s** late |
-| **64-bit at 20 MHz** | next hit after a 64-bit wrap, **~29 000 years** -- never |
-
-**Firmware must compute the next target from the current count with enough margin to
-cover its own interrupt latency, and must not write a target derived from a count it
-read earlier.** In 64-bit mode this is a correctness matter, not a performance one.
-Section 12 turns it into a test.
-
-## 7.5 One-shot mode holds the interrupt as a level
-
-The comparator is a flop **not gated by the counter enable**:
-
-```systemverilog
-// timer_unit_counter.sv -- COMPARATOR
-always_ff@(posedge clk_i, negedge rst_ni)
-   if ( s_count == compare_value_i ) target_reached_o <= 1'b1;
-   else                              target_reached_o <= 1'b0;
-```
-
-and when the counter is stopped, `s_count` holds its value. So a mode that **stops the
-counter on the compare** leaves `s_count == compare_value_i` true indefinitely, and the
-interrupt is held rather than pulsed.
+| Mode | `irq_lo_o` | `irq_hi_o` |
+|---|---|---|
+| 32-bit | `match_lo & CFG_REG_LO.IRQ_EN` | `match_hi & CFG_REG_HI.IRQ_EN` |
+| 64-bit | `match_lo & match_hi & CFG_REG_LO.IRQ_EN` | 0 |
 
 : Interrupt shape by mode
 
-| `CMP_CLR` | `ONE_SHOT` | What happens at the target | Shape | Width |
+| `CMP_CLR` | `ONE_SHOT` | Counter advances | At the match | Interrupt |
 |---|---|---|---|---|
-| 1 | 0 | counter clears and runs on -- periodic | **pulse** | 1 counting tick |
-| 0 | 0 | counter runs past the target | **pulse** | 1 tick; next hit after a full wrap |
-| x | **1** | `ENABLE` cleared, **counter stops on the target** | **held level** | until firmware clears or restarts it |
+| 1 | 0 | any | clears to 0, keeps running -- periodic | 1-cycle pulse |
+| 0 | 0 | every cycle | runs on -- free-running | 1-cycle pulse |
+| 0 | 0 | prescaled or `ref_clk_i` | runs on -- free-running | pulse of one tick |
+| 0 | 1 | every cycle | `ENABLE` cleared, stops at `CMP`+1 | 1-cycle pulse |
+| 0 | 1 | prescaled or `ref_clk_i` | `ENABLE` cleared, stops at `CMP` | level, held until cleared -- 7.5 |
+| 1 | 1 | any | clears to 0 and stops | 1-cycle pulse |
 
-**The held level is useful rather than awkward.** One-shot is exactly the mode in which
-"the event repeats next period" is *not* available as a recovery mechanism. Because the
-IP holds the line, a one-shot alarm missed while `mstatus.MIE` was clear is still
-pending when interrupts are re-enabled. `QNSC_Interrupt_Map_MAS` classifies the two
-modes separately for this reason.
+Periodic operation gives a pulse. One-shot gives a level held until cleared when the
+counter is prescaled or counts `ref_clk_i`, and a 1-cycle pulse when it is not.
 
-**Firmware must clear a one-shot interrupt by acting on the block** -- writing
-`TIMER_RESET_*`, moving `TIMER_CMP_*`, or clearing `IRQ_EN`. Returning from the handler
-without doing so re-enters it immediately.
+: Interrupt period, `CMP` >= 1
 
-## 7.6 The register file aliases 256 times across its region
-
-: Address decode against region size
-
-| Item | Value |
+| Mode | Period |
 |---|---|
-| Registers implemented | 10 addresses, `0x00` to `0x24` |
-| Address bits decoded | `PADDR[5:0]` |
-| Span actually decoded | **64 bytes** |
-| Region assigned | **16 KiB** |
-| Consequence | the 64 bytes **alias 256 times** across the region |
+| Periodic, counter advances every cycle | `CMP`+1 `HCLK` cycles |
+| Periodic, `PRESC_EN` = 1 and `PRESC` >= 1 | `CMP` x (`PRESC`+1) `HCLK` cycles |
+| Free-running | 2^32 ticks, or 2^64 ticks in 64-bit mode |
 
-So `0x80020000` and `0x80020040` are the same register. Harmless if firmware uses the
-base address, and a trap if anyone assumes an access above the first 64 bytes will
-fault -- it will not, `PSLVERR` being tied low.
+Writing 1 to `CFG_REG_HI[31]` in 32-bit mode stops counter `hi` from clearing its own
+`ENABLE` at its match in one-shot mode. Firmware keeps that bit 0.
 
-**The recommendation is to accept the aliasing and document it**, rather than narrow
-the decode in the wrapper: narrowing costs logic and buys only a fault firmware has no
-way to observe.
+## 7.4 Equality compare
+
+A match requires the count to equal `TIMER_CMP`. A compare value that the count has
+already passed matches only after the counter wraps: 2^32 ticks later, 214.7 s at
+20 MHz, or 2^64 ticks in 64-bit mode.
+
+## 7.5 Clearing the interrupt
+
+A held one-shot level falls on any of: a write to `TIMER_RESET_x` or `CFG_REG_x.RESET`
+= 1; a `TIMER_CMP_x` or `TIMER_VAL_x` write that makes count and compare differ;
+`CFG_REG_x.IRQ_EN` = 0.
+
+A write to `TIMER_START_x` alone does not restart a counter held at its match: the
+one-shot condition clears `ENABLE` again.
+
+No register records which `TIMER1` counter raised `irq_fast_i[6]`. In one-shot mode a
+counter that was started and reads `ENABLE` = 0 has matched; in periodic and
+free-running mode no register identifies the source.
+
+## 7.6 APB response and address decode
+
+- `PREADY` = `PSEL & PENABLE`: every access completes with zero wait states.
+- `PSLVERR` = 0 for every offset.
+- Only `PADDR[5:0]` is decoded, so the 64-byte map repeats 256 times in the 16 KiB
+  region: `base + 0x40` is `CFG_REG_LO`.
+- `PSTRB` is not connected: a byte or halfword store writes all 32 bits of `PWDATA`.
+- While the clock gate is closed, the counters and compare flags hold their value,
+  so `o_int_timer` holds its value; the `SCRC` gated-domain responder answers accesses
+  to the region with an error.
 
 # 8. Instances
 
-Two, differing in the mode firmware selects rather than in any parameter -- see the
-table in section 1. `TIMER0` is configured 64-bit as the chip timebase; `TIMER1` is
-left as two independent 32-bit counters.
+Two instances of one wrapper with identical parameters. They differ only in `MODE_64`
+as written by firmware, the clock gate reset state and the `INTMAP` line -- section 1.
 
 # 9. What is not provided here, and who provides it
 
@@ -287,24 +228,25 @@ left as two independent 32-bit counters.
 
 | Function | Where it lives |
 |---|---|
-| Interrupt status or flag | **Nowhere.** The block has none -- section 6 |
-| Interrupt acknowledge | Firmware acting on the block: `TIMER_RESET_*`, `TIMER_CMP_*` or `IRQ_EN` -- 7.5 |
-| Error response on a bad offset | Nowhere. `PSLVERR` is tied 0 -- section 5 |
-| Greater-or-equal compare | Nowhere. Firmware must add the margin -- 7.4 |
-| `mtime` and `mtimecmp` | Nowhere. QSOC has no CLINT -- section 11 |
+| Interrupt status or flag | nowhere |
+| Interrupt acknowledge | firmware writes to the block -- 7.5 |
+| Source of `irq_fast_i[6]` between `TIMER1` `lo` and `hi` | nowhere in periodic mode -- 7.5 |
+| Error response | `SCRC` responder, only while the clock gate is closed -- 7.6 |
+| Greater-or-equal compare | nowhere -- 7.4 |
+| `mtime` and `mtimecmp` | nowhere; `irq_timer_i` is tied 0 at the core |
 | Aggregation onto a CPU interrupt line | `INTMAP` |
 
-# 10. Constraints this block imposes
+# 10. Tie-offs
 
-: Constraints on firmware and integration
+: Tie-offs
 
-| On | Constraint | Consequence if missed |
+| Port | Tied to | Why |
 |---|---|---|
-| Firmware | Compute the next compare target from the **current** count, with margin | A target just passed is missed for a full wrap -- 214.7 s, or never in 64-bit mode |
-| Firmware | Clear a one-shot interrupt by acting on the block | The handler re-enters immediately -- 7.5 |
-| Firmware | Do not write `MODE_64` in `CFG_REG_HI` | Silently ignored -- section 6 |
-| Firmware | Use the region base; do not rely on a fault above `0x24` | Aliasing, silent -- 7.6 |
-| `SCRC` | Do not gate `peri` while a timer interrupt is asserted | The handler cannot clear its own source |
+| `event_lo_i`, `event_hi_i` | 0 | no hardware start source in QSOC; `IEM` has no effect |
+| `ref_clk_i` | 0 | no reference clock in QSOC; `REF_CLK_EN` = 1 stops the counter |
+| `busy_o` | open | no consumer in QSOC |
+| `irq_hi_o` of `TIMER0` | open at `INTMAP` | 0 in 64-bit mode -- 7.2 |
+| `i_bus_apb_pstrb`, `i_bus_apb_pprot` | open | the IP has no such inputs |
 
 # 11. Requirements on others, and open items
 
@@ -312,53 +254,49 @@ left as two independent 32-bit counters.
 
 | Item | Owner | What it blocks |
 |---|---|---|
-| APB paddr width for the wrapper | bus owner | The wrapper's port list. The IP declares 12 bits; the region is 16 KiB, so 14 |
-| `CLK_EN` bit position for this block | SCRC owner | The wrapper's clock port |
-| `TIMER0` on line 10, `TIMER1` on line 6 of `irq_fast_i` | INTMAP owner (this author) | Settled in `util/qsoc_contract.yml` |
-| What drives `event_lo_i` and `event_hi_i`, if anything | top-level owner | Hardware start. Tied 0 if nothing drives them |
-| What drives `ref_clk_i`, if anything | top-level owner | The reference-clock counting modes of 7.1 |
-| Timer driver in place of the standard `mtime` one | firmware owner | Any RTOS port -- see below |
+| `i_bus_apb_paddr[11:0]` = offset within the region (`P_BUS` subtracts the base) | bus owner | register decode |
+| `CLK_EN` and `SOFT_RST_CTRL` bit positions for `TIMER0` and `TIMER1` | `SCRC` owner | the wrapper's clock and reset connection |
+| Gate reset values: `TIMER0` open, `TIMER1` closed | `SCRC` owner | `TIMER0` counting before firmware writes `SCRC` |
 
-**What QSOC gives up by having no `mtime`.** The RISC-V privileged specification puts
-the machine timer at `mtime`/`mtimecmp` in a CLINT, and every RTOS port and most bare
-metal examples assume it. QSOC has no CLINT, so `mip.MTIP` is never set and
-`irq_timer_i` is tied off. The consequence is confined to software: firmware drives
-`TIMER0` through the registers of section 6 instead, and an RTOS port must supply its
-own timer driver. Nothing in hardware is missing -- a 64-bit counter with a compare is
-exactly what `mtime` is -- but the **interface** is this block's, not the standard one.
+Accepted limits and firmware rules:
 
-**Accepted limits**, stated rather than hidden:
+1. Compute each compare value from a fresh read of the count, with margin for
+   interrupt latency; a passed value is missed for a full wrap -- 7.4.
+2. Clear a held one-shot level by one of the writes in 7.5 before `mret`, or the
+   handler is re-entered.
+3. Keep `CFG_REG_HI[31]` = 0 -- 7.3; use word stores only -- 7.6.
+4. Do not close a timer's clock gate while its interrupt is asserted: the level holds
+   and the block cannot be written to clear it -- 7.6.
+5. Closing `TIMER0`'s clock gate stops the timebase without any record.
 
-1. Equality compare, with no catch-up -- 7.4. The most serious limit in the block.
-2. No interrupt status anywhere -- section 6.
-3. No error response -- section 5.
-4. 64 bytes aliasing across 16 KiB -- 7.6.
-5. `irq_hi_o` unused in 64-bit mode -- 7.3.
-
-**Open on this block:** whether `event_*_i` and `ref_clk_i` are driven at all, and the
-gate count, which waits on synthesis.
+Open: gate count, from synthesis.
 
 # 12. Verification
 
-The IP arrives with no testbench, so all of this is QSOC's to write.
+The IP has no testbench. Each check below is added by QSOC.
 
-: Verification QSOC must add
+1. Register reset values and access types match section 6, including reads of 0 from
+   `0x18`-`0x3C` and read-back of `CFG` bits 30:16.
+2. `base + 0x40` accesses `CFG_REG_LO`; every access in the 16 KiB region completes
+   with zero wait states and `PSLVERR` = 0; a byte store writes all 32 bits.
+3. Tick rate for each row of 7.1, including `PRESC` = 0 and 255.
+4. 64-bit mode: `TIMER_VAL_HI` advances exactly once per `lo` wrap, with and without
+   the prescaler; `irq_hi_o` stays 0; one pulse at the programmed 64-bit value.
+5. Every row of the interrupt shape table in 7.3, in 32-bit and 64-bit mode. **Confirm
+   in simulation** the one-shot rows: 1-cycle pulse and stop at `CMP`+1 when the
+   counter advances every cycle; held level and stop at `CMP` when prescaled.
+6. Periodic period equals the 7.3 formula, with and without the prescaler; **confirm
+   in simulation**.
+7. Each clearing action of 7.5 drops a held level; `TIMER_START_x` alone does not
+   restart it -- **confirm in simulation**.
+8. A compare value written one tick behind the count is missed until the wrap.
+9. `CFG_REG_HI[31]` = 1 in 32-bit mode changes counter `hi` one-shot behaviour -- 7.3.
+10. Tie-offs of section 10 present; `IEM` = 1 and `REF_CLK_EN` = 1 act as stated there.
+11. Integration: `TIMER0` `irq_lo_o` reaches `irq_fast_i[10]`, both `TIMER1` outputs
+    reach `irq_fast_i[6]`, and the gate reset values match section 1.
 
-| What is checked | Why it matters |
-|---|---|
-| **A target written just after the counter passed it is missed**, and the documented margin rule avoids it | The block's most serious limit -- 7.4. The test exists to prove the rule is necessary, not that the hardware is wrong |
-| 64-bit chaining: `counter_hi` advances exactly once per wrap of `counter_lo` | The carry of section 3 |
-| 64-bit mode raises **one** pulse at the intended value, and `irq_hi_o` stays low | 7.3 |
-| One-shot holds the line until firmware acts; periodic pulses for one tick | 7.5, and the shape `INTMAP` assumes |
-| Pulse width is one counting tick in each of the four rate modes | 7.1, 7.2 |
-| `MODE_64` in `CFG_REG_HI` has no effect | Section 6 |
-| Reads of the four command offsets return zero | Section 6 |
-| `0x00` and `0x40` are the same register | 7.6 |
-| No APB access can stall `P_BUS`, for any offset in the 16 KiB region | Section 5 |
-
-**Acceptance criterion:** `TIMER0` in 64-bit mode raises exactly one interrupt at a
-programmed 64-bit target, and a target written late is proven to be missed -- because a
-timebase that silently stops being a timebase is the failure this block can cause.
+Acceptance: `TIMER0` in 64-bit mode raises exactly one interrupt at a programmed
+64-bit value, and a value written behind the count is missed.
 
 # Appendix A. Acronyms
 
@@ -366,15 +304,9 @@ timebase that silently stops being a timebase is the failure this block can caus
 
 | Acronym | Description |
 |---|---|
-| APB | Advanced Peripheral Bus, AMBA APB4 |
-| CLINT | Core Local Interruptor -- the RISC-V standard timer block. **Not present in QSOC** |
-| `CMP_CLR` | Clear the counter on compare, making it periodic |
-| `IEM` | Interrupt Event Mask: lets `event_*_i` start the counter |
-| `MODE_64` | `CFG_REG_LO` bit 31: chain both counters |
-| `mtime`, `mtimecmp` | The RISC-V standard machine timer registers, in a CLINT |
-| `ONE_SHOT` | Clear `ENABLE` on compare, stopping the counter |
-| `PRESC` | Prescaler divisor |
-| `PSLVERR` | APB slave error response. **Tied 0 by this IP** |
+| APB | AMBA Advanced Peripheral Bus |
+| `mtime`, `mtimecmp` | RISC-V machine timer registers |
+| SCRC | System clock and reset controller |
 
 # Appendix B. First review
 
@@ -382,7 +314,4 @@ timebase that silently stops being a timebase is the failure this block can caus
 
 | Item | Reviewer | Response |
 |---|---|---|
-| Too long, and the redundancy causes wrong information | Teacher, 2026-09-23 | V2.0: 571 lines to this, with the record kept whole in `_DECISIONS` |
-| Why two different timer IPs in one chip? | -- | Section 4: 16-bit wraps in 3.28 ms, which cannot be a timebase. The roles want opposite counter widths |
-| Is the 64-bit compare expression correct? | -- | Yes, and 7.3 shows why the AND of two conditions still gives exactly one pulse |
-| Does the block need an interrupt status register? | -- | It has none and cannot be given one -- it is IP. Section 9 says where acknowledgement happens instead |
+| Too long, and the redundancy causes wrong information | Teacher, 2026-09-23 | V2.0 rewrite; V2.1 cuts the remaining reasoning to `_DECISIONS` |

@@ -639,3 +639,57 @@ Points the author expects to be challenged on, with the answer held ready.
 | Four external triggers from GPIO proposed | `QSOC_HAS`, timer external triggers row |
 | Four interrupt sources, all pulses, one fast line | `QNSC_Interrupt_Map_MAS`, Table 3 |
 | Most STM32 timers are 16-bit, a few 32-bit | STMicroelectronics STM32G4 general purpose timer training material |
+
+---
+
+# V2.1 cuts (2026-09-24)
+
+Removed from `QNSC_PWM_MAS` V2.0 when it was corrected against the RTL at commit
+`c8faec1e`. Where a correction below contradicts an earlier section of this file,
+the correction holds.
+
+**Moved here, not specification:**
+
+- **Why 16 bits.** At 20 MHz a 16-bit counter gives 305 Hz at `PRESC` = 0 and 1.19 Hz
+  at maximum divide. Use-case table: LED dimming at 1 kHz has 20 000 duty steps, motor
+  drive at 20 kHz has 1 000, and audio-rate output at 44.1 kHz has 454. 16 bits would
+  be too few for a timebase, which is why the timebase is a different IP.
+- **Recovery by periodicity.** No event status exists, so a missed event is lost. The
+  selected channel rises again one period later (23 us to 1 ms at the rates above), so
+  PWM events must not be used as one-off notifications.
+- **`dft_cg_enable_i` history.** The pad table once listed a combined test-mode / JTAG
+  pin. The Day005 review of 2026-09-18 found it had been copied from another chip and
+  removed it, which left nothing to drive the input. The same review ruled that a
+  specification must not assert the absence of scan. If DFT is added, this tie-off
+  is the first thing to revisit.
+- "Narrowest interrupt sources in QSOC": a claim about other blocks.
+- The V1.5 `ch_i_o` error (channel `i` of every module), corrected in V1.6.
+
+**Corrections found against the RTL:**
+
+1. `CH_EN` (`0x104`) is `r_clk_en[3:0]`, the enable of the four `pulp_clock_gating`
+   cells, and resets to 0. It is not a channel output enable.
+2. `timer_module` does not instantiate `lut_4x4` or `out_filter`. Output shape is set
+   by `CHn_TH[18:16]` (comparator MODE). `CHn_LUT` is stored and read back but drives
+   nothing. The idle-level argument of V1.3 and V1.4 still holds, but the flip-flop
+   that holds the level is the `comparator`'s `r_value`, not `out_filter`.
+   `CMD.RST` clears it.
+3. Events are rising edges only (`new & ~old`), not every change of state.
+4. `ext_sig_i` is a count source selected by `CFG.IN_SEL` and qualified by
+   `CFG.IN_MODE`. Start and stop come only from `CMD`.
+5. The decode is `PADDR[9:2]`: a 1 KiB window that repeats every `0x400`, with holes
+   that read 0. It is not a 264-byte span.
+6. `low_speed_clk_i` passes a 3-flop synchroniser in `input_stage` and is used only
+   when `CFG.CLK_SEL` = 1. It is tied 0, not to the domain clock.
+7. `TH[15:0]` is the counter START value and `TH[31:16]` is END.
+8. `ext_sig_i[3:0]` = `TIM_EXT0`-`3` is settled by `QSOC_HAS`, not open.
+9. `input_stage` samples `ext_sig_i` without a synchroniser, so `i_tim_ext` needs
+   one. This is a new item in MAS section 11.
+10. Pad mapping decided 2026-09-24: `PWM_0`-`3` = `ch_0_o[0..3]` and `PWM_4`-`7` =
+    `ch_1_o[0..3]`.
+
+## Decided 2026-09-24
+
+- `i_tim_ext` gets a two-flop synchroniser inside the PWM wrapper, so it does not depend on the IO MUX.
+- `pulp_clock_gating` is a local wrapper of OpenTitan `prim_clock_gating`, which has the same ports and is already used by Ibex. Synthesis then maps one cell to the library ICG.
+- `paddr` is 12 bits at the wrapper; the IP decodes `[9:2]`.

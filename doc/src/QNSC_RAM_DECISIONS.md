@@ -916,3 +916,56 @@ repository of the **project's own mentor**, the same account supplying
 5. **`QSOC_HAS`** -- the system architecture specification. Authority for the boot
    flow of section 5.1, the memory map, and the mandatory protocol conversions
 6. `QNSC_SYSDBG_MAS` -- the companion specification for the author's second block
+
+# V2.2 cuts (2026-09-24)
+
+Text removed from `QNSC_RAM_MAS.md` V2.1 when V2.2 was made specification only.
+Kept here short, as the record of why.
+
+- **History.** V2.0 replaced nine earlier versions and a 300-line memory-map
+  proposal; the map is now generated from `util/qsoc_contract.yml` (910 lines
+  down to about 420 at V2.0). The V2.1 row also noted that the `SYSDBG` register
+  row left the map; that is a `SYSDBG` change, not a RAM one.
+- **Full-chip map.** The MAS now shows only the `AXI_M1` and `AXI_M2` rows
+  (`gen:memory_map ports=AXI_M1,AXI_M2`); the whole map is in the contract.
+- **Contrast with `SYSDBG`.** `SYSDBG` is designed in house; here the controller is
+  existing IP, and the wrapper is the only RTL the project adds.
+- **FIFO depth.** One `PARA_FIFO_DEPTH` sets all FIFOs: deeper absorbs longer
+  bursts without back-pressure and costs registers; the write and read paths
+  cannot be sized apart without editing the IP top level.
+- **One read in flight** is the first thing to revisit if the RAM becomes a
+  bottleneck.
+- **Why the byte-enable path matters.** RV32 `sb` and `sh`, emitted for any
+  `uint8_t`, packed field or string, would otherwise write the whole word and
+  silently destroy the three neighbouring bytes, since `RRESP` is always OKAY.
+  Where the enables travel: Ibex `data_be_o` -> `axi_from_mem` `mem_be_i` ->
+  AXI `wstrb` -> `S_BUS` -> dropped by the controller -> restored by the wrapper
+  -> macro byte enables. The IP's README states the missing `WSTRB` as a boundary,
+  not a defect. V2.2 fixes the mechanism: a strobe FIFO in lockstep with `WFIFO`,
+  no vendor change.
+- **Why the WRAP defect passed the IP's tests.** The reference model in
+  `sim/vcs/env/axi_svt_basic_env.sv` computes the same value,
+  `next_addr = (curr_addr + 4) & 32'hFFFF_FFFC`, so the four `wrap_*` tests agree
+  with the design, not with AXI. To report to the IP authors.
+- **WRAP consequence.** `WRAP` exists for cache-line fills. `axi_from_mem` and
+  `SYSDBG` issue single beats; only the DMA could burst. If it ever issues WRAP,
+  `axi_burst_unwrap.sv` from `pulp-platform/axi`, already used for `S_BUS`, splits
+  it into INCR bursts in front of this block.
+- **SECDED.** If integrity is added later, `RRESP` becomes a real signal; `RFIFO`
+  already carries its two bits.
+- **Aliasing and growth.** A decode window larger than the macro would alias
+  silently. HAS Table 5-2 sets the windows equal to the macro sizes, so the
+  paragraph and its constraint row were removed; the reserved space above each RAM
+  is for growth.
+- **Macro pins.** The behavioural model has only functional pins; the SMIC macro
+  adds margin, retention and test pins that the controller does not drive. A
+  mis-tied pin is harmless in simulation and wrong only in silicon (a floating or
+  asserted test pin reads back stale data), so the tie-offs are written down.
+- **Accepted-limits list** (one read in flight, 32-bit transfer size, WRAP as INCR,
+  no error reporting, one FIFO depth) repeated sections 7 and 10 and was dropped.
+- **Verification.** Reusing the IP's 46-test regression was part of why this IP
+  was chosen. The acceptance test is about the block QSOC ships, not the IP: a C
+  program writing a `uint8_t` array leaves its neighbours intact.
+- **Address alignment.** V2.1 required aligned addresses. Because the macro takes
+  address bits `[..:2]` only, an unaligned single beat addresses its containing
+  word; only narrow bursts remain wrong.

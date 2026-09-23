@@ -162,7 +162,7 @@ memory_map:
     note: Register interface of the DMA. Its data path is an AXI master on AXI_S2.
 
 # -----------------------------------------------------------------------------
-# Interrupts. Source: QNSC_Interrupt_Map_MAS section 5.3 -- and that is now the
+# Interrupts. Source: QNSC_Interrupt_Map_MAS section 7.2 -- and that is now the
 # ONLY prose source. QSOC_HAS_Report_EN_v4_final carries a '# Interrupt map'
 # heading with nothing under it: Table 8-1 (fast line assignment) and Table 8-2
 # (source count per block) were lost in that revision. Until the HAS is repaired,
@@ -177,66 +177,86 @@ memory_map:
 # Order follows the rule "data loss first, human time last": a missed SPI or
 # UART event loses a byte that cannot be recovered, while a missed timer tick
 # arrives again next period.
+#
+# ports: the vendor RTL output(s) of the source instance that drive the line,
+# in the bit order of the INTMAP input i_int_<peripheral>. One name with
+# sources > 1 means one port per instance (GPIO0-3).
 # -----------------------------------------------------------------------------
 interrupts:
   fast_lines_available: 15       # Ibex irq_fast_i width, unconditional
   lines:
     - line: 0
       peripheral: dma
+      ports: [dma_irq_o]
       sources: 1
       shape: level
       note: Held by DMA_ISR write-1-to-clear flags -- QNSC_iDMA V2.0.
     - line: 1
       peripheral: spi_device
+      ports: [intr_upload_cmdfifo_not_empty_o, intr_upload_payload_not_empty_o,
+              intr_upload_payload_overflow_o, intr_readbuf_watermark_o,
+              intr_readbuf_flip_o, intr_tpm_header_not_empty_o,
+              intr_tpm_rdfifo_cmd_end_o, intr_tpm_rdfifo_drop_o]
       sources: 8
       shape: level
     - line: 2
       peripheral: spi_host
+      ports: [intr_error_o, intr_spi_event_o]
       sources: 2
       shape: level
     - line: 3
       peripheral: i2c
+      ports: [interrupt_o]
       sources: 1
       shape: level
     - line: 4
       peripheral: uart_0
+      ports: [INT]
       sources: 1
       shape: level
     - line: 5
       peripheral: uart_1
+      ports: [INT]
       sources: 1
       shape: level
     - line: 6
       peripheral: timer_1
+      ports: [irq_lo_o, irq_hi_o]
       sources: 2
-      shape: pulse
+      shape: pulse; level in one-shot with prescaler or ref clock
     - line: 7
       peripheral: pwm
+      ports: ["events_o[3:0]"]
       sources: 4
       shape: pulse
       note: Four event lines, each a 4-of-16 multiplexer over the channel outputs.
     - line: 8
       peripheral: wdt_wakeup
+      ports: [intr_wkup_timer_expired_o]
       sources: 1
       shape: level
     - line: 9
       peripheral: gpio
+      ports: [interrupt]
       sources: 4
       shape: pulse
       note: Four instances OR to one line; per-pin identity is in each INTSTATUS.
     - line: 10
       peripheral: timer_0
+      ports: [irq_lo_o]
       sources: 1
-      shape: pulse
+      shape: pulse; level in one-shot with prescaler or ref clock
+      note: 64-bit mode drives irq_lo_o only; irq_hi_o stays 0.
   nmi:
     peripheral: wdt_bark
+    ports: [nmi_wdog_timer_bark_o]
     port: irq_nm_i
     mcause: 31
     sources: 1
     shape: level
     note: >
-      Feed-through to irq_nm_i, never through INTMAP, because an NMI cannot be
-      masked -- if firmware hangs with interrupts disabled the bark still lands.
+      A wire through INTMAP, i_int_wdt_bark to o_int_nm, never ORed with any
+      other source. irq_nm_i is outside mstatus.MIE and mie.
   tied_low:
     - irq_external_i
     - irq_timer_i
@@ -299,9 +319,10 @@ clock_domains:
     - block: pwm
       rule: never gate a running block
       why: >
-        out_filter only updates while ctrl_active_i is high, so a gated channel
-        freezes at its current level. For a power stage a held level is not a
-        neutral state.
+        Each channel output is a comparator flip-flop that holds its value while
+        the module clock is stopped, so a gated channel freezes at its current
+        level. For a power stage a held level is not a neutral state. Write
+        CMD = STOP | RST, which drives all four outputs to 0, before gating.
 
 # -----------------------------------------------------------------------------
 # Reset sources. Source: Day005 review of 2026-09-18.

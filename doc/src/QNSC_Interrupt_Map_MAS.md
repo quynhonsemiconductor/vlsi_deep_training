@@ -1,55 +1,46 @@
 ---
 title: "Interrupt Map"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
 # Revision history
 
-`V2.0` is a rewrite, so the history starts again here. The twenty versions before
-it, `V1.0` to `V11.10`, describe a document that no longer exists in this shape;
-they are listed in full, with the reasoning and the evidence behind each, in
+The reasoning behind each change, and the versions before `V2.0`, are in
 [`QNSC_Interrupt_Map_DECISIONS.md`](QNSC_Interrupt_Map_DECISIONS.md).
 
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only. History and reasoning moved to `_DECISIONS`; tables in 7.2 and 10 generated from `util/qsoc_contract.yml` |
+| V2.1 | 2026-09-24 | Nghia VT | -- | NMI stated as a wire through the block; source ports, widths and timer shape added; figure redrawn; reasoning moved to `_DECISIONS` |
 
 # 1. Overview
 
-Twenty-seven interrupt sources reach the CPU as twelve wires. `INTMAP` is the
-combinational OR tree that does the reduction: **eleven peripherals get one fast
-interrupt line each**, and the twelfth, the watchdog bark, passes straight through to
-the non-maskable input. A peripheral with several sources is OR-reduced onto its own
-line; no line is shared between peripherals.
+`INTMAP` is a combinational block that connects 27 interrupt sources from 8 blocks
+to 12 interrupt inputs of the Ibex core. The 26 maskable sources form **11 source
+groups**; each group drives one fast line `irq_fast_i[n]`, through an OR gate when
+the group has several sources and a wire when it has one. The watchdog bark is a
+wire to the non-maskable input `irq_nm_i`.
 
 **It does not**: hold state, decode an address, appear on any bus, prioritise
 (the core does that), or latch a pulse. It has no clock and no reset.
 
 Block directory `design/intmap`, module `m_qnsc_intmap`, owner Nghia Van Trong.
-Why the specification says what it says -- the two designs that were dropped, the
-evidence read out of Ibex, how each question closed -- is in
-[`QNSC_Interrupt_Map_DECISIONS.md`](QNSC_Interrupt_Map_DECISIONS.md). This file is
-the contract.
 
 # 2. Features
 
-- Twenty-seven interrupt sources reduced to **eleven fast lines plus one NMI**
-- **One line per peripheral**: a peripheral owns its line and no other block
-  shares it, so a handler never has to ask who interrupted
-- **Combinational**: no clock, no reset, no flip-flop, no bus port. The delay
-  from a source asserting to the core seeing it is one layer of logic
-- **Priority is the line index**, resolved by the core, ordered data-loss-first
-- **The watchdog bark bypasses the block** onto `irq_nm_i`, so it survives
-  firmware having disabled interrupts
-- **No state**: nothing to configure, nothing to acknowledge here, and nothing
-  to save or restore across a reset
+- 27 sources onto **11 fast lines plus one NMI**; 4 fast lines spare, tied 0
+- **One source group per line**: no line carries sources from two groups
+- **Combinational**: no clock, no reset, no flip-flop, no bus port, no register on
+  any path from input to output
+- **Priority is the line index**, resolved by the core, lowest index first
+- **The watchdog bark is a wire** from `i_int_wdt_bark` to `o_int_nm`, never ORed
 
 # 3. Block diagram
 
-![INTMAP — 27 sources, one OR per peripheral, 12 wires to the CPU](../img/fig_intr_map.png)
+![INTMAP: 5 OR gates and 6 wires onto irq_fast_i[10:0], one wire onto irq_nm_i](../img/fig_intr_map.png)
 
-One combinational layer. No sub-blocks, no clock domain, no reset domain.
+One combinational layer, no clock, reset or bus port. The tie-offs are in `design/top`.
 
 # 4. IP used
 
@@ -63,41 +54,38 @@ One combinational layer. No sub-blocks, no clock domain, no reset domain.
 
 # 5. Interface
 
-Every port. Naming follows `QNSC_RTL_Design_Naming_Rule` V1.0 section 3.6,
-`i_int_<source>` / `o_int_<source>`.
+Every port, named per `QNSC_RTL_Design_Naming_Rule` V1.0 section 3.6. The vendor
+port behind each input is in the table in 7.2.
 
 : Interrupt map interface
 
 | Signal | Dir | Width | Description |
 |---|---|---:|---|
-| `i_int_dma` | in | 1 | DMA completion. Level, held by `DMA_ISR` |
-| `i_int_spi_device` | in | 8 | `spi_device` `intr_*_o`, in declaration order |
-| `i_int_spi_host` | in | 2 | `spi_host` error, event |
-| `i_int_i2c` | in | 1 | I²C |
-| `i_int_uart_0` | in | 1 | UART0. Driven by the IP's `INT` port |
-| `i_int_uart_1` | in | 1 | UART1 |
-| `i_int_timer_1` | in | 2 | TIMER1 `irq_lo_o`, `irq_hi_o` |
-| `i_int_pwm` | in | 4 | PWM `events_o` |
-| `i_int_wdt_wakeup` | in | 1 | `aon_timer` wake-up expiry |
-| `i_int_gpio` | in | 4 | one per GPIO instance |
-| `i_int_timer_0` | in | 1 | TIMER0 `irq_lo_o` only — 64-bit mode |
-| `i_int_wdt_bark` | in | 1 | `aon_timer` `nmi_wdog_timer_bark_o` |
+| `i_int_dma` | in | 1 | from DMA |
+| `i_int_spi_device` | in | 8 | from SPI device, bits in port declaration order |
+| `i_int_spi_host` | in | 2 | from SPI host, bit 0 error, bit 1 event |
+| `i_int_i2c` | in | 1 | from I2C |
+| `i_int_uart_0` | in | 1 | from UART0 |
+| `i_int_uart_1` | in | 1 | from UART1 |
+| `i_int_timer_1` | in | 2 | from TIMER1, bit 0 `irq_lo_o`, bit 1 `irq_hi_o` |
+| `i_int_pwm` | in | 4 | from PWM, bit *n* = `events_o[n]` |
+| `i_int_wdt_wakeup` | in | 1 | from WDT, wake-up timer |
+| `i_int_gpio` | in | 4 | from GPIO0-3, bit *n* = GPIO*n* |
+| `i_int_timer_0` | in | 1 | from TIMER0, 64-bit mode |
+| `i_int_wdt_bark` | in | 1 | from WDT, bark |
 | `o_int_fast` | out | 11 | to Ibex `irq_fast_i[10:0]` |
 | `o_int_nm` | out | 1 | to Ibex `irq_nm_i` |
 
-**27 inputs, 12 outputs, and no other ports.** No `i_clk_*`, no `i_rst_n_*`.
+**27 input bits, 12 output bits, and no other ports.** No `i_clk_*`, no `i_rst_n_*`.
 
 # 6. Register map
 
-None. The block has no address and is not a bus slave, so there is nothing for
-software to read or write.
-
-Enabling and masking is done in the core: `mie` bits 16–26 for the fast lines.
-Acknowledging is done at each peripheral's own status register.
+None. The block has no address and is not a bus slave. Enabling is in the core
+(`mie` bits 16-26, `mstatus.MIE`); clearing is at each source (7.4).
 
 # 7. Functional behaviour
 
-## 7.1 One OR gate per peripheral
+## 7.1 One OR gate per multi-source group
 
 ```systemverilog
 assign o_int_fast[0]  =  i_int_dma;
@@ -114,46 +102,36 @@ assign o_int_fast[10] =  i_int_timer_0;
 assign o_int_nm       =  i_int_wdt_bark;
 ```
 
-A peripheral with one source is wired straight through; one with several is
-OR-reduced. **Zero flip-flops**, so the delay from a source asserting to the core
-seeing it is combinational.
+Five outputs are OR reductions and seven are wires. **Zero flip-flops**: every
+output follows its inputs combinationally, with no cycle of delay.
 
 ## 7.2 Line assignment
 
-**Line** is the index of the wire in `irq_fast_i[14:0]`, the fifteen-bit input
-port on the core. Line 3 means `irq_fast_i[3]`, nothing more. The index **is** the
-priority: Ibex resolves the lowest index first, so this table fixes the default
-priority order as well as the wiring, and changing it requires re-synthesis.
-
-**`mcause`** is the CSR the core writes when it traps, so firmware can read it and
-find out why. For fast line *n* the value is `16 + n`, because Ibex maps
-`irq_fast_i` onto `mip`/`mie` bits 16 to 30 (`ibex_pkg.sv`,
-`CSR_MFIX_BIT_LOW = 16`). It is the same number as the `mie` bit that enables the
-line, so one number serves both purposes: write `mie` bit 20 to enable UART0, and
-read `mcause` 20 to learn UART0 was what interrupted.
-
-**Vector** is where the core jumps. `mtvec` is permanently vectored, so the
-address is `mtvec + 4 * mcause` -- the core reaches the peripheral's handler
-directly, with no dispatch code and no register read on the way.
+**Line** *n* is the wire `irq_fast_i[n]`. Ibex takes the lowest pending index
+first, so the line order is the priority order; changing it is a re-synthesis.
+For line *n*, `mcause` = `16 + n`, equal to the `mie` bit that enables it
+(`ibex_pkg.sv`, `CSR_MFIX_BIT_LOW = 16`). `mtvec` is always in vectored mode, so
+the core jumps to `mtvec + 4 * mcause`. No register is read and no bus
+transaction occurs on the interrupt path.
 
 <!-- gen:interrupt_lines -->
-: Fast interrupt line assignment
+: Interrupt line assignment
 
-| Line | CPU port | mcause | Vector | Peripheral | Sources | Shape |
-|---:|---|---:|---|---|---:|---|
-| 0 | `irq_fast_i[0]` | 16 | `mtvec + 0x40` | dma | 1 | level |
-| 1 | `irq_fast_i[1]` | 17 | `mtvec + 0x44` | spi_device | 8 | level |
-| 2 | `irq_fast_i[2]` | 18 | `mtvec + 0x48` | spi_host | 2 | level |
-| 3 | `irq_fast_i[3]` | 19 | `mtvec + 0x4C` | i2c | 1 | level |
-| 4 | `irq_fast_i[4]` | 20 | `mtvec + 0x50` | uart_0 | 1 | level |
-| 5 | `irq_fast_i[5]` | 21 | `mtvec + 0x54` | uart_1 | 1 | level |
-| 6 | `irq_fast_i[6]` | 22 | `mtvec + 0x58` | timer_1 | 2 | pulse |
-| 7 | `irq_fast_i[7]` | 23 | `mtvec + 0x5C` | pwm | 4 | pulse |
-| 8 | `irq_fast_i[8]` | 24 | `mtvec + 0x60` | wdt_wakeup | 1 | level |
-| 9 | `irq_fast_i[9]` | 25 | `mtvec + 0x64` | gpio | 4 | pulse |
-| 10 | `irq_fast_i[10]` | 26 | `mtvec + 0x68` | timer_0 | 1 | pulse |
-| 11-14 | `irq_fast_i[14:11]` | 27-30 | -- | spare, tied to 0 | 0 | -- |
-| -- | `irq_nm_i` | **31** | `mtvec + 0x7C` | **wdt_bark** | 1 | level |
+| Line | CPU port | mcause | Vector | INTMAP input | Source port | Width | Shape |
+|---:|---|---:|---|---|---|---:|---|
+| 0 | `irq_fast_i[0]` | 16 | `mtvec + 0x40` | `i_int_dma` | `dma_irq_o` | 1 | level |
+| 1 | `irq_fast_i[1]` | 17 | `mtvec + 0x44` | `i_int_spi_device` | `intr_*_o` ×8 | 8 | level |
+| 2 | `irq_fast_i[2]` | 18 | `mtvec + 0x48` | `i_int_spi_host` | `intr_error_o`, `intr_spi_event_o` | 2 | level |
+| 3 | `irq_fast_i[3]` | 19 | `mtvec + 0x4C` | `i_int_i2c` | `interrupt_o` | 1 | level |
+| 4 | `irq_fast_i[4]` | 20 | `mtvec + 0x50` | `i_int_uart_0` | `INT` | 1 | level |
+| 5 | `irq_fast_i[5]` | 21 | `mtvec + 0x54` | `i_int_uart_1` | `INT` | 1 | level |
+| 6 | `irq_fast_i[6]` | 22 | `mtvec + 0x58` | `i_int_timer_1` | `irq_lo_o`, `irq_hi_o` | 2 | pulse; level in one-shot with prescaler or ref clock |
+| 7 | `irq_fast_i[7]` | 23 | `mtvec + 0x5C` | `i_int_pwm` | `events_o[3:0]` | 4 | pulse |
+| 8 | `irq_fast_i[8]` | 24 | `mtvec + 0x60` | `i_int_wdt_wakeup` | `intr_wkup_timer_expired_o` | 1 | level |
+| 9 | `irq_fast_i[9]` | 25 | `mtvec + 0x64` | `i_int_gpio` | `interrupt` ×4 | 4 | pulse |
+| 10 | `irq_fast_i[10]` | 26 | `mtvec + 0x68` | `i_int_timer_0` | `irq_lo_o` | 1 | pulse; level in one-shot with prescaler or ref clock |
+| 11-14 | `irq_fast_i[14:11]` | 27-30 | -- | tied 0 in `design/top` | -- | 0 | -- |
+| -- | `irq_nm_i` | **31** | `mtvec + 0x7C` | **`i_int_wdt_bark`** | `nmi_wdog_timer_bark_o` | 1 | level |
 <!-- /gen -->
 
 <!-- gen:interrupt_totals -->
@@ -161,82 +139,50 @@ directly, with no dispatch code and no register read on the way.
 
 |  | Count |
 |---|---:|
-| Sources aggregated onto fast lines | 26 |
+| Sources ORed onto fast lines | 26 |
 | Sources on the non-maskable input | 1 |
 | **Total interrupt sources** | **27** |
+| Source blocks (DMA, SPI, I2C, UART, TIMER, PWM, WDT, GPIO) | 8 |
+| Sources that pulse | 11 |
 | Fast lines driven | 11 |
 | Fast lines Ibex provides | 15 |
 | Fast lines spare | 4 |
 <!-- /gen -->
 
+## 7.3 The NMI is a wire through this block
 
-Order follows one rule: **data loss first, human time last.** A missed SPI or UART
-event loses a byte that cannot be recovered; a missed timer tick arrives again next
-period. DMA takes line 0 because the rest of the system waits on a transfer
-completing.
+`o_int_nm` equals `i_int_wdt_bark` and depends on no other input; no fast line
+depends on `i_int_wdt_bark`. `irq_nm_i` is not masked by `mstatus.MIE` or `mie`.
+Ibex ignores `irq_nm_i` in Debug Mode; the bark is a held level, so it traps
+after the core resumes.
 
-## 7.3 The core identifies the source, not a register
+## 7.4 A missed pulse, and how each source is cleared
 
-Fast line *n* raises `mcause` `16 + n`, and Ibex is permanently in vectored mode,
-so the trap address is `mtvec + 4 × mcause`. The core therefore enters the
-peripheral's own handler directly. **No claim register is read and no bus
-transaction occurs on the interrupt path.**
+Ibex's `mip` is combinational (`assign mip.irq_fast = irq_fast_i`) and this block
+latches nothing, so a pulse that ends while `mstatus.MIE` (clear inside any
+handler) or the `mie` bit is clear, or in Debug Mode, raises no trap.
 
-`mcause` 16 and above is platform-use space in the RISC-V privileged
-specification, so this numbering is a local convention the specification permits.
+: How each source is cleared, and what a missed pulse costs
 
-## 7.4 The NMI bypasses this block
+| Source | Shape | Cleared by | A missed pulse |
+|---|---|---|---|
+| DMA | level | W1C `DMA_ISR` | -- |
+| SPI device, SPI host | level | W1C `INTR_STATE` | -- |
+| I2C | level | `IACK`, bit 0 of `CMD` | -- |
+| UART0, UART1 | level | the 16550 register read that `IIR` names | -- |
+| WDT wake-up, WDT bark | level | W1C `INTR_STATE` | -- |
+| GPIO0-3 | pulse | nothing; `INTSTATUS` clears on read | lost; the pin stays recorded in `INTSTATUS` |
+| TIMER0, TIMER1 | pulse; level in one-shot with prescaler or ref clock | a write to `TIMER_RESET_LO`/`_HI` ends the level | lost; the next period raises it again |
+| PWM | pulse | nothing | lost; the next period raises it again |
 
-`i_int_wdt_bark` goes to `o_int_nm` unmodified. The bark must reach the core even
-if firmware has hung with interrupts disabled, and `irq_nm_i` is outside
-`mstatus.MIE` and `mie`.
+## 7.5 A gated peripheral holds its line
 
-Ibex ignores the NMI in Debug Mode. A bark raised while `SYSDBG` has the core
-halted therefore traps on resume, not when it occurs — and only because
-`aon_timer` holds the bark as a level.
-
-## 7.5 A pulse can be missed, and what that costs
-
-`mip` in Ibex is combinational: `assign mip.irq_fast = irq_fast_i`. The core
-latches nothing, and neither does this block. A one-cycle pulse arriving while
-`mstatus.MIE` is clear is therefore **not seen**.
-
-That costs an interrupt but not information, because every source either holds its
-line or keeps a record:
-
-: How each source recovers a missed pulse
-
-| Source | Shape | Recovery |
-|---|---|---|
-| DMA | level | held by `DMA_ISR`, write-1-to-clear |
-| SPI ×2, I²C, UART ×2, WDT wake-up | level | held until the handler clears it |
-| GPIO | pulse | which pin fired is in the instance's own `INTSTATUS` |
-| TIMER0, TIMER1, PWM | pulse | the event repeats next period |
-
-**No source destroys information.** This is the condition the design depends on.
-
-## 7.6 A gated peripheral holds its line
-
-All ten interrupt-producing peripheral blocks are in the **`peri` cluster**, which
-`SCRC` may stop through `CLK_EN`. Stopping a clock **retains flip-flop state**, so a
-peripheral gated with its status register set **keeps driving its line high**, and
-this block passes that through -- it has no clock of its own to notice with.
-
-The consequence is an order-of-operations rule, not a design change here:
-
-- With `mie` set for that line, the core re-enters the handler for as long as the
-  line is asserted.
-- The handler clears the source by writing the peripheral's status register, and
-  that write needs the peripheral's clock. Gated, it cannot complete.
-
-**Firmware must clear a peripheral's interrupt before gating it**, and ungate before
-attempting to clear one. `QSOC_HAS` already states the analogous rule for PWM in the
-contract -- *never gate a running block*, because `out_filter` freezes at its current
-level -- so this is the same hazard on the interrupt path rather than a new one.
-
-This block cannot prevent it: with no clock and no register, it has nothing to
-qualify the input with. Whether `SCRC` should refuse to gate a peripheral whose
-interrupt is asserted is the SCRC owner's decision, recorded in section 11.
+All interrupt sources are in the `peri` cluster, whose clocks `SCRC` stops
+through `CLK_EN`. A stopped clock retains flip-flop state, so a peripheral gated
+with its interrupt asserted keeps its line high, and this block passes it on.
+Clearing it needs a register write to the gated peripheral, which cannot
+complete, so the core re-enters that handler while the `mie` bit is set.
+**Firmware clears a peripheral's interrupt before gating it** (11).
 
 # 8. Instances
 
@@ -248,36 +194,27 @@ One. It is instantiated in `design/top` and has no parameters.
 
 | Function | Where it lives |
 |---|---|
-| Pending latch | the peripheral's status register, or nowhere — 7.5 |
-| Which event fired | the peripheral's status register |
-| Which peripheral fired | `mcause`, via the vectored trap address |
+| Pending latch | the source's status register, or none (7.4) |
+| Which event fired | the source's status register |
+| Which group fired | `mcause`, via the vectored trap address |
 | Priority resolution | Ibex, by fast-line index |
-| Per-source enable | `mie` bits 16–26, in the core |
-| Acknowledge | writing the peripheral's status register |
+| Per-line enable | `mie` bits 16-26, in the core |
+| Acknowledge | the source's own clear (7.4) |
 
 # 10. Every interrupt input on the core
 
 <!-- gen:core_tie_offs -->
 : Every interrupt input on the core
 
-| Core input | Width | Driven by | Why |
+| Core input | Width | Driven by | Note |
 |---|---:|---|---|
-| `irq_fast_i[10:0]` | 11 | **`o_int_fast`, this block** | 11 peripherals, one line each, `mcause` 16-26 |
-| `irq_fast_i[14:11]` | 4 | tied `4'b0` | spare: QSOC drives 11 of the 15 lines the core offers |
-| `irq_nm_i` | 1 | **`o_int_nm`, this block** | wdt_bark, `mcause` 31, outside `mie` and `mstatus.MIE` |
-| `irq_external_i` | 1 | tied `0` | needs a **PLIC** -- a bus slave with priority, per-source enable and claim/complete registers. QSOC has none, and 11 lines fit in the 15 the core offers without one |
-| `irq_timer_i` | 1 | tied `0` | needs a **CLINT** for `mtime` and `mtimecmp`. QSOC has none, so `mip.MTIP` is never set and TIMER0 is an ordinary fast line |
-| `irq_software_i` | 1 | tied `0` | needs a second hart to send the inter-processor interrupt. QSOC has one |
+| `irq_fast_i[10:0]` | 11 | **`o_int_fast`, this block** | 11 source groups, one per line, `mcause` 16-26 |
+| `irq_fast_i[14:11]` | 4 | tied `4'b0` in `design/top` | spare; `mcause` 27-30 never raised |
+| `irq_nm_i` | 1 | **`o_int_nm`, this block** | wdt_bark wire, `mcause` 31, outside `mie` and `mstatus.MIE` |
+| `irq_external_i` | 1 | tied `0` in `design/top` | no PLIC; `mcause` 11 never raised |
+| `irq_timer_i` | 1 | tied `0` in `design/top` | no CLINT `mtime`/`mtimecmp`; `mip.MTIP` stays 0 |
+| `irq_software_i` | 1 | tied `0` in `design/top` | no CLINT `msip`; `mip.MSIP` stays 0 |
 <!-- /gen -->
-
-**The tie-offs are made in `design/top`, not here.** This block drives twelve of the
-core's nineteen interrupt bits -- eleven fast plus the NMI -- and the other seven are
-tied where the core is instantiated. The whole table is in this specification because
-this is the document that accounts for the core's interrupt boundary, whether a bit is
-driven from here or tied elsewhere.
-
-**Consequence for firmware:** an RTOS ported to QSOC must supply its own timer
-driver rather than the standard `mtime`/`mtimecmp` one.
 
 # 11. Requirements on others, and open items
 
@@ -285,58 +222,35 @@ driver rather than the standard `mtime`/`mtimecmp` one.
 
 | Item | Owner | What it blocks |
 |---|---|---|
-| APB-to-TL-UL wrapper for `aon_timer` | WDT owner | two of the 27 sources, one being the NMI. Its enable is in `WDOG_CTRL` offset `0x1C`, so without a bus path the watchdog cannot be enabled and never barks |
-| Firmware disables the watchdog for a debug session. Ibex does not export `debug_mode`, so the watchdog cannot see a halt | WDT owner, firmware owner | a long debug session otherwise ends in a reset with nothing recording why |
-| Vector table at `mtvec + 0x40` … `+0x68`, plus `+0x7C`; `mie` bits 16–26 | firmware owner | — |
-| Handlers installed **before** `mstatus.MIE` is set | firmware owner | the block is transparent out of reset, so every source is live from the first cycle |
-| Decide whether `CLK_EN` may gate a peripheral whose interrupt is asserted, or whether the ordering is left to firmware | SCRC owner | nothing in RTL. If left to firmware it must be written into the programming guide, because the failure is a handler that cannot clear its own source -- section 7.6 |
+| Vector table entries at `mtvec + 0x40` to `+0x68` and `+0x7C`; `mtvec` 256-byte aligned, because Ibex ignores `mtvec[7:0]` | firmware owner | every interrupt |
+| Handlers installed before `mstatus.MIE` is set | firmware owner | every source is live from the first cycle out of reset |
+| Firmware clears a peripheral's interrupt before closing its `CLK_EN` gate (7.5); written in the programming guide. `SCRC` needs no change | firmware owner | a handler that cannot clear its own source |
+| Align HAS lines 69 and 155 with 7.3: the bark passes through `INTMAP` as a wire, so `INTMAP` takes 27 sources, not 26 | HAS owner | consistency between HAS and MAS |
 
-**Accepted limits**, stated rather than hidden:
+**Open on this block**, blocking nobody:
 
-1. A pulse arriving while `mstatus.MIE` is clear is lost. Recoverable for every
-   source — 7.5.
-2. Priority is fixed at elaboration. Changing it is a re-synthesis.
-3. `mcause` 16–30 is platform-use space, so the numbering is a local convention
-   rather than a portable one.
-4. A peripheral gated with its interrupt asserted holds the line, and this block
-   cannot qualify it away — 7.6. The rule is an ordering constraint on firmware.
-
-**Open on this block**, blocking nobody, and listed so a reviewer can see they were
-not overlooked:
-
-1. **Propagation delay.** The worst path is the eight-input OR on `spi_device`,
-   three levels of two-input gates. At 20 MHz on 28 nm this is expected to be far
-   inside the period, but **it is an expectation, not a number** -- there is no
-   synthesis yet. It becomes a number with the first run, and it is the one thing
-   that could ever make this block need a register.
-2. **Area.** Eleven OR gates with twenty-six inputs between them. Same answer: the
-   figure comes from synthesis.
-3. **X propagation.** A reduction OR passes X through, so a peripheral driving X
-   before its own reset completes would drive its line X. The core already catches
-   it: `ibex_top.sv` line 1591 asserts
-   `ASSERT_KNOWN(IbexIrqX, {irq_software_i, irq_timer_i, irq_external_i, irq_fast_i, irq_nm_i})`,
-   which fires in simulation at the boundary this block feeds. **Open**: whether
-   that is sufficient, or whether this block should assert its own inputs known and
-   fail nearer the cause. The core's assertion names the bundle, not the source.
+1. **Timing and area.** Deepest path: the 8-input OR on `spi_device`. The numbers
+   come from the first synthesis run.
+2. **X on an input.** An X passes the OR; `ibex_top.sv` `IbexIrqX` checks only the
+   bundle. Open: whether this block asserts each `i_int_*` known.
 
 # 12. Verification
 
-Eleven checks, none requiring a bus model:
+Ten checks, none needing a bus model:
 
 1. Each single-source input raises exactly its own line.
 2. Each OR group raises its line for every member, individually.
 3. No input raises a line other than its own.
-4. Spare lines `[14:11]` are always 0.
-5. `i_int_wdt_bark` reaches `o_int_nm` and no fast line.
-6. Simultaneous inputs on one group raise the line once.
-7. Simultaneous inputs on different groups raise both lines.
-8. Output follows input combinationally, with no cycle of delay.
-9. `mcause`/vector mapping matches section 7.2 against `qnsc_pkg`.
-10. A held input keeps its line asserted for as long as it is held, which is what
-    makes the gating case in 7.6 behave as described.
-11. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
-    `always_ff`. If any appears, the design has drifted back into being a
-    controller.
+4. `irq_fast_i[14:11]`, `irq_external_i`, `irq_timer_i`, `irq_software_i` are
+   always 0 at the core boundary.
+5. `i_int_wdt_bark` reaches `o_int_nm` and no fast line; no other input reaches
+   `o_int_nm`.
+6. Simultaneous inputs raise each affected line once.
+7. Output follows input combinationally, with no cycle of delay.
+8. `mcause` and vector mapping match the table in 7.2 against `qnsc_pkg`.
+9. A held input keeps its line asserted for as long as it is held (7.5).
+10. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
+    `always_ff`.
 
 # Appendix A. Acronyms
 
@@ -344,19 +258,18 @@ Eleven checks, none requiring a bus model:
 
 | Acronym | Description |
 |---|---|
-| CLINT | Core Local Interruptor -- the RISC-V standard timer and software interrupt block. **Not present in QSOC** |
+| CLINT | Core Local Interruptor -- RISC-V timer and software interrupt block. Not present in QSOC |
 | INTMAP | Interrupt Map -- this block |
-| ISR | Interrupt Service Routine |
 | `mcause` | Machine Cause register: why the core trapped |
-| `mie` | Machine Interrupt Enable register: per-source mask |
+| `mie` | Machine Interrupt Enable register: per-line mask |
 | `mip` | Machine Interrupt Pending register |
 | `mstatus.MIE` | The global interrupt enable bit |
 | `mtvec` | Machine Trap Vector: base of the trap table |
 | NMI | Non-Maskable Interrupt -- `irq_nm_i` on Ibex |
-| PLIC | Platform Level Interrupt Controller. Considered in V7.0 and **rejected** |
-| SCRC | System Clock Reset Control. Formerly `SYSCTL` on the block diagram |
+| PLIC | Platform Level Interrupt Controller. Not present in QSOC |
+| SCRC | System Clock Reset Control |
 | W1C | Write-1-to-Clear |
-| WDT | Watchdog Timer |
+| WDT | Watchdog Timer (`aon_timer`) |
 
 # Appendix B. First review
 
@@ -364,9 +277,8 @@ Eleven checks, none requiring a bus model:
 
 | Item | Reviewer | Response |
 |---|---|---|
-| GPIO: one line for four instances, or four lines? | Day005, 2026-09-18 | One line. Which pin fired is in the instance's `INTSTATUS`. Closed in V11.2 |
-| Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by `DMA_ISR` W1C. Closed in V11.10 |
-| Does this block need to latch pending? | -- | No. Section 7.5: no source destroys information |
-| Priority order justified? | -- | Section 7.2: data loss first, human time last |
-| Is the non-maskable interrupt missing from the totals and the tie-off table? | Teacher, 2026-09-23 | Not from the totals, which count it and reach 27. It **was** missing from the tie-off table, which listed only tied inputs while the text claimed to account for every core input. The table now lists all five -- section 10 |
-| What happens to a line whose peripheral is clock-gated? | -- | Section 7.6. **Open**: the ordering rule is a request on the SCRC owner |
+| GPIO: one line for four instances, or four lines? | Day005, 2026-09-18 | One line. Which pin fired is in the instance's `INTSTATUS` (7.4) |
+| Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by W1C `DMA_ISR` (7.4) |
+| Does this block need to latch pending? | -- | No. Every level source holds its line; a missed pulse is recorded or repeats (7.4) |
+| Is the non-maskable interrupt in the totals and the core-input table? | Teacher, 2026-09-23 | Yes: it is counted in the 27 (7.2) and listed in section 10 |
+| What happens to a line whose peripheral is clock-gated? | -- | It stays asserted (7.5). **Open**: the gating rule is a request on the SCRC owner (11) |
