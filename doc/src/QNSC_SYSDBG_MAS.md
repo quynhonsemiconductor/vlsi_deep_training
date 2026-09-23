@@ -44,15 +44,10 @@ Block directory `design/sysdbg`, module `m_qnsc_sysdbg`, owner Nghia Van Trong.
 
 ![SYSDBG block diagram](../img/fig_sysdbg_block.png){width=6.5in}
 
-: SYSDBG clock and reset domains
-
-| Domain | Clock | Reset | Contents |
-|---|---|---|---|
-| TCK | `i_jtag_tck` | `i_jtag_trst_n` AND `i_rst_n_por` | TAP FSM, IR, data registers, `read_req`, `write_req` |
-| AXI | `i_clk_cpu` | `i_rst_n_sysbus` | AXI manager, `rdata_reg`, `resp_reg`, `read_ack`, `write_ack` |
-| System | `i_clk_cpu` | `i_rst_n_por` | `DBG_EN` capture, `dbgreq` and `cpu_hold` synchronisers |
-
-`i_clk_cpu` is the `cpu` cluster clock, the same clock as `S_BUS`, and is never gated.
+Three domains, as labelled in the figure: TCK (`i_jtag_tck`, reset `i_jtag_trst_n`
+AND `i_rst_n_por`), AXI (`i_clk_cpu`, reset `i_rst_n_sysbus`) and system (`i_clk_cpu`,
+reset `i_rst_n_por`). `i_clk_cpu` is the `cpu` cluster clock, the same clock as
+`S_BUS`, and is never gated.
 
 # 4. IP used
 
@@ -246,23 +241,15 @@ Each transaction is one 4-phase handshake:
 5. AXI side sees `req` fall and drops `ack`.
 6. TCK side sees `ack` fall and is no longer busy.
 
-: Crossing signals
+: Crossing signals and constraints
 
-| Signal | Direction | How it crosses |
-|---|---|---|
-| `read_req`, `write_req` | TCK to AXI | `SyncStages` flip-flops, then one delay flip-flop for the edge |
-| `read_ack`, `write_ack` | AXI to TCK | `SyncStages` flip-flops, then one delay flip-flop for the edge |
-| `addr_reg`, `wdata_reg` | TCK to AXI | No synchroniser. Stable from `req` rising until `ack` falls |
-| `rdata_reg`, `resp_reg` | AXI to TCK | No synchroniser. Stable from `ack` rising until the next `req` |
-| `dbgreq`, `cpu_hold` | TCK to system | `SyncStages` flip-flops |
-
-: CDC timing constraints
-
-| From | To | Constraint |
-|---|---|---|
-| `addr_reg`, `wdata_reg` | AXI domain | `set_max_delay -datapath_only`, one `i_clk_cpu` period |
-| `rdata_reg`, `resp_reg` | TCK domain | `set_max_delay -datapath_only`, one `TCK` period |
-| Each synchroniser input | First flip-flop | `set_max_delay -datapath_only`, one period of the receiving clock |
+| Signal | Direction | How it crosses | Constraint |
+|---|---|---|---|
+| `read_req`, `write_req` | TCK to AXI | `SyncStages` flip-flops, then one delay flip-flop for the edge | `set_max_delay -datapath_only`, one `i_clk_cpu` period, to the first flip-flop |
+| `read_ack`, `write_ack` | AXI to TCK | `SyncStages` flip-flops, then one delay flip-flop for the edge | the same, one `TCK` period |
+| `addr_reg`, `wdata_reg` | TCK to AXI | No synchroniser. Stable from `req` rising until `ack` falls | `set_max_delay -datapath_only`, one `i_clk_cpu` period |
+| `rdata_reg`, `resp_reg` | AXI to TCK | No synchroniser. Stable from `ack` rising until the next `req` | `set_max_delay -datapath_only`, one `TCK` period |
+| `dbgreq`, `cpu_hold` | TCK to system | `SyncStages` flip-flops | one `i_clk_cpu` period, to the first flip-flop |
 
 ## 7.7 Halt and resume
 

@@ -49,16 +49,6 @@ Both instances are in the `peri` clock cluster. Each has its own clock gate,
 
 ![Inside one TIMER instance](../img/fig_timer_inside.png){width=6.4in}
 
-: TIMER sub-modules, per instance
-
-| Sub-module | Count | Function |
-|---|---:|---|
-| APB register file | 1 | `CFG`, `TIMER_VAL`, `TIMER_CMP`, `TIMER_START`, `TIMER_RESET` for `lo` and `hi` -- section 6 |
-| `timer_unit_counter_presc` | 2 | 8-bit prescaler ahead of each counter |
-| `timer_unit_counter` | 2 | 32-bit counter with a registered equality compare, `lo` and `hi` |
-| `ref_clk_i` synchroniser | 1 | four flops and a rising-edge detector on `HCLK` |
-| IRQ logic | 1 | combinational AND of compare flags and `IRQ_EN` -- 7.3 |
-
 # 4. IP used
 
 : Upstream IP used

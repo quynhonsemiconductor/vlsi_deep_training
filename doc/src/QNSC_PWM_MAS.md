@@ -46,15 +46,6 @@ Clock `i_clk_peri` (`peri` cluster, gated by `SCRC` `CLK_EN`), reset
 `i_rst_n_peri`. The register file and the event multiplexer run on `i_clk_peri`.
 Timer module `i` runs on `i_clk_peri` gated by `CH_EN[i]`.
 
-: PWM sub-modules
-
-| Sub-module | Count | Function |
-|---|---:|---|
-| `adv_timer_apb_if` | 1 | register file, APB decode |
-| `pulp_clock_gating` | 4 | one clock gate per module, enable `CH_EN[i]` |
-| `timer_module` | 4 | `timer_cntrl` (`CMD`), `input_stage` (7.4), `prescaler`, `up_down_counter` (7.1), 4 x `comparator` (7.2) |
-| event logic in `apb_adv_timer` | 1 | four 16:1 multiplexers and edge detectors -- 7.5 |
-
 # 4. IP used
 
 : Upstream IP used

@@ -51,17 +51,6 @@ File `design/ram/rtl/m_qnsc_wrap_axi4_sram.sv`, owner Nghia Van Trong.
 Clock `i_clk_mem` and reset `i_rst_n_mem` come from the `mem` cluster. The clock is
 never gated; the reset is asserted by power-on, watchdog and software reset.
 
-: Sub-modules
-
-| Instance | Module | Origin | Role |
-|---|---|---|---|
-| `u_ctrl` | `m_vlsi_axi4_sram` | IP | Controller top level |
-| `u_axfsm_wr`, `u_axfsm_rd` | `m_vlsi_axfsm` | IP | Address handshake; one address per beat into `AWFIFO` or `ARFIFO` |
-| `u_awfifo`, `u_wfifo`, `u_arfifo`, `u_rfifo`, `u_bfifo` | `m_vlsi_fifo` | IP | Channel buffers, 7.1 |
-| `u_arbiter` | `m_vlsi_arbiter` | IP | Round-robin grant between write and read requests |
-| `u_sram_misc` | `m_vlsi_sram_misc` | IP | FIFO pops, SRAM address and data mux, `R` and `B` generation |
-| `u_strbfifo` | `m_vlsi_fifo` | QSOC wrapper | `WSTRB` buffer driving the byte enables, 7.3 |
-
 # 4. IP used
 
 : Upstream IP used
@@ -210,12 +199,12 @@ any assertion of `i_rst_n_mem` while power is applied.
 
 : The two instances
 
-| Instance | Port | Decode window, HAS Table 5-2 | `PARA_SRAM_DEPTH` | Size | `o_sram_addr` |
-|---|---|---|---:|---|---|
-| `ISRAM` | `AXI_M1` | `0x2000_0000`-`0x2000_FFFF` | 16384 | 64 KiB | `[15:2]` |
-| `DSRAM` | `AXI_M2` | `0x3000_0000`-`0x3000_7FFF` | 8192 | 32 KiB | `[14:2]` |
+| Instance | Port | `PARA_SRAM_DEPTH` | `o_sram_addr` |
+|---|---|---:|---|
+| `ISRAM` | `AXI_M1` | 16384 | `[15:2]` |
+| `DSRAM` | `AXI_M2` | 8192 | `[14:2]` |
 
-The instances differ only in `PARA_SRAM_DEPTH`. Each decode window equals its macro
+The instances differ only in `PARA_SRAM_DEPTH`. Each decode window (section 1) equals its macro
 size, so every routed address selects exactly one word.
 
 # 9. What is not provided here, and who provides it
