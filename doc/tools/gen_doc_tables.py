@@ -144,15 +144,22 @@ def core_tie_offs(c):
 
 
 def memory_map(c):
-    """Every region, in address order."""
+    """Every region, in address order.
+
+    Bases are stored as integers in the contract so they can be sorted and
+    compared, and are formatted here: a memory map written in decimal is
+    unreadable. The first sentence of the note is used rather than the whole of
+    it, because several notes carry a paragraph of reasoning that belongs in a
+    _DECISIONS file, not in a table cell."""
     rows = []
-    for r in sorted(c["memory_map"], key=lambda x: int(str(x["base"]), 16)):
-        size = int(str(r["size"]), 0)
+    for r in sorted(c["memory_map"], key=lambda x: int(x["base"])):
+        size = int(r["size"])
         human = ("%d KiB" % (size // 1024) if size >= 1024 else "%d B" % size)
-        rows.append(["`%s`" % r["base"], human, r["name"],
-                     r.get("bus", "--"), r.get("description", "")])
-    return table(["Base", "Size", "Region", "Bus", "Description"], rows,
-                 caption="QSOC memory map")
+        note = (r.get("note") or "").strip().split(". ")[0].rstrip(".")
+        rows.append(["`0x%08X`" % int(r["base"]), human, "`%s`" % r["name"],
+                     r.get("port", "--"), r.get("kind", ""), note])
+    return table(["Base", "Size", "Region", "Port", "Kind", "Note"], rows,
+                 align="llllll", caption="QSOC memory map")
 
 
 GENERATORS = {
