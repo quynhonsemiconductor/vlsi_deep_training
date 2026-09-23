@@ -163,14 +163,19 @@ def _para(text, style=None, size=None, bold=False, align="left",
           page_break=False, indent=0, outline=None):
     """One paragraph. Formatting is direct rather than by style, because the
     template justifies Normal and these need their own alignment."""
+    # Children of w:pPr have to appear in the order the schema declares, or a
+    # reader is entitled to ignore the ones that are out of place -- which is
+    # what happened: outlineLvl was written before jc, and WPS dropped it, so the
+    # front headings never reached the navigation pane. Order is
+    # pStyle, ind, jc, outlineLvl, rPr.
     ppr = ['<w:pPr>']
     if style:
         ppr.append('<w:pStyle w:val="%s"/>' % style)
     if indent:
         ppr.append('<w:ind w:left="%d"/>' % indent)
+    ppr.append('<w:jc w:val="%s"/>' % align)
     if outline is not None:
         ppr.append('<w:outlineLvl w:val="%d"/>' % outline)
-    ppr.append('<w:jc w:val="%s"/>' % align)
     rpr = ""
     if bold or size:
         rpr = "<w:rPr>%s%s</w:rPr>" % (
@@ -233,6 +238,21 @@ def insert_front_lists(xml, tables, figures):
     be opened in Word and refreshed."""
     if not tables and not figures:
         return xml
+    # Pandoc styles its contents heading TOCHeading, whose definition carries
+    # outlineLvl 9 -- body text -- so "Table of Contents" was the one front
+    # heading missing from the navigation pane. Promote it to level 0 like the
+    # two below it.
+    def promote(m):
+        para = m.group(0)
+        if _style(para) != "TOCHeading" or "<w:pPr>" not in para:
+            return para
+        if "<w:outlineLvl" in para:
+            return re.sub(r'<w:outlineLvl w:val="\d+"\s*/>',
+                          '<w:outlineLvl w:val="0"/>', para)
+        return para.replace("</w:pPr>", '<w:outlineLvl w:val="0"/></w:pPr>', 1)
+
+    xml = PARA.sub(promote, xml)
+
     anchor = None
     for para in PARA.findall(xml):
         if re.search(r"<w:instrText[^>]*>[^<]*TOC", para):
