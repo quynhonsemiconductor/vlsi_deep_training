@@ -1,6 +1,6 @@
 ---
 title: "RAM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,6 +13,7 @@ behind every parameter are in [`QNSC_RAM_DECISIONS.md`](QNSC_RAM_DECISIONS.md).
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only. The 300-line memory-map proposal is replaced by the table generated from the contract, which is now the authority. Tables and figures are numbered by the build |
+| V2.1 | 2026-09-24 | Nghia VT | -- | `ISRAM` contents survive every reset except power loss. `PARA_ID_WD` = 7, from the HAS. `SYSDBG` register row gone from the map |
 
 # 1. Overview
 
@@ -53,7 +54,6 @@ differ in exactly one thing, the depth of the macro behind them -- section 8.
 | `0x80030000` | 16 KiB | `i2c` | APB_M12 | peripheral |  |
 | `0x80034000` | 16 KiB | `pwm` | APB_M13 | peripheral | A separate apb_adv_timer instance, not a pad function of the timers |
 | `0x80038000` | 16 KiB | `dma_cfg` | APB_M14 | peripheral | Register interface of the DMA |
-| `0xF0000000` | 12 B | `sysdbg` | none | jtag_only | Decoded inside the debug block and never placed on S_BUS, so software running on the core cannot halt it or grant itself debug access |
 <!-- /gen -->
 
 Block directory `design/ram`, module `m_qnsc_wrap_axi4_sram`, owner Nghia Van Trong.
@@ -130,7 +130,7 @@ tracked by the address FSM's own counter, not by the master's flag.
 |---|---:|---|---|---|
 | `PARA_DATA_WD` | 32 | Data width in bits | 32 | 32 |
 | `PARA_ADDR_WD` | 32 | **AXI address bus width**, not a statement about how much memory is present | 32 | 32 |
-| `PARA_ID_WD` | 4 | AXI ID width, set by the interconnect, which widens master IDs to keep them unique | same | same |
+| `PARA_ID_WD` | 4 | AXI ID width, set by the interconnect, which widens master IDs to keep them unique | 7 | 7 |
 | `PARA_LEN_WD` | 8 | `AxLEN` width; 8 gives 256 beats | 8 | 8 |
 | `PARA_FIFO_DEPTH` | 8 | Depth of **all five** FIFOs, a power of two | 8 | 8 |
 | `PARA_SRAM_DEPTH` | 1024 | **Belongs to the macro, not the controller.** The only thing that sets how much memory is present | 16384 words, 64 KiB | 8192 words, 32 KiB |
@@ -328,6 +328,7 @@ it is populated the interconnect must not hand it to this slave.
 | `S_BUS` | Return `DECERR` for unmapped addresses; do not route them here | An out-of-range access succeeds silently |
 | `S_BUS` | Decode window no larger than the macro depth | Aliasing, silent, because `RRESP` is always `OKAY` |
 | Masters | Transfer size fixed at 32 bits; `AxSIZE` is ignored, not refused | A narrower transfer is executed at full width |
+| Macro and its simulation model | The array has no reset and is never cleared on reset. The controller resets only its FIFOs and FSMs | An image loaded by `SYSDBG` or the bootloader is lost on a watchdog or software reset |
 | Physical design | **Every macro pin the controller does not drive is tied to its databook default** -- margin at default, retention off, test off | See below |
 
 **The real macro has pins the behavioural model does not.** `m_vlsi_sram_sp.sv` has a
@@ -347,7 +348,7 @@ That is why it is a written constraint rather than left to physical design.
 | `CPU2AXI` merge must carry `mem_be_i` through to `wstrb` | bus owner | Every sub-word store from the CPU -- 7.3 |
 | `DECERR` for unmapped addresses, and decode windows matching the macro depths | bus owner | Silent aliasing and silent out-of-range success -- 10 |
 | **Does the DMA issue `WRAP` bursts?** | DMA owner | If yes, `axi_burst_unwrap.sv` goes in front of this block -- 7.4 |
-| `PARA_ID_WD` = the width the interconnect widens master IDs to | bus owner | Response ID matching |
+| `PARA_ID_WD` = the `S_BUS` master-port ID width, 7 in HAS Table 5-1 | bus owner | Response ID matching |
 | First 4 KiB of `ISRAM` reserved, main image linked at `0x20001000` | firmware owner | The `SYSDBG` debug window |
 | Macro pin tie-offs to databook defaults | physical design | Silicon-only failures -- 10 |
 
@@ -384,6 +385,7 @@ chosen.**
 | `WRAP` against an **independent** address model, not the IP's | The IP's checker computes the same wrong value -- 7.4 |
 | Aliasing above the macro depth is unreachable in the final decode | The window is an integration choice, not an IP property -- 8 |
 | Macro pin tie-offs match the databook | The behavioural model has no such pins -- 10 |
+| Write a pattern, assert `i_rst_n`, read it back unchanged | The IP's tests reset only the controller -- 10 |
 
 The acceptance criterion is the byte-enable path: **a C program that writes a
 `uint8_t` array leaves its neighbours intact.** Everything the IP tests is about the

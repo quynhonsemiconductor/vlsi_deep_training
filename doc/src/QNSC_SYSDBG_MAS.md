@@ -334,7 +334,7 @@ One, in `design/top`, with the default parameters.
 | `DmBaseAddr = 0x2000_0000`, `DmAddrMask = 0x0000_0FFF`, `DmHaltAddr = 0x2000_0800`, `DmExceptionAddr = 0x2000_0810` | CPU owner | 7.8 |
 | `fetch_enable_i` (`ibex_mubi_t`) on whenever the CPU reset is released | CPU owner, `SCRC` | Open. Proposed: tie to `IbexMuBiOn` |
 | `AXI_S0` connected to `SYSDBG` directly, AXI4, ID width `AxiIdWidth`. No `axi_from_mem` | Bus owner | Every bus access |
-| Remove the `0xF000_0000` `SYSDBG` register region from the HAS memory map and `qsoc_contract.yml` | HAS owner | Consistency. There are no memory-mapped registers |
+| Remove the `0xF000_0000` `SYSDBG` register region from HAS Table 7-1 (already gone from `qsoc_contract.yml`) | HAS owner | Consistency. There are no memory-mapped registers |
 | `PIN_8`--`PIN_12` forced to JTAG while `o_dbg_en = 1` | IO MUX owner | Debug boot with firmware that remaps pins |
 | `ISRAM` array has no reset and no clear-on-reset | RAM owner | Image surviving a watchdog or software reset |
 | Image linked at `0x2000_1000`, reset entry `0x2000_1080`; bootloader jumps to `0x2000_1080` | Firmware owner | The same image in both boot modes |

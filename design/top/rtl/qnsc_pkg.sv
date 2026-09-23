@@ -61,8 +61,6 @@ package qnsc_pkg;
   localparam int unsigned             C_PWM_SIZE = 16384;  // 16 KiB
   localparam logic [C_ADDR_WIDTH-1:0] C_DMA_CFG_BASE = 32'h80038000;
   localparam int unsigned             C_DMA_CFG_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_SYSDBG_BASE = 32'hF0000000;
-  localparam int unsigned             C_SYSDBG_SIZE = 12;  // 12 B
 
   // ---- interrupt lines -----------------------------------------------------
   // Source: QSOC_HAS Table 8-1. The line index IS the priority: Ibex resolves

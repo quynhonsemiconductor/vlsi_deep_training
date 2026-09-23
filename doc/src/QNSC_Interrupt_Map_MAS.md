@@ -286,7 +286,7 @@ driver rather than the standard `mtime`/`mtimecmp` one.
 | Item | Owner | What it blocks |
 |---|---|---|
 | APB-to-TL-UL wrapper for `aon_timer` | WDT owner | two of the 27 sources, one being the NMI. Its enable is in `WDOG_CTRL` offset `0x1C`, so without a bus path the watchdog cannot be enabled and never barks |
-| Watchdog stoppable while `debug_mode` is asserted, **or** firmware told to disable it | WDT owner | a long debug session otherwise ends in a reset with nothing recording why |
+| Firmware disables the watchdog for a debug session. Ibex does not export `debug_mode`, so the watchdog cannot see a halt | WDT owner, firmware owner | a long debug session otherwise ends in a reset with nothing recording why |
 | Vector table at `mtvec + 0x40` … `+0x68`, plus `+0x7C`; `mie` bits 16–26 | firmware owner | — |
 | Handlers installed **before** `mstatus.MIE` is set | firmware owner | the block is transparent out of reset, so every source is live from the first cycle |
 | Decide whether `CLK_EN` may gate a peripheral whose interrupt is asserted, or whether the ordering is left to firmware | SCRC owner | nothing in RTL. If left to firmware it must be written into the programming guide, because the failure is a handler that cannot clear its own source -- section 7.6 |
