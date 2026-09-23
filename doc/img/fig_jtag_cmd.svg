@@ -24,10 +24,9 @@
 <text x="390.0" y="332.7" font-size="11" text-anchor="middle" fill="#000000">result of the PREVIOUS command</text>
 <text x="870.0" y="318.7" font-size="11" text-anchor="middle" fill="#000000">status</text>
 <text x="870.0" y="332.7" font-size="11" text-anchor="middle" fill="#000000">[1:0]</text>
-<text x="510.0" y="463.7" font-size="11" text-anchor="middle" fill="#000000">op:  00 = NOP   |   01 = READ   |   10 = WRITE</text>
-<text x="510.0" y="477.7" font-size="11" text-anchor="middle" fill="#000000">size:  00 = byte   |   01 = halfword   |   10 = word   -&gt;  drives mem_be_o</text>
-<text x="510.0" y="491.7" font-size="11" text-anchor="middle" fill="#000000">status:  00 = OK   |   01 = BUSY   |   10 = ERROR</text>
-<text x="510.0" y="505.7" font-size="11" text-anchor="middle" fill="#000000">addr[31:28] = 0xF  -&gt;  SYSDBG registers   |   otherwise  -&gt;  system bus</text>
-<text x="510.0" y="519.7" font-size="11" text-anchor="middle" fill="#000000">the payload always sits in the LOW bits of data: hardware shifts it into the addressed lane</text>
-<text x="510.0" y="533.7" font-size="11" text-anchor="middle" fill="#000000">one scan = one command, and the answer arrives on the next scan</text>
+<text x="510.0" y="470.7" font-size="11" text-anchor="middle" fill="#000000">op:  00 = NOP   |   01 = READ   |   10 = WRITE</text>
+<text x="510.0" y="484.7" font-size="11" text-anchor="middle" fill="#000000">size:  00 = byte   |   01 = halfword   |   10 = word   -&gt;  drives mem_be_o</text>
+<text x="510.0" y="498.7" font-size="11" text-anchor="middle" fill="#000000">status:  00 = OK   |   01 = BUSY   |   10 = ERROR</text>
+<text x="510.0" y="512.7" font-size="11" text-anchor="middle" fill="#000000">addr[31:28] = 0xF  -&gt;  SYSDBG registers   |   otherwise  -&gt;  system bus</text>
+<text x="510.0" y="526.7" font-size="11" text-anchor="middle" fill="#000000">payload always in the LOW bits of data; hardware shifts it into the lane</text>
 </svg>

@@ -46,7 +46,7 @@
         <mxCell id="bus" value="S_BUS&#10;AXI_S0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1260" y="360" width="165" height="72" as="geometry"/>
         </mxCell>
-        <mxCell id="steps" value="1  host shifts op, addr and data in on TDI&#10;2  at Update-DR the 68 bits are latched as one command&#10;3  the command crosses into the system clock domain&#10;4  the FSM executes it  |  addr[31:28] = 0xF goes to a SYSDBG register  |  anything else becomes a bus request&#10;5  rdata and status travel back across the CDC&#10;6  they are captured at the next Capture-DR&#10;7  the host shifts them out on TDO  |  so a READ takes two scans: one to ask, one to collect" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=11;dashed=1;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="steps" value="1  host shifts op, addr and data in on TDI&#10;2  at Update-DR the 68 bits are latched as one command&#10;3  the command crosses into the system clock domain&#10;4  the FSM executes it: local register, or a bus request&#10;5  rdata and status travel back across the CDC&#10;6  they are captured at the next Capture-DR&#10;7  the host shifts them out on TDO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=11;dashed=1;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="20" y="580" width="1405" height="160" as="geometry"/>
         </mxCell>
         <mxCell id="pads_tap_0" value="TMS, TCK" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.1199999999999999;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pads" target="tap">
@@ -120,7 +120,7 @@
         <mxCell id="status" value="status&#10;[1:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="760" y="280" width="220" height="84" as="geometry"/>
         </mxCell>
-        <mxCell id="leg" value="op:  00 = NOP   |   01 = READ   |   10 = WRITE&#10;size:  00 = byte   |   01 = halfword   |   10 = word   -&gt;  drives mem_be_o&#10;status:  00 = OK   |   01 = BUSY   |   10 = ERROR&#10;addr[31:28] = 0xF  -&gt;  SYSDBG registers   |   otherwise  -&gt;  system bus&#10;the payload always sits in the LOW bits of data: hardware shifts it into the addressed lane&#10;one scan = one command, and the answer arrives on the next scan" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="leg" value="op:  00 = NOP   |   01 = READ   |   10 = WRITE&#10;size:  00 = byte   |   01 = halfword   |   10 = word   -&gt;  drives mem_be_o&#10;status:  00 = OK   |   01 = BUSY   |   10 = ERROR&#10;addr[31:28] = 0xF  -&gt;  SYSDBG registers   |   otherwise  -&gt;  system bus&#10;payload always in the LOW bits of data; hardware shifts it into the lane" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="40" y="420" width="940" height="150" as="geometry"/>
         </mxCell>
       </root>
@@ -146,7 +146,7 @@
         <mxCell id="done" value="DONE&#10;latch rdata&#10;and status" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="780" y="180" width="170" height="80" as="geometry"/>
         </mxCell>
-        <mxCell id="f3leg" value="one scan = one command   |   status reads BUSY while the FSM is not in IDLE&#10;BusTimeout expiry inside BUS sets ERROR and STATUS.bus_timeout but does NOT leave the state:&#10;a granted request cannot be cancelled, so its response is waited for and discarded" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=10;dashed=1;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="f3leg" value="status reads BUSY while not in IDLE&#10;BusTimeout expiry sets ERROR and bus_timeout but does NOT leave BUS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=10;dashed=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="60" y="370" width="890" height="96" as="geometry"/>
         </mxCell>
         <mxCell id="idle_dec_0" value="op != NOP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="idle" target="dec">

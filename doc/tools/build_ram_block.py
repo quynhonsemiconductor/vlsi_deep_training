@@ -34,9 +34,7 @@ f = [
     N("sram", 990, 270, 170, 100, "SRAM macro\nsingle port\n1-cycle read", "grey", 11, True),
 
     N("todo", 180, 470, 760, 66,
-      "ADDED FOR QSOC | WSTRB byte-enable path: AW and W channels, "
-      "an extra FIFO field,\nand byte write enables on the macro.  "
-      "Without it a byte store overwrites the whole word.", "red", 10),
+      "ADDED FOR QSOC: WSTRB byte-enable path", "red", 10),
 
     N("note", 990, 400, 300, 136,
       "Burst address generation\nlives in the two AXFSMs.\n\n"

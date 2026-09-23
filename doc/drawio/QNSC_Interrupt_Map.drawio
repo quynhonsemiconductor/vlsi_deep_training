@@ -115,8 +115,8 @@
         <mxCell id="intmap" value="INTMAP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=11;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="250" y="74" width="80" height="510" as="geometry"/>
         </mxCell>
-        <mxCell id="note" value="INTMAP = 11 OR gates. No clock, no reset, no register, no address, no bus port, ZERO flip-flops.&#10;mcause = 16 + line, and mtvec is permanently vectored, so the trap address is mtvec + 4 x mcause&#10;-&gt; the core lands INSIDE that peripheral&#x27;s handler with no register read on the path.&#10;irq_external_i, irq_timer_i, irq_software_i are tied 0.  Lines 11-14 spare." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="40" y="674" width="756" height="96" as="geometry"/>
+        <mxCell id="note" value="11 OR gates, combinational: no clock, no reset, no flip-flop, no bus port." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="674" width="756" height="34" as="geometry"/>
         </mxCell>
         <mxCell id="p0_or0_0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="p0" target="or0">
           <mxGeometry relative="1" as="geometry"/>

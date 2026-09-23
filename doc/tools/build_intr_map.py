@@ -29,11 +29,12 @@ f1 += [
     N("nmi", 372, Y0 + 11 * DY + 14, 210, 34, "irq_nm_i    mcause 31", "red", 10, True),
     N("cpu", 646, 180, 150, 210, "Ibex\n\nRV32IMC\n\nvectored\nmtvec", "blue", 13, True),
     N("intmap", 250, 74, 80, 11 * DY + 4, "INTMAP", "group", 11, True, "top"),
-    N("note", 40, Y0 + 12 * DY + 26, 756, 96,
-      "INTMAP = 11 OR gates. No clock, no reset, no register, no address, no bus port, ZERO flip-flops.\n"
-      "mcause = 16 + line, and mtvec is permanently vectored, so the trap address is mtvec + 4 x mcause\n"
-      "-> the core lands INSIDE that peripheral's handler with no register read on the path.\n"
-      "irq_external_i, irq_timer_i, irq_software_i are tied 0.  Lines 11-14 spare.", "box", 11, False, "top"),
+    # The legend used to restate sections 1, 7.2 and 10 in four sentences. A
+    # diagram that repeats the text is a second copy to keep in step, so only the
+    # one fact the drawing itself cannot show is kept.
+    N("note", 40, Y0 + 12 * DY + 26, 756, 34,
+      "11 OR gates, combinational: no clock, no reset, no flip-flop, no bus port.",
+      "box", 11, False, "top"),
 ]
 f1e = [E("p%d" % l, "r", "or%d" % l, "l") for _, _, _, l in PER]
 f1e += [E("or%d" % l, "r", "l%d" % l, "l") for _, _, _, l in PER]

@@ -83,8 +83,8 @@
 <text x="722.5" y="597.0" font-size="11" text-anchor="middle" fill="#000000">1  host shifts op, addr and data in on TDI</text>
 <text x="722.5" y="611.0" font-size="11" text-anchor="middle" fill="#000000">2  at Update-DR the 68 bits are latched as one command</text>
 <text x="722.5" y="625.0" font-size="11" text-anchor="middle" fill="#000000">3  the command crosses into the system clock domain</text>
-<text x="722.5" y="639.0" font-size="11" text-anchor="middle" fill="#000000">4  the FSM executes it  |  addr[31:28] = 0xF goes to a SYSDBG register  |  anything else becomes a bus request</text>
+<text x="722.5" y="639.0" font-size="11" text-anchor="middle" fill="#000000">4  the FSM executes it: local register, or a bus request</text>
 <text x="722.5" y="653.0" font-size="11" text-anchor="middle" fill="#000000">5  rdata and status travel back across the CDC</text>
 <text x="722.5" y="667.0" font-size="11" text-anchor="middle" fill="#000000">6  they are captured at the next Capture-DR</text>
-<text x="722.5" y="681.0" font-size="11" text-anchor="middle" fill="#000000">7  the host shifts them out on TDO  |  so a READ takes two scans: one to ask, one to collect</text>
+<text x="722.5" y="681.0" font-size="11" text-anchor="middle" fill="#000000">7  the host shifts them out on TDO</text>
 </svg>
