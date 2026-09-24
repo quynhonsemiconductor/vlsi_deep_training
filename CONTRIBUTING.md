@@ -53,8 +53,8 @@ What a wrapper must do, the emacs rules and the naming table are in
 ### 4. Check locally before pushing
 
 ```bash
-make setup                  # once: install the tools and turn on the pre-push hook
-make doctor                 # what this machine is missing, and how to install it
+make doctor                 # once: which tools are missing (install list in README)
+make hooks                  # once per clone: every git push runs make check
 make check                  # everything CI checks, before every push
 make lint BLOCK=<block>     # one check, one block, while you work
 make new-wrap BLOCK=<block> IP=<ip top .sv>   # scaffold an emacs wrapper, once

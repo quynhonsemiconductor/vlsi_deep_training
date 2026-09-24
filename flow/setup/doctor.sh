@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Report which tools this machine has for each stage, and how to install the
-# missing ones. Installs nothing (make setup does that).
+# missing ones. Installs nothing: what to install, per OS, is in the root README.
 #
 #   make doctor
 #
@@ -44,5 +44,5 @@ else
   printf '%-13s %-6s %-26s %s\n' "pre-push" "-" "make check on git push" "make hooks"
 fi
 
-[ "$missing" = 0 ] && echo "ready for make check" || echo "MISS = needed by make check; run make setup, or the command shown"
+[ "$missing" = 0 ] && echo "ready for make check" || echo "MISS = needed by make check; install it (README, Getting started)"
 exit $missing

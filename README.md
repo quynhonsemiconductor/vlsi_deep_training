@@ -59,13 +59,24 @@ Honest status, so nobody has to guess:
 
 ## Getting started
 
-Needs Python 3 with PyYAML, `verilator` for lint, `emacs` for generated
-wrappers, and `pandoc` to build the specifications. `make setup` installs them
-(Homebrew or apt) and turns on the pre-push hook; `make doctor` says what is
-missing on a machine where you cannot install.
+Install these once. `make doctor` then says what is still missing.
+
+| Tool | Needed for | macOS (Homebrew) | Ubuntu / Debian |
+|---|---|---|---|
+| Python 3 + PyYAML | every check | `brew install python`, `pip3 install pyyaml` | `apt install python3 python3-yaml` |
+| `make`, `git`, `bash` | every check | Xcode command-line tools | `apt install make git` |
+| Verilator 5 | lint, simulation | `brew install verilator` | `apt install verilator` |
+| emacs | emacs wrappers | `brew install emacs` | `apt install emacs-nox` |
+| pandoc | `make docs` | `brew install pandoc` | `apt install pandoc` |
+| rsvg-convert | doc diagrams (optional) | `brew install librsvg` | `apt install librsvg2-bin` |
+| Yosys, OpenSTA, VCS | later stages | `make doctor` shows how | `make doctor` shows how |
+
+**Windows:** use WSL2 with Ubuntu and follow the Ubuntu column. The scripts are
+bash, and the training server is Linux, so WSL keeps everyone on the same tools.
 
 ```bash
-make setup                             # once: tools + pre-push hook
+make doctor                            # once: what is missing on this machine
+make hooks                             # once per clone: make check before every push
 make check                             # every check CI runs
 make help                              # each check on its own, per block
 make docs                              # build the specifications
