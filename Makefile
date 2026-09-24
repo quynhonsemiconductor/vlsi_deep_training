@@ -8,6 +8,8 @@
 #   make check                 everything below except docs, before every push
 #   make lint BLOCK=pwm        one block; omit BLOCK for all
 #   make wrap BLOCK=pwm        regenerate an emacs wrapper
+#   make setup                 once: install the tools and turn on the pre-push hook
+#   make doctor                which tools this machine has, and how to get the rest
 #   make hooks                 once per clone: run make check before every push
 #   make help                  the full list
 # =============================================================================
@@ -18,9 +20,11 @@ BASE  ?= origin/main
 SCOPE = $(if $(BLOCK),design/$(BLOCK))
 
 .PHONY: help check filelists lint naming hardcode pkg pkg-check tables docs \
-        vendor-guard new-wrap wrap wrap-check vcs sim syn gca hooks
+        vendor-guard new-wrap wrap wrap-check vcs sim syn gca hooks doctor setup
 
 help:
+	@echo "make setup          once: install the tools, turn on the pre-push hook"
+	@echo "make doctor         which tools are here, and how to install the rest"
 	@echo "make hooks          once per clone: run make check before every push"
 	@echo "make check          all CI checks: filelists lint naming hardcode pkg-check tables wrap-check vendor-guard"
 	@echo "make filelists      paths in every .f are relative and exist"
@@ -37,6 +41,12 @@ help:
 	@echo "make wrap-check     every emacs wrapper matches its .src.sv"
 	@echo "make vcs            compile with VCS, on the server        BLOCK="
 	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=]"
+
+setup:
+	bash flow/setup/setup.sh
+
+doctor:
+	bash flow/setup/doctor.sh
 
 hooks:
 	git config core.hooksPath .githooks

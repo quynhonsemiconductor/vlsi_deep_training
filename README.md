@@ -60,10 +60,12 @@ Honest status, so nobody has to guess:
 ## Getting started
 
 Needs Python 3 with PyYAML, `verilator` for lint, `emacs` for generated
-wrappers, and `pandoc` to build the specifications.
+wrappers, and `pandoc` to build the specifications. `make setup` installs them
+(Homebrew or apt) and turns on the pre-push hook; `make doctor` says what is
+missing on a machine where you cannot install.
 
 ```bash
-make hooks                             # once: run make check before every push
+make setup                             # once: tools + pre-push hook
 make check                             # every check CI runs
 make help                              # each check on its own, per block
 make docs                              # build the specifications
