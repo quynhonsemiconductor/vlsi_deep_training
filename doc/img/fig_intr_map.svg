@@ -1,117 +1,174 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="804" height="744" viewBox="16 50 804 744" font-family="Helvetica,Arial,sans-serif">
-<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#333"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#333"/></marker></defs>
-<rect x="16" y="50" width="804" height="744" fill="#ffffff"/>
-<rect x="40" y="96" width="168" height="34" rx="3" fill="#d5e8d4" stroke="#82b366" stroke-width="1.4"/>
-<rect x="262" y="96" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="96" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="142" width="168" height="34" rx="3" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.4"/>
-<rect x="262" y="142" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="142" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="188" width="168" height="34" rx="3" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.4"/>
-<rect x="262" y="188" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="188" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="234" width="168" height="34" rx="3" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.4"/>
-<rect x="262" y="234" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="234" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="280" width="168" height="34" rx="3" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.4"/>
-<rect x="262" y="280" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="280" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="326" width="168" height="34" rx="3" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.4"/>
-<rect x="262" y="326" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="326" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="372" width="168" height="34" rx="3" fill="#d5e8d4" stroke="#82b366" stroke-width="1.4"/>
-<rect x="262" y="372" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="372" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="418" width="168" height="34" rx="3" fill="#d5e8d4" stroke="#82b366" stroke-width="1.4"/>
-<rect x="262" y="418" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="418" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="464" width="168" height="34" rx="3" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.4"/>
-<rect x="262" y="464" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="464" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="510" width="168" height="34" rx="3" fill="#d5e8d4" stroke="#82b366" stroke-width="1.4"/>
-<rect x="262" y="510" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="510" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="556" width="168" height="34" rx="3" fill="#d5e8d4" stroke="#82b366" stroke-width="1.4"/>
-<rect x="262" y="556" width="54" height="34" rx="3" fill="#f5f5f5" stroke="#666666" stroke-width="1.4"/>
-<rect x="372" y="556" width="210" height="34" rx="3" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
-<rect x="40" y="616" width="168" height="34" rx="3" fill="#f8cecc" stroke="#b85450" stroke-width="1.4"/>
-<rect x="372" y="616" width="210" height="34" rx="3" fill="#f8cecc" stroke="#b85450" stroke-width="1.4"/>
-<rect x="646" y="180" width="150" height="210" rx="3" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.4"/>
-<rect x="250" y="74" width="80" height="510" rx="3" fill="none" stroke="#999999" stroke-width="1.4" stroke-dasharray="6 4"/>
-<rect x="40" y="674" width="756" height="96" rx="3" fill="#ffffff" stroke="#333333" stroke-width="1.4"/>
-<polyline points="208.0,113.0 262.0,113.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,159.0 262.0,159.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,205.0 262.0,205.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,251.0 262.0,251.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,297.0 262.0,297.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,343.0 262.0,343.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,389.0 262.0,389.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,435.0 262.0,435.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,481.0 262.0,481.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,527.0 262.0,527.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="208.0,573.0 262.0,573.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,113.0 372.0,113.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,159.0 372.0,159.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,205.0 372.0,205.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,251.0 372.0,251.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,297.0 372.0,297.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,343.0 372.0,343.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,389.0 372.0,389.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,435.0 372.0,435.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,481.0 372.0,481.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,527.0 372.0,527.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="316.0,573.0 372.0,573.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="582.0,113.0 614.0,113.0 614.0,205.2 646.0,205.2" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="587.0" y="151.1" width="54.0" height="14" fill="#fff"/>
-<text x="614.0" y="162.1" font-size="10" fill="#444" text-anchor="middle">11 lines</text>
-<polyline points="208.0,633.0 372.0,633.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="251.0" y="625.0" width="78.0" height="14" fill="#fff"/>
-<text x="290.0" y="636.0" font-size="10" fill="#444" text-anchor="middle">feed-through</text>
-<polyline points="582.0,633.0 614.0,633.0 614.0,369.0 646.0,369.0" fill="none" stroke="#333" stroke-width="1.4" marker-end="url(#ah)"/>
-<text x="124.0" y="116.3" font-size="10" text-anchor="middle" fill="#111">DMA   1 src</text>
-<text x="289.0" y="116.3" font-size="10" text-anchor="middle" fill="#111">—</text>
-<text x="477.0" y="116.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[0]    mcause 16</text>
-<text x="124.0" y="162.3" font-size="10" text-anchor="middle" fill="#111">SPI device   8 src</text>
-<text x="289.0" y="162.3" font-size="10" text-anchor="middle" fill="#111">OR</text>
-<text x="477.0" y="162.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[1]    mcause 17</text>
-<text x="124.0" y="208.3" font-size="10" text-anchor="middle" fill="#111">SPI host   2 src</text>
-<text x="289.0" y="208.3" font-size="10" text-anchor="middle" fill="#111">OR</text>
-<text x="477.0" y="208.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[2]    mcause 18</text>
-<text x="124.0" y="254.3" font-size="10" text-anchor="middle" fill="#111">I2C   1 src</text>
-<text x="289.0" y="254.3" font-size="10" text-anchor="middle" fill="#111">—</text>
-<text x="477.0" y="254.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[3]    mcause 19</text>
-<text x="124.0" y="300.3" font-size="10" text-anchor="middle" fill="#111">UART0   1 src</text>
-<text x="289.0" y="300.3" font-size="10" text-anchor="middle" fill="#111">—</text>
-<text x="477.0" y="300.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[4]    mcause 20</text>
-<text x="124.0" y="346.3" font-size="10" text-anchor="middle" fill="#111">UART1   1 src</text>
-<text x="289.0" y="346.3" font-size="10" text-anchor="middle" fill="#111">—</text>
-<text x="477.0" y="346.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[5]    mcause 21</text>
-<text x="124.0" y="392.3" font-size="10" text-anchor="middle" fill="#111">TIMER1   2 src</text>
-<text x="289.0" y="392.3" font-size="10" text-anchor="middle" fill="#111">OR</text>
-<text x="477.0" y="392.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[6]    mcause 22</text>
-<text x="124.0" y="438.3" font-size="10" text-anchor="middle" fill="#111">PWM   4 src</text>
-<text x="289.0" y="438.3" font-size="10" text-anchor="middle" fill="#111">OR</text>
-<text x="477.0" y="438.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[7]    mcause 23</text>
-<text x="124.0" y="484.3" font-size="10" text-anchor="middle" fill="#111">WDT wakeup   1 src</text>
-<text x="289.0" y="484.3" font-size="10" text-anchor="middle" fill="#111">—</text>
-<text x="477.0" y="484.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[8]    mcause 24</text>
-<text x="124.0" y="530.3" font-size="10" text-anchor="middle" fill="#111">GPIO0-3   4 src</text>
-<text x="289.0" y="530.3" font-size="10" text-anchor="middle" fill="#111">OR</text>
-<text x="477.0" y="530.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[9]    mcause 25</text>
-<text x="124.0" y="576.3" font-size="10" text-anchor="middle" fill="#111">TIMER0   1 src</text>
-<text x="289.0" y="576.3" font-size="10" text-anchor="middle" fill="#111">—</text>
-<text x="477.0" y="576.3" font-size="10" text-anchor="middle" fill="#111">irq_fast_i[10]    mcause 26</text>
-<text x="124.0" y="636.3" font-size="10" text-anchor="middle" fill="#111">WDT bark   1 src</text>
-<text x="477.0" y="636.3" font-size="10" text-anchor="middle" fill="#111" font-weight="bold">irq_nm_i    mcause 31</text>
-<text x="721.0" y="249.3" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">Ibex</text>
-<text x="721.0" y="265.3" font-size="13" text-anchor="middle" fill="#111" font-weight="bold"></text>
-<text x="721.0" y="281.3" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">RV32IMC</text>
-<text x="721.0" y="297.3" font-size="13" text-anchor="middle" fill="#111" font-weight="bold"></text>
-<text x="721.0" y="313.3" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">vectored</text>
-<text x="721.0" y="329.3" font-size="13" text-anchor="middle" fill="#111" font-weight="bold">mtvec</text>
-<text x="290.0" y="91.0" font-size="11" text-anchor="middle" fill="#111" font-weight="bold">INTMAP</text>
-<text x="418.0" y="691.0" font-size="11" text-anchor="middle" fill="#111">INTMAP = 11 OR gates. No clock, no reset, no register, no address, no bus port, ZERO flip-flops.</text>
-<text x="418.0" y="705.0" font-size="11" text-anchor="middle" fill="#111">mcause = 16 + line, and mtvec is permanently vectored, so the trap address is mtvec + 4 x mcause</text>
-<text x="418.0" y="719.0" font-size="11" text-anchor="middle" fill="#111">-&gt; the core lands INSIDE that peripheral&#x27;s handler with no register read on the path.</text>
-<text x="418.0" y="733.0" font-size="11" text-anchor="middle" fill="#111">irq_external_i, irq_timer_i, irq_software_i are tied 0.  Lines 11-14 spare.</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="758" height="786" viewBox="16 38 758 786" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
+<rect x="16" y="38" width="758" height="786" fill="#ffffff"/>
+<rect x="560" y="62" width="190" height="738" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="258" y="66" width="178" height="550" rx="3" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="6 4"/>
+<rect x="40" y="96" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="96" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="96" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="140" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="140" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="140" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="184" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="184" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="184" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="228" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="228" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="228" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="272" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="272" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="272" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="316" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="316" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="316" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="360" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="360" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="360" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="404" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="404" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="404" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="448" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="448" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="448" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="492" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="492" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="492" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="536" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="272" y="536" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="536" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="580" width="200" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="2.8"/>
+<rect x="272" y="580" width="150" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="2.8"/>
+<rect x="570" y="580" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="2.8"/>
+<rect x="570" y="624" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="490" y="632" width="44" height="16" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="668" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="490" y="676" width="44" height="16" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="712" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="490" y="720" width="44" height="16" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="570" y="756" width="170" height="32" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="490" y="764" width="44" height="16" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="478" y="612" width="68" height="176" rx="3" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="6 4"/>
+<polyline points="240.0,112.0 272.0,112.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,112.0 570.0,112.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="104.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="115.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[0]</text>
+<polyline points="240.0,156.0 272.0,156.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,156.0 570.0,156.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="148.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="159.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[1]</text>
+<polyline points="240.0,200.0 272.0,200.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,200.0 570.0,200.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="192.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="203.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[2]</text>
+<polyline points="240.0,244.0 272.0,244.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,244.0 570.0,244.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="236.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="247.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[3]</text>
+<polyline points="240.0,288.0 272.0,288.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,288.0 570.0,288.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="280.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="291.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[4]</text>
+<polyline points="240.0,332.0 272.0,332.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,332.0 570.0,332.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="324.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="335.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[5]</text>
+<polyline points="240.0,376.0 272.0,376.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,376.0 570.0,376.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="368.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="379.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[6]</text>
+<polyline points="240.0,420.0 272.0,420.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,420.0 570.0,420.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="412.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="423.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[7]</text>
+<polyline points="240.0,464.0 272.0,464.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,464.0 570.0,464.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="456.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="467.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[8]</text>
+<polyline points="240.0,508.0 272.0,508.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,508.0 570.0,508.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="454.0" y="500.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="511.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[9]</text>
+<polyline points="240.0,552.0 272.0,552.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,552.0 570.0,552.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="451.0" y="544.0" width="90.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="555.0" font-size="10" fill="#000000" text-anchor="middle">o_int_fast[10]</text>
+<polyline points="240.0,596.0 272.0,596.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="422.0,596.0 570.0,596.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="469.0" y="588.0" width="54.0" height="14" fill="#ffffff"/>
+<text x="496.0" y="599.0" font-size="10" fill="#000000" text-anchor="middle">o_int_nm</text>
+<polyline points="534.0,640.0 570.0,640.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="534.0,684.0 570.0,684.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="534.0,728.0 570.0,728.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="534.0,772.0 570.0,772.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<text x="655.0" y="80.0" font-size="12" text-anchor="middle" fill="#000000" font-weight="bold">Ibex</text>
+<text x="347.0" y="83.0" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">INTMAP</text>
+<text x="140.0" y="109.0" font-size="9" text-anchor="middle" fill="#000000">DMA</text>
+<text x="140.0" y="121.0" font-size="9" text-anchor="middle" fill="#000000">dma_irq_o · level</text>
+<text x="347.0" y="109.0" font-size="9" text-anchor="middle" fill="#000000">i_int_dma</text>
+<text x="347.0" y="121.0" font-size="9" text-anchor="middle" fill="#000000">wire</text>
+<text x="655.0" y="115.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[0]   mcause 16</text>
+<text x="140.0" y="153.0" font-size="9" text-anchor="middle" fill="#000000">SPI device</text>
+<text x="140.0" y="165.0" font-size="9" text-anchor="middle" fill="#000000">intr_*_o ×8 · level</text>
+<text x="347.0" y="153.0" font-size="9" text-anchor="middle" fill="#000000">i_int_spi_device[7:0]</text>
+<text x="347.0" y="165.0" font-size="9" text-anchor="middle" fill="#000000">OR</text>
+<text x="655.0" y="159.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[1]   mcause 17</text>
+<text x="140.0" y="197.0" font-size="9" text-anchor="middle" fill="#000000">SPI host</text>
+<text x="140.0" y="209.0" font-size="9" text-anchor="middle" fill="#000000">intr_error_o, intr_spi_event_o · level</text>
+<text x="347.0" y="197.0" font-size="9" text-anchor="middle" fill="#000000">i_int_spi_host[1:0]</text>
+<text x="347.0" y="209.0" font-size="9" text-anchor="middle" fill="#000000">OR</text>
+<text x="655.0" y="203.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[2]   mcause 18</text>
+<text x="140.0" y="241.0" font-size="9" text-anchor="middle" fill="#000000">I2C</text>
+<text x="140.0" y="253.0" font-size="9" text-anchor="middle" fill="#000000">interrupt_o · level</text>
+<text x="347.0" y="241.0" font-size="9" text-anchor="middle" fill="#000000">i_int_i2c</text>
+<text x="347.0" y="253.0" font-size="9" text-anchor="middle" fill="#000000">wire</text>
+<text x="655.0" y="247.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[3]   mcause 19</text>
+<text x="140.0" y="285.0" font-size="9" text-anchor="middle" fill="#000000">UART0</text>
+<text x="140.0" y="297.0" font-size="9" text-anchor="middle" fill="#000000">INT · level</text>
+<text x="347.0" y="285.0" font-size="9" text-anchor="middle" fill="#000000">i_int_uart_0</text>
+<text x="347.0" y="297.0" font-size="9" text-anchor="middle" fill="#000000">wire</text>
+<text x="655.0" y="291.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[4]   mcause 20</text>
+<text x="140.0" y="329.0" font-size="9" text-anchor="middle" fill="#000000">UART1</text>
+<text x="140.0" y="341.0" font-size="9" text-anchor="middle" fill="#000000">INT · level</text>
+<text x="347.0" y="329.0" font-size="9" text-anchor="middle" fill="#000000">i_int_uart_1</text>
+<text x="347.0" y="341.0" font-size="9" text-anchor="middle" fill="#000000">wire</text>
+<text x="655.0" y="335.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[5]   mcause 21</text>
+<text x="140.0" y="373.0" font-size="9" text-anchor="middle" fill="#000000">TIMER1</text>
+<text x="140.0" y="385.0" font-size="9" text-anchor="middle" fill="#000000">irq_lo_o, irq_hi_o · pulse/level</text>
+<text x="347.0" y="373.0" font-size="9" text-anchor="middle" fill="#000000">i_int_timer_1[1:0]</text>
+<text x="347.0" y="385.0" font-size="9" text-anchor="middle" fill="#000000">OR</text>
+<text x="655.0" y="379.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[6]   mcause 22</text>
+<text x="140.0" y="417.0" font-size="9" text-anchor="middle" fill="#000000">PWM</text>
+<text x="140.0" y="429.0" font-size="9" text-anchor="middle" fill="#000000">events_o[3:0] · pulse</text>
+<text x="347.0" y="417.0" font-size="9" text-anchor="middle" fill="#000000">i_int_pwm[3:0]</text>
+<text x="347.0" y="429.0" font-size="9" text-anchor="middle" fill="#000000">OR</text>
+<text x="655.0" y="423.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[7]   mcause 23</text>
+<text x="140.0" y="461.0" font-size="9" text-anchor="middle" fill="#000000">WDT</text>
+<text x="140.0" y="473.0" font-size="9" text-anchor="middle" fill="#000000">intr_wkup_timer_expired_o · level</text>
+<text x="347.0" y="461.0" font-size="9" text-anchor="middle" fill="#000000">i_int_wdt_wakeup</text>
+<text x="347.0" y="473.0" font-size="9" text-anchor="middle" fill="#000000">wire</text>
+<text x="655.0" y="467.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[8]   mcause 24</text>
+<text x="140.0" y="505.0" font-size="9" text-anchor="middle" fill="#000000">GPIO0-2</text>
+<text x="140.0" y="517.0" font-size="9" text-anchor="middle" fill="#000000">interrupt ×3 · pulse</text>
+<text x="347.0" y="505.0" font-size="9" text-anchor="middle" fill="#000000">i_int_gpio[2:0]</text>
+<text x="347.0" y="517.0" font-size="9" text-anchor="middle" fill="#000000">OR</text>
+<text x="655.0" y="511.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[9]   mcause 25</text>
+<text x="140.0" y="549.0" font-size="9" text-anchor="middle" fill="#000000">TIMER0</text>
+<text x="140.0" y="561.0" font-size="9" text-anchor="middle" fill="#000000">irq_lo_o · pulse/level</text>
+<text x="347.0" y="549.0" font-size="9" text-anchor="middle" fill="#000000">i_int_timer_0</text>
+<text x="347.0" y="561.0" font-size="9" text-anchor="middle" fill="#000000">wire</text>
+<text x="655.0" y="555.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[10]   mcause 26</text>
+<text x="140.0" y="593.0" font-size="9" text-anchor="middle" fill="#000000">WDT</text>
+<text x="140.0" y="605.0" font-size="9" text-anchor="middle" fill="#000000">nmi_wdog_timer_bark_o · level</text>
+<text x="347.0" y="593.0" font-size="9" text-anchor="middle" fill="#000000">i_int_wdt_bark</text>
+<text x="347.0" y="605.0" font-size="9" text-anchor="middle" fill="#000000">wire</text>
+<text x="655.0" y="599.0" font-size="9" text-anchor="middle" fill="#000000" font-weight="bold">irq_nm_i   mcause 31</text>
+<text x="655.0" y="643.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[14:11]</text>
+<text x="512.0" y="643.0" font-size="9" text-anchor="middle" fill="#000000">4&#x27;b0</text>
+<text x="655.0" y="687.0" font-size="9" text-anchor="middle" fill="#000000">irq_external_i</text>
+<text x="512.0" y="687.0" font-size="9" text-anchor="middle" fill="#000000">0</text>
+<text x="655.0" y="731.0" font-size="9" text-anchor="middle" fill="#000000">irq_timer_i</text>
+<text x="512.0" y="731.0" font-size="9" text-anchor="middle" fill="#000000">0</text>
+<text x="655.0" y="775.0" font-size="9" text-anchor="middle" fill="#000000">irq_software_i</text>
+<text x="512.0" y="775.0" font-size="9" text-anchor="middle" fill="#000000">0</text>
+<text x="512.0" y="627.0" font-size="9" text-anchor="middle" fill="#000000">design/top</text>
 </svg>

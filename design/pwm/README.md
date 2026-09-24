@@ -16,9 +16,9 @@ PWM generation built on pulp-platform `apb_adv_timer`. This directory holds
 
 One instance. `TIMER_NBITS = 16`, `EXTSIG_NUM = 32`. From reading the RTL: the
 four `events_o` are a 4-of-16 multiplexer over channel outputs, edge-detected to
-one cycle, and **inert until `EVENT_CFG` is programmed**. `out_filter` only
-updates while `ctrl_active_i` is high, so a stopped channel holds its last
-level. The per-timer `status_o` is not wired to anything readable upstream — if
+one cycle, and **inert until `EVENT_CFG` is programmed**. Each channel output is a
+`comparator` flip-flop: a stopped module holds its last level, and
+`CMD` = STOP | RST forces its four outputs to 0 (MAS section 7). The per-timer `status_o` is not wired to anything readable upstream — if
 the spec needs it visible, the wrapper exposes it.
 
 ## The wrapper is the boundary

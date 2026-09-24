@@ -7,39 +7,84 @@ from diagen import Node as N, Edge as E, emit
 IMG = os.path.join(_DOC, "img")
 DRAWIO = os.path.join(_DOC, "drawio", "QNSC_Interrupt_Map.drawio")
 
-# ------------------------------------------------- 1. sources -> OR -> fast lines
-# One OR per peripheral. 26 sources become 11 lines. No state anywhere.
-PER = [("DMA", 1, "pulse", 0), ("SPI device", 8, "level", 1), ("SPI host", 2, "level", 2),
-       ("I2C", 1, "level", 3), ("UART0", 1, "level", 4), ("UART1", 1, "level", 5),
-       ("TIMER1", 2, "pulse", 6), ("PWM", 4, "pulse", 7), ("WDT wakeup", 1, "level", 8),
-       ("GPIO0-3", 4, "pulse", 9), ("TIMER0", 1, "pulse", 10)]
+# ------------------------------------------------- 1. sources -> INTMAP -> Ibex
+# Everything per row is read from util/qsoc_contract.yml, so the figure cannot
+# disagree with the generated tables. Monochrome, labels only.
+import yaml
+_C = yaml.safe_load(open(os.path.join(os.path.dirname(_DOC), "util",
+                                      "qsoc_contract.yml")))["interrupts"]
+NAME = {"dma": "DMA", "spi_device": "SPI device", "spi_host": "SPI host",
+        "i2c": "I2C", "uart_0": "UART0", "uart_1": "UART1", "timer_0": "TIMER0",
+        "timer_1": "TIMER1", "pwm": "PWM", "wdt_wakeup": "WDT", "wdt_bark": "WDT",
+        "gpio": "GPIO0-2"}
 
-f1 = []
-Y0, DY = 96, 46
-for name, n, shape, line in PER:
-    y = Y0 + line * DY
-    f1.append(N("p%d" % line, 40, y, 168, 34,
-                "%s   %d src" % (name, n), "blue" if shape == "level" else "green", 10))
-    f1.append(N("or%d" % line, 262, y, 54, 34, "OR" if n > 1 else "\u2014", "grey", 10))
-    f1.append(N("l%d" % line, 372, y, 210, 34,
-                "irq_fast_i[%d]    mcause %d" % (line, 16 + line), "yellow", 10))
 
-f1 += [
-    N("nmisrc", 40, Y0 + 11 * DY + 14, 168, 34, "WDT bark   1 src", "red", 10),
-    N("nmi", 372, Y0 + 11 * DY + 14, 210, 34, "irq_nm_i    mcause 31", "red", 10, True),
-    N("cpu", 646, 180, 150, 210, "Ibex\n\nRV32IMC\n\nvectored\nmtvec", "blue", 13, True),
-    N("intmap", 250, 74, 80, 11 * DY + 4, "INTMAP", "group", 11, True, "top"),
-    N("note", 40, Y0 + 12 * DY + 26, 756, 96,
-      "INTMAP = 11 OR gates. No clock, no reset, no register, no address, no bus port, ZERO flip-flops.\n"
-      "mcause = 16 + line, and mtvec is permanently vectored, so the trap address is mtvec + 4 x mcause\n"
-      "-> the core lands INSIDE that peripheral's handler with no register read on the path.\n"
-      "irq_external_i, irq_timer_i, irq_software_i are tied 0.  Lines 11-14 spare.", "box", 11, False, "top"),
-]
-f1e = [E("p%d" % l, "r", "or%d" % l, "l") for _, _, _, l in PER]
-f1e += [E("or%d" % l, "r", "l%d" % l, "l") for _, _, _, l in PER]
-f1e += [E("l0", "r", "cpu", "l@0.12", "11 lines"),
-        E("nmisrc", "r", "nmi", "l", "feed-through"),
-        E("nmi", "r", "cpu", "l@0.9")]
+def ports(l):
+    """Same compaction as gen_doc_tables.source_ports, without markdown."""
+    p, n = l["ports"], l["sources"]
+    if len(p) > 4:
+        pre, suf = p[0], p[0]
+        while not all(x.startswith(pre) for x in p):
+            pre = pre[:-1]
+        while not all(x.endswith(suf) for x in p):
+            suf = suf[1:]
+        return "%s*%s ×%d" % (pre, suf, len(p))
+    if len(p) == 1 and n > 1 and "[" not in p[0]:
+        return "%s ×%d" % (p[0], n)
+    return ", ".join(p)
+
+
+def shape(l):
+    s = l["shape"]
+    return "pulse/level" if ("pulse" in s and "level" in s) else s
+
+
+def inport(l):
+    n = l["sources"]
+    return "i_int_%s%s" % (l["peripheral"], "[%d:0]" % (n - 1) if n > 1 else "")
+
+
+Y0, DY, H = 96, 44, 32
+XS, WS = 40, 200          # source boxes
+XG, WG = 272, 150         # gate boxes inside INTMAP
+XC, WC = 560, 190         # Ibex outline
+XP, WP = 570, 170         # core input pins inside Ibex
+XT, WT = 490, 44          # tie-off constants, in design/top
+
+f1, f1e = [], []
+rows = list(_C["lines"]) + [dict(_C["nmi"], line=len(_C["lines"]))]
+ncore = len(rows) + 1 + len(_C["tied_low"])     # + the spare-line pin
+f1.append(N("cpu", XC, Y0 - 34, WC, ncore * DY + 34, "Ibex", "box", 12, True, "top"))
+f1.append(N("intmap", XG - 14, Y0 - 30, WG + 28, len(rows) * DY + 22,
+            "INTMAP", "group", 11, True, "top"))
+for k, l in enumerate(rows):
+    y = Y0 + k * DY
+    nmi = l is rows[-1]
+    st = "red" if nmi else "box"
+    f1.append(N("s%d" % k, XS, y, WS, H,
+                "%s\n%s · %s" % (NAME[l["peripheral"]], ports(l), shape(l)), st, 9))
+    f1.append(N("g%d" % k, XG, y, WG, H,
+                "%s\n%s" % (inport(l), "OR" if l["sources"] > 1 else "wire"), st, 9))
+    if nmi:
+        pin, out = "irq_nm_i   mcause %d" % l["mcause"], "o_int_nm"
+    else:
+        pin, out = ("irq_fast_i[%d]   mcause %d" % (k, 16 + k),
+                    "o_int_fast[%d]" % k)
+    f1.append(N("p%d" % k, XP, y, WP, H, pin, st, 9, nmi))
+    f1e += [E("s%d" % k, "r", "g%d" % k, "l"), E("g%d" % k, "r", "p%d" % k, "l", out)]
+
+used, avail = len(_C["lines"]), _C["fast_lines_available"]
+ties = [("irq_fast_i[%d:%d]" % (avail - 1, used), "%d'b0" % (avail - used))]
+ties += [(p, "0") for p in _C["tied_low"]]
+for j, (pin, val) in enumerate(ties):
+    k = len(rows) + j
+    y = Y0 + k * DY
+    f1.append(N("tp%d" % j, XP, y, WP, H, pin, "box", 9))
+    f1.append(N("tv%d" % j, XT, y + 8, WT, H - 16, val, "box", 9))
+    f1e.append(E("tv%d" % j, "r", "tp%d" % j, "l"))
+ty = Y0 + len(rows) * DY
+f1.append(N("top", XT - 12, ty - 12, WT + 24, len(ties) * DY,
+            "design/top", "group", 9, False, "top"))
 
 # ------------------------------------------------- 2. what replaced what
 f2 = [
@@ -70,6 +115,6 @@ f2 = [
 ]
 f2e = []
 
-emit([("fig_intr_map", "INTMAP: 27 sources, one OR per peripheral, 12 wires to the CPU", f1, f1e),
+emit([("fig_intr_map", "INTMAP: 5 OR gates and 6 wires onto irq_fast_i[10:0], one wire onto irq_nm_i", f1, f1e),
       ("fig_intr_levels", "The three designs, and what this one trades", f2, f2e)],
      DRAWIO, IMG)

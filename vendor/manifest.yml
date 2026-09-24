@@ -87,8 +87,8 @@ upstreams:
   - rtl/timer_unit_counter_presc.sv
   notes: 'The repository is named timer_unit; the module QSOC instantiates is apb_timer_unit. Searching
     for a repo named after the module returns nothing. Two instances: TIMER0 with MODE_64 = 1, TIMER1
-    with MODE_64 = 0. The comparator is registered and NOT gated by the counter enable, which is why one-shot
-    mode yields a held level rather than a pulse. Compare is on equality, not greater-or-equal.
+    with MODE_64 = 0. The comparator is registered and NOT gated by the counter enable, so one-shot mode
+    yields a held level with a prescaler or ref clock, and a one-cycle pulse without (QNSC_TIMER_MAS 7.3). Compare is on equality, not greater-or-equal.
 
     '
 - name: pulp-platform/apb_adv_timer

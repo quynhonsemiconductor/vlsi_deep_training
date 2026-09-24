@@ -32,7 +32,8 @@ meta:
 
 # -----------------------------------------------------------------------------
 # Memory map. Source: QSOC_HAS Table 7-1, cross-checked against QNSC_RAM_MAS
-# section 5.1 and QNSC_SYSDBG_MAS Table 11.
+# section 5.1 and QNSC_SYSDBG_MAS section 7.8. SYSDBG has no memory-mapped
+# registers (QNSC_SYSDBG_MAS V3.0), so it has no row here; HAS row 25 is stale.
 #
 # Every address in the 32-bit space belongs to exactly one row; an access
 # outside them returns a decode error rather than reaching a subordinate.
@@ -56,7 +57,8 @@ memory_map:
     kind: memory
     note: >
       The debug window: the first 4 KiB of ISRAM, not a block of its own.
-      Firmware must place nothing here. Enforced by a PMP region.
+      Firmware must place nothing here. The host writes it through SYSDBG.
+      PMP is disabled (HAS Table 6-4 row 11), so this is a firmware convention.
 
   - name: isram
     base: 0x20001000
@@ -105,11 +107,9 @@ memory_map:
     size: 0x00004000
     port: APB_M5
     kind: peripheral
-  - name: gpio_3
-    base: 0x80018000
-    size: 0x00004000
-    port: APB_M6
-    kind: peripheral
+  # 0x8001_8000 / APB_M6 is unused: GPIO3 was dropped with the 40-pin package
+  # (GPIO MAS V1.2, 2026-09-23). The timers keep their addresses; the hole
+  # answers DECERR like any other unmapped address.
   - name: timer_0
     base: 0x8001C000
     size: 0x00004000
@@ -159,19 +159,8 @@ memory_map:
     kind: peripheral
     note: Register interface of the DMA. Its data path is an AXI master on AXI_S2.
 
-  - name: sysdbg
-    base: 0xF0000000
-    size: 0x0000000C          # 12 B -- CTRL, STATUS, ID
-    port: none
-    kind: jtag_only
-    note: >
-      Decoded inside the debug block and never placed on S_BUS, so software
-      running on the core cannot halt it or grant itself debug access. The
-      crossbar must leave this region unmapped and answer DECERR -- a slave here
-      would shadow the registers.
-
 # -----------------------------------------------------------------------------
-# Interrupts. Source: QNSC_Interrupt_Map_MAS section 5.3 -- and that is now the
+# Interrupts. Source: QNSC_Interrupt_Map_MAS section 7.2 -- and that is now the
 # ONLY prose source. QSOC_HAS_Report_EN_v4_final carries a '# Interrupt map'
 # heading with nothing under it: Table 8-1 (fast line assignment) and Table 8-2
 # (source count per block) were lost in that revision. Until the HAS is repaired,
@@ -186,65 +175,86 @@ memory_map:
 # Order follows the rule "data loss first, human time last": a missed SPI or
 # UART event loses a byte that cannot be recovered, while a missed timer tick
 # arrives again next period.
+#
+# ports: the vendor RTL output(s) of the source instance that drive the line,
+# in the bit order of the INTMAP input i_int_<peripheral>. One name with
+# sources > 1 means one port per instance (GPIO0-2).
 # -----------------------------------------------------------------------------
 interrupts:
   fast_lines_available: 15       # Ibex irq_fast_i width, unconditional
   lines:
     - line: 0
       peripheral: dma
+      ports: [dma_irq_o]
       sources: 1
       shape: level
       note: Held by DMA_ISR write-1-to-clear flags -- QNSC_iDMA V2.0.
     - line: 1
       peripheral: spi_device
+      ports: [intr_upload_cmdfifo_not_empty_o, intr_upload_payload_not_empty_o,
+              intr_upload_payload_overflow_o, intr_readbuf_watermark_o,
+              intr_readbuf_flip_o, intr_tpm_header_not_empty_o,
+              intr_tpm_rdfifo_cmd_end_o, intr_tpm_rdfifo_drop_o]
       sources: 8
       shape: level
     - line: 2
       peripheral: spi_host
+      ports: [intr_error_o, intr_spi_event_o]
       sources: 2
       shape: level
     - line: 3
       peripheral: i2c
+      ports: [interrupt_o]
       sources: 1
       shape: level
     - line: 4
       peripheral: uart_0
+      ports: [INT]
       sources: 1
       shape: level
     - line: 5
       peripheral: uart_1
+      ports: [INT]
       sources: 1
       shape: level
     - line: 6
       peripheral: timer_1
+      ports: [irq_lo_o, irq_hi_o]
       sources: 2
-      shape: pulse
+      shape: pulse; level in one-shot with prescaler or ref clock
     - line: 7
       peripheral: pwm
+      ports: ["events_o[3:0]"]
       sources: 4
       shape: pulse
       note: Four event lines, each a 4-of-16 multiplexer over the channel outputs.
     - line: 8
       peripheral: wdt_wakeup
+      ports: [intr_wkup_timer_expired_o]
       sources: 1
       shape: level
     - line: 9
       peripheral: gpio
-      sources: 4
+      ports: [interrupt]
+      sources: 3
       shape: pulse
-      note: Four instances OR to one line; per-pin identity is in each INTSTATUS.
+      note: Three instances OR to one line; per-pin identity is in each INTSTATUS.
     - line: 10
       peripheral: timer_0
+      ports: [irq_lo_o]
       sources: 1
-      shape: pulse
+      shape: pulse; level in one-shot with prescaler or ref clock
+      note: 64-bit mode drives irq_lo_o only; irq_hi_o stays 0.
   nmi:
     peripheral: wdt_bark
+    ports: [nmi_wdog_timer_bark_o]
+    port: irq_nm_i
     mcause: 31
     sources: 1
     shape: level
     note: >
-      Feed-through to irq_nm_i, never through INTMAP, because an NMI cannot be
-      masked -- if firmware hangs with interrupts disabled the bark still lands.
+      A wire through INTMAP, i_int_wdt_bark to o_int_nm, never ORed with any
+      other source. irq_nm_i is outside mstatus.MIE and mie.
   tied_low:
     - irq_external_i
     - irq_timer_i
@@ -256,7 +266,7 @@ interrupts:
 
 # -----------------------------------------------------------------------------
 # Clock and reset domains. Source: QSOC_HAS Table 4-2, confirmed in
-# QNSC_RAM_MAS 5.2, QNSC_SYSDBG_MAS 4.2 and QNSC_PWM_MAS.
+# QNSC_RAM_MAS 5.2, QNSC_SYSDBG_MAS section 3 and QNSC_PWM_MAS.
 #
 # One clock frequency for the whole chip, so nothing here crosses a frequency
 # boundary; a domain is a gate plus a soft-reset bit, not a separate clock.
@@ -301,15 +311,16 @@ clock_domains:
     - block: sysdbg
       rule: gate open out of reset, and not closable by software
       why: >
-        The TAP runs on tck_i, so gating clk_i would leave the host able to shift
-        commands in with nothing executing them -- a silent way to disable the
-        debugger.
+        The TAP runs on i_jtag_tck, so gating i_clk_cpu would leave the host able
+        to shift commands in with nothing executing them -- a silent way to disable
+        the debugger.
     - block: pwm
       rule: never gate a running block
       why: >
-        out_filter only updates while ctrl_active_i is high, so a gated channel
-        freezes at its current level. For a power stage a held level is not a
-        neutral state.
+        Each channel output is a comparator flip-flop that holds its value while
+        the module clock is stopped, so a gated channel freezes at its current
+        level. For a power stage a held level is not a neutral state. Write
+        CMD = STOP | RST, which drives all four outputs to 0, before gating.
 
 # -----------------------------------------------------------------------------
 # Reset sources. Source: Day005 review of 2026-09-18.

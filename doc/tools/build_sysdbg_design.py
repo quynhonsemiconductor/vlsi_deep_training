@@ -39,12 +39,10 @@ f1 = [
       "1  host shifts op, addr and data in on TDI\n"
       "2  at Update-DR the 68 bits are latched as one command\n"
       "3  the command crosses into the system clock domain\n"
-      "4  the FSM executes it  |  addr[31:28] = 0xF goes to a SYSDBG register  |  "
-      "anything else becomes a bus request\n"
+      "4  the FSM executes it: local register, or a bus request\n"
       "5  rdata and status travel back across the CDC\n"
       "6  they are captured at the next Capture-DR\n"
-      "7  the host shifts them out on TDO  |  so a READ takes two scans: "
-      "one to ask, one to collect", "group", 11, False, "top"),
+      "7  the host shifts them out on TDO", "group", 11, False, "top"),
 ]
 f1e = [
     E("pads", "r@0.12", "tap", "l", "TMS, TCK"),
@@ -83,8 +81,8 @@ f2 = [
       "size:  00 = byte   |   01 = halfword   |   10 = word   ->  drives mem_be_o\n"
       "status:  00 = OK   |   01 = BUSY   |   10 = ERROR\n"
       "addr[31:28] = 0xF  ->  SYSDBG registers   |   otherwise  ->  system bus\n"
-      "the payload always sits in the LOW bits of data: hardware shifts it into the addressed lane\n"
-      "one scan = one command, and the answer arrives on the next scan", "box", 11),
+      "payload always in the LOW bits of data; hardware shifts it into the lane",
+      "box", 11),
 ]
 f2e = []
 
@@ -96,9 +94,8 @@ f3 = [
     N("axi", 540, 180, 170, 80, "BUS\nissue request,\nwait for rsp_valid", "green", 11, True),
     N("done", 780, 180, 170, 80, "DONE\nlatch rdata\nand status", "grey", 11, True),
     N("f3leg", 60, 370, 890, 96,
-      "one scan = one command   |   status reads BUSY while the FSM is not in IDLE\n"
-      "BusTimeout expiry inside BUS sets ERROR and STATUS.bus_timeout but does NOT leave the state:\n"
-      "a granted request cannot be cancelled, so its response is waited for and discarded",
+      "status reads BUSY while not in IDLE\n"
+      "BusTimeout expiry sets ERROR and bus_timeout but does NOT leave BUS",
       "group", 10),
 ]
 f3e = [

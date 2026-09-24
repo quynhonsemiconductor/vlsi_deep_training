@@ -1,634 +1,332 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V1.5"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
-# Reversion and History
+# Revision history
 
-| Version | Date       | Author/Owner | Description of Change |
-|---------|------------|--------------|-----------------------|
-| V1.0    | 2026-09-21 | Nghia VT     | First issue. Covers the single `apb_adv_timer` instance that provides QSOC's PWM outputs. The companion document is `QNSC_TIMER_MAS`, which covers TIMER0 and TIMER1 -- **a different IP at different APB ports**. Two findings in this document were read from the RTL and are not in any datasheet: the four event lines are a **4-of-16 multiplexer over the channel outputs**, section 4.5, and the per-timer status output is **not reachable by software**, section 4.6. |
-| V1.1    | 2026-09-21 | Nghia VT     | **`dft_cg_enable_i` position corrected against the Day005 review.** v1 ties it **0** because the review found the combined *test mode / JTAG* pad entry was copied from another chip and removed it -- so the earlier requirement to drive it from a test-mode pin was unsatisfiable. The same review ruled the spec must **not assert** that QSOC has no scan, so section 5.4 now records a tie-off plus the condition for revisiting it, rather than either a hard requirement or a claim of no DFT. |
-| V1.2    | 2026-09-21 | Nghia VT     | **External triggers settled against the team's `IOPAD_Pin_Summary` and the IP's own RTL.** Four pads already exist -- `TIM_EXT0`--`3` on `PIN_37`--`40` -- so the open question narrows to which `ext_sig_i` bits they attach to. The **selection register this document previously proposed is dropped**: `input_stage.sv` shows each module already selects one signal with an 8-bit `cfg_sel`. Reading that code also found the pool is **48 signals, not 32** (`EXTSIG_NUM + 16`), because it includes the sixteen channel outputs -- so a module can be triggered by another module's channel, which qualifies the independence claim in section 4.1. Table 7 now cites the pad list as independent confirmation. |
-| V1.3    | 2026-09-21 | Nghia VT     | **Three open questions closed, one narrowed.** The eight pad channels are fixed as `ch_0_o` and `ch_1_o` of **each** module, for four independent frequencies at the pins rather than two; the four `TIM_EXT` pads attach to `ext_sig_i[3:0]` **in pad order**, so the mapping reads off the pinout; and centre-aligned output is recorded as **available but unverified** -- `up_down_counter.sv` shows it is one bit, `cfg_sawtooth_i`, so removing it would be work rather than saving. The idle-level question is narrowed to a proposal plus the RTL reason it matters: `out_filter.sv` only updates while `ctrl_active_i` is high, so a stopped or gated channel **holds its last level** and does not return to a safe one by itself. |
-| V1.4    | 2026-09-21 | Nghia VT     | The idle-level item is closed by **changing whose problem it is**. `out_filter.sv` only updates its stored output while `ctrl_active_i` is high, so the block has **no idle level to configure** -- a stopped channel holds the last level it drove. Section 5.9 therefore specifies a **four-step firmware procedure** ending in *never gate a running block*, and what remains for the pad owner shrinks to a one-line check that no pad pull fights the rest level. The document now has **no open questions**. |
-| V1.5    | 2026-09-22 | Nghia VT     | Removes an internal inconsistency: section 5.6 still called the `ext_sig_i` bit mapping a *proposal* left to settle, while section 5.9 had already **decided** it as `ext_sig_i[3:0]` in pad order. Section 5.6 now points at the decision. |
-| V1.6    | 2026-09-22 | Nghia VT     | **Corrects the pad-channel mapping against the RTL.** V1.3 stated the eight pad channels were `ch_0_o` and `ch_1_o` *of each of the four modules*, for **four** independent frequencies. Reading `apb_adv_timer.sv` shows the channels are grouped **by module** -- `u_tim0.pwm_o -> ch_0_o`, `u_tim1.pwm_o -> ch_1_o`, `u_tim2.pwm_o -> ch_2_o`, `u_tim3.pwm_o -> ch_3_o` -- so `ch_i_o[3:0]` is the four channels of module `i`. Bringing out `ch_0_o` and `ch_1_o` is therefore **all four channels of modules 0 and 1**, giving **two** independent base frequencies (four channels each), not four. Sections 4.x pad-mapping paragraph, 5.9 and the requirements table are corrected; `QSOC_HAS` already uses the two-frequency figure. |
+The reasoning behind each change is in
+[`QNSC_PWM_DECISIONS.md`](QNSC_PWM_DECISIONS.md).
 
-# Table of Tables
-
-| Table | Title |
-|-------|-------|
-| Table 1 | IP sourcing decision |
-| Table 2 | What this block is not |
-| Table 3 | Achievable PWM frequency and resolution at 20 MHz |
-| Table 4 | Block interface |
-| Table 5 | Register map |
-| Table 6 | Registers of one timer module |
-| Table 7 | What firmware must program before any interrupt occurs |
-| Table 8 | Address decode against region size |
-| Table 9 | Channel outputs against pads |
-| Table 10 | Clock and reset domain |
-| Table 11 | Interrupt sources contributed to INTMAP |
-| Table 12 | Verification QSOC must add |
-| Table 13 | Interfaces to agree with the team |
-| Table 14 | Acronyms |
-
-# Table of Figures
-
-| Figure | Title |
-|--------|-------|
-| Figure 1 | The PWM block and where its outputs go |
-
----
+| Version | Date | Author | Reviewer | Description of change |
+|---|---|---|---|---|
+| V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, onto the template |
+| V2.1 | 2026-09-24 | Nghia VT | -- | Corrected against the RTL (`CH_EN`, output MODE, events, input stage, decode); full register fields; tie-off table; new block diagram |
 
 # 1. Overview
 
-## 1.1 Scope
+`PWM` is one instance of `pulp-platform/apb_adv_timer` on `APB_M13`, at `0x80034000`,
+16 KiB. It has four timer modules of four channels each, so sixteen channel outputs.
+The eight channels of modules 0 and 1 drive pads `PWM_0` to `PWM_7`. Four event
+lines drive `INTMAP` fast line 7.
 
-This document specifies the integration of **one `apb_adv_timer` instance** as QSOC's
-PWM block: its register map, the channel outputs and how many reach pads, the event
-lines it contributes to `INTMAP`, the clock and reset domain, and the address decode.
+The block has no event status register, no period-end interrupt and no DMA request.
 
-**It does not cover TIMER0 or TIMER1.** Those are two instances of a different IP,
-`apb_timer_unit`, at `APB_M7` and `APB_M8`, specified in `QNSC_TIMER_MAS`. The
-distinction is stated first because confusing the two is exactly what `QSOC_HAS`
-records as a disagreement between documents, and because the confusion is easy to
-make: the PWM IP is *called* a timer and contains four of them.
+Block directory `design/pwm`, module `m_qnsc_wrap_apb_adv_timer`, owner Nghia Van
+Trong.
 
-**Table 1 -- IP sourcing decision**
+# 2. Features
 
-| Item | Value |
-|---|---|
-| IP | `pulp-platform/apb_adv_timer` |
-| Sub-modules | `timer_module`, `up_down_counter`, `comparator`, `prescaler`, `lut_4x4`, `out_filter`, `input_stage`, `timer_cntrl`, `adv_timer_apb_if` |
-| Instances | **one** |
-| Bus | APB slave, plain signals, no adapter required |
-| Parameters | `APB_ADDR_WIDTH = 12`, `TIMER_NBITS = 16`, `EXTSIG_NUM = 32` |
-| Written by QSOC | instantiation, tie-off and the pad mux; no RTL inside the block |
+- Four timer modules, each with a 16-bit up or up-down counter, 16-bit start and end
+  values and an 8-bit prescaler -- 7.1.
+- Four channels per module, each with a 16-bit compare value and a 3-bit output action
+  -- 7.2.
+- Eight channel outputs at pads, modules 0 and 1 -- 7.3.
+- Per-module count source selected from 48 signals: four `TIM_EXT` pads, 28 constant
+  zeros and the sixteen channel outputs -- 7.4.
+- Four event lines, each the rising edge of one selected channel -- 7.5.
+- A clock gate per module under `CH_EN`, all four closed out of reset -- 7.7.
 
-**Table 2 -- What this block is not**
+# 3. Block diagram
 
-| | |
-|---|---|
-| Not the timebase | its counters are 16-bit and wrap every 3.2768 ms at 20 MHz |
-| Not TIMER0 or TIMER1 | different IP, different ports, different clock gates |
-| Not a source of `mtime` | QSOC has no machine timer; see `QNSC_TIMER_MAS` section 5.5 |
-| Not readable for "which event fired" | section 4.6 |
+![PWM block: register file, clock gates, four timer modules, event multiplexer](../img/fig_pwm_block.png){width=6.5in}
 
-## 1.2 Position in the system
+Clock `i_clk_peri` (`peri` cluster, gated by `SCRC` `CLK_EN`), reset
+`i_rst_n_peri`. The register file and the event multiplexer run on `i_clk_peri`.
+Timer module `i` runs on `i_clk_peri` gated by `CH_EN[i]`.
 
-The block is an APB slave on `P_BUS`, reached from the CPU through `AXI2APB` on
-`AXI_M3`. Unlike the timers, it **does drive pads**: eight of its sixteen channel
-outputs leave the chip through the IO mux. It also contributes four event lines to
-`INTMAP`.
+# 4. IP used
 
-![Figure 1 -- The PWM block and where its outputs go](../img/fig_pwm_block.png){width=6.4in}
+: Upstream IP used
 
-# 2. Feature
+| From | Module | Commit | Licence |
+|---|---|---|---|
+| `pulp-platform/apb_adv_timer` | `apb_adv_timer`, `adv_timer_apb_if`, `timer_module`, `timer_cntrl`, `input_stage`, `prescaler`, `up_down_counter`, `comparator` | `c8faec1e` | SolderPad 0.51 |
 
-## 2.1 Feature -- PWM
+`lut_4x4.sv` and `out_filter.sv` are in the vendor directory and are not instantiated.
+`pulp_clock_gating` is supplied in `design/pwm/rtl` as a wrapper of OpenTitan
+`prim_clock_gating`, which has the same ports and is the cell Ibex already uses.
 
-- One `apb_adv_timer` instance containing **four independent timer modules**.
-- Each module has a **16-bit up or up-down counter**, an 8-bit prescaler and **four
-  comparators**, giving **sixteen channel outputs** in total.
-- Each channel has a **4-entry lookup table** that combines the comparator result with
-  the previous channel state, which is how the IP produces the different output shapes
-  from one compare.
-- **Eight of the sixteen channels reach pads** as `PWM_0` to `PWM_7`, each shared with
-  a GPIO function through the IO mux.
-- **Four event lines** to `INTMAP`, each a one-cycle pulse, each selected from any one
-  of the sixteen channel outputs.
-- **32 external signal inputs** able to start, stop or gate a module without CPU
-  action; QSOC wires a subset, section 5.6.
+# 5. Interface
 
-**What the block does not provide:**
+Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. `o_pwm` and `o_int_pwm` are 0 in reset.
 
-- **No software-readable event status.** Section 4.6 shows the RTL evidence. Firmware
-  cannot ask the block which event fired or whether one was missed.
-- **No interrupt on its own.** Out of reset the four event lines are inert until
-  firmware programs the event configuration, section 4.5.
-- **No error reporting.** `PSLVERR` behaviour is as for the other APB peripherals in
-  QSOC: the block cannot report a bad access.
+: PWM interface
 
-# 3. Block Diagram
-
-Figure 1 in section 1.2 is the block diagram: the APB register file, four timer
-modules, the sixteen channel outputs, and the two destinations those outputs feed --
-the pad mux and the event multiplexer.
-
-# 4. Micro-architecture Details
-
-## 4.1 Structure
-
-Four `timer_module` instances, each parameterised `NUM_BITS = TIMER_NBITS = 16`, sit
-behind one APB register file. Inside a module:
-
-| Sub-module | Function |
-|---|---|
-| `prescaler` | 8-bit divider, field `PRESC`, ahead of the counter |
-| `up_down_counter` | the 16-bit counter; counts up, or up then down for centre-aligned output |
-| `comparator` x4 | one per channel, compares the count against that channel's threshold |
-| `lut_4x4` x4 | turns the comparator result plus the current output into the next output |
-| `out_filter` | output conditioning |
-| `timer_cntrl` | start, stop and reset, from APB or from an external signal |
-
-The four modules have **independent counters**, periods and prescalers. Two channels on
-the *same* module share a time base and can therefore be phase-related; channels on
-*different* modules are not phase-related unless firmware arranges it -- which it can,
-because a module's trigger pool includes the other modules' channel outputs,
-section 5.6.
-
-## 4.2 Counter width, and why 16 bits is the right choice here
-
-The counters are 16-bit. At QSOC's 20 MHz that is a maximum period of
-**3.2768 ms**, so **305 Hz** is the lowest frequency reachable without the prescaler,
-and **1.19 Hz** with the prescaler at its maximum divide of 256.
-
-That range covers every use QSOC has, with resolution to spare.
-
-**Table 3 -- Achievable PWM frequency and resolution at 20 MHz**
-
-| Intended use | Frequency | Counts per period | Duty steps available |
-|---|---|---:|---:|
-| LED dimming | 1 kHz | 20 000 | **20 000** |
-| Motor drive | 20 kHz | 1 000 | **1 000** |
-| Audio-rate output | 44.1 kHz | 454 | **454** |
-| Slowest without prescaler | 305 Hz | 65 536 | 65 536 |
-| Slowest with prescaler | 1.19 Hz | 65 536 x 256 | 65 536 |
-
-A 16-bit counter is **not** a limitation for PWM: the human eye resolves a few dozen
-brightness levels and 20 000 steps is far beyond that. The same 16 bits would be a
-serious limitation for a timebase, which is why the timebase is a different IP.
-`QNSC_TIMER_MAS` section 4.1 carries that comparison.
-
-## 4.3 Block interface
-
-**Table 4 -- Block interface**
-
-| Signal | Dir | Width | Note |
+| Signal | Dir | Width | Description |
 |---|---|---:|---|
-| `HCLK` | in | 1 | domain clock, section 5.3 |
-| `HRESETn` | in | 1 | active low |
-| `PADDR` | in | 12 | decoded as a register index, section 4.7 |
-| `PWDATA` | in | 32 | |
-| `PWRITE`, `PSEL`, `PENABLE` | in | 1 each | |
-| `PRDATA` | out | 32 | |
-| `PREADY`, `PSLVERR` | out | 1 each | |
-| `low_speed_clk_i` | in | 1 | **sampled as data, not used as a clock** |
-| `dft_cg_enable_i` | in | 1 | bypass for the internal clock gates, section 5.4 |
-| `ext_sig_i` | in | **32** | external start, stop and gate triggers |
-| `events_o` | out | **4** | to `INTMAP`; one-cycle pulses |
-| `ch_0_o`, `ch_1_o`, `ch_2_o`, `ch_3_o` | out | 4 each | **16 channel outputs** |
+| `i_clk_peri` | in | 1 | `peri` cluster clock, to `HCLK` |
+| `i_rst_n_peri` | in | 1 | asynchronous active-low reset, to `HRESETn` |
+| `i_bus_apb_paddr` | in | 12 | only `[9:2]` decoded -- 7.6 |
+| `i_bus_apb_pwdata` | in | 32 | write data |
+| `i_bus_apb_pwrite`, `i_bus_apb_psel`, `i_bus_apb_penable` | in | 1 each | APB4 control |
+| `o_bus_apb_prdata` | out | 32 | read data; 0 at unimplemented offsets |
+| `o_bus_apb_pready` | out | 1 | constant 1, zero wait states |
+| `o_bus_apb_pslverr` | out | 1 | constant 0 |
+| `i_tim_ext` | in | 4 | pads `TIM_EXT0`-`3` through IO MUX. Two flip-flops in the wrapper synchronise it to `i_clk_peri`, then `ext_sig_i[3:0]` |
+| `o_pwm` | out | 8 | `[3:0]` = `ch_0_o[3:0]`, `[7:4]` = `ch_1_o[3:0]`, to IO MUX -- 7.3 |
+| `o_int_pwm` | out | 4 | `events_o[3:0]`, one-cycle pulses, to `INTMAP` line 7 -- 7.5 |
 
-## 4.4 Register map
+# 6. Register map
 
-The block decodes an 8-bit register index. Each timer module occupies `0x40` bytes,
-and two global registers follow the four modules.
+`M` is the module base: `0x000`, `0x040`, `0x080` or `0x0C0` for modules 0 to 3.
+`n` is the channel, 0 to 3. Reserved bits read 0 and ignore writes.
 
-**Table 5 -- Register map**
+: Register map
 
-| Offset range | Contents |
-|---|---|
-| `0x000` -- `0x02C` | timer module 0 |
-| `0x040` -- `0x06C` | timer module 1 |
-| `0x080` -- `0x0AC` | timer module 2 |
-| `0x0C0` -- `0x0EC` | timer module 3 |
-| `0x100` | `EVENT_CFG` -- selects and enables the four event lines |
-| `0x104` | `CH_EN` -- channel output enables |
+| Offset | Register | Field | Bits | Access | Reset | Description |
+|---|---|---|---|---|---|---|
+| `M+0x00` | `CMD` | START | 0 | WO | 0 | load START, END, SAW into the counter and run |
+| | | STOP | 1 | WO | 0 | stop; outputs hold their level |
+| | | UPDATE | 2 | WO | 0 | load START, END, SAW into the counter |
+| | | RST | 3 | WO | 0 | counter to START, prescaler to 0, all four outputs to 0 |
+| | | ARM | 4 | WO | 0 | arm the input stage for `IN_MODE` 6 and 7 |
+| `M+0x04` | `CFG` | IN_SEL | 7:0 | RW | 0 | count source index -- 7.4 |
+| | | IN_MODE | 10:8 | RW | 0 | count source qualifier -- 7.4 |
+| | | CLK_SEL | 11 | RW | 0 | 1: count only on rising edges of `low_speed_clk_i` |
+| | | SAW | 12 | RW | 1 | 1: up (sawtooth); 0: up-down |
+| | | PRESC | 23:16 | RW | 0 | prescaler; divide by `PRESC + 1` |
+| `M+0x08` | `TH` | START | 15:0 | RW | 0 | counter start value |
+| | | END | 31:16 | RW | 0 | counter end value |
+| `M+0x0C+4n` | `CHn_TH` | TH | 15:0 | RW | 0 | compare value of channel `n` |
+| | | MODE | 18:16 | RW | 0 | output action of channel `n` -- 7.2 |
+| `M+0x1C+4n` | `CHn_LUT` | LUT, FLT | 15:0, 17:16 | RW | 0 | stored and read back; no effect on any output |
+| `M+0x2C` | `COUNTER` | COUNT | 15:0 | RO | 0 | current counter value |
+| `0x100` | `EVENT_CFG` | SEL0 .. SEL3 | 15:0 | RW | 0 | 4 bits per event line `k` at `[4k+3:4k]`: channel index `4 x module + n` |
+| | | EN | 19:16 | RW | 0 | `EN[k]` enables event line `k` |
+| `0x104` | `CH_EN` | CLK_EN | 3:0 | RW | 0 | `CLK_EN[i]` opens the clock gate of module `i` |
 
-**Table 6 -- Registers of one timer module**
+`CMD` bits are held for the duration of the write and clear on the next cycle without
+a write. `CMD` reads 0.
 
-Offsets shown relative to the module base, which is `0x000`, `0x040`, `0x080` or `0x0C0`.
+# 7. Functional behaviour
 
-| Offset | Name | Function |
-|---|---|---|
-| `+0x00` | `CMD` | start, stop, update, reset, arm |
-| `+0x04` | `CFG` | clock source, prescaler, up or up-down mode |
-| `+0x08` | `TH` | period threshold -- the value the counter counts to |
-| `+0x0C` | `CH0_TH` | compare threshold, channel 0 -- the duty cycle |
-| `+0x10` | `CH1_TH` | compare threshold, channel 1 |
-| `+0x14` | `CH2_TH` | compare threshold, channel 2 |
-| `+0x18` | `CH3_TH` | compare threshold, channel 3 |
-| `+0x1C` | `CH0_LUT` | output shape, channel 0 |
-| `+0x20` | `CH1_LUT` | output shape, channel 1 |
-| `+0x24` | `CH2_LUT` | output shape, channel 2 |
-| `+0x28` | `CH3_LUT` | output shape, channel 3 |
-| `+0x2C` | `COUNTER` | current count, readable |
+## 7.1 Counter and period
 
-**Period is `TH`, duty is `CHn_TH`.** The two are separate registers, so changing the
-duty of one channel does not disturb the period or the other three channels on the
-same module.
+The counter advances once per prescaler output event.
 
-## 4.5 The four event lines are a multiplexer over the channel outputs
+- `SAW` = 1: counts START, START+1, ... END, then reloads START. Period =
+  (END - START + 1) x (PRESC + 1) count events.
+- `SAW` = 0: counts START up to END, then down to START, then up. Period =
+  2 x (END - START) x (PRESC + 1) count events.
 
-This is the fact most likely to be assumed wrongly, so it is given its own section.
-The four event lines are **not** four dedicated comparators. They are four selections
-from the sixteen channel outputs, each followed by an edge detector:
+With `IN_MODE` = 0 there is one count event per `i_clk_peri` cycle. At 20 MHz the
+sawtooth period ranges from 100 ns (END - START = 1, PRESC = 0) to 838.9 ms
+(65 536 x 256 cycles).
 
-```systemverilog
-assign s_event_signals = {ch_3_o, ch_2_o, ch_1_o, ch_0_o};      // 16 bits
+## 7.2 Output action
 
-assign events_o[0] = s_event_en[0] & r_event_sync_0[1] & ~r_event_sync_0[0];
-assign events_o[1] = s_event_en[1] & r_event_sync_1[1] & ~r_event_sync_1[0];
-assign events_o[2] = s_event_en[2] & r_event_sync_2[1] & ~r_event_sync_2[0];
-assign events_o[3] = s_event_en[3] & r_event_sync_3[1] & ~r_event_sync_3[0];
-```
+Each channel output is a flip-flop in its `comparator`. A match is COUNTER equal to
+`CHn_TH.TH` on a count event. The "second event" is the counter reaching END when
+`SAW` = 1, and the next match when `SAW` = 0.
 
-Three consequences follow, and all three are firmware-visible.
+: Channel output action, `CHn_TH.MODE`
 
-**An interrupt means "a channel I chose has just changed state".** It does not mean a
-period elapsed, and it does not identify which module or channel unless firmware
-remembers what it selected.
-
-**The pulse is exactly one `HCLK` cycle.** The expression is the classic edge
-detector -- present value AND the inverse of the previous value. `INTMAP` provides no
-latch, so these are the narrowest sources in QSOC and `QNSC_Interrupt_Map_MAS`
-classifies them as pulses on that basis.
-
-**Out of reset the block raises no interrupt at all.** `s_event_en` comes from
-`EVENT_CFG`, which resets to zero. Until firmware writes a selection and an enable,
-the four lines stay low. This is the opposite of a fault: it means the block cannot
-interrupt a system that has not asked it to.
-
-**Table 7 -- What firmware must program before any interrupt occurs**
-
-| Step | Register | Why |
-|---:|---|---|
-| 1 | `CHn_LUT`, `CHn_TH`, `TH`, `CFG` of the module | otherwise the channel never changes state |
-| 2 | `CH_EN` | enable the channel output |
-| 3 | `EVENT_CFG` -- selection | choose which of the 16 channels drives each event line |
-| 4 | `EVENT_CFG` -- enable | set `s_event_en` for the lines wanted |
-| 5 | `mie` bits for the PWM fast line, then `mstatus.MIE` | the core side, see `QNSC_Interrupt_Map_MAS` |
-
-## 4.6 There is no software-readable event status
-
-Each `timer_module` exposes an 8-bit `status_o`. In the top level it appears **exactly
-twice** -- once declared, once connected:
-
-```systemverilog
-logic [7:0] s_timer0_status;
-...
-    .status_o         ( s_timer0_status       )
-```
-
-and then nothing reads it. The APB interface module `adv_timer_apb_if` has **no port
-whose name contains `status`**. The signal is therefore not reachable by software in
-this version of the IP.
-
-**Consequence for QSOC.** A PWM event that arrives while `mstatus.MIE` is clear is
-lost, and **nothing anywhere records that it happened**. There is no flag to poll and
-no counter to compare.
-
-**Why this is acceptable here.** A PWM channel is periodic by construction: it changes
-state again on the next period, which at the frequencies in Table 3 is between 23
-microseconds and 1 millisecond away. **The recovery mechanism is periodicity, not a
-status register.** That distinction matters, because it fails in exactly one case: a
-module configured for a single shot, or stopped immediately after the event. Firmware
-that uses PWM events as one-off notifications cannot rely on them.
-
-This finding is the reason `QNSC_Interrupt_Map_MAS` must state its pulse-recovery
-argument in terms of periodicity rather than status registers.
-
-## 4.7 Address decode against the region
-
-The register file spans `0x000` to `0x107`, that is **264 bytes**, inside the
-**16 KiB** region `QSOC_HAS` grants the block.
-
-**Table 8 -- Address decode against region size**
-
-| Item | Value |
-|---|---|
-| Registers implemented | 4 modules x 12 registers, plus 2 global |
-| Span actually decoded | **264 bytes**, `0x000` to `0x107` |
-| Region assigned | **16 KiB** |
-| Consequence | the decoded span **aliases** across the region |
-
-As with the timers, an access beyond the implemented span neither faults nor reports
-an error. The recommendation is the same: accept the aliasing, document it, and do not
-spend logic on a fault firmware cannot observe.
-
-# 5. Integration into QSOC
-
-## 5.1 Address and port assignment
-
-Taken from `QSOC_HAS` and not changed by this document.
-
-| Port | Block | Base | Region |
+| MODE | Name | On match | On second event |
 |---|---|---|---|
-| `APB_M13` | **PWM** | `0x8003_4000` | 16 KiB |
+| 0 | SET | set | -- |
+| 1 | TOGRST | toggle | clear |
+| 2 | SETRST | set | clear |
+| 3 | TOG | toggle | -- |
+| 4 | RST | clear | -- |
+| 5 | TOGSET | toggle | set |
+| 6 | RSTSET | clear | set |
+| 7 | -- | hold | hold |
 
-## 5.2 Channel outputs and pads
+MODE 2 with `SAW` = 1 gives an edge-aligned output; MODE 2 with `SAW` = 0 gives a
+centre-aligned output. `CMD.RST` drives the output to 0 in every MODE.
 
-Sixteen channels exist; eight leave the chip. The pad assignment is fixed by
-`QSOC_HAS` and every one of the eight is shared with a GPIO function.
+## 7.3 Channel outputs and pads
 
-**Table 9 -- Channel outputs against pads**
+`ch_i_o[n]` is channel `n` of module `i`. Modules 0 and 1 drive the pads, so the pads
+carry two independent periods with four channels under each.
 
-| Pad name | Pin | Shared with |
+: Channel outputs against pad functions
+
+| Pad function | Wrapper output | Channel |
 |---|---|---|
-| `PWM_0` | PIN_27 | `GPIO1_1` |
-| `PWM_1` | PIN_28 | `GPIO1_0` |
-| `PWM_2` | PIN_29 | `GPIO2_7` |
-| `PWM_3` | PIN_30 | `GPIO2_6` |
-| `PWM_4` | PIN_33 | `GPIO2_5` |
-| `PWM_5` | PIN_34 | `GPIO2_4` |
-| `PWM_6` | PIN_35 | `GPIO2_3` |
-| `PWM_7` | PIN_36 | `GPIO2_2` |
+| `PWM_0`..`PWM_3` | `o_pwm[3:0]` | `ch_0_o[3:0]`, module 0 |
+| `PWM_4`..`PWM_7` | `o_pwm[7:4]` | `ch_1_o[3:0]`, module 1 |
 
-**Which eight of the sixteen reach these pads is a decision this document must
-record and `QSOC_HAS` does not yet fix.** In the RTL the channels are grouped **by
-module**: `u_tim0.pwm_o -> ch_0_o`, `u_tim1.pwm_o -> ch_1_o`, and so on, so
-`ch_i_o[3:0]` is the four channels of module `i`. Bringing out `ch_0_o` and `ch_1_o`
-therefore means **all four channels of module 0 and all four of module 1** -- two
-modules at the pads. Because channels within one module share that module's counter
-and prescaler, this gives firmware **two independent base frequencies** at the pins,
-four channels (independent duty/phase) under each.
+The IO MUX sees only `o_pwm[7:0]`. Which package pin carries each function is the
+pad owner's table.
 
-The remaining eight channels (modules 2 and 3) stay inside the chip and are still
-useful: any of the sixteen can be selected as an event source, section 4.5.
+`ch_2_o` and `ch_3_o` reach only the event multiplexer and the input pool.
 
-## 5.3 Clock and reset domain
+## 7.4 Input stage and external triggers
 
-**Table 10 -- Clock and reset domain**
+Each module's `input_stage` picks one signal from a 48-signal pool with `CFG.IN_SEL`
+and qualifies it with `CFG.IN_MODE`. Start and stop come only from `CMD`.
 
-| Item | Value |
+: Input pool index, `CFG.IN_SEL`
+
+| IN_SEL | Signal |
 |---|---|
-| Domain | **D18** |
-| Clock gate bit | bit 15 |
-| Gate | own gate, independently gateable |
-| Clock | 20 MHz system clock, no PLL in QSOC |
-| Reset | synchronous release of the system reset, active low |
-| `low_speed_clk_i` | **not a clock**: sampled as data, creates no second domain |
+| 0 -- 3 | `ext_sig_i[3:0]` = `TIM_EXT0`-`3` |
+| 4 -- 31 | `ext_sig_i[31:4]`, tied 0 |
+| 32 + 4 x module + n | `ch_<module>_o[n]` |
+| 48 -- 255 | constant 0 |
 
-`QSOC_HAS` already records the treatment of `low_speed_clk_i`: the block samples it
-rather than clocking from it, so it introduces no clock domain crossing and needs no
-`set_false_path`. Tie it to the domain clock unless a slower counting rate is wanted.
+: Count source qualifier, `CFG.IN_MODE`
 
-**Closing gate bit 15 freezes the channel outputs at their current level.** For a
-motor drive that is not a neutral state. Firmware should stop the modules through
-`CMD` and let the outputs reach their idle level before the gate is closed, rather
-than gating a running block.
-
-## 5.4 The internal clock gates and DFT
-
-The IP instantiates clock gating cells internally and brings out `dft_cg_enable_i` to
-bypass them, so that scan can shift through logic that is otherwise gated.
-
-**For QSOC v1 this input is tied low, because there is nothing to drive it from.**
-The pad table originally listed a combined *test mode / JTAG* pin, but the Day005
-review of 2026-09-18 established that this entry was **copied from another chip** and
-removed it. With no test-mode pin in the pad ring, a tie-off is the only option.
-
-**This document does not claim that QSOC has no scan.** The same review ruled that the
-spec must **not assert** the absence of test mode or scan, because DFT may be added
-later. The position recorded here is therefore narrower and is meant to be revisited:
-
-| | |
+| IN_MODE | A count event occurs |
 |---|---|
-| For v1 | `dft_cg_enable_i` tied **0**, because no test-mode signal exists |
-| What is **not** claimed | that QSOC will never have scan |
-| What must happen if DFT is added | this input needs a real source, and the tie-off in the PWM wrapper is one of the places that must change |
-| Why it is worth recording | the tie is **harmless in simulation and only wrong on the tester** -- the same class of defect as the SRAM non-functional pins in `QNSC_RAM_MAS` |
+| 0 | every cycle; the selected signal is ignored |
+| 1 | every cycle the signal is 0 |
+| 2 | every cycle the signal is 1 |
+| 3 | on each rising edge |
+| 4 | on each falling edge |
+| 5 | on each rising or falling edge |
+| 6 | after `CMD.ARM`, every cycle from the first rising edge until the counter reaches END |
+| 7 | as 6, from the first falling edge |
 
-The same applies to the four GPIO instances, which have the same input. Keeping the
-requirement visible costs one row in Table 13 and saves rediscovering it during a DFT
-pass.
+`CFG.CLK_SEL` = 1 additionally requires a rising edge of `low_speed_clk_i`, which
+is tied 0, so a module with `CLK_SEL` = 1 does not count.
 
-## 5.5 Interrupt contribution
+## 7.5 Event lines
 
-**Table 11 -- Interrupt sources contributed to INTMAP**
+Event line `k` is `EN[k] & new & ~old`, where `new` and `old` are two successive
+`i_clk_peri` samples of channel `SELk` of `{ch_3_o, ch_2_o, ch_1_o, ch_0_o}`.
 
-| Source | From | Shape | Width |
-|---|---|---|---|
-| PWM event 0 | `events_o[0]` | pulse | 1 `HCLK` cycle |
-| PWM event 1 | `events_o[1]` | pulse | 1 `HCLK` cycle |
-| PWM event 2 | `events_o[2]` | pulse | 1 `HCLK` cycle |
-| PWM event 3 | `events_o[3]` | pulse | 1 `HCLK` cycle |
+- Each event is a pulse of exactly one `i_clk_peri` cycle.
+- A falling edge of the selected channel produces no event.
+- `EVENT_CFG` resets to 0, so no event occurs until firmware sets a selection and
+  `EN[k]`.
+- The edge detector samples only while `EN[k]` = 1. Enabling a line whose selected
+  channel is 1, when the last sample taken was 0, produces one event; this applies to
+  every enable, not only the first.
+- The event does not identify the module or channel; firmware knows which it selected.
 
-**Four sources on one fast line.** This matches what `QNSC_Interrupt_Map_MAS` already
-assumes, so the interrupt contract needs no change from this document.
+The block has no software-readable event status. `timer_module.status_o` is not
+connected to the register file. An event that the core does not take is not
+recorded anywhere.
 
-Because all four share one line, `mcause` identifies the block and not the event.
-The handler must know which channel it selected into which event slot; the block
-cannot tell it, section 4.6.
+## 7.6 Address decode
 
-## 5.6 External triggers
+The register index is `PADDR[9:2]`, so the decoded window is 1 KiB and repeats
+every `0x400` across the 16 KiB region. Offsets with no register -- `M+0x30` to
+`M+0x3C` and `0x108` to `0x3FC` -- read 0 and ignore writes. No access returns an
+error: `PSLVERR` is 0 and `PREADY` is 1.
 
-`ext_sig_i` is 32 bits wide. **Four of them reach pads**, confirmed by the team's
-`IOPAD_Pin_Summary`: `TIM_EXT0` to `TIM_EXT3` on `PIN_37` to `PIN_40`, each sharing its
-pad with a GPIO function through the IO MUX.
+## 7.7 Clock gating and safe stop
 
-| Pad | Pin | Shared with |
+Two gates are in series: `SCRC` `CLK_EN` gates `i_clk_peri` for the whole block, and
+`CH_EN[i]` gates module `i`.
+
+- `CH_EN` resets to 0: every module is stopped and unclocked out of reset.
+- While `CH_EN[i]` = 0, module `i` holds its counter and outputs, and a `CMD` write to
+  it has no effect.
+- A gated module freezes its outputs at their current level.
+- Safe stop: with `CH_EN[i]` = 1, write `CMD` = STOP | RST (`0x0A`). All four
+  outputs of module `i` go to 0; the clock may then be gated.
+
+# 8. Instances
+
+One, on `APB_M13`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
+`TIMER_NBITS` = 16. The four timer modules are internal to the IP.
+
+# 9. What is not provided here, and who provides it
+
+: Functions this block does not provide
+
+| Function | Where it lives |
+|---|---|
+| Event status, flag or acknowledge | Nowhere -- 7.5 |
+| Period-end interrupt | Nowhere; events are channel rising edges -- 7.5 |
+| Merging the four events onto one core line | `INTMAP`, fast line 7 |
+| Pad multiplexing of `PWM_n` and `TIM_EXTn` with GPIO | IO MUX |
+
+# 10. Tie-offs
+
+: Tie-offs
+
+| Port | Tied to | Why |
 |---|---|---|
-| `TIM_EXT0` | PIN_37 | `GPIO2_1` |
-| `TIM_EXT1` | PIN_38 | `GPIO2_0` |
-| `TIM_EXT2` | PIN_39 | `GPIO3_7` |
-| `TIM_EXT3` | PIN_40 | `GPIO3_6` |
+| `dft_cg_enable_i` | 0 | no test-mode source in the pad ring; the four clock gates follow `CH_EN` only |
+| `low_speed_clk_i` | 0 | no slow clock source; `CFG.CLK_SEL` = 1 stops the module counting |
+| `ext_sig_i[31:4]` | 0 | four `TIM_EXT` pads exist; `IN_SEL` 4-31 select 0 |
+| `ch_2_o`, `ch_3_o` | unconnected at the wrapper boundary | modules 2 and 3 have no pads |
 
-**The IP already selects per module, so no selection register is needed in the
-wrapper.** An earlier revision of this document proposed one; reading the RTL shows it
-would duplicate what the IP does. Each `timer_module` takes an 8-bit `cfg_sel` and picks
-**one signal out of a pool**:
+# 11. Requirements on others, and open items
 
-```systemverilog
-localparam N_TIMEREXTSIG = EXTSIG_NUM + 16;                          // 32 + 16 = 48
-assign s_timer0_signal = {ch_3_o, ch_2_o, ch_1_o, ch_0_o, ext_sig_i};
-```
+: Requirements on other owners
 
-and inside `input_stage.sv` the select walks that pool. The pool is **48 signals wide,
-not 32**: the 32 external inputs **plus the 16 channel outputs**. Two consequences.
-
-**Any module can be triggered by any of the four pads, chosen at run time.** The
-design-time decision is only *which `ext_sig_i` bit each pad attaches to* -- the
-`IOPAD_Pin_Summary` left that unfixed, and **section 5.9 fixes it**: the lowest four,
-`ext_sig_i[3:0]`, in pad order, so the mapping is guessable from the pin number rather
-than needing a table.
-
-**A module can also be triggered by another module's channel output**, because the pool
-includes all sixteen. This qualifies section 4.1: the four modules have independent
-counters, but they are **not obliged to run unsynchronised** -- one can start another.
-No QSOC use needs it today, and it costs nothing to leave available.
-
-**The remaining 28 bits of `ext_sig_i` must be tied low**, not left unconnected.
-
-## 5.7 Verification QSOC must add
-
-**Table 12 -- Verification QSOC must add**
-
-| # | Check | Why it is here |
-|---:|---|---|
-| 1 | Every register reads back what was written, at the documented offset | basic |
-| 2 | The decoded span aliases as Table 8 states | pins the decode |
-| 3 | `TH` sets the period and `CHn_TH` sets the duty, independently, on one module | the core function |
-| 4 | Changing the duty of one channel disturbs neither the period nor the other three | the claim made in section 4.4 |
-| 5 | Four modules run at four different frequencies simultaneously | the reason for the pad grouping in 5.2 |
-| 6 | **Out of reset, with `EVENT_CFG` untouched, `events_o` stays 0** | the inert-out-of-reset claim of 4.5 |
-| 7 | Each event line can be selected from any of the 16 channels | proves the 4-of-16 mux |
-| 8 | **Every event pulse is exactly one `HCLK` cycle** | the number `INTMAP` depends on |
-| 9 | `ext_sig_i` starts and stops a module as configured | otherwise the input is untested |
-| 10 | Eight channels reach the correct pads and the IO mux selects between PWM and GPIO | the only pad-facing path in this block |
-| 11 | With `dft_cg_enable_i` tied 0, the block still functions normally; the input is **proven reachable** in RTL so a future DFT pass can drive it | section 5.4 -- v1 has no scan, but the path must not be optimised away |
-| 12 | Closing gate bit 15 freezes outputs; stopping via `CMD` first leaves them idle | the motor-drive hazard of 5.3 |
-
-Test 6 asserts that **nothing** happens, and like test 7 in `QNSC_TIMER_MAS` it is the
-one most likely to be dropped. It is also the one that protects the boot sequence: a
-block that interrupts before firmware is ready is hard to debug from the symptom.
-
-## 5.8 Interfaces to agree with the team
-
-**Table 13 -- Interfaces to agree with the team**
-
-| Item | Owner | What this document proposes |
+| Item | Owner | What it blocks |
 |---|---|---|
-| Which 8 of 16 channels reach pads | pad and IO mux owner | `ch_0_o` and `ch_1_o` -- all four channels of modules 0 and 1, for two independent base frequencies |
-| `ext_sig_i` wiring | pad / IO MUX owner | **Four pads already exist** (`TIM_EXT0`--`3`, `PIN_37`--`40`). This block proposes they attach to `ext_sig_i[3:0]` in pad order; remaining 28 bits tied low. No selection register needed -- the IP selects per module |
-| `dft_cg_enable_i` | DFT owner | **tie 0 for v1** -- no test-mode pin exists, Day005. Revisit if a DFT strategy is adopted; do not record QSOC as having no scan |
-| `low_speed_clk_i` | `SCRC` | tie to the domain clock; the IP samples it |
-| Clock gate bit 15 | `SCRC` | may start **closed**; the block does nothing useful until programmed |
-| **No pad pull fights the rest level** | pad owner | Section 5.9 -- firmware leaves each channel at a chosen level before the gate closes; a pull in the opposite direction would fight it. One-line check against the pad list |
-| Four interrupt sources on one line | `INTMAP` | already assumed by `QNSC_Interrupt_Map_MAS`; no change |
+| `i_bus_apb_paddr[11:0]` = the low 12 bits of the offset (`P_BUS` subtracts the base; offset bits 13:12 are not used) | bus owner | register decode |
+| `CLK_EN` and `SOFT_RST_CTRL` bit positions for PWM | SCRC owner | firmware clock and reset control |
+| `SCRC` closes the PWM clock only after firmware's safe stop -- 7.7 | firmware owner | outputs frozen at a non-zero level at a power stage |
+| Pins for `PWM_0..7` and `TIM_EXT0..3`, and their IO MUX default after reset | IO pad / IO MUX owner | pin owner out of reset |
 
-## 5.9 Decisions taken
+**Accepted limits:**
 
-**Decided -- the eight pad channels are `ch_0_o` and `ch_1_o`, i.e. all four channels
-of module 0 and all four of module 1.** In the RTL each module drives its own
-`ch_i_o` bus (`u_tim0.pwm_o -> ch_0_o`, `u_tim1.pwm_o -> ch_1_o`), so `ch_i_o[3:0]`
-is the four channels of module `i`. Channels within a module share that module's
-counter, so two modules at the pads give firmware **two independent base frequencies**,
-four channels each. The eight that stay inside (modules 2 and 3) are not wasted: any of
-the sixteen can still be selected as an event source, section 4.5, or as another
-module's trigger, section 5.6.
+1. No event status; a missed event is not recorded -- 7.5.
+2. Events are rising edges of one selected channel, not period ends -- 7.5.
+3. The 1 KiB register window aliases across 16 KiB without an error -- 7.6.
+4. Pads carry modules 0 and 1 only: two independent periods -- 7.3.
+5. `CHn_LUT` has no effect -- section 6.
 
-**Decided -- the four `TIM_EXT` pads attach to `ext_sig_i[3:0]` in pad order.** So
-`PIN_37` is bit 0, `PIN_38` bit 1, `PIN_39` bit 2, `PIN_40` bit 3, and the remaining 28
-bits are tied low. The reason is legibility rather than function: any four bits work
-electrically, but a mapping that follows pin order can be read off the pinout without a
-table, and firmware's `cfg_sel` values become guessable instead of memorised.
+**Open:** gate count, after synthesis.
 
-**Decided -- centre-aligned output stays available but is not verified exhaustively.**
-The mode is one configuration bit: `up_down_counter.sv` carries `r_direction` and
-`r_sawtooth`, so `cfg_sawtooth_i = 1` gives edge-aligned sawtooth and `0` gives the
-up-then-down count that produces centre-aligned PWM. Since the capability costs nothing
-in an IP QSOC does not modify, removing it would be work rather than saving. **QSOC's
-default is sawtooth**, the verification of Table 12 covers that, and centre-aligned is
-recorded here as *available and unverified* rather than claimed as supported.
+# 12. Verification
 
-**Proposed, and needing the pad owner -- the idle level of each PWM pad is low.** This
-is the one question with a consequence outside the chip, so it is stated as a proposal
-rather than a decision. Two facts frame it:
+The IP has no testbench.
 
-- **Stopping a module freezes its pad.** `out_filter.sv` updates its stored output only
-  while `ctrl_active_i` is high, so an inactive channel holds whatever level it last
-  drove.
-- **Gating the domain freezes it too**, section 5.3, and for the same reason.
+1. `ch_i_o[n]` is channel `n` of module `i`; `o_pwm[3:0]` = `ch_0_o`, `o_pwm[7:4]` =
+   `ch_1_o`.
+2. Every register field resets to the value in section 6; reserved bits and `CMD`
+   read 0.
+3. Out of reset, `CMD.START` has no effect until `CH_EN[i]` = 1.
+4. `SAW` = 1 period is (END - START + 1) x (PRESC + 1); `SAW` = 0 period is
+   2 x (END - START) x (PRESC + 1).
+5. Each `CHn_TH.MODE` value 0-7 gives the action of the MODE table, in both `SAW`
+   settings; MODE 2 with `SAW` = 0 is centre-aligned.
+6. Changing one `CHn_TH` changes no other channel and not `TH`; `CHn_LUT` writes
+   read back and change no output.
+7. `CMD.STOP` holds all four outputs; `CMD` = STOP | RST drives them to 0.
+8. An event fires on a rising edge of the selected channel only, is one
+   `i_clk_peri` cycle wide, and never fires while `EN[k]` = 0.
+9. Each `IN_MODE` 0-7 with `ext_sig_i[3:0]` and with a channel feedback source;
+    `IN_SEL` 4-31 and 48-255 never count except in `IN_MODE` 0 and 1.
+10. Holes read 0 and ignore writes; offset `+0x400` aliases offset 0; `PSLVERR` = 0.
+11. Confirm in simulation: when a new `TH` takes effect (at `CMD.START`, at
+    `CMD.UPDATE` while stopped, at the period end after `CMD.UPDATE` while running),
+    and when new `CHn_TH`, `IN_SEL`, `IN_MODE` and `PRESC` values take effect while
+    running.
 
-So the pad does **not** return to a safe level by itself, and "safe" is a board
-question: for an LED either level is harmless, for a motor driver one of them may mean
-*conducting*. The operational rule this document asks for is therefore: **stop the
-module through `CMD` and let the channel reach its idle level before the clock gate is
-closed**, never gate a running block. Whether idle is low or high per pad is for the pad
-and board owners to fix before the IO MUX is frozen.
-
-**Decided, because the block cannot provide an idle level and firmware must.** The
-earlier wording asked the pad owner to fix an idle level per pad. Reading the RTL shows
-that is the wrong request: `out_filter.sv` updates its stored output **only while
-`ctrl_active_i` is high**, so a stopped or gated channel holds whatever it last drove.
-**No level is "the idle level" from the block's point of view** -- there is only the last
-one driven.
-
-So the rule is a firmware procedure, and it is the same for every pad:
-
-| Step | Action |
-|---|---|
-| 1 | Set the channel's `CHn_TH` so the output reaches its intended rest level |
-| 2 | Let at least one full period elapse, so the level is actually driven |
-| 3 | Stop the module through `CMD` |
-| 4 | Only then may `SCRC` close the domain gate |
-
-**Never gate a running block.** Doing so freezes the pad at an arbitrary point in the
-waveform, which for an LED is harmless and for a motor driver may mean *conducting*.
-
-**What the pad owner still needs to confirm is narrower**: that none of the eight pads
-carries a pull-up or pull-down that fights the level firmware leaves behind. That is a
-one-line check against the pad list, not a design decision, and it is recorded in
-Table 13 rather than here.
-
-# 6. Observations
-
-**The IP's name is the main hazard in this block.** It is called an advanced *timer*,
-it contains four *timers*, and it is not the timer. The previous document for these
-blocks specified this IP for the timer role, and `QSOC_HAS` still carries the
-resulting disagreement. The clearest defence is the one in section 4.2: 16 bits wrap
-in 3.28 ms, which is ample for a waveform and useless for a timebase.
-
-**Two facts in this document are not in any datasheet and change what firmware must
-do.** The four event lines are a multiplexer over the channel outputs rather than four
-independent comparators, so an interrupt means a chosen channel toggled and firmware
-must have programmed the choice. And the per-timer status output is connected to
-nothing, so software cannot ask what happened. Both were found by reading the RTL
-rather than the documentation, and both would have been discovered late and expensively
-otherwise.
-
-**The absence of a status register is what forces a correction elsewhere.**
-`QNSC_Interrupt_Map_MAS` argues that losing a pulse is mostly harmless because the
-sources keep their own record. For GPIO that is true and the register is named. For
-PWM it is not: the recovery mechanism is that the waveform repeats. The argument
-survives, but it has to be stated in terms of periodicity, and it then has a visible
-exception in single-shot use. A specification that had assumed a status register would
-have been wrong in a way no test would catch.
+**Acceptance criterion:** eight pads carry two independent periods with four
+independently set compare values under each, and each event arrives one
+`i_clk_peri` cycle wide on a rising edge of the channel firmware selected.
 
 # Appendix A. Acronyms
 
-**Table 14 -- Acronyms**
+: Acronyms
 
-| Term | Meaning |
+| Acronym | Description |
 |---|---|
-| APB | Advanced Peripheral Bus, the AMBA bus used for QSOC's slow peripherals |
-| CDC | Clock Domain Crossing |
-| `CH_EN` | Channel enable register, offset `0x104` |
+| APB | Advanced Peripheral Bus, AMBA APB4 |
 | DFT | Design For Test |
-| Duty cycle | The fraction of one period for which the output is high |
-| `EVENT_CFG` | Event configuration register, offset `0x100` |
-| `HCLK` | The APB clock, named by AMBA convention |
-| LUT | Look-Up Table -- here the 4-entry table that shapes one channel output |
-| MAS | Micro-Architecture Specification |
-| `mcause` | RISC-V CSR reporting the cause of a trap |
-| Prescaler | 8-bit divider ahead of a counter, field `PRESC` |
+| ICG | Integrated Clock Gating cell |
 | PWM | Pulse Width Modulation |
-| `TH` | Threshold -- the period register of a module |
 
-# Appendix B. First Review
+# Appendix B. First review
 
-Points the author expects to be challenged on, with the answer held ready.
+: First review
 
-1. **Sixteen channels for eight pads -- is half the block wasted?**
-   No. Any of the sixteen can be selected as an event source, and the eight that stay
-   inside cost nothing beyond the area already committed by choosing the IP.
-2. **Why not a smaller PWM IP, or one written in house?**
-   The alternatives on APB are not comparable: OpenTitan's PWM is TL-UL and would need
-   a bridge. An in-house block would have to reproduce the per-channel LUT and the
-   up-down mode to match, which is not the small job that `INTMAP` was.
-3. **Why does the block not interrupt out of reset?**
-   Because `EVENT_CFG` resets to zero, so the event enables are clear. This is
-   desirable and section 5.7 test 6 protects it.
-
-# Appendix C. References
-
-| Claim | Where the evidence is |
-|---|---|
-| Module name, parameters, ports | `pulp-platform/apb_adv_timer`, `rtl/apb_adv_timer.sv` |
-| `TIMER_NBITS = 16`, `EXTSIG_NUM = 32` | same file, parameter list |
-| Four `timer_module` instances, 16 channel outputs | same file, the four instantiations |
-| **Events are a 4-of-16 mux over channel outputs** | same file: `assign s_event_signals = {ch_3_o, ch_2_o, ch_1_o, ch_0_o};` |
-| **Event pulse is one cycle** | same file: `events_o[0] = s_event_en[0] & r_event_sync_0[1] & ~r_event_sync_0[0];` |
-| **`status_o` is connected to nothing readable** | same file: `s_timer0_status` appears only at its declaration and its connection; `rtl/adv_timer_apb_if.sv` has no `status` port |
-| Register offsets, module stride `0x40`, `EVENT_CFG` at `0x100`, `CH_EN` at `0x104` | `rtl/adv_timer_apb_if.sv`, the `` `define REG_ `` block |
-| 8-bit prescaler | `rtl/prescaler.sv`: `input logic [7:0] cfg_presc_i` |
-| Port, address, domain D18, gate bit 15 | `QSOC_HAS` Table 9-1, the APB port table and the clock domain table |
-| `PWM_0` to `PWM_7` pad and pin assignment | `QSOC_HAS` pad table, PIN_27 to PIN_36 |
-| `low_speed_clk_i` sampled as data, no second domain | `QSOC_HAS` clock list |
-| Four external triggers from GPIO proposed | `QSOC_HAS`, timer external triggers row |
-| Four interrupt sources, all pulses, one fast line | `QNSC_Interrupt_Map_MAS`, Table 3 |
-| Most STM32 timers are 16-bit, a few 32-bit | STMicroelectronics STM32G4 general purpose timer training material |
+| Item | Reviewer | Response |
+|---|---|---|
+| Too long; redundancy causes wrong information | Teacher, 2026-09-23 | Rewritten to the template; reasoning in `_DECISIONS` |
+| Do the four event lines mean four periods elapsed? | -- | No: each is a rising edge of one selected channel -- 7.5 |
+| Is 16 bits enough? | -- | Period range at 20 MHz in 7.1 |
+| `ch_i_o` mapping | RTL | All four channels of module `i` -- 7.3 |

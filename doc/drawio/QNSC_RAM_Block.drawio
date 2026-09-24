@@ -1,109 +1,130 @@
 <mxfile host="app.diagrams.net" type="device">
-  <diagram name="AXI4 SRAM controller" id="pg0">
+  <diagram name="RAM block: wrapper, controller and macro" id="pg0">
     <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="busg" value="S_BUS | AXI_M1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#999999;fontSize=11;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="10" y="40" width="130" height="350" as="geometry"/>
+        <mxCell id="clk" value="i_clk_mem&#10;i_rst_n_mem" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="10" y="24" width="190" height="50" as="geometry"/>
         </mxCell>
-        <mxCell id="ch_aw" value="AW" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="20" y="80" width="110" height="44" as="geometry"/>
+        <mxCell id="busg" value="S_BUS  AXI_M1 (ISRAM)&#10;or AXI_M2 (DSRAM)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=11;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="10" y="110" width="190" height="380" as="geometry"/>
         </mxCell>
-        <mxCell id="ch_w" value="W" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="20" y="145" width="110" height="44" as="geometry"/>
+        <mxCell id="ch_w" value="W" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="25" y="170" width="150" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="ch_ar" value="AR" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="20" y="210" width="110" height="44" as="geometry"/>
+        <mxCell id="ch_aw" value="AW" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="25" y="235" width="150" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="ch_r" value="R" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="20" y="275" width="110" height="44" as="geometry"/>
+        <mxCell id="ch_ar" value="AR" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="25" y="300" width="150" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="ch_b" value="B" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="20" y="340" width="110" height="44" as="geometry"/>
+        <mxCell id="ch_r" value="R" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="25" y="365" width="150" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="ctrl" value="SRAM controller  |  m_vlsi_axi4_sram" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#999999;fontSize=12;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="180" y="40" width="760" height="400" as="geometry"/>
+        <mxCell id="ch_b" value="B" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="25" y="430" width="150" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="aw" value="u_axfsm_wr" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="210" y="80" width="170" height="44" as="geometry"/>
+        <mxCell id="wrap" value="m_qnsc_wrap_axi4_sram" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=12;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="230" y="20" width="750" height="580" as="geometry"/>
         </mxCell>
-        <mxCell id="ar" value="u_axfsm_rd" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="210" y="210" width="170" height="44" as="geometry"/>
+        <mxCell id="sf" value="u_strbfifo&#10;wstrb, 4 bit x 8" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="520" y="60" width="170" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="awf" value="AWFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="410" y="80" width="150" height="44" as="geometry"/>
+        <mxCell id="ctrl" value="u_ctrl  |  m_vlsi_axi4_sram  (IP, unmodified)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=11;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="260" y="130" width="690" height="450" as="geometry"/>
         </mxCell>
-        <mxCell id="wf" value="WFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="410" y="145" width="150" height="44" as="geometry"/>
+        <mxCell id="aw" value="u_axfsm_wr" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="290" y="235" width="150" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="arf" value="ARFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="410" y="210" width="150" height="44" as="geometry"/>
+        <mxCell id="ar" value="u_axfsm_rd" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="290" y="300" width="150" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="rf" value="RFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="410" y="275" width="150" height="44" as="geometry"/>
+        <mxCell id="wf" value="WFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="490" y="170" width="140" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="bf" value="BFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="410" y="340" width="150" height="44" as="geometry"/>
+        <mxCell id="awf" value="AWFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="490" y="235" width="140" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="arb" value="u_arbiter&#10;round-robin&#10;W / R grant" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="610" y="90" width="150" height="150" as="geometry"/>
+        <mxCell id="arf" value="ARFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="490" y="300" width="140" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="misc" value="u_sram_misc&#10;FIFO pop · SRAM mux&#10;R and B generation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="610" y="270" width="300" height="100" as="geometry"/>
+        <mxCell id="rf" value="RFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="490" y="365" width="140" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="sram" value="SRAM macro&#10;single port&#10;1-cycle read" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="990" y="270" width="170" height="100" as="geometry"/>
+        <mxCell id="bf" value="BFIFO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="490" y="430" width="140" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="todo" value="ADDED FOR QSOC | WSTRB byte-enable path: AW and W channels, an extra FIFO field,&#10;and byte write enables on the macro.  Without it a byte store overwrites the whole word." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="180" y="470" width="760" height="66" as="geometry"/>
+        <mxCell id="misc" value="u_sram_misc&#10;FIFO pop, SRAM mux&#10;R and B generation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="700" y="170" width="220" height="304" as="geometry"/>
         </mxCell>
-        <mxCell id="note" value="Burst address generation&#10;lives in the two AXFSMs.&#10;&#10;Constrain masters to INCR&#10;and FIXED: the WRAP path&#10;aligns but never wraps." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;fontSize=10;dashed=0;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="990" y="400" width="300" height="136" as="geometry"/>
+        <mxCell id="arb" value="u_arbiter&#10;round-robin" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="700" y="510" width="220" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="ch_aw_aw_0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ch_aw" target="aw">
+        <mxCell id="sram" value="SRAM macro&#10;single port&#10;1-cycle read&#10;no reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="200" width="180" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="clk_wrap_0" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.05;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="clk" target="wrap">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="ch_ar_ar_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ch_ar" target="ar">
+        <mxCell id="ch_w_wf_1" value="wdata" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ch_w" target="wf">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="ch_w_wf_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ch_w" target="wf">
+        <mxCell id="ch_w_sf_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.20000000000000026;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ch_w" target="sf">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="rf_ch_r_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="rf" target="ch_r">
+        <mxCell id="ch_aw_aw_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ch_aw" target="aw">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="bf_ch_b_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="bf" target="ch_b">
+        <mxCell id="ch_ar_ar_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ch_ar" target="ar">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="aw_awf_5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="aw" target="awf">
+        <mxCell id="rf_ch_r_5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="rf" target="ch_r">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="ar_arf_6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ar" target="arf">
+        <mxCell id="bf_ch_b_6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="bf" target="ch_b">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="awf_arb_7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="awf" target="arb">
+        <mxCell id="aw_awf_7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="aw" target="awf">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="wf_arb_8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.62;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="wf" target="arb">
+        <mxCell id="ar_arf_8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ar" target="arf">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="arf_arb_9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.92;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="arf" target="arb">
+        <mxCell id="wf_misc_9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.07240000000000002;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="wf" target="misc">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="arb_misc_10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.15;exitY=1.0;entryX=0.15;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="arb" target="misc">
+        <mxCell id="awf_misc_10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.28619999999999995;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="awf" target="misc">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="misc_rf_11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.25;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="rf">
+        <mxCell id="arf_misc_11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="arf" target="misc">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="misc_bf_12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.75;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="bf">
+        <mxCell id="misc_rf_12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.7138;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="rf">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="misc_sram_13" value="addr, wdata, we, oe" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.3;entryX=0.0;entryY=0.3;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="sram">
+        <mxCell id="misc_bf_13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.9276000000000001;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="bf">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="sram_misc_14" value="rdata" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.75;entryX=1.0;entryY=0.75;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sram" target="misc">
+        <mxCell id="misc_arb_14" value="req_write, req_read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.15;exitY=1.0;entryX=0.15;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="arb">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arb_misc_15" value="arb_sel, write_en" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.85;exitY=0.0;entryX=0.85;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="arb" target="misc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="misc_sf_16" value="o_sram_we (pop)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.85;exitY=0.0;entryX=0.8;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="sf">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="sf_sram_17" value="bwe[3:0]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sf" target="sram">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="misc_sram_18" value="addr[15:2] / [14:2]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.21380000000000005;entryX=0.0;entryY=0.15910000000000005;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="sram">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="misc_sram_19" value="wdata, we, oe" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.37829999999999997;entryX=0.0;entryY=0.3864000000000002;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="sram">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="sram_misc_20" value="rdata" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.8182;entryX=1.0;entryY=0.6908;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sram" target="misc">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
       </root>

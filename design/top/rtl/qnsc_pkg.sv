@@ -43,8 +43,6 @@ package qnsc_pkg;
   localparam int unsigned             C_GPIO_1_SIZE = 16384;  // 16 KiB
   localparam logic [C_ADDR_WIDTH-1:0] C_GPIO_2_BASE = 32'h80014000;
   localparam int unsigned             C_GPIO_2_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_GPIO_3_BASE = 32'h80018000;
-  localparam int unsigned             C_GPIO_3_SIZE = 16384;  // 16 KiB
   localparam logic [C_ADDR_WIDTH-1:0] C_TIMER_0_BASE = 32'h8001C000;
   localparam int unsigned             C_TIMER_0_SIZE = 16384;  // 16 KiB
   localparam logic [C_ADDR_WIDTH-1:0] C_TIMER_1_BASE = 32'h80020000;
@@ -61,8 +59,6 @@ package qnsc_pkg;
   localparam int unsigned             C_PWM_SIZE = 16384;  // 16 KiB
   localparam logic [C_ADDR_WIDTH-1:0] C_DMA_CFG_BASE = 32'h80038000;
   localparam int unsigned             C_DMA_CFG_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_SYSDBG_BASE = 32'hF0000000;
-  localparam int unsigned             C_SYSDBG_SIZE = 12;  // 12 B
 
   // ---- interrupt lines -----------------------------------------------------
   // Source: QSOC_HAS Table 8-1. The line index IS the priority: Ibex resolves
@@ -74,8 +70,8 @@ package qnsc_pkg;
   // above are platform-use space in the privileged specification.
   localparam int unsigned C_INT_FAST_LINES_AVAILABLE = 15;
   localparam int unsigned C_INT_FAST_LINES_USED      = 11;
-  localparam int unsigned C_INT_SOURCES_AGGREGATED   = 26;  // through INTMAP
-  localparam int unsigned C_INT_SOURCES_TOTAL        = 27;  // including the NMI
+  localparam int unsigned C_INT_SOURCES_AGGREGATED   = 25;  // through INTMAP
+  localparam int unsigned C_INT_SOURCES_TOTAL        = 26;  // including the NMI
 
   localparam int unsigned C_INT_LINE_DMA          = 0;   // mcause 16, 1 source(s), level
   localparam int unsigned C_INT_LINE_SPI_DEVICE   = 1;   // mcause 17, 8 source(s), level
@@ -83,14 +79,14 @@ package qnsc_pkg;
   localparam int unsigned C_INT_LINE_I2C          = 3;   // mcause 19, 1 source(s), level
   localparam int unsigned C_INT_LINE_UART_0       = 4;   // mcause 20, 1 source(s), level
   localparam int unsigned C_INT_LINE_UART_1       = 5;   // mcause 21, 1 source(s), level
-  localparam int unsigned C_INT_LINE_TIMER_1      = 6;   // mcause 22, 2 source(s), pulse
+  localparam int unsigned C_INT_LINE_TIMER_1      = 6;   // mcause 22, 2 source(s), pulse; level in one-shot with prescaler or ref clock
   localparam int unsigned C_INT_LINE_PWM          = 7;   // mcause 23, 4 source(s), pulse
   localparam int unsigned C_INT_LINE_WDT_WAKEUP   = 8;   // mcause 24, 1 source(s), level
-  localparam int unsigned C_INT_LINE_GPIO         = 9;   // mcause 25, 4 source(s), pulse
-  localparam int unsigned C_INT_LINE_TIMER_0      = 10;   // mcause 26, 1 source(s), pulse
+  localparam int unsigned C_INT_LINE_GPIO         = 9;   // mcause 25, 3 source(s), pulse
+  localparam int unsigned C_INT_LINE_TIMER_0      = 10;   // mcause 26, 1 source(s), pulse; level in one-shot with prescaler or ref clock
 
   localparam int unsigned C_INT_MCAUSE_BASE = 16;
-  localparam int unsigned C_INT_MCAUSE_NMI  = 31;   // wdt_bark, on irq_nm_i, never through INTMAP
+  localparam int unsigned C_INT_MCAUSE_NMI  = 31;   // wdt_bark, on irq_nm_i, a wire through INTMAP, never ORed
 
   // ---- clock and reset clusters ---------------------------------------------
   // Source: QSOC_HAS v4 section 'Clock and Reset'. One frequency for the whole
