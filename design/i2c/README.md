@@ -1,6 +1,6 @@
 # `i2c` — I2C controller
 
-**Owner:** _TBD_   **Spec:** _not written yet_   **DV:** [`../../dv/i2c`](../../dv/i2c)
+**Owner:** @Vinh-OngBao   **Spec:** `Vinh_QNSC_I2C_Core_IP.docx` (kept by the owner; not yet in `doc/src/`)   **DV:** [`../../dv/i2c`](../../dv/i2c)
 
 ## What this block is
 
