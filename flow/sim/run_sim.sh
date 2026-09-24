@@ -25,7 +25,7 @@ mkdir -p "$out"
 
 verilator --binary --timing -Wno-fatal -j 0 \
   --top-module "tb_${block}" -Mdir "$out" \
-  -f "$flist" $( [ -f "$extra" ] && echo "-f $extra" ) "$tb"
+  -F "$flist" $( [ -f "$extra" ] && echo "-F $extra" ) "$tb"
 
 "$out/Vtb_${block}" ${test:+"+test=${test}"} | tee "$out/sim.log"
 grep -q "PASS" "$out/sim.log"

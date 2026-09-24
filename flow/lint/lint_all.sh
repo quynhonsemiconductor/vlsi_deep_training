@@ -40,10 +40,15 @@ for dir in design/*/; do
   waiver=""
   [ -f "${dir}waivers.vlt" ] && waiver="${dir}waivers.vlt"
 
-  if verilator --lint-only -Wall -Wno-fatal $waiver -f "$flist" \
-       2>&1 | tee "/tmp/lint-${block}.log" | grep -q '%Error'; then
+  # -F, not -f: paths inside the filelist are relative to the filelist itself
+  # (../../vendor/...), and -f would resolve them against the repository root.
+  # The log is written first and grepped second: with pipefail, piping verilator
+  # into grep took verilator's non-zero exit as the result and reported "ok".
+  log="/tmp/lint-${block}.log"
+  verilator --lint-only -Wall -Wno-fatal $waiver -F "$flist" > "$log" 2>&1
+  if grep -q '%Error' "$log"; then
     printf '  %-10s FAIL\n' "$block"
-    sed 's/^/      /' "/tmp/lint-${block}.log"
+    sed 's/^/      /' "$log"
     fail=1
   else
     printf '  %-10s ok\n' "$block"
