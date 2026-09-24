@@ -1,6 +1,6 @@
 # `uart` — serial ports
 
-**Owner:** _TBD_   **Spec:** _not written yet_   **DV:** [`../../dv/uart`](../../dv/uart)
+**Owner:** @Vinh-OngBao   **Spec:** `TranVanThe_APB_UART.docx` (kept by the owner; not yet in `doc/src/`)   **DV:** [`../../dv/uart`](../../dv/uart)
 
 ## What this block is
 
