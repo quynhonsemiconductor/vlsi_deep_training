@@ -17,7 +17,7 @@ BASE  ?= origin/main
 SCOPE = $(if $(BLOCK),design/$(BLOCK))
 
 .PHONY: help check filelists lint naming hardcode pkg pkg-check tables docs \
-        vendor-guard wrap wrap-check sim syn gca
+        vendor-guard new-wrap wrap wrap-check sim syn gca
 
 help:
 	@echo "make check          all CI checks: filelists lint naming hardcode pkg-check tables wrap-check vendor-guard"
@@ -30,6 +30,7 @@ help:
 	@echo "make tables         specification tables match the contract"
 	@echo "make docs           build every .docx from doc/src"
 	@echo "make vendor-guard   vendor/ unedited since BASE             [BASE=origin/main]"
+	@echo "make new-wrap       scaffold rtl/emacs for a new wrapper   BLOCK= IP=<ip top .sv>"
 	@echo "make wrap           regenerate one emacs wrapper           BLOCK="
 	@echo "make wrap-check     every emacs wrapper matches its .src.sv"
 	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=]"
@@ -62,6 +63,10 @@ docs:
 
 vendor-guard:
 	bash flow/lint/vendor_guard.sh $(BASE)
+
+new-wrap:
+	@test -n "$(BLOCK)" -a -n "$(IP)" || { echo "usage: make new-wrap BLOCK=<block> IP=<path to ip top .sv>"; exit 1; }
+	bash flow/emacs/new_wrapper.sh $(BLOCK) $(IP)
 
 wrap:
 	@test -n "$(BLOCK)" || { echo "usage: make wrap BLOCK=<block>"; exit 1; }

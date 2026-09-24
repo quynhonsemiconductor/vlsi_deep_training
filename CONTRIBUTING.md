@@ -64,13 +64,14 @@ the worked example.
 ```bash
 make check                  # everything CI checks, before every push
 make lint BLOCK=<block>     # one check, one block, while you work
+make new-wrap BLOCK=<block> IP=<ip top .sv>   # scaffold an emacs wrapper, once
 make wrap BLOCK=<block>     # regenerate an emacs wrapper after editing its .src.sv
 make help                   # the full list
 ```
 
 Every CI step calls the same `make` target, so a green `make check` on your
-machine is a green CI. A wrapper generated with emacs has a two-line
-`rtl/emacs/Makefile` that includes [`flow/emacs/wrap.mk`](flow/emacs/wrap.mk).
+machine is a green CI. How a wrapper is written with emacs is in
+[`design/README.md`, "Writing a wrapper with emacs verilog-mode"](design/README.md#writing-a-wrapper-with-emacs-verilog-mode).
 
 ### 5. Open the pull request
 

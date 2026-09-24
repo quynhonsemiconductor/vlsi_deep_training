@@ -9,6 +9,11 @@ any directory and know what to expect.
 ```
 design/<block>/
   rtl/               code written here, and nothing else
+    m_qnsc_wrap_<block>.sv       the wrapper; generated when rtl/emacs/ exists
+    emacs/                       only for a wrapper generated with emacs
+      m_qnsc_wrap_<block>.src.sv   the source you edit
+      Makefile                     DESIGN = ..., include flow/emacs/wrap.mk
+      filelist_emacs.f             the IP file whose ports verilog-mode reads
   <block>.f          filelist: what builds this block, in what order
   constraints/
     <block>.sdc      clocks, I/O delays, CDC constraints (SDC stage)
@@ -34,9 +39,45 @@ every wrapper, so it is a shared surface and not a block owner's file.
 never copied into `rtl/`. That is what makes "self-designed or IP?" answerable by
 reading one directory.
 
-A wrapper has four jobs: map ports to the names in `qsoc_pkg`, tie off what QSOC does
-not use, adapt the protocol if the IP speaks a different one, and add what the IP is
-missing — the byte-enable path the RAM controller lacks is the example.
+**Wrapper = core + bridge.** The wrapper is the layer around an existing IP that
+lets it fit into QSoC. The **core** is the IP itself. The **bridge** sits inside the
+wrapper and converts the IP's protocol to the chip bus; it exists only when the two
+differ — APB to TL-UL for SPI and WDT, APB to OBI for UART, none for PWM, whose IP
+already speaks APB. One wrapper per IP, and the IP owner owns it. `design/top`
+connects every wrapper by the naming rule.
+
+A wrapper has four jobs: map ports to the names in `qnsc_pkg`, tie off what QSOC does
+not use, adapt the protocol (the bridge) if the IP speaks a different one, and add
+what the IP is missing — the byte-enable path the RAM controller lacks is the example.
+
+## Writing a wrapper with emacs verilog-mode
+
+The mentors ask for wrappers generated with emacs `verilog-mode`, as industry does.
+You write the port groups and an `AUTO_TEMPLATE` that maps each IP port to its QNSC
+name; `AUTOINST`, `AUTOINPUT`, `AUTOOUTPUT` and `AUTOWIRE` write the port list and
+the instance. The worked example is the I2C demo on the `share_review` branch.
+
+```bash
+make new-wrap BLOCK=pwm IP=vendor/pulp-platform/apb_adv_timer/rtl/apb_adv_timer.sv
+#   scaffolds design/pwm/rtl/emacs/ from flow/emacs/template.src.sv
+vim design/pwm/rtl/emacs/m_qnsc_wrap_pwm.src.sv     # fill the AUTO_TEMPLATE
+make wrap BLOCK=pwm                                 # expand, copy to rtl/
+make check                                          # lint, naming, wrap-check, ...
+```
+
+Rules:
+
+1. Edit only the `.src.sv`. Commit it together with the generated files; CI
+   regenerates every wrapper and fails if the committed result differs.
+2. The **Others** group must end empty. A port that lands there has no template
+   line, and it will also fail the naming check.
+3. Internal signals are `w_*` or `r_*`. The template ignores `w_*` for ports, so an
+   IP output mapped to `w_<name>` becomes a wire (`AUTOWIRE`), not a port.
+4. An IP parameter the wrapper replaces with a `qnsc_pkg` name goes in `PARAM_FIX`
+   in the block Makefile, for example
+   `PARAM_FIX = s,\[APB_ADDR_WIDTH-1,[C_APB_PADDR_WIDTH-1,g`.
+5. `filelist_emacs.f` is read only by emacs. `<block>.f` is still the filelist that
+   builds and lints the block.
 
 ## Instances are decided in `design/top`, not here
 
@@ -123,7 +164,7 @@ that come up most:
 | Thing | Form | Example |
 |---|---|---|
 | Module, in house | `m_qnsc_<function>` | `m_qnsc_intmap` |
-| Module, wrapper around IP | `m_qnsc_wrap_<ip_module>` | `m_qnsc_wrap_timer` |
+| Module, wrapper around IP | `m_qnsc_wrap_<block>` | `m_qnsc_wrap_i2c`, `m_qnsc_wrap_timer` |
 | Module, generic and shared | `qnsc_<function>` (no `m_`) | `qnsc_fifo_sync` |
 | Port | `i_` / `o_` / `io_` prefix | `i_clk_sys`, `o_int_timer_0` |
 | Clock, reset | `i_clk_<domain>`, `i_rst_n_<domain>` | `i_rst_n_sys` |
