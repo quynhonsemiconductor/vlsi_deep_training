@@ -23,5 +23,21 @@ the spec needs it visible, the wrapper exposes it.
 
 ## The wrapper is the boundary
 
-`rtl/qsoc_pwm_wrap.sv`: instantiate, tie off, port-map to `qsoc_pkg`. Ours in
-`rtl/`, borrowed in `vendor/`.
+The IP already speaks APB, so the wrapper is the core with no bridge. Ours in
+`rtl/`, borrowed in `vendor/`, and [`pwm.f`](./pwm.f) lists both.
+
+| File | What it is |
+|---|---|
+| `rtl/emacs/m_qnsc_wrap_pwm.src.sv` | the source to edit: ports, logic and the `AUTO_TEMPLATE` |
+| `rtl/emacs/Makefile` | `make` runs emacs verilog-mode (`AUTOINST`, `AUTOINPUT`, `AUTOWIRE`) and copies the result to `rtl/` |
+| `rtl/m_qnsc_wrap_pwm.sv` | generated wrapper, compiled through `pwm.f`; never edited by hand |
+| `rtl/pulp_clock_gating.sv` | the clock gate `apb_adv_timer` instantiates, mapped onto OpenTitan `prim_clock_gating` |
+
+The wrapper ties `dft_cg_enable_i` and `low_speed_clk_i` to 0, synchronises
+`i_tim_ext[3:0]` with two flip-flops into `ext_sig_i[3:0]` (`[31:4]` = 0), drives
+`o_pwm[7:0]` from `ch_1_o`, `ch_0_o`, and leaves `ch_2_o`, `ch_3_o` unconnected
+(MAS sections 5 and 10).
+
+```bash
+cd design/pwm/rtl/emacs && make     # regenerate after editing the .src.sv
+```
