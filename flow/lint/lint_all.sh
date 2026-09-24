@@ -46,6 +46,13 @@ for dir in design/*/; do
   # into grep took verilator's non-zero exit as the result and reported "ok".
   log="/tmp/lint-${block}.log"
   verilator --lint-only -Wall -Wno-fatal $waiver -F "$flist" > "$log" 2>&1
+  # A filelist that holds only packages (design/top today: qnsc_pkg.sv) has no
+  # module to elaborate. Verilator 5.020, the Ubuntu package CI installs, stops
+  # with "No top level module found"; newer releases accept it. Not a defect.
+  if [ "$(grep -c '%Error' "$log")" -le 2 ] && grep -q 'No top level module found' "$log"; then
+    printf '  %-10s no module yet, skipped\n' "$block"
+    continue
+  fi
   if grep -q '%Error' "$log"; then
     printf '  %-10s FAIL\n' "$block"
     sed 's/^/      /' "$log"
