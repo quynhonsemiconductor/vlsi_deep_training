@@ -29,6 +29,11 @@ meta:
   data_width: 32
   addr_width: 32
   clock_mhz: 20
+  # Address bits P_BUS passes to every APB slave: the low 12 bits of the offset
+  # inside the slave's 16 KiB window. Every pulp APB IP declares
+  # APB_ADDR_WIDTH = 12 and decodes only low bits, so 12 fits them all.
+  # Decided 2026-09-24 by the overall lead; it closes the former tbd item.
+  apb_paddr_width: 12
 
 # -----------------------------------------------------------------------------
 # Memory map. Source: QSOC_HAS Table 7-1, cross-checked against QNSC_RAM_MAS
@@ -339,14 +344,11 @@ tbd:
       i_clk_<domain> port name needs. What is still missing is the BIT NUMBER
       each peripheral occupies in SCRC's CLK_EN and SOFT_RST_CTRL registers --
       that belongs to the SCRC register map, not here.
-  - item: one APB paddr width for every peripheral slave
-    owner: bus owner
+  - item: DMA peripheral channel for each requester
+    owner: DMA owner
     note: >
-      Not an open design question so much as one number to confirm. The pulp APB
-      IPs all declare APB_ADDR_WIDTH = 12 and decode only their low bits
-      (apb_timer_unit PADDR[5:0], apb_gpio PADDR[6:2], apb_i2c PADDR[5:2]), while
-      the memory map gives each peripheral a 16 KiB window, which is 14 bits. So
-      the bus must supply at least 12; 14 covers the window. The one width the HAS
-      does state is 16 bits, for SYSCSR (Table 9-1, "three registers in one 16 KiB
-      window"), which is wider than the window needs. The bus owner picks one
-      number and it applies to all peripheral slaves.
+      The DMA front end has eight peripheral channels. The requesters are
+      UART0 and UART1 (TX and RX each), I2C (TX and RX) and SPI (TX and RX), and
+      each wrapper exposes o_dma_tx_req / o_dma_rx_req. Which channel number
+      each request line drives is the DMA owner's to fix; until then no wrapper
+      and no firmware header types a channel number.

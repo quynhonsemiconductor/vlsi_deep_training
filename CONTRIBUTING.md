@@ -25,6 +25,9 @@ grep -A8 "clusters:"           util/qsoc_contract.yml   # which i_clk_<domain> y
 
 If the number you need is not there, **add it to the contract** — see
 [Changing a shared number](#changing-a-shared-number). Never type it into the wrapper.
+If it is not agreed yet (a DMA channel, a `CLK_EN` bit), add a `tbd:` entry that
+names the owner in the same pull request. A number mentioned only in the PR text
+is lost when the PR is merged.
 
 ### 2. Write the filelist `design/<block>/<block>.f`
 
@@ -68,6 +71,12 @@ Both run in CI. Running them first saves a round trip.
 ### 5. Open the pull request
 
 - Title follows **Conventional Commits** — `feat(uart): add the APB wrapper`
+- The block `README.md` names the **owner** and links the **spec**. Until the MAS is
+  in `doc/src/`, link wherever it lives. `_TBD_` is not accepted
+- To catch up with `main`, **rebase** your branch (`git fetch && git rebase
+  origin/main`); do not merge `main` into it. The repository accepts only squash
+  and rebase merges ([`POLICY.md`](.github/POLICY.md)), so a merge commit on the
+  branch breaks a rebase merge
 - `main` is protected: no direct pushes, and a code-owner review is required
 - Eight checks must pass:
 
@@ -82,6 +91,29 @@ Both run in CI. Running them first saves a round trip.
 | `Specifications build and check` | the specifications no longer build |
 | `actions-security / Workflow lint (actionlint)` | a workflow file is malformed |
 | `actions-security / Actions security (zizmor)` | a workflow has a security finding |
+
+## What `vendor/` is
+
+**Nobody writes code in `vendor/`.** Every file there is upstream code that
+`util/vendor_ip.py` copies in at the commit pinned in `vendor/manifest.yml`, and
+then patches with whatever sits in `vendor/patches/`. Our own RTL lives only in
+`design/<block>/rtl/`.
+
+```bash
+python3 util/vendor_ip.py --list          # what is pinned, and where
+python3 util/vendor_ip.py <name>          # (re)vendor one upstream at its pin
+```
+
+Commit the vendored files, the manifest and `vendor/vendor.lock.yml` together.
+
+### Cases the basic rule does not spell out
+
+| Case | Do this |
+|---|---|
+| The IP needs **another upstream** (a Bender dependency, a `common_cells` cell) | Vendor it as its **own manifest entry**, at the exact version the parent pins, with `files:` limited to what is compiled and `used_by:` naming the block. List only the compiled files in `<block>.f` |
+| You vendor a repo only to **read** it, not compile it | Say "reference only, not compiled" in its manifest `notes:` and in the block README, and keep it out of `<block>.f` |
+| The IP lacks a **feature** QSOC needs | Add it in the **wrapper** if it can be built from the IP's ports. Use a **patch** only when it needs the IP's internal state (the UART and I2C DMA request lines are the examples). Name it `vendor/patches/<vendor>_<repo>/NNNN-<what>.patch` and describe it in the manifest `notes:`, the block README and the MAS. Commit the patch and the patched vendor files in the same PR |
+| Your wrapper **starts from an upstream file** (a sample wrapper) | Allowed as a starting point that you then own. Keep the upstream licence header, which the licence requires, and add one line `QNSC: derived from <path> @ <commit>`. State it in the README |
 
 ## Changing a shared number
 
@@ -106,9 +138,14 @@ who must supply it.
 ## Instances are decided in `design/top`
 
 You write **one** wrapper. `design/top` instantiates it as many times as the block
-diagram shows: `uart` twice, `gpio` four times, `timer` twice with different
+diagram shows: `uart` twice, `gpio` three times, `timer` twice with different
 parameters, `ram` twice with different depths. What differs between instances is a
 **parameter or a port** — never a forked file.
+
+For the same reason, a shared wrapper never uses a per-instance constant:
+`C_UART_0_SIZE` inside a wrapper that also serves UART1 is wrong, even when the
+two values happen to be equal. Use a chip-wide constant (`C_APB_PADDR_WIDTH`) or a
+parameter that `design/top` sets per instance.
 
 ## Do not
 
@@ -119,7 +156,8 @@ parameters, `ram` twice with different depths. What differs between instances is
 | Type an address, interrupt index or domain name into a wrapper | That is how ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11` and eleven interrupt sources against twelve all happened. Import it from `qnsc_pkg` — and `No hardcoded shared values` will fail the PR if you do |
 | Hand-edit `design/top/rtl/qnsc_pkg.sv` | It is generated. CI regenerates and compares |
 | Fork the wrapper per instance | One wrapper, parameters for the difference |
-| Rename a vendored module's port to satisfy the naming rule | The rule applies to our RTL. `naming_check.py` already skips identifiers after a dot for exactly this reason |
+| Rename a vendored module's port to satisfy the naming rule | The rule applies to our RTL. `naming_check.py` already skips identifiers after a dot, after `::`, and system functions such as `$clog2`, for exactly this reason |
+| Rewrite correct RTL to dodge a checker false positive | Report the false positive and fix the checker in `flow/`. A `// naming-check: ignore -- <reason>` is the stop-gap, not a rewrite |
 
 ## Ownership
 
