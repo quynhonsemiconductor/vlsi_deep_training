@@ -21,6 +21,9 @@ nguyenquanicd/AXI4-SRAM-CONTROLLER:
 nguyenquanicd/MRV-CPU:
   commit: eea0028c969015e8fac911278e51e7beca27175e
   url: https://github.com/nguyenquanicd/MRV-CPU
+pulp-platform/apb:
+  commit: 77ddf073f194d44b9119949d2421be59789e69ae
+  url: https://github.com/pulp-platform/apb
 pulp-platform/apb_adv_timer:
   commit: c8faec1e1755386d0e0f31a55ebd80612a3dcea9
   url: https://github.com/pulp-platform/apb_adv_timer
@@ -36,9 +39,18 @@ pulp-platform/apb_uart:
 pulp-platform/axi:
   commit: 70b8e54fd460e3308e58be596ceb3566a6e3576e
   url: https://github.com/pulp-platform/axi
+pulp-platform/common_cells:
+  commit: 9afda9abb565971649c2aa0985639c096f351171
+  url: https://github.com/pulp-platform/common_cells
 pulp-platform/idma:
   commit: 2e0b0fe53b6f8823319e2428e2e9abc2db149b7d
   url: https://github.com/pulp-platform/idma
+pulp-platform/obi:
+  commit: 0155fc34e900c7c884e081c0a1114a247937ff69
+  url: https://github.com/pulp-platform/obi
+pulp-platform/obi_peripherals:
+  commit: 079894a6cbd4e544c477643d184a4c340bd4e391
+  url: https://github.com/pulp-platform/obi_peripherals
 pulp-platform/riscv-dbg:
   commit: 643607e19df3435cfd77cc56143e2637f5900a6e
   url: https://github.com/pulp-platform/riscv-dbg
