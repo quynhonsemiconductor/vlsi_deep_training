@@ -6,6 +6,12 @@
 `define REG_STATUS        3'b011 //BASEADDR+0x0C
 `define REG_TX            3'b100 //BASEADDR+0x10
 `define REG_CMD           3'b101 //BASEADDR+0x14
+// Combined TX+command and RX+command registers for the QSOC peripheral-
+// triggered DMA channel:
+// a single fixed-address write/read lets a DMA channel stream consecutive
+// bytes without software re-issuing REG_CMD for every byte.
+`define REG_TXCMD         3'b110 //BASEADDR+0x18
+`define REG_RXCMD         3'b111 //BASEADDR+0x1C
 
 module apb_i2c
 #(
@@ -23,6 +29,15 @@ module apb_i2c
     output logic                      PREADY,
     output logic                      PSLVERR,
     output logic                      interrupt_o,
+    // DMA request lines for the QSOC peripheral-triggered DMA channel.
+    // dma_tx_req_o: core idle and ready to accept the next REG_TXCMD write.
+    // dma_rx_req_o: a byte read via REG_RXCMD is waiting to be collected.
+    output logic                      dma_tx_req_o,
+    output logic                      dma_rx_req_o,
+    // Asserted by the DMA channel while it issues the read that will consume
+    // the LAST byte of an RX burst: REG_RXCMD then auto-issues NACK+STOP
+    // instead of ACK+continue for the following byte.
+    input  logic                      dma_last_i,
     input  logic                      scl_pad_i,
     output logic                      scl_pad_o,
     output logic                      scl_padoen_o,
@@ -95,7 +110,32 @@ module apb_i2c
                         if(s_core_en)
                             r_cmd <= PWDATA[7:0];
                     end
+                    `REG_TXCMD:
+                    begin
+                        // DMA-friendly TX path: one write both loads the data
+                        // byte and auto-issues WR (+START/STOP taken from the
+                        // source word, so software pre-marks the first/last
+                        // byte of the burst in the DMA source buffer).
+                        r_tx <= PWDATA[7:0];
+                        if (s_core_en)
+                            // r_cmd = {sta, sto, rd, wr, ack, rsvd[1:0], iack}
+                            r_cmd <= {PWDATA[8], PWDATA[9], 1'b0, 1'b1, 1'b0, 2'b0, 1'b0};
+                    end
                 endcase
+            end
+            else if (PSEL && PENABLE && ~PWRITE && s_core_en && (s_apb_addr == `REG_RXCMD))
+            begin
+                // DMA-friendly RX path: reading REG_RXCMD both returns the
+                // previous byte (see PRDATA mux below) and auto-issues the
+                // next RD command. dma_last_i (driven by the DMA channel on
+                // the read that will consume the final byte) selects
+                // NACK+STOP instead of ACK+continue.
+                if (s_done | i2c_al)
+                    r_cmd[7:4] <= 4'h0;
+                // r_cmd = {sta, sto, rd, wr, ack, rsvd[1:0], iack}
+                // sto=ack=dma_last_i: on the last byte, NACK the slave and
+                // issue STOP in the same command; otherwise ACK and continue.
+                r_cmd <= {1'b0, dma_last_i, 1'b1, 1'b0, dma_last_i, 2'b0, 1'b0};
             end
             else
             begin
@@ -106,6 +146,23 @@ module apb_i2c
                 r_cmd[0]   <= 1'b0;               // clear IRQ_ACK bit
             end
     end //always
+
+    // ------------------------------------------------------------------
+    // DMA request generation (QSOC peripheral-triggered DMA channel)
+    // ------------------------------------------------------------------
+    reg rx_rdy_q;
+    always_ff @ (posedge HCLK, negedge HRESETn)
+    begin
+        if (~HRESETn)
+            rx_rdy_q <= 1'b0;
+        else if (s_done && rd)
+            rx_rdy_q <= 1'b1;
+        else if (PSEL && PENABLE && ~PWRITE && s_core_en && (s_apb_addr == `REG_RXCMD))
+            rx_rdy_q <= 1'b0;
+    end
+
+    assign dma_tx_req_o = s_core_en & ~tip;
+    assign dma_rx_req_o = rx_rdy_q;
 
     always_comb
     begin
@@ -122,6 +179,8 @@ module apb_i2c
                 PRDATA = {24'h0,r_tx};
             `REG_CMD:
                 PRDATA = {24'h0,r_cmd};
+            `REG_RXCMD:
+                PRDATA = {24'h0,s_rx}; // read here also auto-issues the next RD (see always_ff above)
             default:
                 PRDATA = 'h0;
         endcase

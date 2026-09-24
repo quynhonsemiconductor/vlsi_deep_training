@@ -199,8 +199,12 @@ upstreams:
   - design/i2c
   files:
   - '*.sv'
-  notes: No standalone LICENSE file upstream; licence terms are in the source file headers (OpenCores-derived
-    I2C master). SHL-0.51 recorded per the pulp-platform packaging.
+  notes: 'No standalone LICENSE file upstream; licence terms are in the source file headers (OpenCores-derived
+    I2C master). SHL-0.51 recorded per the pulp-platform packaging. Patched by
+    vendor/patches/pulp-platform_apb_i2c/0001-add-dma-request-lines.patch: REG_TXCMD (0x18), REG_RXCMD
+    (0x1C), dma_tx_req_o, dma_rx_req_o and dma_last_i for the QSOC DMA. Existing registers are unchanged.
+
+    '
 - name: nguyenquanicd/AXI4-SRAM-CONTROLLER
   url: https://github.com/nguyenquanicd/AXI4-SRAM-CONTROLLER
   commit: 503d7cd98352378c09dff3930f7fdb0590ea643d
