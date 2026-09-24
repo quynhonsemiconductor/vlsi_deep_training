@@ -12,6 +12,7 @@ copy of each rule rather than two that drift apart.
 | `DM/RULES/FE/Release/QNSC_RTL_Design_Naming_Rule.pdf` (in `MCU_guide_ws`) | **Mandatory** naming rules. CI enforces them |
 | [`util/qsoc_contract.yml`](util/qsoc_contract.yml) | Every number shared between blocks, and where each came from |
 | Your block's MAS under [`doc/src/`](doc/src) | What your block must do |
+| [`doc/TRACKER.md`](doc/TRACKER.md) | Where every block stands, stage by stage. Update your row in the PR that finishes a stage |
 
 ## Writing a block — five steps
 
@@ -158,6 +159,31 @@ parameter that `design/top` sets per instance.
 | Fork the wrapper per instance | One wrapper, parameters for the difference |
 | Rename a vendored module's port to satisfy the naming rule | The rule applies to our RTL. `naming_check.py` already skips identifiers after a dot, after `::`, and system functions such as `$clog2`, for exactly this reason |
 | Rewrite correct RTL to dodge a checker false positive | Report the false positive and fix the checker in `flow/`. A `// naming-check: ignore -- <reason>` is the stop-gap, not a rewrite |
+
+## Sign-off stages
+
+Every IP moves through the columns of [`doc/TRACKER.md`](doc/TRACKER.md). QSOC is a
+training project, so every stage runs on **open-source tools**. The tracker keeps the
+teacher's column names; the column "VCS" is the simulation stage and runs on
+Verilator here.
+
+| Stage | Tool | Files, per block | Command | `done` when |
+|---|---|---|---|---|
+| **RTL integration** | Verilator (elaborate) | `design/<block>/rtl/`, `<block>.f` | `bash flow/lint/lint_all.sh` | The wrapper follows [`design/README.md`](design/README.md), elaborates through `<block>.f`, and is instantiated in `design/top` |
+| **SIM** ("VCS") | Verilator `--binary --timing` | `dv/<block>/tb_<block>.sv`, `dv/<block>/tests/` | `bash flow/sim/run_sim.sh <block>` | Every test in the MAS verification section runs **self-checking** and ends in `PASS`; a failure calls `$fatal` |
+| **LINT** | Verilator `--lint-only -Wall`, `naming_check.py`, `hardcode_check.py` | `design/<block>/waivers.vlt` | `bash flow/lint/lint_all.sh` (CI) | All three are clean in CI. Every waiver line has a reason |
+| **SDC** | OpenSTA syntax | `design/<block>/constraints/<block>.sdc` | read by the SYN and GCA stages | Every clock and every input/output is constrained. Clock names follow the table in [`flow/sta/README.md`](flow/sta/README.md). CDC paths carry the constraint their MAS states |
+| **CDC** | Review against the MAS, plus lint | MAS crossing table | review in the pull request | Every crossing in the RTL is in the MAS crossing table, and every one goes through a shared cell in `design/common` or a handshake the MAS specifies. See [`flow/cdc/README.md`](flow/cdc/README.md) |
+| **RDC** | Review against the MAS | MAS reset table | review in the pull request | Every reset domain is listed in the MAS, and no flop is reset by one domain and sampled by another without the MAS saying why it is safe. See [`flow/rdc/README.md`](flow/rdc/README.md) |
+| **SYN** | Yosys, with the `yosys-slang` front end | none extra | `bash flow/syn/run_syn.sh <block>` | Synthesises with no latch and no multi-driven net. The cell count is recorded in the tracker comment |
+| **GCA** | OpenSTA `check_setup` | the block SDC | `bash flow/sta/run_gca.sh <block>` | `check_setup` reports no unconstrained clock, input, output or loop |
+
+CDC and RDC have no mature open-source checker, so their evidence is the MAS table plus
+the review. That is why every crossing must go through a **named shared cell**: it
+makes a crossing findable with `grep` instead of by reading every line.
+
+Mark a cell `done` only in the pull request that meets its definition, and link the
+evidence (the CI run, the test log, the review comment) in that pull request.
 
 ## Ownership
 
