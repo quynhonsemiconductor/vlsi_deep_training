@@ -16,6 +16,11 @@
 # RULES, enforced by flow/lint/vendor_guard.sh in RTL · CI:
 #   - Do not edit files under vendor/. Local fixes go in vendor/patches/ with a
 #     reason, so the next upstream bump does not silently revert them.
+#     A patch may also add a feature that needs the IP's internal state; anything
+#     that can be built from the IP's ports belongs in the wrapper instead.
+#   - A dependency of a vendored IP is vendored as its own entry, at the version
+#     the parent pins, with files: limited to what is compiled.
+#   - See CONTRIBUTING.md, "What vendor/ is", for the cases in full.
 #   - Any change under vendor/ must update this file in the same PR.
 #
 # `commit:` is left as TODO where the tree has not been vendored yet. Fill it at

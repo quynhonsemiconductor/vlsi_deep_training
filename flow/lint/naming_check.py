@@ -192,8 +192,11 @@ def check_file(path: Path) -> list[Finding]:
 
     # ---- 2.2 instance name ----------------------------------------------
     # <ModuleName> [#(...)] <inst> ( ... )   at statement level
+    # At least one blank must separate the module name (or its #(...) block)
+    # from the instance name. Without it, backtracking split `if (` into a
+    # module `i` and an instance `f`.
     for m in re.finditer(
-        r"^[ \t]*([A-Za-z_]\w*)[ \t]*(?:#\s*\([^;]*?\)[ \t]*)?([A-Za-z_]\w*)[ \t]*\(",
+        r"^[ \t]*([A-Za-z_]\w*)(?:[ \t]*#\s*\([^;]*?\))?[ \t]+([A-Za-z_]\w*)[ \t]*\(",
         src, re.M
     ):
         mod, inst = m.group(1), m.group(2)
@@ -234,6 +237,13 @@ def check_file(path: Path) -> list[Finding]:
         # checking it here would put two CI checks in direct contradiction.
         # The same applies to struct and package member access.
         if m.start() > 0 and src[m.start() - 1] == ".":
+            continue
+        # Not ours either: a system function ($clog2), a macro (`APB_TYPEDEF_ALL)
+        # and a package member (obi_pkg::ObiMinimalOptionalConfig) are named by
+        # the language or by the vendored package that declares them.
+        if m.start() > 0 and src[m.start() - 1] in "$`":
+            continue
+        if m.start() > 1 and src[m.start() - 2:m.start()] == "::":
             continue
 
         seen.add((ln, name))

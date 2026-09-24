@@ -19,6 +19,7 @@ package qnsc_pkg;
   localparam int unsigned C_DATA_WIDTH = 32;
   localparam int unsigned C_ADDR_WIDTH = 32;
   localparam int unsigned C_CLK_MHZ    = 20;
+  localparam int unsigned C_APB_PADDR_WIDTH = 12;  // P_BUS -> every APB slave
 
   // ---- memory map ----------------------------------------------------------
   // Source: QSOC_HAS Table 7-1. Every address in the 32-bit space belongs to

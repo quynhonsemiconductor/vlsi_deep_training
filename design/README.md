@@ -40,7 +40,7 @@ instances is passed as a **parameter** — never a forked file.
 | Block | Ports on the block diagram | Instances |
 |---|---|---:|
 | `uart` | `APB_M9/10` | 2 |
-| `gpio` | `APB_M3/4/5/6` | 4 |
+| `gpio` | `APB_M3/4/5` | 3 (GPIO3 dropped with the 40-pin package; `APB_M6` unused) |
 | `timer` | `APB_M7/8` | 2 (64-bit vs two 32-bit) |
 | `ram` | `AXI_M1`, `AXI_M2` | 2 (ISRAM, DSRAM — differ only in depth) |
 | `pwm`, `i2c`, `spi`, `dma` | one port each | 1 |
@@ -95,6 +95,18 @@ detectable.
 Numbers not yet agreed are listed under `tbd:` in the contract, named rather than
 omitted so the gap is visible instead of being filled in by whoever needs it first.
 
+## APB slave conventions
+
+Every APB peripheral wrapper follows these, so P_BUS and firmware see one
+behaviour across the chip.
+
+| Item | Rule |
+|---|---|
+| `i_bus_apb_paddr` | `C_APB_PADDR_WIDTH` = 12 bits: the low 12 bits of the offset inside the 16 KiB window, after P_BUS subtracts the base. Offsets the IP does not decode alias, and that is accepted |
+| `PSTRB`, `PPROT` | Connect them if the IP has them. If the IP has no `PSTRB`, leave the port unconnected and state in the MAS that a sub-word write writes the whole word |
+| `PREADY`, `PSLVERR` | Pass the IP's through. A wrapper that adds its own decode error states it, and the reason, in its MAS |
+| Clock, reset | `i_clk_peri`, `i_rst_n_peri`: the `peri` cluster, gateable by `SCRC` |
+
 ## Naming
 
 **`QNSC_RTL_Design_Naming_Rule` V1.0 is mandatory.** The full document is
@@ -116,6 +128,13 @@ that come up most:
 | Memory array | `mem_<function>` | `mem_data` |
 | Index | underscore before the digit | `timer_0`, never `timer0` |
 | Vocabulary | `int` not `irq`, `clk` not `clock`, `rst` not `reset` | `o_int_fast` |
+| Port to a pad, through IO MUX | `i_<function>_<pin>`, `o_<function>_<pin>`, `o_<function>_<pin>_oe` | `i_i2c_scl`, `o_i2c_scl_oe`, `i_jtag_tck`, `o_pwm` |
+| Output enable | `_oe`, **active high**; invert an IP's active-low enable inside the wrapper | `o_jtag_tdo_oe` |
+| DMA handshake | `o_dma_tx_req`, `o_dma_rx_req`, `i_dma_last` | |
+
+A pad-bound port is named after the **function**, not after the pad: `gpio`
+appears in a name only when the port belongs to the GPIO IP. Which package pin
+carries the function is the IO pad owner's table, never the wrapper's.
 
 `flow/lint/naming_check.py` enforces these in CI and reports each violation **inline
 on the pull request diff**. Run it before pushing:

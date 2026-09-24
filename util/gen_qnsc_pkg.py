@@ -64,6 +64,7 @@ def emit(c: dict) -> str:
     a(f"  localparam int unsigned C_DATA_WIDTH = {meta['data_width']};")
     a(f"  localparam int unsigned C_ADDR_WIDTH = {meta['addr_width']};")
     a(f"  localparam int unsigned C_CLK_MHZ    = {meta['clock_mhz']};")
+    a(f"  localparam int unsigned C_APB_PADDR_WIDTH = {meta['apb_paddr_width']};  // P_BUS -> every APB slave")
     a("")
 
     # ---- memory map ------------------------------------------------------
