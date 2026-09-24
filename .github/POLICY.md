@@ -19,12 +19,12 @@ a review rule for every block at once.
 | `labels.yml` | Source of truth for the label set. |
 | `labeler.yml` | Maps file paths to labels. Every label it names must exist in `labels.yml`. |
 | `workflows/pr-title.yml` | PR title must be a Conventional Commit. Its own workflow — see the header comment for why. |
-| `workflows/rtl-ci.yml` | Verilator lint per block, vendor-tree guard, manifest guard, docs build. |
+| `workflows/rtl-ci.yml` | The RTL checks: lint, filelist paths, generated wrappers, naming, hardcoded values, contract, vendor guard, docs. Every step calls a target of the root `Makefile`. |
 | `workflows/labeler.yml` | Applies path labels via the org's shared CI. |
 | `workflows/security.yml` | Pins/audits the GitHub Actions this repo calls. |
 
-The lint and guard scripts the RTL workflow calls live in
-[`../flow/lint/`](../flow/lint): `lint_all.sh` and `vendor_guard.sh`.
+The scripts the RTL workflow calls live in [`../flow/`](../flow) and
+[`../util/`](../util); `make help` lists them.
 
 ## Bootstrap (run once, by a maintainer)
 
@@ -39,7 +39,7 @@ Labels must exist before the labeler can apply them. Using
 ```bash
 npx github-label-sync --access-token "$GH_TOKEN" \
   --labels .github/labels.yml \
-  quynhonsemiconductor/qsoc
+  quynhonsemiconductor/vlsi_deep_training
 ```
 
 `--dry-run` first to see the diff. Re-run this whenever `labels.yml` changes;
@@ -52,16 +52,16 @@ makes the required review *unsatisfiable* — the PR blocks with no way to
 proceed. Confirm both teams are added:
 
 ```bash
-gh api orgs/quynhonsemiconductor/teams/vlsi-maintainers/repos/quynhonsemiconductor/qsoc
-gh api orgs/quynhonsemiconductor/teams/vlsi-devs/repos/quynhonsemiconductor/qsoc
+gh api orgs/quynhonsemiconductor/teams/vlsi-maintainers/repos/quynhonsemiconductor/vlsi_deep_training
+gh api orgs/quynhonsemiconductor/teams/vlsi-devs/repos/quynhonsemiconductor/vlsi_deep_training
 ```
 
 `vlsi-maintainers` needs at least `push` (write) to be a valid code owner;
 `vlsi-devs` needs `push` to open branches. To grant:
 
 ```bash
-gh api -X PUT orgs/quynhonsemiconductor/teams/vlsi-maintainers/repos/quynhonsemiconductor/qsoc -f permission=maintain
-gh api -X PUT orgs/quynhonsemiconductor/teams/vlsi-devs/repos/quynhonsemiconductor/qsoc         -f permission=push
+gh api -X PUT orgs/quynhonsemiconductor/teams/vlsi-maintainers/repos/quynhonsemiconductor/vlsi_deep_training -f permission=maintain
+gh api -X PUT orgs/quynhonsemiconductor/teams/vlsi-devs/repos/quynhonsemiconductor/vlsi_deep_training         -f permission=push
 ```
 
 ### 3. Create the `main-protection` ruleset
@@ -72,8 +72,8 @@ classic branch protection and are what the org already uses.
 
 Save this as `main-protection.json`. This mirrors rova's `main-protection`
 ruleset (the org standard) field for field; only the `required_status_checks`
-contexts differ, because qsoc runs RTL checks rather than rova's web/backend
-checks.
+contexts differ, because this repository runs RTL checks rather than rova's
+web/backend checks.
 
 ```json
 {
@@ -107,7 +107,12 @@ checks.
           { "context": "Vendor tree unmodified" },
           { "context": "Specifications build and check" },
           { "context": "actions-security / Workflow lint (actionlint)" },
-          { "context": "actions-security / Actions security (zizmor)" }
+          { "context": "actions-security / Actions security (zizmor)" },
+          { "context": "RTL naming rule" },
+          { "context": "Inter-block contract" },
+          { "context": "No hardcoded shared values" },
+          { "context": "Filelist paths" },
+          { "context": "Generated wrappers" }
         ]
       }
     }
@@ -121,7 +126,7 @@ checks.
 Then:
 
 ```bash
-gh api -X POST repos/quynhonsemiconductor/qsoc/rulesets \
+gh api -X POST repos/quynhonsemiconductor/vlsi_deep_training/rulesets \
   --input main-protection.json
 ```
 
@@ -144,18 +149,18 @@ Notes:
 Verify:
 
 ```bash
-gh api repos/quynhonsemiconductor/qsoc/rulesets | jq '.[].name'
-gh ruleset check --repo quynhonsemiconductor/qsoc   # if gh version supports it
+gh api repos/quynhonsemiconductor/vlsi_deep_training/rulesets | jq '.[].name'
+gh ruleset check --repo quynhonsemiconductor/vlsi_deep_training   # if gh version supports it
 ```
 
-## Open CI items (recorded, not yet built)
+## Keeping the ruleset in step with CI
 
-- **Licence audit over `vendor/manifest.yml`.** Several upstreams are marked
-  `license: UNRESOLVED` (the `nguyenquanicd/*` repos have no LICENSE file). A
-  check that fails when a `used_by` entry points at an `UNRESOLVED` licence
-  would turn that open question into a gate instead of a comment. This is why
-  `security.yml` does **not** call the org's npm/Python dependency scanner —
-  that would be a permanently-green check proving nothing.
-- **Manifest `commit: TODO` guard.** Fail if any `used_by`-referenced upstream
-  still has `commit: TODO` when its consuming block gains RTL. Tape-out cannot
-  proceed on an unpinned source.
+A new CI job is not a gate until its name is added to `required_status_checks`.
+The live ruleset requires the first nine contexts above; `Filelist paths` and
+`Generated wrappers` were added to CI later and are required once a maintainer
+updates the ruleset:
+
+```bash
+gh api repos/quynhonsemiconductor/vlsi_deep_training/rulesets --jq '.[] | "\(.id) \(.name)"'
+gh api -X PUT repos/quynhonsemiconductor/vlsi_deep_training/rulesets/<id> --input main-protection.json
+```

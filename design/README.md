@@ -99,6 +99,11 @@ instances is passed as a **parameter** — never a forked file.
 Reading the port name on the diagram tells you the count: `APB_M9/10` is two ports,
 so two instances.
 
+For the same reason, a shared wrapper never uses a per-instance constant:
+`C_UART_0_SIZE` inside a wrapper that also serves UART1 is wrong, even when the two
+values happen to be equal. Use a chip-wide constant (`C_APB_PADDR_WIDTH`) or a
+parameter that `design/top` sets per instance.
+
 ## The filelist is not optional
 
 CI lints each block **through `<block>.f`**. A file not listed there is not compiled
@@ -132,7 +137,7 @@ the single source of truth. To change a number:
 
 ```bash
 vim util/qsoc_contract.yml
-python3 util/gen_qnsc_pkg.py        # regenerate the package
+make pkg                            # regenerate the package
 # commit both files together
 ```
 
@@ -198,8 +203,8 @@ of the rule document.
 on the pull request diff**. Run it before pushing:
 
 ```bash
-python3 flow/lint/naming_check.py            # whole design/ tree
-python3 flow/lint/naming_check.py design/timer
+make naming                  # whole design/ tree
+make naming BLOCK=timer
 ```
 
 It checks `design/**/rtl` only. **Vendored IP is out of scope** — it follows its

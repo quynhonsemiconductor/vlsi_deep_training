@@ -36,28 +36,19 @@ Upstream IP is **listed**, never copied into `rtl/`. Order matters: packages and
 `` `define `` files first, then leaf modules, then the IP's top, then your wrapper
 last. Rationale in [`design/README.md`](design/README.md).
 
-### 3. Write the wrapper `design/<block>/rtl/m_qnsc_wrap_<ip>.sv`
+### 3. Write the wrapper `design/<block>/rtl/m_qnsc_wrap_<ip_module>.sv`
 
-```systemverilog
-import qnsc_pkg::*;
+Wrapper = core (the IP) + bridge (only if the IP speaks another protocol than the
+chip bus). It is generated with emacs verilog-mode from a template:
 
-module m_qnsc_wrap_uart (
-  input  logic i_clk_peri,
-  input  logic i_rst_n_peri,
-  // ... APB per the naming rule: i_bus_apb_<signal>
-  output logic o_int_uart_0
-);
-  apb_uart u_uart_0 (
-    .clk_i (i_clk_peri),   // left side is the vendored module's port name
-    ...
-  );
-endmodule
+```bash
+make new-wrap BLOCK=<block> IP=vendor/<org>/<ip>/<ip_top>.sv   # once
+# fill the AUTO_TEMPLATE in design/<block>/rtl/emacs/<wrapper>.src.sv
+make wrap BLOCK=<block>                                       # after every edit
 ```
 
-A wrapper does four things: **port-map** to the contract's names, **tie off** what
-QSOC does not use, **adapt the protocol** if the IP speaks a different one, and
-**add what the IP is missing** — the byte-enable path the RAM controller lacks is
-the worked example.
+What a wrapper must do, the emacs rules and the naming table are in
+[`design/README.md`](design/README.md#the-wrapper-is-the-boundary).
 
 ### 4. Check locally before pushing
 
@@ -142,18 +133,6 @@ git add util/qsoc_contract.yml design/top/rtl/qnsc_pkg.sv   # commit BOTH
 
 Numbers not yet agreed are listed under `tbd:` in the contract, each with the owner
 who must supply it.
-
-## Instances are decided in `design/top`
-
-You write **one** wrapper. `design/top` instantiates it as many times as the block
-diagram shows: `uart` twice, `gpio` three times, `timer` twice with different
-parameters, `ram` twice with different depths. What differs between instances is a
-**parameter or a port** — never a forked file.
-
-For the same reason, a shared wrapper never uses a per-instance constant:
-`C_UART_0_SIZE` inside a wrapper that also serves UART1 is wrong, even when the
-two values happen to be equal. Use a chip-wide constant (`C_APB_PADDR_WIDTH`) or a
-parameter that `design/top` sets per instance.
 
 ## Do not
 

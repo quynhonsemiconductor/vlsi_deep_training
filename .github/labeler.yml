@@ -26,30 +26,58 @@ area/pwm:
 
 area/scrc:
   - changed-files:
-    - any-glob-to-any-file: ["design/scrc/**"]
+    - any-glob-to-any-file: ["design/scrc/**", "dv/scrc/**"]
 
 area/dma:
   - changed-files:
-    - any-glob-to-any-file: ["design/dma/**"]
+    - any-glob-to-any-file: ["design/dma/**", "dv/dma/**"]
 
 area/bus:
   - changed-files:
-    - any-glob-to-any-file: ["design/bus/**"]
+    - any-glob-to-any-file: ["design/bus/**", "dv/bus/**"]
 
 area/spi:
   - changed-files:
-    - any-glob-to-any-file: ["design/spi/**"]
+    - any-glob-to-any-file: ["design/spi/**", "dv/spi/**"]
 
 area/iomux:
   - changed-files:
-    - any-glob-to-any-file: ["design/iomux/**"]
+    - any-glob-to-any-file: ["design/iomux/**", "dv/iomux/**"]
 
 # ---- shared surfaces -------------------------------------------------------
 # These three get their own labels because a change to any of them can move
 # another block's contract without touching that block's directory.
+area/rom:
+  - changed-files:
+    - any-glob-to-any-file: ["design/rom/**", "dv/rom/**"]
+
+area/cpu:
+  - changed-files:
+    - any-glob-to-any-file: ["design/cpu/**", "dv/cpu/**"]
+
+area/uart:
+  - changed-files:
+    - any-glob-to-any-file: ["design/uart/**", "dv/uart/**"]
+
+area/i2c:
+  - changed-files:
+    - any-glob-to-any-file: ["design/i2c/**", "dv/i2c/**"]
+
+area/gpio:
+  - changed-files:
+    - any-glob-to-any-file: ["design/gpio/**", "dv/gpio/**"]
+
+area/wdt:
+  - changed-files:
+    - any-glob-to-any-file: ["design/wdt/**", "dv/wdt/**"]
+
+area/common:
+  - changed-files:
+    - any-glob-to-any-file: ["design/common/**"]
+
 area/top:
   - changed-files:
-    - any-glob-to-any-file: ["design/top/**"]
+    - any-glob-to-any-file: ["design/top/**", "dv/top/**"]
 
 area/vendor:
   - changed-files:
@@ -74,11 +102,11 @@ area/doc:
 
 area/ci:
   - changed-files:
-    - any-glob-to-any-file: [".github/**", "flow/lint/**"]
+    - any-glob-to-any-file: [".github/**", "Makefile", "flow/**"]
 
 # ---- cross-cutting flag ----------------------------------------------------
 # Raised when a PR touches the contract surfaces at the same time as a block.
 # Not a substitute for review, just a prompt to check the other side moved too.
 contract-change:
   - changed-files:
-    - any-glob-to-any-file: ["design/top/qsoc_pkg.sv", "util/gen/**", "vendor/manifest.yml"]
+    - any-glob-to-any-file: ["util/qsoc_contract.yml", "design/top/rtl/qnsc_pkg.sv", "vendor/manifest.yml"]

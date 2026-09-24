@@ -9,7 +9,7 @@ toolchain that builds them. **The source of truth is Markdown, not the `.docx`.*
 |------|------|---------|
 | `src/*.md` | Spec source (the truth) | ✅ |
 | `template/QNSC_Technical_Document_Format.docx` | pandoc reference template | ✅ |
-| `tools/*.py`, `diagen.py` | Diagram generators | ✅ |
+| `tools/*.py` | Diagram generators and the contract-table generator | ✅ |
 | `drawio/*.drawio` | Editable diagram sources | ✅ |
 | `img/*.png`, `*.svg` | Rendered diagrams (committed so specs are readable without the drawio CLI) | ✅ |
 | `build_docs.py` | Builds the `.docx` specs from `src/*.md` | ✅ |
@@ -40,25 +40,31 @@ its spec.
 Needs `pandoc`. From this directory:
 
 ```bash
-python3 build_docs.py
+python3 build_docs.py        # or, from the repository root: make docs
 ```
 
 Produces one `.docx` per entry in the `DOCS` list in `build_docs.py`. This is
 the exact step CI runs (`RTL · CI` → *Specifications build and check*), so a
 broken source or template fails the PR.
 
-## Regenerate the diagrams (`img/` from `drawio/`)
+## Regenerate the diagrams (`img/` and `drawio/` from `tools/`)
 
-Only needed when a diagram changes. Needs the **drawio CLI** (`drawio` /
-`drawio-desktop`), which is why this is a manual step and **not** in CI — CI
-consumes the committed `img/` instead of rendering it. Each script is
-self-contained:
+Only needed when a diagram changes. Each script describes its figures once in
+Python; `tools/diagen.py` writes the editable `.drawio`, the `.svg`, and the
+`.png` (through `rsvg-convert`). CI does not render; it uses the committed `img/`.
 
-```bash
-python3 tools/build_ram_block.py      # -> img/fig_ram_simple.* + drawio/QNSC_RAM_Block.drawio
-python3 tools/build_intr_map.py       # interrupt map figures
-python3 tools/build_sysdbg_design.py  # etc.
-```
+| Script | Figures | Used by |
+|---|---|---|
+| `tools/build_ram_block.py` | `fig_ram_simple` | RAM MAS |
+| `tools/build_intr_map.py` | `fig_intr_map`, `fig_intr_levels` | Interrupt Map MAS, DECISIONS |
+| `tools/build_timer_pwm.py` | `fig_timer_block`, `fig_timer_inside`, `fig_pwm_block` | TIMER, PWM MAS |
+| `tools/build_sysdbg_mas.py` | `fig_sysdbg_block`, `fig_sysdbg_handshake`, `fig_sysdbg_boot_wiring` | SYSDBG MAS |
+| `tools/build_sysdbg_design.py`, `tools/build_sysdbg_ports.py` | the V1.x SYSDBG figures | SYSDBG DECISIONS |
+| `tools/build_qsoc_mem.py` | `fig_qsoc_mem` | RAM and SYSDBG DECISIONS |
+| `tools/svg_mono.py` | `fig_qsoc_full_mono` from `fig_qsoc_full.svg` | root README |
+
+`tools/gen_doc_tables.py` rewrites the `<!-- gen:... -->` tables in `src/*.md`
+from `util/qsoc_contract.yml`; CI checks them with `--check` (`make tables`).
 
 Paths in the scripts are relative to `doc/`, so they run from anywhere.
 
@@ -68,5 +74,5 @@ Paths in the scripts are relative to `doc/`, so they run from anywhere.
 2. Add `("<NAME>", "<Header label>")` to `DOCS` in `build_docs.py`.
 3. If it has diagrams, add a `tools/build_<name>.py` and reference the rendered
    `img/*.png` from the markdown.
-4. Run `build_docs.py` to confirm it builds. Commit the `.md`, drawio, img, and
-   script — never the `.docx`.
+4. Run `build_docs.py` to confirm it builds. Commit the `.md`, drawio, img,
+   script, and the new `.docx` (the rules above).

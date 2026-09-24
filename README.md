@@ -22,8 +22,8 @@ through a wrapper.
 | **Memory** | 2 KiB ROM · 64 KiB instruction RAM · 32 KiB data RAM |
 | **System bus** | AXI4 crossbar, fully connected, decode error on an unmapped address |
 | **Peripheral bus** | APB4 router, 16 slaves |
-| **Peripherals** | 2× UART · SPI host + device · I²C · 4× GPIO · 2× timer · PWM · watchdog · DMA |
-| **Interrupts** | 27 sources → 11 fast lines + 1 NMI, through a combinational OR tree |
+| **Peripherals** | 2× UART · SPI host + device · I²C · 3× GPIO · 2× timer · PWM · watchdog · DMA |
+| **Interrupts** | 26 sources → 11 fast lines + 1 NMI, through a combinational OR tree |
 | **Debug** | JTAG, in-house: halt, resume, and memory access without the CPU |
 | **Boot** | serial download into RAM, header + payload + CRC32, then jump |
 

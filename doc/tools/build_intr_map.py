@@ -88,7 +88,7 @@ f1.append(N("top", XT - 12, ty - 12, WT + 24, len(ties) * DY,
 
 # ------------------------------------------------- 2. what replaced what
 f2 = [
-    N("t", 40, 70, 760, 30, "The same 27 sources, three ways", "group", 12, True),
+    N("t", 40, 70, 760, 30, "The same 26 sources, three ways", "group", 12, True),
     N("h1", 40, 116, 246, 30, "OR tree  --  this revision", "green", 11, True),
     N("h2", 300, 116, 246, 30, "Latched in-house  V2.0-V7.0", "grey", 11, True),
     N("h3", 560, 116, 240, 30, "rv_plic  V8.0-V10.1", "grey", 11, True),

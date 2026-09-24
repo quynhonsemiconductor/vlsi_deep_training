@@ -1,10 +1,10 @@
-# `ram` — RAM / ROM controller
+# `ram` — RAM controller (ISRAM, DSRAM)
 
-**Owner:** @nghia   **Spec:** [`doc/src/QNSC_RAM_MAS.md`](../../doc/src/QNSC_RAM_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/ram`](../../dv/ram)
+**Owner:** @Nghia-VanTrong   **Spec:** [`doc/src/QNSC_RAM_MAS.md`](../../doc/src/QNSC_RAM_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/ram`](../../dv/ram)
 
 ## What this block is
 
-AXI4 memory controller for on-chip RAM and ROM, built on
+AXI4 memory controller for the on-chip RAMs, built on
 `nguyenquanicd/AXI4-SRAM-CONTROLLER`. The IP lives in
 [`vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER`](../../vendor) and is not copied
 here; `rtl/` holds our wrapper and the pieces the IP is missing.
@@ -27,5 +27,6 @@ Findings from reading the RTL, handled in our wrapper:
 
 ## The wrapper is the boundary
 
-`rtl/m_qnsc_wrap_axi4_sram.sv` (module `m_qnsc_wrap_axi4_sram`) instantiates the
-vendored controller unmodified and adds the WSTRB logic. Ours in `rtl/`, borrowed in `vendor/`.
+`rtl/m_qnsc_wrap_axi4_sram.sv` (module `m_qnsc_wrap_axi4_sram`, after the IP's
+`m_vlsi_axi4_sram`) instantiates the vendored controller unmodified and adds the
+WSTRB logic. Generated with emacs from `rtl/emacs/` ([`design/README.md`](../README.md#writing-a-wrapper-with-emacs-verilog-mode)). Ours in `rtl/`, borrowed in `vendor/`.
