@@ -42,6 +42,7 @@ Honest status, so nobody has to guess:
 | RTL | **not started.** The scaffold, naming rules and CI are in place; wrappers are next |
 | Verification | not started |
 | Physical design | not started |
+| Per-IP status | [`doc/TRACKER.md`](doc/TRACKER.md), one column per sign-off stage |
 
 ## Repository layout
 
@@ -51,8 +52,9 @@ Honest status, so nobody has to guess:
 | `doc/` | Specifications and the toolchain that builds them — see [`doc/README.md`](doc/README.md) |
 | `vendor/` | Upstream IP, copied in at a pinned commit, never edited |
 | `util/` | The inter-block contract, its generator, and the vendoring tool |
-| `flow/` | Lint and the checks that gate a pull request |
-| `dv/` · `pd/` · `fpga/` | Verification, physical design, FPGA bring-up |
+| `flow/` | Scripts for every sign-off stage: lint, sim, syn, STA/SDC, and the CDC/RDC rules |
+| `dv/` · `pd/` · `fpga/` | Verification, implementation, FPGA bring-up |
+| `doc/TRACKER.md` | Sign-off status of every IP, one column per stage |
 | `.github/` | CI, ownership and repository policy — see [`.github/POLICY.md`](.github/POLICY.md) |
 
 ## Getting started
