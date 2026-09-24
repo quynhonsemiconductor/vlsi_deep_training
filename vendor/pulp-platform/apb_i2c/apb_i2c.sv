@@ -75,6 +75,13 @@ module apb_i2c
     wire i2c_busy;    // bus busy (start signal detected)
     wire i2c_al;      // i2c bus arbitration lost
     reg  al;          // status register arbitration lost bit
+    // decode command register
+    wire sta  = r_cmd[7];
+    wire sto  = r_cmd[6];
+    wire rd   = r_cmd[5];
+    wire wr   = r_cmd[4];
+    wire ack  = r_cmd[3];
+    wire iack = r_cmd[0];
 
     //
     // module body
@@ -186,13 +193,6 @@ module apb_i2c
         endcase
     end
 
-    // decode command register
-    wire sta  = r_cmd[7];
-    wire sto  = r_cmd[6];
-    wire rd   = r_cmd[5];
-    wire wr   = r_cmd[4];
-    wire ack  = r_cmd[3];
-    wire iack = r_cmd[0];
 
     // decode control register
     assign s_core_en = r_ctrl[7];

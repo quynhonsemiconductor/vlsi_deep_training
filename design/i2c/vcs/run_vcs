@@ -1,0 +1,21 @@
+#!/bin/tcsh
+
+setenv DESIGN m_qnsc_wrap_i2c 
+
+#if (! $?) then
+#    vcs -sverilog +vcs+lic+wait \
+#        -timescale=1ns/1ps \
+#        -F filelist.f \
+#        -top $DESIGN \
+#        -debug_acess -kdb \
+#        +error+100 \
+#        +lint=all -l comp.log
+if (! $?) then
+    vcs -sverilog +vcs+lic+wait \
+        -timescale=1ns/1ps \
+        -F filelist.f \
+        -top $DESIGN \
+        -kdb \
+        +lint=TFIPC-L \
+        -l comp.log
+endif
