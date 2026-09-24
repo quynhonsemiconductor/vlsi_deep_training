@@ -177,6 +177,75 @@ upstreams:
   files:
   - src/**
   - LICENSE*
+  notes: 'Read as the reference for the wrapper, not compiled. m_qnsc_wrap_apb_uart is derived from
+    apb_uart_wrap.sv and instantiates apb_to_obi + obi_uart directly, because apb_uart_wrap has no DMA
+    request ports. The UART core itself comes from pulp-platform/obi_peripherals, a Bender dependency
+    of this repo (apb 0.2.4, obi 0.1.7, obi_peripherals 0.1.1).
+
+    '
+- name: pulp-platform/obi_peripherals
+  url: https://github.com/pulp-platform/obi_peripherals
+  commit: 079894a6cbd4e544c477643d184a4c340bd4e391
+  license: SHL-0.51
+  used_by:
+  - design/uart
+  files:
+  - hw/obi_uart/**
+  - LICENSE*
+  notes: 'Tag v0.1.1, the version apb_uart 8182a85 depends on. Holds obi_uart, the actual UART core.
+    Patched by vendor/patches/pulp-platform_obi_peripherals/0001-add-dma-request-lines.patch to bring
+    out dma_tx_req_o / dma_rx_req_o for the QSOC DMA. Modem inputs are tied inactive in the wrapper.
+
+    '
+- name: pulp-platform/obi
+  url: https://github.com/pulp-platform/obi
+  commit: 0155fc34e900c7c884e081c0a1114a247937ff69
+  license: SHL-0.51
+  used_by:
+  - design/uart
+  files:
+  - include/obi/*.svh
+  - src/obi_pkg.sv
+  - src/apb_to_obi.sv
+  - LICENSE*
+  notes: 'Tag v0.1.7, the version apb_uart 8182a85 depends on (also satisfies obi_peripherals'' ^0.1.3).
+    Only the package, the typedef macros and apb_to_obi are taken: the UART wrapper converts APB to OBI
+    in front of obi_uart.
+
+    '
+- name: pulp-platform/apb
+  url: https://github.com/pulp-platform/apb
+  commit: 77ddf073f194d44b9119949d2421be59789e69ae
+  license: SHL-0.51
+  used_by:
+  - design/uart
+  files:
+  - include/apb/*.svh
+  - src/apb_pkg.sv
+  - LICENSE*
+  notes: 'Tag v0.2.4, the version apb_uart 8182a85 depends on. Only apb_pkg and the typedef macros are
+    taken, for the APB request/response structs the UART wrapper feeds to apb_to_obi.
+
+    '
+- name: pulp-platform/common_cells
+  url: https://github.com/pulp-platform/common_cells
+  commit: 9afda9abb565971649c2aa0985639c096f351171
+  license: SHL-0.51
+  used_by:
+  - design/uart
+  files:
+  - include/common_cells/*.svh
+  - src/cf_math_pkg.sv
+  - src/sync.sv
+  - src/delta_counter.sv
+  - src/counter.sv
+  - src/fifo_v3.sv
+  - LICENSE*
+  notes: 'Tag v1.38.0, the version obi 0.1.7 resolves in its Bender.lock (satisfies apb ^1.16.2 and
+    obi_peripherals ^1.37.0). Only the cells obi_uart and apb_to_obi instantiate are taken. Any other
+    block that needs common_cells adds its files to this list rather than vendoring a second copy.
+
+    '
 - name: pulp-platform/apb_gpio
   url: https://github.com/pulp-platform/apb_gpio
   commit: f82caeb7f7d89427f05e9af5ed31e0675efe0d83

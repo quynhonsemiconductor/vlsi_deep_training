@@ -15,11 +15,35 @@
 # =============================================================================
 
 # ---- include directories ----------------------------------------------------
-# +incdir+../../vendor/<upstream>/<path>
++incdir+../../vendor/pulp-platform/common_cells/include
++incdir+../../vendor/pulp-platform/apb/include
++incdir+../../vendor/pulp-platform/obi/include
+
+# ---- shared contract --------------------------------------------------------
+../top/rtl/qnsc_pkg.sv
 
 # ---- upstream IP, in compile order -----------------------------------------
-# ../../vendor/<upstream>/rtl/<leaf>.sv
-# ../../vendor/<upstream>/rtl/<top_of_ip>.sv
+# pulp-platform/common_cells -- only the cells obi_uart and apb_to_obi use
+../../vendor/pulp-platform/common_cells/src/cf_math_pkg.sv
+../../vendor/pulp-platform/common_cells/src/sync.sv
+../../vendor/pulp-platform/common_cells/src/delta_counter.sv
+../../vendor/pulp-platform/common_cells/src/counter.sv
+../../vendor/pulp-platform/common_cells/src/fifo_v3.sv
+# pulp-platform/apb -- request/response structs
+../../vendor/pulp-platform/apb/src/apb_pkg.sv
+# pulp-platform/obi -- OBI package and the APB-to-OBI bridge
+../../vendor/pulp-platform/obi/src/obi_pkg.sv
+../../vendor/pulp-platform/obi/src/apb_to_obi.sv
+# pulp-platform/obi_peripherals, with vendor/patches/pulp-platform_obi_peripherals/
+# applied. Order is upstream's Bender.yml.
+../../vendor/pulp-platform/obi_peripherals/hw/obi_uart/obi_uart_pkg.sv
+../../vendor/pulp-platform/obi_peripherals/hw/obi_uart/obi_uart_baudgen.sv
+../../vendor/pulp-platform/obi_peripherals/hw/obi_uart/obi_uart_interrupts.sv
+../../vendor/pulp-platform/obi_peripherals/hw/obi_uart/obi_uart_modem.sv
+../../vendor/pulp-platform/obi_peripherals/hw/obi_uart/obi_uart_rx.sv
+../../vendor/pulp-platform/obi_peripherals/hw/obi_uart/obi_uart_tx.sv
+../../vendor/pulp-platform/obi_peripherals/hw/obi_uart/obi_uart_register.sv
+../../vendor/pulp-platform/obi_peripherals/hw/obi_uart/obi_uart.sv
 
 # ---- ours -------------------------------------------------------------------
-# rtl/<wrapper>.sv
+rtl/m_qnsc_wrap_apb_uart.sv

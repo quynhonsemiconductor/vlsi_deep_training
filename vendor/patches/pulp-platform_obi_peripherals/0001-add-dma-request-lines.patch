@@ -1,0 +1,70 @@
+QSOC: bring out DMA request lines from obi_uart.
+
+Reason: the QSOC DMA serves both UARTs without the CPU polling LSR. Upstream
+obi_uart has no DMA handshake, so this patch adds:
+  - obi_uart_tx.dma_tx_req_o = ~thr_full_q (TX holding register/FIFO has room)
+  - obi_uart.dma_tx_req_o    (from obi_uart_tx)
+  - obi_uart.dma_rx_req_o    = rx_fifo_trigger (RX FIFO at its trigger level)
+No existing port or register changes behaviour.
+
+Applied by util/vendor_ip.py (git apply -p1 --directory vendor/pulp-platform/obi_peripherals).
+Upstream base: pulp-platform/obi_peripherals v0.1.1, 079894a6cbd4e544c477643d184a4c340bd4e391.
+Used by: design/uart
+
+diff --git a/hw/obi_uart/obi_uart.sv b/hw/obi_uart/obi_uart.sv
+index 8696f47..5742d82 100644
+--- a/hw/obi_uart/obi_uart.sv
++++ b/hw/obi_uart/obi_uart.sv
+@@ -27,6 +27,12 @@ module obi_uart #(
+   output logic     irq_o,   // Interrupt line
+   output logic     irq_no,  // Negated Interrupt line
+ 
++  // DMA request lines for the QSOC peripheral-triggered DMA channels.
++  // dma_tx_req_o: TX holding register/FIFO has room for a new byte.
++  // dma_rx_req_o: RX FIFO has reached its trigger level (data available).
++  output logic     dma_tx_req_o,
++  output logic     dma_rx_req_o,
++
+   input  logic     rxd_i,  // Serial Input
+   output logic     txd_o,  // Serial Output
+ 
+@@ -154,11 +160,14 @@ module obi_uart #(
+     .double_rate_edge_i (double_rate_edge),
+ 
+     .txd_o       (txd),
++    .dma_tx_req_o(dma_tx_req_o),
+ 
+     .reg_read_i  (reg_read),
+     .reg_write_o (reg_write.tx)
+   );
+ 
++  assign dma_rx_req_o = rx_fifo_trigger;
++
+   ////////////////////////////////////////////////////////////////////////////////////////////////
+   // INTERRUPT CONTROL //
+   ////////////////////////////////////////////////////////////////////////////////////////////////
+diff --git a/hw/obi_uart/obi_uart_tx.sv b/hw/obi_uart/obi_uart_tx.sv
+index 920879d..4ae85a8 100644
+--- a/hw/obi_uart/obi_uart_tx.sv
++++ b/hw/obi_uart/obi_uart_tx.sv
+@@ -18,6 +18,11 @@ module obi_uart_tx #()
+ 
+   output logic txd_o,
+ 
++  // DMA request: asserted whenever the transmit holding register/FIFO can
++  // accept a new byte (mirrors the LSR THRE bit used to drive dma_tx_req_o
++  // at the wrapper level for the QSOC peripheral-triggered DMA channel).
++  output logic dma_tx_req_o,
++
+   input obi_uart_pkg::reg_read_t      reg_read_i,
+   output obi_uart_pkg::tx_reg_write_t reg_write_o
+ );
+@@ -300,6 +305,8 @@ module obi_uart_tx #()
+ 
+   `FF(thr_full_q, thr_full_d, '0, clk_i, rst_ni)
+ 
++  assign dma_tx_req_o = ~thr_full_q;
++
+   `FF(tsr_q, tsr_d, '0, clk_i, rst_ni)
+   `FF(tsr_count_q, tsr_count_d, '0, clk_i, rst_ni)
+ 
