@@ -1388,3 +1388,4 @@ The MAS went from 372 to 283 lines in V2.1. What left it, and what it corrected:
 ## Decided 2026-09-24
 
 - A gated peripheral with its line high is handled by a firmware rule, clear before gating, not by `SCRC` refusing to gate. It is simplest and needs no RTL in `SCRC`.
+- GPIO3 is dropped (GPIO MAS V1.2 and the 40-pin pad list, 2026-09-23/24). Line 9 now ORs three instances; the totals become 26 sources, 25 maskable and 10 pulse sources. `APB_M6` at `0x8001_8000` is left unused so no other address moves.

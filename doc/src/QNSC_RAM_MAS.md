@@ -38,7 +38,7 @@ File `design/ram/rtl/m_qnsc_wrap_axi4_sram.sv`, owner Nghia Van Trong.
 # 2. Features
 
 - **AXI4 subordinate**, 32-bit data and address, 7-bit ID, on `AXI_M1` or `AXI_M2`.
-- **Bursts** `FIXED` and `INCR`, 1 to 256 beats; responses in order -- 7.1, 7.2.
+- **Bursts** `INCR` of 1 to 256 beats and `FIXED` of 1 to 16 (the AXI4 limit); responses in order -- 7.1, 7.2.
 - **Byte, halfword and word writes** through `WSTRB` -- 7.3.
 - **Eight-entry FIFO** on every channel; one SRAM read in flight -- 7.1.
 - **64 KiB `ISRAM`** and **32 KiB `DSRAM`**, set by `PARA_SRAM_DEPTH` -- section 8.

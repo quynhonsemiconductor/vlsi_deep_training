@@ -147,9 +147,9 @@
 <text x="347.0" y="461.0" font-size="9" text-anchor="middle" fill="#000000">i_int_wdt_wakeup</text>
 <text x="347.0" y="473.0" font-size="9" text-anchor="middle" fill="#000000">wire</text>
 <text x="655.0" y="467.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[8]   mcause 24</text>
-<text x="140.0" y="505.0" font-size="9" text-anchor="middle" fill="#000000">GPIO0-3</text>
-<text x="140.0" y="517.0" font-size="9" text-anchor="middle" fill="#000000">interrupt ×4 · pulse</text>
-<text x="347.0" y="505.0" font-size="9" text-anchor="middle" fill="#000000">i_int_gpio[3:0]</text>
+<text x="140.0" y="505.0" font-size="9" text-anchor="middle" fill="#000000">GPIO0-2</text>
+<text x="140.0" y="517.0" font-size="9" text-anchor="middle" fill="#000000">interrupt ×3 · pulse</text>
+<text x="347.0" y="505.0" font-size="9" text-anchor="middle" fill="#000000">i_int_gpio[2:0]</text>
 <text x="347.0" y="517.0" font-size="9" text-anchor="middle" fill="#000000">OR</text>
 <text x="655.0" y="511.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[9]   mcause 25</text>
 <text x="140.0" y="549.0" font-size="9" text-anchor="middle" fill="#000000">TIMER0</text>

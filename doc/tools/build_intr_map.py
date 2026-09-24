@@ -16,7 +16,7 @@ _C = yaml.safe_load(open(os.path.join(os.path.dirname(_DOC), "util",
 NAME = {"dma": "DMA", "spi_device": "SPI device", "spi_host": "SPI host",
         "i2c": "I2C", "uart_0": "UART0", "uart_1": "UART1", "timer_0": "TIMER0",
         "timer_1": "TIMER1", "pwm": "PWM", "wdt_wakeup": "WDT", "wdt_bark": "WDT",
-        "gpio": "GPIO0-3"}
+        "gpio": "GPIO0-2"}
 
 
 def ports(l):

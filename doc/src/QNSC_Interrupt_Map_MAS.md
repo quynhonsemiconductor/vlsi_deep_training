@@ -1,6 +1,6 @@
 ---
 title: "Interrupt Map"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.1"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.2"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,11 +13,12 @@ The reasoning behind each change, and the versions before `V2.0`, are in
 |---|---|---|---|---|
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only. History and reasoning moved to `_DECISIONS`; tables in 7.2 and 10 generated from `util/qsoc_contract.yml` |
 | V2.1 | 2026-09-24 | Nghia VT | -- | NMI stated as a wire through the block; source ports, widths and timer shape added; figure redrawn; reasoning moved to `_DECISIONS` |
+| V2.2 | 2026-09-24 | Nghia VT | -- | GPIO3 dropped with the 40-pin package: 26 sources, `i_int_gpio` 3 bits |
 
 # 1. Overview
 
-`INTMAP` is a combinational block that connects 27 interrupt sources from 8 blocks
-to 12 interrupt inputs of the Ibex core. The 26 maskable sources form **11 source
+`INTMAP` is a combinational block that connects 26 interrupt sources from 8 blocks
+to 12 interrupt inputs of the Ibex core. The 25 maskable sources form **11 source
 groups**; each group drives one fast line `irq_fast_i[n]`, through an OR gate when
 the group has several sources and a wire when it has one. The watchdog bark is a
 wire to the non-maskable input `irq_nm_i`.
@@ -29,7 +30,7 @@ Block directory `design/intmap`, module `m_qnsc_intmap`, owner Nghia Van Trong.
 
 # 2. Features
 
-- 27 sources onto **11 fast lines plus one NMI**; 4 fast lines spare, tied 0
+- 26 sources onto **11 fast lines plus one NMI**; 4 fast lines spare, tied 0
 - **One source group per line**: no line carries sources from two groups
 - **Combinational**: no clock, no reset, no flip-flop, no bus port, no register on
   any path from input to output
@@ -70,13 +71,13 @@ port behind each input is in the table in 7.2.
 | `i_int_timer_1` | in | 2 | from TIMER1, bit 0 `irq_lo_o`, bit 1 `irq_hi_o` |
 | `i_int_pwm` | in | 4 | from PWM, bit *n* = `events_o[n]` |
 | `i_int_wdt_wakeup` | in | 1 | from WDT, wake-up timer |
-| `i_int_gpio` | in | 4 | from GPIO0-3, bit *n* = GPIO*n* |
+| `i_int_gpio` | in | 3 | from GPIO0-2, bit *n* = GPIO*n* |
 | `i_int_timer_0` | in | 1 | from TIMER0, 64-bit mode |
 | `i_int_wdt_bark` | in | 1 | from WDT, bark |
 | `o_int_fast` | out | 11 | to Ibex `irq_fast_i[10:0]` |
 | `o_int_nm` | out | 1 | to Ibex `irq_nm_i` |
 
-**27 input bits, 12 output bits, and no other ports.** No `i_clk_*`, no `i_rst_n_*`.
+**26 input bits, 12 output bits, and no other ports.** No `i_clk_*`, no `i_rst_n_*`.
 
 # 6. Register map
 
@@ -128,7 +129,7 @@ transaction occurs on the interrupt path.
 | 6 | `irq_fast_i[6]` | 22 | `mtvec + 0x58` | `i_int_timer_1` | `irq_lo_o`, `irq_hi_o` | 2 | pulse; level in one-shot with prescaler or ref clock |
 | 7 | `irq_fast_i[7]` | 23 | `mtvec + 0x5C` | `i_int_pwm` | `events_o[3:0]` | 4 | pulse |
 | 8 | `irq_fast_i[8]` | 24 | `mtvec + 0x60` | `i_int_wdt_wakeup` | `intr_wkup_timer_expired_o` | 1 | level |
-| 9 | `irq_fast_i[9]` | 25 | `mtvec + 0x64` | `i_int_gpio` | `interrupt` ×4 | 4 | pulse |
+| 9 | `irq_fast_i[9]` | 25 | `mtvec + 0x64` | `i_int_gpio` | `interrupt` ×3 | 3 | pulse |
 | 10 | `irq_fast_i[10]` | 26 | `mtvec + 0x68` | `i_int_timer_0` | `irq_lo_o` | 1 | pulse; level in one-shot with prescaler or ref clock |
 | 11-14 | `irq_fast_i[14:11]` | 27-30 | -- | tied 0 in `design/top` | -- | 0 | -- |
 | -- | `irq_nm_i` | **31** | `mtvec + 0x7C` | **`i_int_wdt_bark`** | `nmi_wdog_timer_bark_o` | 1 | level |
@@ -139,11 +140,11 @@ transaction occurs on the interrupt path.
 
 |  | Count |
 |---|---:|
-| Sources onto fast lines | 26 |
+| Sources onto fast lines | 25 |
 | Sources on the non-maskable input | 1 |
-| **Total interrupt sources** | **27** |
+| **Total interrupt sources** | **26** |
 | Source blocks (DMA, SPI, I2C, UART, TIMER, PWM, WDT, GPIO) | 8 |
-| Sources that pulse | 11 |
+| Sources that pulse | 10 |
 | Fast lines driven | 11 |
 | Fast lines Ibex provides | 15 |
 | Fast lines spare | 4 |
@@ -171,7 +172,7 @@ handler) or the `mie` bit is clear, or in Debug Mode, raises no trap.
 | I2C | level | `IACK`, bit 0 of `CMD` | -- |
 | UART0, UART1 | level | the 16550 register read that `IIR` names | -- |
 | WDT wake-up, WDT bark | level | W1C `INTR_STATE` | -- |
-| GPIO0-3 | pulse | nothing; `INTSTATUS` clears on read | lost; the pin stays recorded in `INTSTATUS` |
+| GPIO0-2 | pulse | nothing; `INTSTATUS` clears on read | lost; the pin stays recorded in `INTSTATUS` |
 | TIMER0, TIMER1 | pulse; level in one-shot with prescaler or ref clock | a held level ends on the writes in `QNSC_TIMER_MAS` 7.5 | lost; periodic mode raises it again next period, one-shot does not |
 | PWM | pulse | nothing | lost; the next period raises it again |
 
@@ -225,7 +226,7 @@ One. It is instantiated in `design/top` and has no parameters.
 | Vector table entries at `mtvec + 0x40` to `+0x68` and `+0x7C`; `mtvec` 256-byte aligned, because Ibex ignores `mtvec[7:0]` | firmware owner | every interrupt |
 | Handlers installed before `mstatus.MIE` is set, and the NMI entry at `mtvec + 0x7C` before the watchdog is enabled | firmware owner | every source is live from the first cycle out of reset; the NMI ignores `mstatus.MIE` |
 | Firmware clears a peripheral's interrupt before closing its `CLK_EN` gate (7.5); written in the programming guide. `SCRC` needs no change | firmware owner | a handler that cannot clear its own source |
-| Align HAS lines 69 and 155 with 7.3: the bark passes through `INTMAP` as a wire, so `INTMAP` takes 27 sources, not 26 | HAS owner | consistency between HAS and MAS |
+| Align HAS lines 69 and 155 with 7.3: the bark passes through `INTMAP` as a wire, so `INTMAP` takes 26 sources (25 maskable + the NMI). The HAS also still counts four GPIO instances; QSOC has three | HAS owner | consistency between HAS and MAS |
 
 **Open on this block**, blocking nobody:
 
@@ -277,8 +278,8 @@ Ten checks, none needing a bus model:
 
 | Item | Reviewer | Response |
 |---|---|---|
-| GPIO: one line for four instances, or four lines? | Day005, 2026-09-18 | One line. Which pin fired is in the instance's `INTSTATUS` (7.4) |
+| GPIO: one line for the three instances, or three lines? | Day005, 2026-09-18 | One line. Which pin fired is in the instance's `INTSTATUS` (7.4) |
 | Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by W1C `DMA_ISR` (7.4) |
 | Does this block need to latch pending? | -- | No. Every level source holds its line; a missed pulse is recorded or repeats (7.4) |
-| Is the non-maskable interrupt in the totals and the core-input table? | Teacher, 2026-09-23 | Yes: it is counted in the 27 (7.2) and listed in section 10 |
+| Is the non-maskable interrupt in the totals and the core-input table? | Teacher, 2026-09-23 | Yes: it is counted in the 26 (7.2) and listed in section 10 |
 | What happens to a line whose peripheral is clock-gated? | -- | It stays asserted (7.5). Firmware clears the source before gating it; `SCRC` needs no change (11) |

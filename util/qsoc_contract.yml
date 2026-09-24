@@ -107,11 +107,9 @@ memory_map:
     size: 0x00004000
     port: APB_M5
     kind: peripheral
-  - name: gpio_3
-    base: 0x80018000
-    size: 0x00004000
-    port: APB_M6
-    kind: peripheral
+  # 0x8001_8000 / APB_M6 is unused: GPIO3 was dropped with the 40-pin package
+  # (GPIO MAS V1.2, 2026-09-23). The timers keep their addresses; the hole
+  # answers DECERR like any other unmapped address.
   - name: timer_0
     base: 0x8001C000
     size: 0x00004000
@@ -180,7 +178,7 @@ memory_map:
 #
 # ports: the vendor RTL output(s) of the source instance that drive the line,
 # in the bit order of the INTMAP input i_int_<peripheral>. One name with
-# sources > 1 means one port per instance (GPIO0-3).
+# sources > 1 means one port per instance (GPIO0-2).
 # -----------------------------------------------------------------------------
 interrupts:
   fast_lines_available: 15       # Ibex irq_fast_i width, unconditional
@@ -238,9 +236,9 @@ interrupts:
     - line: 9
       peripheral: gpio
       ports: [interrupt]
-      sources: 4
+      sources: 3
       shape: pulse
-      note: Four instances OR to one line; per-pin identity is in each INTSTATUS.
+      note: Three instances OR to one line; per-pin identity is in each INTSTATUS.
     - line: 10
       peripheral: timer_0
       ports: [irq_lo_o]
@@ -268,7 +266,7 @@ interrupts:
 
 # -----------------------------------------------------------------------------
 # Clock and reset domains. Source: QSOC_HAS Table 4-2, confirmed in
-# QNSC_RAM_MAS 5.2, QNSC_SYSDBG_MAS 4.2 and QNSC_PWM_MAS.
+# QNSC_RAM_MAS 5.2, QNSC_SYSDBG_MAS section 3 and QNSC_PWM_MAS.
 #
 # One clock frequency for the whole chip, so nothing here crosses a frequency
 # boundary; a domain is a gate plus a soft-reset bit, not a separate clock.

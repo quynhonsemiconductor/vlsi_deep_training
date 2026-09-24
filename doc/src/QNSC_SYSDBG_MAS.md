@@ -225,7 +225,7 @@ single-step (`dcsr.step`) or resume. No hardware trigger is needed.
 | Address handshake | `arvalid` = 0 | `awvalid` = 0 |
 | Data handshake | `rdata_reg` = `rdata`, `resp_reg` = `rresp`, `rready` = 0 | `wvalid` = 0 |
 | Response handshake | -- | `resp_reg` = `bresp`, `bready` = 0 |
-| Acknowledge | `read_ack` = `read_req` delayed AND NOT `rready` | `write_ack` = `write_req` delayed AND NOT `bready` |
+| Acknowledge | `read_ack` = synchronised `read_req` after the delay flip-flop, AND NOT `rready` | `write_ack` = synchronised `write_req` after the delay flip-flop, AND NOT `bready` |
 
 At most one transaction is outstanding.
 
@@ -249,14 +249,15 @@ Each transaction is one 4-phase handshake:
 | `read_ack`, `write_ack` | AXI to TCK | `SyncStages` flip-flops, then one delay flip-flop for the edge | the same, one `TCK` period |
 | `addr_reg`, `wdata_reg` | TCK to AXI | No synchroniser. Stable from `req` rising until `ack` falls | `set_max_delay -datapath_only`, one `i_clk_cpu` period |
 | `rdata_reg`, `resp_reg` | AXI to TCK | No synchroniser. Stable from `ack` rising until the next `req` | `set_max_delay -datapath_only`, one `TCK` period |
-| `dbgreq`, `cpu_hold` | TCK to system | `SyncStages` flip-flops | one `i_clk_cpu` period, to the first flip-flop |
+| `dbgreq`, `cpu_hold` | TCK to system | `SyncStages` flip-flops | `set_max_delay -datapath_only`, one `i_clk_cpu` period, to the first flip-flop |
 
 ## 7.7 Halt and resume
 
 - **Halt.** `CPUDBG = 1` drives `o_cpu_debug_req` high. Ibex saves the PC in `dpc`
   and jumps to `DmHaltAddr` = `0x2000_0800`. The window code sets `HALTED` = 1; the
   host reads it to confirm the halt.
-- **Halt before starting.** `CPUDBG = 1` while the CPU is held makes the core halt
+- **Halt before starting.** `CPUDBG = 1` while the CPU is held, or across a watchdog
+  reset, makes the core halt
   before its first instruction.
 - **Resume.** The host writes `CPUDBG = 0` **first**, then `RESUME` = 1 in the debug
   window. The loop executes `dret`. If `debug_req` were still high, the core would

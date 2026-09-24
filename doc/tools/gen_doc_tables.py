@@ -75,7 +75,7 @@ def source_ports(entry):
 
     Several ports sharing a prefix and suffix (spi_device's eight intr_*_o)
     collapse to the pattern and a count; one port name with more than one
-    source is one port per instance (GPIO0-3)."""
+    source is one port per instance (GPIO0-2)."""
     ports, n = entry["ports"], entry["sources"]
     if len(ports) > 4:
         pre = ports[0]

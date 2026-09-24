@@ -233,7 +233,7 @@
         <mxCell id="dbg" value="SYSDBG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="260" y="80" width="220" height="200" as="geometry"/>
         </mxCell>
-        <mxCell id="scrc" value="SCRC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="scrc" value="SCRC sequencer" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="600" y="440" width="170" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="iomux" value="IO MUX&#10;JTAG pads = JTAG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
@@ -242,7 +242,7 @@
         <mxCell id="mux" value="boot_addr mux&#10;0: 0x0000_0000&#10;1: 0x2000_1000" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="600" y="165" width="170" height="90" as="geometry"/>
         </mxCell>
-        <mxCell id="gate" value="CPU reset&#10;synchroniser&#10;hold OR cpu reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="gate" value="SCRC: CPU reset&#10;synchroniser&#10;hold OR cpu reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="600" y="285" width="170" height="90" as="geometry"/>
         </mxCell>
         <mxCell id="cpu" value="Ibex CPU" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
