@@ -2,14 +2,187 @@
 
 **Khớp tài liệu:** `QNSC_SYSDBG_MAS` V3.0 · **Ngày:** 2026-09-24
 
-## 1. SYSDBG là gì
+> Nếu chưa quen JTAG, TAP, CDC hay handshake, đọc **mục 6 (Kiến thức nền)** trước, rồi
+> **mục 7 (ví dụ đọc/ghi 1 word)**, sau đó mới quay lại mục 2.
 
-`SYSDBG` là debugger của QSOC: host nói chuyện với nó qua JTAG TAP.
-Bên trong có một AXI4 manager trên `AXI_S0` để đọc/ghi bộ nhớ, và một 4-phase
-handshake nối hai clock domain `TCK` và `i_clk_cpu`.
-Nó điều khiển CPU bằng hai đường: `o_cpu_debug_req` để halt Ibex, và `o_cpu_hold`
-để giữ CPU trong reset khi pad `DBG_EN` = 1.
-Nó không có memory-mapped register, không reset chip, không gate clock.
+## 1. SYSDBG là gì (bức tranh tổng)
+
+### 1.1 Nói trong 30 giây
+
+> `SYSDBG` là debugger của QSoC. Nó cho máy tính, qua 5 dây JTAG, **đọc và ghi bất kỳ
+> địa chỉ nào trong chip** mà không cần CPU, **dừng và chạy tiếp CPU**, và khi chân
+> `DBG_EN` = 1 thì **giữ CPU đứng yên sau khi bật nguồn** cho tới khi máy tính nạp xong
+> chương trình vào ISRAM. Bên trong có ba phần: JTAG TAP chạy bằng clock `TCK` của máy
+> tính, AXI4 manager chạy bằng clock chip, và một handshake 4 pha nối an toàn hai clock
+> đó. IP tự thiết kế theo reference design của thầy, không dùng IP ngoài.
+
+### 1.1b Hình tổng: dùng để mở đầu phần trình bày
+
+![SYSDBG overall](../img/fig_sysdbg_overall.png)
+
+Hình này không có trong MAS; nó gom Figure 3-1 và Figure 7-1 thành một, để nói trong một
+lượt. Các con số trên hình khớp với các câu hỏi ở 1.2:
+
+1. **Kết nối** (ô Host PC → 5 JTAG pads → JTAG TAP): máy tính nói chuyện bằng JTAG.
+2. **Chọn mode** (ô Board → DBG_EN pad → DBG_EN 2FF + capture once): jumper = 1 là debug
+   boot.
+3. **Giữ CPU** (outputs → SCRC → `rst_ni` của Ibex): `o_cpu_hold` được OR vào reset CPU.
+4. **Nạp code** (TAP → CDC → AXI4 manager → S_BUS → ISRAM): ghi debug window và chương trình.
+5. **Chạy** (boot_addr mux → Ibex): nhả hold, CPU chạy từ `0x2000_1080`.
+6. **Đọc dữ liệu**: cùng đường với bước 4, theo chiều đọc.
+7. **Halt** (outputs → Ibex, `debug_req`): Ibex nhảy vào ENTRY `0x2000_0800` trong ISRAM.
+8. **Resume** (host ghi `RESUME` vào ISRAM): vòng lặp trong ISRAM chạy `dret`.
+
+Hai chi tiết nên chỉ vào: ô **CDC** (in đậm) là chỗ duy nhất đổi clock; và dây
+`o_dbg_en` đi ra 2 nơi, IO MUX (ép chân JTAG) và boot_addr mux.
+
+### 1.2 Toàn bộ design qua 10 câu hỏi
+
+Đi đúng thứ tự một phiên debug: kết nối → chọn mode → giữ CPU → nạp code → chạy →
+đọc dữ liệu → halt → resume. Mỗi câu có **câu trả lời** trước, rồi **làm thế nào**.
+
+**① Máy tính nói chuyện với SYSDBG bằng gì?**
+**Qua 5 dây JTAG** (`TCK`, `TMS`, `TDI`, `TDO`, `TRST_N`). Host dịch lệnh vào từng bit.
+- Máy trạng thái **TAP FSM** (16 trạng thái, chuẩn IEEE 1149.1) quyết định lúc nào
+  Capture, Shift, Update. Host điều khiển nó bằng `TMS`.
+- **IR 4 bit** chọn một trong 7 **DR**: `ADDR` (33 bit), `DATA` (32), `STATUS` (3),
+  `CPUDBG` (1), `CPUHOLD` (1), `IDCODE` (32), `BYPASS` (1). Table 6-1.
+- SYSDBG không có register trên bus: **mọi điều khiển đều qua JTAG**, nên phần mềm trên CPU
+  không tự halt mình được.
+
+**② Làm sao chọn debug mode?**
+**Bằng chân ngoài `DBG_EN`.** Board gạt jumper lên 1 thì debug boot; để nguyên 0
+(pull-down) thì normal boot.
+- SYSDBG đồng bộ `DBG_EN` qua 2FF và **chốt một lần**, `SyncStages` + 1 chu kỳ sau khi
+  power-on reset nhả. Kết quả là `o_dbg_en`, giữ nguyên tới lần power-on sau.
+- Phải là chân ngoài vì mode phải biết **ngay từ lúc bật nguồn**, trước khi host kịp gửi
+  lệnh. Một register thì không làm được: reset về "giữ" thì chip không boot khi không cắm
+  probe; reset về "chạy" thì CPU đã chạy trước khi host kịp ghi. Đó là ý của thầy.
+
+**③ Trong debug mode, SYSDBG giữ reset CPU thế nào?**
+**Bằng `o_cpu_hold`: SCRC OR tín hiệu này vào reset CPU**, đặt trước bộ đồng bộ reset CPU.
+- `o_cpu_hold` = 1 từ lúc power-on tới khi chốt xong `DBG_EN`. Sau đó:
+  - `DBG_EN` = 0: `o_cpu_hold` = 0 mãi mãi, SCRC tự nhả CPU như bình thường.
+  - `DBG_EN` = 1: `o_cpu_hold` đi theo DR `CPUHOLD`, mà `CPUHOLD` **reset bằng 1**. Vậy CPU
+    đứng yên cho tới khi host ghi `CPUHOLD` = 0. Ghi lại 1 thì CPU vào reset lại, ISRAM
+    không bị xoá.
+- **Chỉ giữ CPU**: bus, RAM, peripheral vẫn được SCRC nhả, để host còn ghi vào RAM được.
+- Không cần giữ clock: clock CPU không bao giờ bị gate, giữ reset là đủ.
+
+**④ Ai nạp code, nạp vào đâu, khi nào?**
+**Host nạp, qua JTAG → SYSDBG → AXI4 → `S_BUS` → ISRAM.**
+- **Vào đâu:**
+  - Debug window: 4 KiB đầu ISRAM, `0x2000_0000`–`0x2000_0FFF`. Là đoạn code nhỏ CPU chạy
+    khi bị halt (bước ⑦).
+  - Chương trình chính: từ `0x2000_1000`.
+- **Khi nào:**
+  - Debug boot: **trong lúc CPU đang bị giữ reset** (sau bước ③, trước bước ⑤).
+  - Normal boot: bất cứ lúc nào **trước lần halt đầu tiên**, kể cả khi CPU đang chạy.
+- **Cách ghi một word:** IR = `ADDR`, DR = {**1**, địa chỉ} → IR = `DATA`, DR = giá trị
+  → Update-DR bắt đầu ghi AXI → quét `STATUS` tới khi `busy` = 0.
+
+**⑤ Nhả CPU thì nó chạy từ đâu?**
+**Từ ISRAM `0x2000_1080`**, vì `o_dbg_en` = 1 chuyển mux `boot_addr` sang `0x2000_1000`, và
+Ibex luôn bắt đầu ở `boot_addr` + `0x80`.
+- Host ghi `CPUHOLD` = 0 → `o_cpu_hold` = 0 → SCRC nhả reset CPU.
+- Nếu không có mux này, CPU sẽ chạy bootloader trong ROM, rồi đứng chờ UART, và không bao
+  giờ tới chương trình vừa nạp.
+- Muốn dừng ngay ở lệnh đầu tiên thì ghi `CPUDBG` = 1 **trước** khi ghi `CPUHOLD` = 0.
+
+**⑥ Đọc dữ liệu để debug thế nào?**
+Có hai loại:
+- **Bộ nhớ và peripheral (biến, register của IP): đọc thẳng qua bus, kể cả khi CPU đang chạy.**
+  IR = `ADDR`, DR = {**0**, địa chỉ} → quét `STATUS` tới khi `busy` = 0 → IR = `DATA`,
+  quét ra 32 bit.
+- **Thanh ghi của CPU (`x1`..`x31`, `pc`/`dpc`, CSR): phải halt trước.** Thanh ghi CPU không
+  có địa chỉ trên bus, nên host nhờ CPU tự đọc:
+  1. host ghi một đoạn lệnh ngắn vào đầu window, ví dụ `csrr s1, dpc` rồi `sw s1, DATA`;
+  2. ghi `CMD` = 1;
+  3. CPU đang chạy vòng lặp trong window thấy `CMD` thì chạy đoạn lệnh, ghi kết quả vào
+     `DATA` (`0x2000_0700`), rồi xoá `CMD`;
+  4. host thấy `CMD` = 0 thì đọc `DATA` qua bus.
+
+**⑦ Halt CPU thế nào?**
+**Host ghi `CPUDBG` = 1 → `o_cpu_debug_req` = 1 → Ibex vào debug mode.**
+- Ibex lưu PC hiện tại vào `dpc`, rồi nhảy tới `DmHaltAddr` = `0x2000_0800` (ENTRY trong
+  window).
+- Code ở ENTRY cất `s0`, `s1` vào `dscratch0`/`dscratch1`, ghi `HALTED` = 1
+  (`0x2000_0710`), rồi quay vòng chờ lệnh (LOOP).
+- Host đọc `HALTED` = 1 là biết CPU đã dừng. Ibex không xuất tín hiệu `debug_mode` ra
+  ngoài, nên dùng cờ này thay.
+
+**⑧ Resume thế nào?**
+**Host ghi `CPUDBG` = 0 trước, rồi ghi `RESUME` = 1 vào window.**
+- LOOP thấy `RESUME`: xoá `RESUME` và `HALTED`, khôi phục `s0`, `s1`, chạy `dret`. Ibex rời
+  debug mode và chạy tiếp từ `dpc`.
+- **Thứ tự bắt buộc**: nếu `debug_req` vẫn = 1 lúc `dret` thì CPU halt lại ngay lệnh sau.
+
+**⑨ Không có hardware breakpoint thì debug bằng gì?**
+CPU partner chốt `DbgTriggerEn = 0`. Debug bằng:
+- `ebreak` đặt trong code ở RAM;
+- **single-step** (`dcsr.step`, ghi bằng một đoạn lệnh trong window);
+- halt/resume.
+
+Muốn debug bootloader ROM từ lệnh đầu tiên: debug boot, halt trước lệnh đầu, ghi
+`dpc` = `0x0000_0080` bằng một đoạn lệnh, rồi single-step.
+
+**⑩ Hai clock khác nhau, reset bất ngờ thì sao?**
+- **Clock:** phần JTAG chạy bằng `TCK` của máy tính, phần AXI chạy bằng clock chip. Nối
+  bằng **handshake 4 pha**: chỉ `req` và `ack` đi qua 2FF; địa chỉ và dữ liệu giữ đứng yên
+  suốt lúc bên kia đọc (Figure 7-2, Table 7-4).
+- **Watchdog hoặc software reset:** chỉ phần AXI bị reset, và lệnh đang dở được tự gửi lại.
+  Phần JTAG, `CPUHOLD`, `CPUDBG` và `DBG_EN` chỉ reset bởi power-on, nên **phiên debug
+  vẫn còn**. ISRAM không có reset, nên code vẫn còn.
+- **Lúc đang nạp code thì không có gì reset được** (CPU bị giữ, watchdog tắt), trừ mất nguồn.
+
+### 1.3 Bên trong có gì (Figure 3-1)
+
+```
+ JTAG pads ──► [ TCK domain ]          [ CDC ]            [ AXI domain ]        ──AXI4──► S_BUS
+ (5 dây)       TAP FSM, IR 4 bit,      4-phase handshake   AXI manager                    (AXI_S0)
+               7 DR: ADDR DATA STATUS  req/ack qua 2FF,    AR R · AW W B
+               CPUDBG CPUHOLD IDCODE   dữ liệu qua         rdata_reg, resp_reg
+               BYPASS                  set_max_delay
+                        │
+                        └─ dbgreq, cpu_hold ─2FF─► [ system domain ] ──► o_cpu_debug_req (Ibex)
+ DBG_EN pad ─────────────────────────────────────► DBG_EN 2FF + chốt  ──► o_dbg_en, o_cpu_hold
+                                                                           (SCRC, boot mux, IO MUX)
+```
+
+| Domain | Clock | Reset | Chứa gì |
+|---|---|---|---|
+| TCK | `i_jtag_tck` (của máy tính) | `TRST_N` AND POR | TAP, IR, các DR, `read_req`/`write_req` |
+| AXI | `i_clk_cpu` | `i_rst_n_sysbus` | AXI manager, `read_ack`/`write_ack` |
+| System | `i_clk_cpu` | chỉ POR | chốt `DBG_EN`, sync `dbgreq`/`cpu_hold`, các output |
+
+### 1.4 Nối với IP nào (Figure 7-1)
+
+| IP | Tín hiệu | Để làm gì |
+|---|---|---|
+| Máy tính (JTAG adapter) | 5 pad JTAG | Gửi lệnh, nhận kết quả |
+| Board / pad | `DBG_EN` → `i_dbg_en` | Chọn normal boot (0) hay debug boot (1) |
+| `S_BUS` | AXI4 trên `AXI_S0` | Đọc/ghi mọi địa chỉ: ROM, ISRAM, DSRAM, peripheral |
+| Ibex | `o_cpu_debug_req` | Halt CPU |
+| SCRC | `o_cpu_hold` (OR vào reset CPU), `i_rst_n_por`, `i_rst_n_sysbus` | Giữ CPU; reset riêng cho từng domain |
+| CPU wrapper | `o_dbg_en` → mux `boot_addr` | Debug boot chạy từ ISRAM `0x2000_1080` thay vì ROM |
+| IO MUX | `o_dbg_en` | Ép 5 pad về JTAG khi debug boot |
+| ISRAM | (qua `S_BUS`) | 4 KiB đầu là debug window, host ghi |
+
+### 1.5 Hai chế độ boot
+
+| | `DBG_EN` = 0, normal boot | `DBG_EN` = 1, debug boot |
+|---|---|---|
+| Ai nhả CPU | SCRC, tự động | Host, ghi `CPUHOLD` = 0 |
+| CPU chạy từ | ROM `0x0000_0080` (bootloader) | ISRAM `0x2000_1080` (image host nạp) |
+| Debugger | Gắn vào sau, lúc CPU đang chạy | Toàn quyền từ lúc bật nguồn |
+
+### 1.6 Không làm gì (để chặn câu hỏi)
+
+- Không reset chip hay domain nào: `o_cpu_hold` chỉ giữ CPU.
+- Không gate clock: clock CPU không bao giờ bị gate, giữ reset là đủ.
+- Không có memory-mapped register: mọi điều khiển qua JTAG, nên phần mềm trên CPU không tự halt mình được.
+- Không có debug ROM, không có hardware trigger (`DbgTriggerEn = 0`): code debug nằm trong ISRAM, host ghi vào.
+- Chỉ truy cập word 32 bit, mỗi lần một transaction.
 
 ## 2. Flow end-to-end
 
@@ -591,3 +764,167 @@ và hình tham khảo `VLSI_SYSDBG.drawio` của thầy (ghi "theo hình của t
 | Vùng `0xF000_0000` | Table 11-1 | `SYSDBG` không có memory-mapped register, nên vùng này trong HAS Table 7-1 thừa. | -- |
 | Ba domain | Section 3, Figure 3-1 | Ba tổ hợp clock/reset khác nhau: `TCK` + TRST & POR, `i_clk_cpu` + `i_rst_n_sysbus`, `i_clk_cpu` + `i_rst_n_por`. | Xem Figure 3-1, câu hỏi thứ hai. |
 | V3.0 | Revision history | Số version của tài liệu, không phải thông số thiết kế. | -- |
+
+## 6. Kiến thức nền
+
+Mục này giải thích các khái niệm mà hình và bảng trong MAS dùng, nhưng không định nghĩa
+lại, vì chúng là kiến thức chuẩn. Đọc để hiểu; khi thầy hỏi, trả lời bằng câu tóm tắt ở
+cuối mỗi phần.
+
+### 6.1 JTAG: cổng nối tiếp từ máy tính vào chip
+
+JTAG (IEEE 1149.1) dùng 5 dây, đúng 5 pad JTAG của QSoC:
+
+| Dây | Port `SYSDBG` | Hướng | Ý nghĩa |
+|---|---|---|---|
+| `TCK` | `i_jtag_tck` | vào | Clock của toàn bộ phần JTAG. Host cấp, có thể dừng bất cứ lúc nào |
+| `TMS` | `i_jtag_tms` | vào | "Mode select": mỗi nhịp `TCK` quyết định TAP FSM đi sang trạng thái nào |
+| `TDI` | `i_jtag_tdi` | vào | Dữ liệu vào, từng bit một |
+| `TDO` | `o_jtag_tdo` (+ `o_jtag_tdo_oe`) | ra | Dữ liệu ra, từng bit một |
+| `TRST_N` | `i_jtag_trst_n` | vào | Reset riêng cho phần JTAG |
+
+Bên trong là các **thanh ghi dịch**. Mỗi nhịp `TCK`, một bit từ `TDI` vào một đầu, một
+bit ở đầu kia ra `TDO`, giống băng chuyền: đẩy giá trị mới vào thì giá trị cũ rơi ra.
+Muốn ghi 33 bit thì phải dịch 33 nhịp.
+
+*Tóm tắt: JTAG là cổng nối tiếp 5 dây; dữ liệu đi vào và ra từng bit qua thanh ghi dịch.*
+
+### 6.2 TAP FSM: máy 16 trạng thái (ô "TAP FSM" trong Figure 3-1)
+
+TAP FSM quyết định lúc nào dịch, dịch vào thanh ghi nào, và lúc nào chốt. Host điều
+khiển nó **chỉ bằng `TMS`**.
+
+```
+ Test-Logic-Reset ──TMS=0──► Run-Test/Idle ──TMS=1──► Select-DR ──TMS=1──► Select-IR
+   ▲ (TMS=1 đủ 5 nhịp                                     │TMS=0               │TMS=0
+   │  từ bất kỳ đâu)                                      ▼                    ▼
+                                                     Capture-DR           Capture-IR
+                                                          ▼                    ▼
+                                                     Shift-DR ⟲           Shift-IR ⟲
+                                                     (Exit1 · Pause · Exit2: để tạm dừng)
+                                                          ▼                    ▼
+                                                     Update-DR            Update-IR
+```
+
+Ba động tác quan trọng, gặp khắp MAS:
+
+| Trạng thái | Việc xảy ra | Trong `SYSDBG` |
+|---|---|---|
+| **Capture** | Chụp giá trị hiện tại vào thanh ghi dịch, để lát nữa dịch ra `TDO` | Capture-DR của `DATA` chụp dữ liệu vừa đọc được; của `STATUS` chụp `{busy, resp}` |
+| **Shift** | Mỗi nhịp dịch 1 bit: `TDI` vào, `TDO` ra | Dịch 33 bit vào `ADDR` |
+| **Update** | Dịch xong mới **chốt** thành giá trị thật | Update-DR của `ADDR` (bit 32 = 0) **bắt đầu lệnh đọc** |
+
+Tách Shift và Update là vì trong lúc dịch, thanh ghi chứa giá trị nửa cũ nửa mới. Chỉ khi
+Update thì giá trị mới trọn vẹn. Ô "control signals" trong Figure 3-1 giải mã trạng thái
+TAP thành các tín hiệu `capture`, `shift`, `update`.
+
+*Tóm tắt: TAP FSM là máy 16 trạng thái chuẩn IEEE, điều khiển bằng `TMS`: Capture chụp,
+Shift dịch, Update chốt.*
+
+### 6.3 IR và DR (Table 6-1)
+
+- **IR** (4 bit) như công tắc chọn kênh: giá trị trong IR quyết định lần dịch DR kế tiếp
+  vào **thanh ghi dữ liệu nào**. Dịch IR bằng nhánh Select-IR của TAP.
+- **DR** là các thanh ghi dữ liệu thật: `ADDR`, `DATA`, `STATUS`, `CPUDBG`, `CPUHOLD`,
+  `IDCODE`, `BYPASS`. Dịch DR bằng nhánh Select-DR.
+- **TDO mux** chọn bit ra: đang dịch IR thì lấy IR, đang dịch DR thì lấy DR mà IR đang chọn.
+- **Flop TDO chạy ở cạnh xuống của `TCK`** (vòng tròn nhỏ ở chân clock trong hình thầy): chuẩn
+  quy định vậy, để host có nửa chu kỳ ổn định và lấy mẫu ở cạnh lên kế tiếp.
+
+*Tóm tắt: IR chọn kênh, DR chứa dữ liệu; TDO đổi ở cạnh xuống để host lấy mẫu an toàn.*
+
+### 6.4 CDC và metastability
+
+**CDC (Clock Domain Crossing)** là khi tín hiệu đi từ vùng chạy clock A sang vùng chạy
+clock B. `TCK` và `i_clk_cpu` không liên quan gì nhau, nên sớm muộn gì flop bên B cũng
+lấy mẫu đúng lúc tín hiệu bên A đang đổi. Khi đó flop rơi vào **metastability**: đầu ra
+lơ lửng giữa 0 và 1 một lúc rồi mới ngã về một phía. Mạch phía sau đọc lúc đó thì mỗi
+chỗ đọc ra một kiểu.
+
+**Synchroniser 2FF** chữa cho tín hiệu 1 bit:
+
+```
+ clock A          │           clock B
+ read_req_reg ────┼──►[FF1]──►[FF2]──► read_req đã sync
+                  │    ↑ có thể      ↑ đã có 1 chu kỳ
+                  │    lơ lửng        để ổn định
+```
+
+FF1 có thể lơ lửng, nhưng có nguyên một chu kỳ clock B để ổn định trước khi FF2 lấy mẫu.
+`SyncStages` = 2 là số flop này.
+
+**2FF không dùng được cho bus nhiều bit**: mỗi bit có thể tới trễ khác nhau, bên B có thể
+thấy một giá trị lai. Vì vậy địa chỉ và dữ liệu cần handshake.
+
+*Tóm tắt: hai clock không liên quan thì lấy mẫu sai lúc sẽ bị metastability; tín hiệu 1
+bit qua 2FF, bus nhiều bit phải dùng handshake.*
+
+### 6.5 Handshake 4 pha (Figure 7-2, Table 7-4)
+
+Ý tưởng: **chỉ `req` và `ack` (1 bit mỗi cái) đi qua 2FF. Bus dữ liệu không qua
+synchroniser mà được giữ đứng yên** suốt lúc bên kia đọc.
+
+```
+ Bên TCK                                         Bên AXI
+ ① addr_reg đã chốt, req = 1   ──req──2FF──►  ② thấy req lên: đọc addr_reg (đứng yên), chạy AXI
+                                              ③ AXI xong: chốt rdata_reg, ack = 1
+ ④ thấy ack lên: chép rdata_reg ◄──ack──2FF──
+   (đứng yên), hạ req = 0      ──req──2FF──►  ⑤ thấy req xuống: hạ ack = 0
+ ⑥ thấy ack xuống: hết busy    ◄──ack──2FF──
+```
+
+"4 pha" là 4 lần đổi mức: req lên, ack lên, req xuống, ack xuống.
+
+Vì sao an toàn:
+- `addr_reg` chỉ đổi ở Update-DR mới, mà Update-DR bị bỏ qua khi `busy`. Từ ① tới ⑥ địa chỉ
+  đứng yên.
+- `rdata_reg` chỉ đổi ở lệnh đọc mới, mà lệnh mới chỉ có sau ⑥. Lúc ④ chép, dữ liệu đứng yên.
+- `set_max_delay` một chu kỳ clock bên nhận bảo đảm dữ liệu tới nơi trước khi `req`/`ack`
+  (mất ít nhất 2 chu kỳ qua 2FF) báo cho bên nhận đọc.
+
+*Tóm tắt: chỉ `req`/`ack` qua 2FF; dữ liệu đứng yên trong cửa sổ handshake nên đọc thẳng
+được, với ràng buộc `set_max_delay`.*
+
+### 6.6 Bắt cạnh và flop set/clear
+
+- **Bắt cạnh lên** `set_ar = sync & !dly`: `dly` là `sync` trễ 1 chu kỳ. Biểu thức chỉ bằng
+  1 **đúng một chu kỳ**, lúc `req` vừa từ 0 lên 1. Không có nó thì AXI phát lệnh liên tục
+  suốt thời gian `req = 1`. Cạnh lên của `ack` phía TCK cũng làm như vậy.
+- **Flop set/clear** (ký hiệu `?1`, `10`, `#` trong hình thầy): tín hiệu điều khiển 2 bit
+  {clear, set}. `?1` (set = 1) ra 1; `10` (clear = 1, set = 0) ra 0; `#` (còn lại) giữ
+  nguyên. `read_req`, `arvalid`, `rready`, `bready` đều là loại này: set khi bắt đầu,
+  clear khi đối phương xác nhận. Đây là luật AXI: giữ `valid` cho tới khi có `ready`.
+
+*Tóm tắt: bắt cạnh biến mức thành xung 1 chu kỳ để mỗi lệnh chạy đúng một lần; flop
+set/clear giữ `valid`/`ready`/`req` cho tới khi phía kia xác nhận.*
+
+## 7. Ví dụ: host đọc và ghi 1 word, từng lần quét JTAG
+
+**Đọc 1 word ở `0x2000_1000`:**
+
+| # | Host làm trên JTAG | Bên trong chip |
+|---|---|---|
+| 1 | Dịch IR = `0100` (`ADDR`): Select-DR → Select-IR → Capture-IR → Shift-IR 4 nhịp → Update-IR | IR chọn `ADDR` |
+| 2 | Dịch DR 33 bit = {**0**, `0x2000_1000`} → Update-DR | Bit 32 = 0 là đọc: `read_req` = 1, `busy` = 1 |
+| 3 | Để `TCK` chạy vài nhịp (ở Run-Test/Idle) | Handshake ①–⑥ của 6.5: `set_ar` → AR → R → `rdata_reg` → `read_ack` → chép sang `rdata_hold` → hết `busy` |
+| 4 | Dịch IR = `0110` (`STATUS`), rồi dịch DR 3 bit | Capture-DR chụp `{busy, resp}`. Thấy `busy` = 0, `resp` = `00` (OKAY) thì tiếp; còn `busy` thì quét lại |
+| 5 | Dịch IR = `0101` (`DATA`), rồi dịch DR 32 bit | Capture-DR chụp `rdata_hold`: **32 bit ra `TDO` chính là word đọc được**. Update-DR không ghi gì, vì `addr_reg[32]` = 0 |
+
+**Ghi `0x1234_5678` vào `0x2000_1000`:**
+
+| # | Host làm trên JTAG | Bên trong chip |
+|---|---|---|
+| 1 | IR = `0100`, DR = {**1**, `0x2000_1000`} → Update-DR | Bit 32 = 1: chỉ nạp địa chỉ, **chưa chạy gì** |
+| 2 | IR = `0101`, DR = `0x1234_5678` → Update-DR | `addr_reg[32]` = 1 nên `write_req` = 1: AW + W + B chạy qua handshake |
+| 3 | IR = `0110`, quét `STATUS` tới khi `busy` = 0 | `resp` = `00` là ghi xong |
+
+**Halt, rồi resume:**
+
+| # | Host làm | Bên trong chip |
+|---|---|---|
+| 1 | IR = `0111` (`CPUDBG`), DR = 1 | `dbgreq` qua 2FF ra `o_cpu_debug_req`; Ibex nhảy vào `0x2000_0800`, code trong window ghi `HALTED` = 1 |
+| 2 | Đọc `HALTED` như bảng đọc ở trên | Thấy 1 là đã halt |
+| 3 | `CPUDBG` = 0 **trước**, rồi ghi `RESUME` = 1 vào window | Loop chạy `dret`; `debug_req` đã thấp nên CPU không halt lại |
+
+Mỗi lần "ghi/đọc" trong bảng halt và resume là một lượt đầy đủ như bảng đọc/ghi phía trên.
+

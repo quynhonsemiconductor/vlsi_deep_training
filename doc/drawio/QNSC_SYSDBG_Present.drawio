@@ -1,0 +1,115 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="SYSDBG overall" id="pg0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="host" value="Host PC&#10;JTAG adapter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=12;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="90" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="board" value="Board&#10;DBG_EN jumper" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="330" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="chip" value="QSoC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=12;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="210" y="20" width="1330" height="680" as="geometry"/>
+        </mxCell>
+        <mxCell id="jpad" value="5 JTAG pads&#10;TCK TMS TDI&#10;TDO TRST_N" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="240" y="90" width="140" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="dpad" value="DBG_EN pad" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="240" y="330" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="iomux" value="IO MUX&#10;force JTAG pads" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="240" y="470" width="140" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="sysdbg" value="SYSDBG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=12;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="420" y="50" width="520" height="390" as="geometry"/>
+        </mxCell>
+        <mxCell id="tap" value="JTAG TAP  (clock TCK)&#10;TAP FSM · IR 4 bit&#10;DR: ADDR DATA STATUS&#10;CPUDBG CPUHOLD&#10;IDCODE BYPASS" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="440" y="90" width="210" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="cdc" value="CDC&#10;4-phase&#10;req / ack&#10;2FF" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="670" y="90" width="90" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="axim" value="AXI4 manager&#10;(clock chip)&#10;AR R · AW W B" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="780" y="90" width="140" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="dben" value="DBG_EN&#10;2FF + capture once" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="440" y="330" width="210" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="outs" value="outputs (clock chip)&#10;o_cpu_debug_req&#10;o_cpu_hold&#10;o_dbg_en" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="670" y="300" width="250" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="sbus" value="S_BUS&#10;AXI_S0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="990" y="90" width="140" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="isram" value="ISRAM&#10;&#10;0x2000_0000  debug window 4 KiB&#10;  0x0800 ENTRY (halt)&#10;  0x0700 DATA · CMD&#10;  RESUME · HALTED&#10;0x2000_1000  program" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="60" width="280" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="cpu" value="Ibex CPU&#10;&#10;halt: PC -&gt; dpc, jump 0x2000_0800&#10;resume: dret -&gt; dpc" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="300" width="280" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="scrc" value="SCRC&#10;CPU reset = SCRC OR hold&#10;(before synchroniser)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="700" y="580" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="boot" value="boot_addr mux&#10;0: 0x0000_0000 ROM&#10;1: 0x2000_1000" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="990" y="470" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="key" value="1 connect   2 choose mode   3 hold CPU   4 load code   5 run   6 read data   7 halt   8 resume" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=11;dashed=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="20" y="730" width="1520" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="host_jpad_0" value="1 JTAG" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="host" target="jpad">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="board_dpad_1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="board" target="dpad">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="jpad_tap_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="jpad" target="tap">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="dpad_dben_3" value="2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dpad" target="dben">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="tap_cdc_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tap" target="cdc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="cdc_axim_5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cdc" target="axim">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="axim_sbus_6" value="AXI4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="axim" target="sbus">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="sbus_isram_7" value="4 load / 6 read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.3;entryX=0.0;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sbus" target="isram">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="tap_outs_8" value="dbgreq · cpu_hold" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.85;exitY=1.0;entryX=0.0;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tap" target="outs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="dben_outs_9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.8;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dben" target="outs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="outs_cpu_10" value="7 debug_req" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.25;entryX=0.0;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="outs" target="cpu">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="outs_scrc_11" value="3 o_cpu_hold" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.3;exitY=1.0;entryX=0.35;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="outs" target="scrc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="scrc_cpu_12" value="rst_ni" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.25;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scrc" target="cpu">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="outs_boot_13" value="o_dbg_en" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.85;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="outs" target="boot">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="boot_cpu_14" value="5 boot_addr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.75;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="boot" target="cpu">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="outs_iomux_15" value="o_dbg_en" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.1;exitY=1.0;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="outs" target="iomux">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="cpu_isram_16" value="fetch · halt loop · 8 RESUME" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cpu" target="isram">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
