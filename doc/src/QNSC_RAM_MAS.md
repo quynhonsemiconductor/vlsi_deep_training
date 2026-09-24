@@ -46,7 +46,7 @@ File `design/ram/rtl/m_qnsc_wrap_axi4_sram.sv`, owner Nghia Van Trong.
 
 # 3. Block diagram
 
-![The RAM block: wrapper, unmodified controller and macro. Heavy outline: the logic QSOC adds](../img/fig_ram_simple.png){width=6.5in}
+![The RAM block: wrapper, unmodified controller and macro. Heavy outline: the strobe FIFO QSOC adds](../img/fig_ram_simple.png){width=6.5in}
 
 Clock `i_clk_mem` and reset `i_rst_n_mem` come from the `mem` cluster. The clock is
 never gated; the reset is asserted by power-on, watchdog and software reset.
@@ -123,8 +123,8 @@ never gated; the reset is asserted by power-on, watchdog and software reset.
 
 A write is granted when `AWFIFO` and `WFIFO` are both non-empty; one entry is popped
 from each and written to the macro in the same cycle. When a write and a read
-request in the same cycle, the arbiter grants them alternately; a lone request is
-granted in the cycle it appears.
+request in the same cycle, the arbiter's round-robin toggle picks one; the toggle
+flips after every grant. A lone request is granted in the cycle it appears.
 
 A read is issued when `ARFIFO` is non-empty, `RFIFO` is not full and no read is
 pending. At most one SRAM read is in flight: the address is presented in one cycle
@@ -163,7 +163,8 @@ reads the containing word, or writes the bytes `WSTRB` selects in it.
 ## 7.3 Byte-enable path
 
 The IP has no `WSTRB` input. The wrapper adds `u_strbfifo`, an `m_vlsi_fifo`
-4 bits wide and `PARA_FIFO_DEPTH` deep:
+4 bits wide with `PARA_DEPTH` = `$clog2(PARA_FIFO_DEPTH)`, so it holds
+`PARA_FIFO_DEPTH` entries, the same as `WFIFO`:
 
 - **Push** `i_bus_axi_wstrb` on `i_bus_axi_wvalid & o_bus_axi_wready`, the `WFIFO` push.
 - **Pop** on `o_sram_we`, which is the `WFIFO` pop.
@@ -186,7 +187,7 @@ computes `(addr + 4) & ~3`, which aligns the address and does not wrap it. For a
 
 ## 7.6 Reset
 
-`i_rst_n_mem` asynchronously resets every flip-flop in the controller and in
+`i_rst_n_mem` (asserted asynchronously, released synchronously by `SCRC`) resets every flip-flop in the controller and in
 `u_strbfifo`: address FSMs to `S_IDLE`, FIFO pointers and storage to zero, the
 arbiter toggle and the read-pending flag to zero. After reset `awready`, `arready`
 and `wready` are 1, and `bvalid` and `rvalid` are 0. A transaction in flight when
@@ -242,7 +243,7 @@ size, so every routed address selects exactly one word.
 | Item | Owner | What it blocks |
 |---|---|---|
 | `CPU2AXI` carries the Ibex byte enables to `wstrb` | bus owner | Every sub-word CPU store -- 7.3 |
-| `DECERR` for unmapped addresses; decode windows as section 8 | bus owner | Out-of-range accesses -- 7.5 |
+| `DECERR` for unmapped addresses; decode windows as Table 1-1 | bus owner | Out-of-range accesses -- 7.5 |
 | `S_BUS` master-port ID width 7, equal to `PARA_ID_WD` | bus owner | Response ID matching |
 | **Does the DMA issue `WRAP` or narrow bursts into RAM?** If yes, `axi_burst_unwrap` goes in front of this block | DMA owner | DMA transfers -- 7.2, 7.4 |
 | First 4 KiB of `ISRAM` reserved, main image linked at `0x20001000` | firmware owner | The `SYSDBG` debug window |
@@ -280,6 +281,7 @@ Checks QSOC adds:
 | Acronym | Description |
 |---|---|
 | BWE | Byte write enable |
+| FIFO | First-In, First-Out buffer |
 | `DECERR` | AXI decode error response |
 | `DSRAM` | Data RAM, 32 KiB on `AXI_M2` |
 | `ISRAM` | Instruction RAM, 64 KiB on `AXI_M1` |

@@ -149,21 +149,18 @@ centre-aligned output. `CMD.RST` drives the output to 0 in every MODE.
 
 ## 7.3 Channel outputs and pads
 
-`ch_i_o[n]` is channel `n` of module `i`. Modules 0 and 1 drive the pads, so the pins
+`ch_i_o[n]` is channel `n` of module `i`. Modules 0 and 1 drive the pads, so the pads
 carry two independent periods with four channels under each.
 
-: Channel outputs against pads
+: Channel outputs against pad functions
 
-| Pad | Channel | Pin | Shared with |
-|---|---|---|---|
-| `PWM_0` | `ch_0_o[0]` | PIN_27 | `GPIO1_1` |
-| `PWM_1` | `ch_0_o[1]` | PIN_28 | `GPIO1_0` |
-| `PWM_2` | `ch_0_o[2]` | PIN_29 | `GPIO2_7` |
-| `PWM_3` | `ch_0_o[3]` | PIN_30 | `GPIO2_6` |
-| `PWM_4` | `ch_1_o[0]` | PIN_33 | `GPIO2_5` |
-| `PWM_5` | `ch_1_o[1]` | PIN_34 | `GPIO2_4` |
-| `PWM_6` | `ch_1_o[2]` | PIN_35 | `GPIO2_3` |
-| `PWM_7` | `ch_1_o[3]` | PIN_36 | `GPIO2_2` |
+| Pad function | Wrapper output | Channel |
+|---|---|---|
+| `PWM_0`..`PWM_3` | `o_pwm[3:0]` | `ch_0_o[3:0]`, module 0 |
+| `PWM_4`..`PWM_7` | `o_pwm[7:4]` | `ch_1_o[3:0]`, module 1 |
+
+The IO MUX sees only `o_pwm[7:0]`. Which package pin carries each function is the
+pad owner's table.
 
 `ch_2_o` and `ch_3_o` reach only the event multiplexer and the input pool.
 
@@ -206,8 +203,9 @@ Event line `k` is `EN[k] & new & ~old`, where `new` and `old` are two successive
 - A falling edge of the selected channel produces no event.
 - `EVENT_CFG` resets to 0, so no event occurs until firmware sets a selection and
   `EN[k]`.
-- The first enable after reset of a line whose selected channel is already 1
-  produces one event.
+- The edge detector samples only while `EN[k]` = 1. Enabling a line whose selected
+  channel is 1, when the last sample taken was 0, produces one event; this applies to
+  every enable, not only the first.
 - The event does not identify the module or channel; firmware knows which it selected.
 
 The block has no software-readable event status. `timer_module.status_o` is not
@@ -266,10 +264,10 @@ One, on `APB_M13`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 
 | Item | Owner | What it blocks |
 |---|---|---|
-| `i_bus_apb_paddr[11:0]` = offset within the region (`P_BUS` subtracts the base) | bus owner | register decode |
+| `i_bus_apb_paddr[11:0]` = the low 12 bits of the offset (`P_BUS` subtracts the base; offset bits 13:12 are not used) | bus owner | register decode |
 | `CLK_EN` and `SOFT_RST_CTRL` bit positions for PWM | SCRC owner | firmware clock and reset control |
 | `SCRC` closes the PWM clock only after firmware's safe stop -- 7.7 | firmware owner | outputs frozen at a non-zero level at a power stage |
-| IO MUX default for PIN_27-30, PIN_33-36 and PIN_37-40 | IO MUX owner | pin owner out of reset |
+| Pins for `PWM_0..7` and `TIM_EXT0..3`, and their IO MUX default after reset | IO pad / IO MUX owner | pin owner out of reset |
 
 **Accepted limits:**
 

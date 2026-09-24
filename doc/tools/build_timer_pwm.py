@@ -146,12 +146,13 @@ p = [
     N("tls", 10, 460, 120, 36, "low_speed_clk_i = 0", "box", 10),
     N("text", 10, 657, 120, 36, "ext_sig_i[31:4] = 0", "box", 10),
 
-    N("tpads", 10, 760, 120, 44, "TIM_EXT0 .. 3\nPIN_37 .. 40", "grey", 10),
+    N("tpads", 10, 760, 120, 44, "TIM_EXT0 .. 3\npads", "grey", 10),
     N("iomux_in", 170, 760, 130, 44, "IO MUX", "grey", 11, True),
+    N("sync2ff", 330, 760, 120, 44, "2FF sync\ni_clk_peri", "box", 10),
 
     N("intmap2", 1020, 150, 170, 60, "INTMAP\nfast line 7  (mcause 23)", "grey", 10, True),
     N("iomux_out", 1020, 240, 170, 160,
-      "IO MUX\n\nPWM_0 .. 3 = ch_0_o[0..3]\nPIN_27 .. 30\n\nPWM_4 .. 7 = ch_1_o[0..3]\nPIN_33 .. 36",
+      "IO MUX\n\nPWM_0 .. 3 = o_pwm[3:0]\n\nPWM_4 .. 7 = o_pwm[7:4]",
       "grey", 10),
 ]
 q = [
@@ -181,16 +182,17 @@ q = [
     E("m3", "r", "chbus", "l@" + _ch(_MY[3] + 35), "ch_3_o[3:0]"),
 
     E("chbus", "r@" + _ch(_MY[0] + 35), "iomux_out", "l@%.4f" % ((_MY[0] + 35 - 240) / 160),
-      "ch_0_o[3:0]"),
+      "o_pwm[3:0]"),
     E("chbus", "r@" + _ch(_MY[1] + 35), "iomux_out", "l@%.4f" % ((_MY[1] + 35 - 240) / 160),
-      "ch_1_o[3:0]"),
+      "o_pwm[7:4]"),
     E("chbus", "t", "evmux", "l@0.7", "16"),
     E("chbus", "b", "pool", "r", "ch[15:0]"),
     E("evmux", "r", "intmap2", "l", "events_o[3:0]"),
 
     E("text", "r", "pool", "l"),
     E("tpads", "r", "iomux_in", "l"),
-    E("iomux_in", "r", "pool", "b@0.4815", "ext_sig_i[3:0]"),
+    E("iomux_in", "r", "sync2ff", "l", "i_tim_ext"),
+    E("sync2ff", "r", "pool", "b@0.4815", "ext_sig_i[3:0]"),
 ]
 
 emit([("fig_timer_block", "TIMER0 and TIMER1 in QSOC", t, e),

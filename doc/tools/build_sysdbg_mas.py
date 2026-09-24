@@ -124,7 +124,7 @@ wire = [
     N("jpad", 20, 160, 150, 60, "JTAG pads", "blue", 11),
     N("dbg", 260, 80, 220, 200, "SYSDBG", "red", 13, True),
     N("scrc", 600, 440, 170, 60, "SCRC", "box", 12, True),
-    N("iomux", 600, 50, 170, 70, "IO MUX\nPIN_8..12 = JTAG", "box", 10),
+    N("iomux", 600, 50, 170, 70, "IO MUX\nJTAG pads = JTAG", "box", 10),
     N("mux", 600, 165, 170, 90, "boot_addr mux\n0: 0x0000_0000\n1: 0x2000_1000", "box", 10),
     N("gate", 600, 285, 170, 90, "CPU reset\nsynchroniser\nhold OR cpu reset", "box", 10),
     N("cpu", 900, 150, 170, 240, "Ibex CPU", "blue", 13, True),

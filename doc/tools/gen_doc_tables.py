@@ -137,7 +137,7 @@ def interrupt_totals(c):
     pulses = sum(l["sources"] for l in every if l["shape"].startswith("pulse"))
     return table(["", "Count"], align="lr",
                  caption="Interrupt source totals", rows=[
-        ["Sources ORed onto fast lines", agg],
+        ["Sources onto fast lines", agg],
         ["Sources on the non-maskable input", nmi],
         ["**Total interrupt sources**", "**%d**" % (agg + nmi)],
         ["Source blocks (%s)" % ", ".join(blocks), len(blocks)],

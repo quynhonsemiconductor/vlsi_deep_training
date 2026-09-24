@@ -156,7 +156,7 @@ o_cpu_hold = !captured | (o_dbg_en & cpu_hold_sync)      -- registered, reset 1
 | CPU leaves reset | When `SCRC` releases it | When `SCRC` releases it **and** `CPUHOLD = 0` |
 | Ibex `boot_addr_i` | `0x0000_0000`, ROM | `0x2000_1000`, `ISRAM` |
 | First instruction | `0x0000_0080`, bootloader | `0x2000_1080`, loaded image |
-| JTAG pins `PIN_8`--`PIN_12` | IO MUX register, default JTAG | Forced to JTAG |
+| JTAG pads (`TCK`, `TMS`, `TDI`, `TDO`, `TRST_N`) | IO MUX register, default JTAG | Forced to JTAG |
 
 **Normal boot.** To attach, the host writes the debug window (7.8) while the CPU
 runs, then halts it (7.7).
@@ -318,7 +318,7 @@ One, in `design/top`, with the default parameters.
 
 | Item | Owner | What it blocks |
 |---|---|---|
-| `DBG_EN` on one of the three no-connect pads, pull-down on the board | Top, pad owner | Debug boot |
+| `DBG_EN` on a dedicated input pad, pull-down on the board. If no pad is free, it may share a pad whose IO MUX default is an input, since it is sampled only after power-on | Top, pad owner | Debug boot |
 | `i_rst_n_por` from power-on only, not from the watchdog | `SCRC` | `DBG_EN` capture and hold surviving a watchdog bite |
 | CPU reset = `SCRC` CPU reset OR `o_cpu_hold`, through the CPU reset synchroniser | `SCRC` | Debug boot |
 | `boot_addr_i = o_dbg_en ? 0x2000_1000 : 0x0000_0000` | CPU owner | Debug boot running the loaded image |
@@ -326,7 +326,7 @@ One, in `design/top`, with the default parameters.
 | `fetch_enable_i` tied to `IbexMuBiOn`. The CPU is held by reset (`o_cpu_hold`), not by fetch enable | CPU owner | Debug boot; a second hold would need its own release |
 | `AXI_S0` connected to `SYSDBG` directly, AXI4, ID width `AxiIdWidth`. No `axi_from_mem` | Bus owner | Every bus access |
 | Remove the `0xF000_0000` `SYSDBG` register region from HAS Table 7-1 (already gone from `qsoc_contract.yml`) | HAS owner | Consistency. There are no memory-mapped registers |
-| `PIN_8`--`PIN_12` forced to JTAG while `o_dbg_en = 1` | IO MUX owner | Debug boot with firmware that remaps pins |
+| The five JTAG pads forced to JTAG while `o_dbg_en = 1` | IO MUX owner | Debug boot with firmware that remaps pins |
 | `ISRAM` array has no reset and no clear-on-reset | RAM owner | Image surviving a watchdog or software reset |
 | Image linked at `0x2000_1000`, reset entry `0x2000_1080`; bootloader jumps to `0x2000_1080` | Firmware owner | The same image in both boot modes |
 

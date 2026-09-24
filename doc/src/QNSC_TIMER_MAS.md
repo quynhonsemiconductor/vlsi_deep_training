@@ -28,8 +28,8 @@ Nghia Van Trong.
 
 | Instance | Base | APB port | Mode | Clock gate out of reset | Interrupt |
 |---|---|---|---|---|---|
-| `TIMER0` | `0x8001_C000` | `APB_M7` | 64-bit, `MODE_64` = 1 | open | `irq_lo_o` to `irq_fast_i[10]` (mcause 26); `irq_hi_o` not connected |
-| `TIMER1` | `0x8002_0000` | `APB_M8` | two 32-bit, `MODE_64` = 0 | closed | `irq_lo_o` and `irq_hi_o` to `irq_fast_i[6]` (mcause 22) |
+| `TIMER0` | `0x8001_C000` | `APB_M7` | 64-bit: firmware writes `MODE_64` = 1 | open | `irq_lo_o` to `irq_fast_i[10]` (mcause 26); `irq_hi_o` not connected |
+| `TIMER1` | `0x8002_0000` | `APB_M8` | two 32-bit: `MODE_64` stays 0 | closed | `irq_lo_o` and `irq_hi_o` to `irq_fast_i[6]` (mcause 22) |
 
 # 2. Features
 
@@ -142,8 +142,8 @@ mode.
 
 ## 7.3 Compare and interrupt
 
-The match flag of each counter is a flop that is 1 in every cycle in which the count
-equals `TIMER_CMP`, whether or not `ENABLE` is set. The interrupt is combinational:
+The match flag of each counter is a flop: it is 1 in the cycle after each cycle in
+which the count equals `TIMER_CMP`, whether or not `ENABLE` is set. The interrupt is combinational:
 
 : Interrupt equations
 
@@ -220,7 +220,7 @@ as written by firmware, the clock gate reset state and the `INTMAP` line -- sect
 |---|---|
 | Interrupt status or flag | nowhere |
 | Interrupt acknowledge | firmware writes to the block -- 7.5 |
-| Source of `irq_fast_i[6]` between `TIMER1` `lo` and `hi` | nowhere in periodic mode -- 7.5 |
+| Source of `irq_fast_i[6]` between `TIMER1` `lo` and `hi` | nowhere in periodic or free-running mode -- 7.5 |
 | Error response | `SCRC` responder, only while the clock gate is closed -- 7.6 |
 | Greater-or-equal compare | nowhere -- 7.4 |
 | `mtime` and `mtimecmp` | nowhere; `irq_timer_i` is tied 0 at the core |
@@ -244,7 +244,7 @@ as written by firmware, the clock gate reset state and the `INTMAP` line -- sect
 
 | Item | Owner | What it blocks |
 |---|---|---|
-| `i_bus_apb_paddr[11:0]` = offset within the region (`P_BUS` subtracts the base) | bus owner | register decode |
+| `i_bus_apb_paddr[11:0]` = the low 12 bits of the offset (`P_BUS` subtracts the base; offset bits 13:12 are not used) | bus owner | register decode |
 | `CLK_EN` and `SOFT_RST_CTRL` bit positions for `TIMER0` and `TIMER1` | `SCRC` owner | the wrapper's clock and reset connection |
 | Gate reset values: `TIMER0` open, `TIMER1` closed | `SCRC` owner | `TIMER0` counting before firmware writes `SCRC` |
 
@@ -258,6 +258,8 @@ Accepted limits and firmware rules:
 4. Do not close a timer's clock gate while its interrupt is asserted: the level holds
    and the block cannot be written to clear it -- 7.6.
 5. Closing `TIMER0`'s clock gate stops the timebase without any record.
+6. Read the 64-bit count as `HI`, `LO`, `HI`; if the two `HI` values differ, read again.
+7. Restart a one-shot with `TIMER_RESET_x`, then `TIMER_START_x` -- 7.5.
 
 Open: gate count, from synthesis.
 

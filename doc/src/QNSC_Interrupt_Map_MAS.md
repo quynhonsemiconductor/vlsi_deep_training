@@ -139,7 +139,7 @@ transaction occurs on the interrupt path.
 
 |  | Count |
 |---|---:|
-| Sources ORed onto fast lines | 26 |
+| Sources onto fast lines | 26 |
 | Sources on the non-maskable input | 1 |
 | **Total interrupt sources** | **27** |
 | Source blocks (DMA, SPI, I2C, UART, TIMER, PWM, WDT, GPIO) | 8 |
@@ -172,7 +172,7 @@ handler) or the `mie` bit is clear, or in Debug Mode, raises no trap.
 | UART0, UART1 | level | the 16550 register read that `IIR` names | -- |
 | WDT wake-up, WDT bark | level | W1C `INTR_STATE` | -- |
 | GPIO0-3 | pulse | nothing; `INTSTATUS` clears on read | lost; the pin stays recorded in `INTSTATUS` |
-| TIMER0, TIMER1 | pulse; level in one-shot with prescaler or ref clock | a write to `TIMER_RESET_LO`/`_HI` ends the level | lost; the next period raises it again |
+| TIMER0, TIMER1 | pulse; level in one-shot with prescaler or ref clock | a held level ends on the writes in `QNSC_TIMER_MAS` 7.5 | lost; periodic mode raises it again next period, one-shot does not |
 | PWM | pulse | nothing | lost; the next period raises it again |
 
 ## 7.5 A gated peripheral holds its line
@@ -195,7 +195,7 @@ One. It is instantiated in `design/top` and has no parameters.
 | Function | Where it lives |
 |---|---|
 | Pending latch | the source's status register, or none (7.4) |
-| Which event fired | the source's status register |
+| Which event fired | the source's status register; `TIMER1` (lo/hi) and `PWM` have none, see their MAS |
 | Which group fired | `mcause`, via the vectored trap address |
 | Priority resolution | Ibex, by fast-line index |
 | Per-line enable | `mie` bits 16-26, in the core |
@@ -223,7 +223,7 @@ One. It is instantiated in `design/top` and has no parameters.
 | Item | Owner | What it blocks |
 |---|---|---|
 | Vector table entries at `mtvec + 0x40` to `+0x68` and `+0x7C`; `mtvec` 256-byte aligned, because Ibex ignores `mtvec[7:0]` | firmware owner | every interrupt |
-| Handlers installed before `mstatus.MIE` is set | firmware owner | every source is live from the first cycle out of reset |
+| Handlers installed before `mstatus.MIE` is set, and the NMI entry at `mtvec + 0x7C` before the watchdog is enabled | firmware owner | every source is live from the first cycle out of reset; the NMI ignores `mstatus.MIE` |
 | Firmware clears a peripheral's interrupt before closing its `CLK_EN` gate (7.5); written in the programming guide. `SCRC` needs no change | firmware owner | a handler that cannot clear its own source |
 | Align HAS lines 69 and 155 with 7.3: the bark passes through `INTMAP` as a wire, so `INTMAP` takes 27 sources, not 26 | HAS owner | consistency between HAS and MAS |
 
@@ -281,4 +281,4 @@ Ten checks, none needing a bus model:
 | Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by W1C `DMA_ISR` (7.4) |
 | Does this block need to latch pending? | -- | No. Every level source holds its line; a missed pulse is recorded or repeats (7.4) |
 | Is the non-maskable interrupt in the totals and the core-input table? | Teacher, 2026-09-23 | Yes: it is counted in the 27 (7.2) and listed in section 10 |
-| What happens to a line whose peripheral is clock-gated? | -- | It stays asserted (7.5). **Open**: the gating rule is a request on the SCRC owner (11) |
+| What happens to a line whose peripheral is clock-gated? | -- | It stays asserted (7.5). Firmware clears the source before gating it; `SCRC` needs no change (11) |
