@@ -13,13 +13,21 @@ toolchain that builds them. **The source of truth is Markdown, not the `.docx`.*
 | `drawio/*.drawio` | Editable diagram sources | ✅ |
 | `img/*.png`, `*.svg` | Rendered diagrams (committed so specs are readable without the drawio CLI) | ✅ |
 | `build_docs.py` | Builds the `.docx` specs from `src/*.md` | ✅ |
-| `*.docx` (the specs) | **Generated** by `build_docs.py` | ❌ gitignored |
+| `*.docx` (the specs) | **Generated** by `build_docs.py`, committed so a reviewer without pandoc can open them | ✅ |
 | `template/QNSC_Reference_NoAutoNum.docx` | Build intermediate | ❌ gitignored |
+| `present/` | Personal presentation notes and their figures | ❌ gitignored |
+| Files received from other owners (their `.docx`, `.xlsx`) | Not a source of this repository | ❌ do not add |
 
-The `.docx` specifications are **not committed**: they are binary (undiffable) and
-go stale the instant `src/*.md` changes without a rebuild — the source-vs-output
-drift this project is built to avoid. Regenerate them locally when you need a
-`.docx` to share.
+**Rules for the generated files:**
+
+- Commit a `.docx` **only when its `src/*.md` changed.** A `.docx` is a zip, so every
+  rebuild changes its bytes even when the content does not. After `build_docs.py`,
+  put back the untouched ones with `git checkout -- doc/<NAME>.docx`.
+- Commit a rendered `img/*.png` / `*.svg` together with the script or drawio change
+  that produced it.
+- Keep your own study or presentation notes in `doc/present/`. It sits next to the
+  specifications, so relative links such as `../img/...` still work, but it is never
+  committed.
 
 ## Blocks documented here
 

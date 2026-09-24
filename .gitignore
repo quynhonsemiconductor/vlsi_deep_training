@@ -1,1 +1,7 @@
 build/
+
+# macOS Finder metadata
+.DS_Store
+
+# Personal presentation notes: kept next to the specifications, never committed.
+doc/present/
