@@ -48,9 +48,10 @@ what is ours and what is borrowed.
 - **Added decode:** answers `PSLVERR` for any slot offset at or above `0x20`
   (`P_STRICT_DECODE`), which the core does not do.
 
-Not yet agreed, from `tbd:` in the contract: the APB address width (bus owner) and
-the `CLK_EN` / `SOFT_RST_CTRL` bit positions (SCRC owner). The DMA channels that
-serve the UARTs are not in the contract yet either.
+The APB address width is `C_APB_PADDR_WIDTH` (12 bits) from the contract, the same
+for both instances. Not yet agreed, from `tbd:` in the contract: the `CLK_EN` /
+`SOFT_RST_CTRL` bit positions (SCRC owner) and the DMA channels that serve the UARTs
+(DMA owner).
 
 ## Instances
 

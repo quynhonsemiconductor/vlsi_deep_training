@@ -20,10 +20,10 @@ import qnsc_pkg::*;
 // QNSC wrapper of the PULP OBI UART for the QSOC peripheral bus.
 // design/top instantiates it twice: u_uart_0 on APB_M9, u_uart_1 on APB_M10.
 module m_qnsc_wrap_apb_uart #(
-  // P_BUS address width. One width for every peripheral slave is still tbd: in
-  // util/qsoc_contract.yml (bus owner); until then it covers the 16 KiB window.
-  parameter int unsigned P_ADDR_WIDTH      = $clog2(C_UART_0_SIZE),  // naming-check: ignore -- $clog2 is a system function
-  parameter int unsigned P_SLOT_ADDR_WIDTH = $clog2(C_UART_0_SIZE),  // naming-check: ignore -- $clog2 is a system function; 16 KiB slot
+  // APB address width: C_APB_PADDR_WIDTH (12), the low 12 bits of the offset
+  // P_BUS passes to every APB slave. The same for both instances.
+  parameter int unsigned P_ADDR_WIDTH      = C_APB_PADDR_WIDTH,
+  parameter int unsigned P_SLOT_ADDR_WIDTH = C_APB_PADDR_WIDTH,
   parameter bit          P_STRICT_DECODE   = 1'b1 // PSLVERR for slot offsets >= 0x20
 ) (
   // Clock and reset, peri cluster (gateable by SCRC CLK_EN; the bit positions
@@ -51,9 +51,9 @@ module m_qnsc_wrap_apb_uart #(
   output logic                    o_dma_rx_req,
 
   // Serial pins towards IOMUX (RX must be driven idle-high when unselected)
-  input  logic                    i_gpio_uart_rx,
-  output logic                    o_gpio_uart_tx,
-  output logic                    o_gpio_uart_tx_oe
+  input  logic                    i_uart_rx,
+  output logic                    o_uart_tx,
+  output logic                    o_uart_tx_oe
 );
 
   `APB_TYPEDEF_ALL(apb, logic [P_ADDR_WIDTH-1:0], logic [31:0], logic [3:0])
@@ -62,7 +62,7 @@ module m_qnsc_wrap_apb_uart #(
       P_ADDR_WIDTH,
       32,
       1,
-      obi_pkg::ObiMinimalOptionalConfig  // naming-check: ignore -- member of vendored obi_pkg
+      obi_pkg::ObiMinimalOptionalConfig
   );
 
   `OBI_TYPEDEF_DEFAULT_ALL(obi, C_OBI_CFG)
@@ -122,8 +122,8 @@ module m_qnsc_wrap_apb_uart #(
     .irq_no       (                ),
     .dma_tx_req_o ( o_dma_tx_req   ),
     .dma_rx_req_o ( o_dma_rx_req   ),
-    .rxd_i        ( i_gpio_uart_rx ),
-    .txd_o        ( o_gpio_uart_tx ),
+    .rxd_i        ( i_uart_rx ),
+    .txd_o        ( o_uart_tx ),
     // Modem inputs tied inactive: matches the '1 reset value of the modem
     // synchronizers, so no delta (MSR/MSTAT) event is raised after reset
     .cts_ni       ( 1'b1           ),
@@ -136,6 +136,6 @@ module m_qnsc_wrap_apb_uart #(
     .out2_no      (                )
   );
 
-  assign o_gpio_uart_tx_oe = 1'b1;
+  assign o_uart_tx_oe = 1'b1;
 
 endmodule
