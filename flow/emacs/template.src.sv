@@ -5,6 +5,7 @@
 //
 // Edit this .src.sv, then `make wrap BLOCK=@BLOCK@`: emacs verilog-mode expands
 // the AUTO comments and writes rtl/@DESIGN@.sv, the file @BLOCK@.f compiles.
+// Template functions: DM/EMACS/EMACS_quick_guide.pdf in MCU_guide_ws.
 //
 // Wrapper = core + bridge. The core is the IP; the bridge, only when the IP
 // speaks another protocol than the chip bus, converts it (APB to TL-UL, APB to
@@ -25,10 +26,11 @@ module @DESIGN@
 /*AUTOOUTPUT("^o_bus_apb")*/
 
 //---------------------------------------------------------------
-// PAD, through IO MUX
+// PAD, through IO MUX (Naming Rule 3.8: i_pad_ / o_pad_ / io_pad_)
 //---------------------------------------------------------------
-/*AUTOINPUT("^i_@BLOCK@")*/
-/*AUTOOUTPUT("^o_@BLOCK@")*/
+/*AUTOINPUT("^i_pad")*/
+/*AUTOOUTPUT("^o_pad")*/
+/*AUTOINOUT("^io_pad")*/
 
 //---------------------------------------------------------------
 // DMA
@@ -80,8 +82,14 @@ module @DESIGN@
 // Map every IP port to a QNSC name. First match wins; [] keeps the width.
 //   .P\(ADDR\|WDATA\|WRITE\|SEL\|ENABLE\) (i_bus_apb_p@"(downcase (symbol-name '\1))"[]),
 //   .P\(.*\)                              (o_bus_apb_p@"(downcase (symbol-name '\1))"[]),
-//   .unused_i                             (1'b0),     tie-off
-//   .unused_o                             (),         left open
+//   .\(.*\)_pad_o                         (o_pad_@BLOCK@_\1[]),
+//   .\(.*\)_padoen_o                      (o_pad_@BLOCK@_\1_oe_n[]),   active low: _n
+//   .irq_o                                (o_int_@BLOCK@),
+//   .dft_\(.*\)_i                         (1'b0),                        tie-off
+//   .unused_o                             (),                            left open
+//   .ERR_\(.*\) (@"(if (equal vl-dir \"input\") \"'0\" \"\")"),   inputs to 0, outputs open
+// Instance parameters are substituted into widths (verilog-auto-inst-param-value t):
+//   @IP_MODULE@ #(.APB_ADDR_WIDTH(C_APB_PADDR_WIDTH)) u_@IP_MODULE@ (/*AUTOINST*/);
 /* @IP_MODULE@ AUTO_TEMPLATE(
     .HCLK                                 (i_clk_peri),
     .HRESETn                              (i_rst_n_peri),
@@ -96,6 +104,6 @@ endmodule
 // verilog-library-flags:("-f filelist_emacs.f")
 // verilog-library-extensions:(".v" ".sv")
 // verilog-auto-star-expand: nil
-// verilog-auto-inst-param-value: nil
+// verilog-auto-inst-param-value: t
 // eval: (setq large-file-warning-threshold nil)
 // End:

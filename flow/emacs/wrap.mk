@@ -3,14 +3,15 @@
 #
 # A block's design/<block>/rtl/emacs/Makefile is only:
 #
-#   DESIGN    = m_qnsc_wrap_<block>
-#   PARAM_FIX = s,\[APB_ADDR_WIDTH-1,[C_APB_PADDR_WIDTH-1,g     # optional
+#   DESIGN    = m_qnsc_wrap_<ip_module>
+#   PARAM_FIX = <sed script>                                   # optional, rare
 #   include ../../../../flow/emacs/wrap.mk
 #
 # `make` copies <DESIGN>.src.sv to <DESIGN>.sv, expands the AUTO comments
 # (AUTOINST, AUTOINPUT, AUTOWIRE, AUTO_TEMPLATE) and copies the result to rtl/,
-# which is the file <block>.f compiles. PARAM_FIX is a sed script applied after
-# the expansion, for an IP parameter the wrapper replaces with a qnsc_pkg name.
+# which is the file <block>.f compiles. Instance parameters are already
+# substituted by verilog-auto-inst-param-value t; PARAM_FIX is a sed script run
+# after the expansion, only for what that cannot express.
 #
 # The target names are those of the I2C demo on share_review, so the format is
 # the same for every block. Edit only the .src.sv; CI regenerates the wrapper

@@ -39,7 +39,7 @@ identifiers:
     # QNSC functional module, wrapper around an IP, or a generic module.
     pattern: '^(?:m_qnsc_wrap_[a-z0-9_]+|m_qnsc_[a-z0-9_]+|qnsc_[a-z0-9_]+)$'
     message: >
-      must be m_qnsc_<function>, m_qnsc_wrap_<block> or qnsc_<function>
+      must be m_qnsc_<function>, m_qnsc_wrap_<ip_module> or qnsc_<function>
 
   port:
     rule: "1.2 port prefix"

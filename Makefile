@@ -17,7 +17,7 @@ BASE  ?= origin/main
 SCOPE = $(if $(BLOCK),design/$(BLOCK))
 
 .PHONY: help check filelists lint naming hardcode pkg pkg-check tables docs \
-        vendor-guard new-wrap wrap wrap-check sim syn gca
+        vendor-guard new-wrap wrap wrap-check vcs sim syn gca
 
 help:
 	@echo "make check          all CI checks: filelists lint naming hardcode pkg-check tables wrap-check vendor-guard"
@@ -33,6 +33,7 @@ help:
 	@echo "make new-wrap       scaffold rtl/emacs for a new wrapper   BLOCK= IP=<ip top .sv>"
 	@echo "make wrap           regenerate one emacs wrapper           BLOCK="
 	@echo "make wrap-check     every emacs wrapper matches its .src.sv"
+	@echo "make vcs            compile with VCS, on the server        BLOCK="
 	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=]"
 
 check: filelists lint naming hardcode pkg-check tables wrap-check vendor-guard
@@ -74,6 +75,10 @@ wrap:
 
 wrap-check:
 	bash flow/emacs/check_wrappers.sh
+
+vcs:
+	@test -n "$(BLOCK)" || { echo "usage: make vcs BLOCK=<block>"; exit 1; }
+	bash flow/vcs/run_vcs $(BLOCK)
 
 sim:
 	bash flow/sim/run_sim.sh $(BLOCK) $(TEST)

@@ -66,6 +66,7 @@ make check                  # everything CI checks, before every push
 make lint BLOCK=<block>     # one check, one block, while you work
 make new-wrap BLOCK=<block> IP=<ip top .sv>   # scaffold an emacs wrapper, once
 make wrap BLOCK=<block>     # regenerate an emacs wrapper after editing its .src.sv
+make vcs BLOCK=<block>      # compile with VCS, on the server (CI uses Verilator)
 make help                   # the full list
 ```
 

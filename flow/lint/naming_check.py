@@ -18,7 +18,7 @@ pulp's `clk_i`) and is not ours to rename. Section 4.3 of the rule applies to
 
 WHAT IS CHECKED (section 4.3, Enforcement Checklist)
 
-    module name       m_qnsc_<function> | m_qnsc_wrap_<block> | qnsc_<function>
+    module name       m_qnsc_<function> | m_qnsc_wrap_<ip_module> | qnsc_<function>
     port direction    i_ | o_ | io_ prefix
     parameter         P_<UPPER>          constant C_<UPPER>   FSM state S_<UPPER>
     instance          u_<function>[_<index>]
