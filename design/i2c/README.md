@@ -43,12 +43,12 @@ what is ours and what is borrowed.
 - **Port map:** maps the core to `i_clk_peri` / `i_rst_n_peri`, `i_bus_apb_*`,
   `o_int_i2c` and `o_dma_*` / `i_dma_last`.
 - **Pins:** hands SCL and SDA to IOMUX as input / output / output enable
-  (`o_gpio_i2c_*_oe = ~*_padoen_o`). The tri-state is left to the pad ring, the
+  (`o_i2c_*_oe = ~*_padoen_o`, active high). The tri-state is left to the pad ring, the
   same split SYSDBG uses for `tdo_oe_o`.
 
-Not yet agreed, from `tbd:` in the contract: the APB address width (bus owner) and
-the `CLK_EN` / `SOFT_RST_CTRL` bit positions (SCRC owner). The DMA channel that
-serves I2C is not in the contract yet either.
+The APB address width is `C_APB_PADDR_WIDTH` (12 bits) from the contract. Not yet
+agreed, from `tbd:` in the contract: the `CLK_EN` / `SOFT_RST_CTRL` bit positions
+(SCRC owner) and the DMA channel that serves I2C (DMA owner).
 
 ## Instances
 

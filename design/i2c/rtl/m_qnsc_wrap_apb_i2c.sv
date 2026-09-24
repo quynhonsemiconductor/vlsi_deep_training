@@ -12,10 +12,10 @@
 import qnsc_pkg::*;
 
 module m_qnsc_wrap_apb_i2c #(
-  // APB address width. One width for every peripheral slave is still tbd: in
-  // util/qsoc_contract.yml (bus owner); until then it covers the 16 KiB window.
-  // The core decodes only PADDR[5:2], so the window aliases every 64 bytes.
-  parameter int unsigned P_APB_ADDR_WIDTH = $clog2(C_I2C_SIZE)  // naming-check: ignore -- $clog2 is a system function
+  // APB address width: C_APB_PADDR_WIDTH (12), the low 12 bits of the offset
+  // P_BUS passes to every APB slave. The core decodes only PADDR[5:2], so the
+  // register map aliases every 64 bytes.
+  parameter int unsigned P_APB_ADDR_WIDTH = C_APB_PADDR_WIDTH
 ) (
   // Clock and reset, peri cluster (gateable by SCRC CLK_EN)
   input  logic                        i_clk_peri,
@@ -41,12 +41,12 @@ module m_qnsc_wrap_apb_i2c #(
 
   // I2C pins towards IOMUX. Open drain: the core only ever drives 0, so the
   // output enable alone decides between pulling low and releasing the line.
-  input  logic                        i_gpio_i2c_scl,
-  output logic                        o_gpio_i2c_scl,
-  output logic                        o_gpio_i2c_scl_oe,
-  input  logic                        i_gpio_i2c_sda,
-  output logic                        o_gpio_i2c_sda,
-  output logic                        o_gpio_i2c_sda_oe
+  input  logic                        i_i2c_scl,
+  output logic                        o_i2c_scl,
+  output logic                        o_i2c_scl_oe,
+  input  logic                        i_i2c_sda,
+  output logic                        o_i2c_sda,
+  output logic                        o_i2c_sda_oe
 );
 
   logic w_scl_padoen;  // active low in the core: 0 = drive
@@ -69,15 +69,15 @@ module m_qnsc_wrap_apb_i2c #(
     .dma_tx_req_o ( o_dma_tx_req      ),
     .dma_rx_req_o ( o_dma_rx_req      ),
     .dma_last_i   ( i_dma_last        ),
-    .scl_pad_i    ( i_gpio_i2c_scl    ),
-    .scl_pad_o    ( o_gpio_i2c_scl    ),
+    .scl_pad_i    ( i_i2c_scl    ),
+    .scl_pad_o    ( o_i2c_scl    ),
     .scl_padoen_o ( w_scl_padoen      ),
-    .sda_pad_i    ( i_gpio_i2c_sda    ),
-    .sda_pad_o    ( o_gpio_i2c_sda    ),
+    .sda_pad_i    ( i_i2c_sda    ),
+    .sda_pad_o    ( o_i2c_sda    ),
     .sda_padoen_o ( w_sda_padoen      )
   );
 
-  assign o_gpio_i2c_scl_oe = ~w_scl_padoen;
-  assign o_gpio_i2c_sda_oe = ~w_sda_padoen;
+  assign o_i2c_scl_oe = ~w_scl_padoen;
+  assign o_i2c_sda_oe = ~w_sda_padoen;
 
 endmodule
