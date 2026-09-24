@@ -59,23 +59,20 @@ Honest status, so nobody has to guess:
 
 ## Getting started
 
-Needs Python 3 with PyYAML, `verilator` for lint, and `pandoc` to build the
-specifications.
+Needs Python 3 with PyYAML, `verilator` for lint, `emacs` for generated
+wrappers, and `pandoc` to build the specifications.
 
 ```bash
-python3 flow/lint/naming_check.py      # naming rules
-python3 flow/lint/hardcode_check.py    # no shared value typed by hand
-bash    flow/lint/lint_all.sh          # Verilator, per block
-python3 util/gen_qnsc_pkg.py --check   # the generated package matches the contract
-
-cd doc && python3 build_docs.py        # build the specifications
+make check                             # every check CI runs
+make help                              # each check on its own, per block
+make docs                              # build the specifications
 python3 util/vendor_ip.py --list       # which upstream IP is pinned, and at what commit
 ```
 
 ## Contributing
 
 **Start with [`CONTRIBUTING.md`](CONTRIBUTING.md)** — what to read first, the five
-steps for writing a block, and the nine checks that gate a pull request.
+steps for writing a block, and the checks that gate a pull request.
 
 `main` is protected: no direct pushes, and a code-owner review is required.
 Ownership is per directory in [`.github/CODEOWNERS`](.github/CODEOWNERS).

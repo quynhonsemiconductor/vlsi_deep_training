@@ -62,12 +62,15 @@ the worked example.
 ### 4. Check locally before pushing
 
 ```bash
-python3 flow/lint/naming_check.py   design/<block>  # naming rule
-python3 flow/lint/hardcode_check.py design/<block>  # no shared value typed by hand
-bash    flow/lint/lint_all.sh                       # Verilator, through your filelist
+make check                  # everything CI checks, before every push
+make lint BLOCK=<block>     # one check, one block, while you work
+make wrap BLOCK=<block>     # regenerate an emacs wrapper after editing its .src.sv
+make help                   # the full list
 ```
 
-Both run in CI. Running them first saves a round trip.
+Every CI step calls the same `make` target, so a green `make check` on your
+machine is a green CI. A wrapper generated with emacs has a two-line
+`rtl/emacs/Makefile` that includes [`flow/emacs/wrap.mk`](flow/emacs/wrap.mk).
 
 ### 5. Open the pull request
 
@@ -79,12 +82,14 @@ Both run in CI. Running them first saves a round trip.
   and rebase merges ([`POLICY.md`](.github/POLICY.md)), so a merge commit on the
   branch breaks a rebase merge
 - `main` is protected: no direct pushes, and a code-owner review is required
-- Eight checks must pass:
+- These checks must pass (`make check` runs all but the last three locally):
 
 | Check | Fails when |
 |---|---|
 | `PR title (conventional commits)` | the title is not a conventional commit |
 | `Verilator lint` | your block does not lint through its filelist |
+| `Filelist paths` | a path in a `.f` is absolute, or names a file that does not exist |
+| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` |
 | `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** |
 | `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region |
 | `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract |
@@ -169,14 +174,14 @@ Verilator here.
 
 | Stage | Tool | Files, per block | Command | `done` when |
 |---|---|---|---|---|
-| **RTL integration** | Verilator (elaborate) | `design/<block>/rtl/`, `<block>.f` | `bash flow/lint/lint_all.sh` | The wrapper follows [`design/README.md`](design/README.md), elaborates through `<block>.f`, and is instantiated in `design/top` |
-| **SIM** ("VCS") | Verilator `--binary --timing` | `dv/<block>/tb_<block>.sv`, `dv/<block>/tests/` | `bash flow/sim/run_sim.sh <block>` | Every test in the MAS verification section runs **self-checking** and ends in `PASS`; a failure calls `$fatal` |
-| **LINT** | Verilator `--lint-only -Wall`, `naming_check.py`, `hardcode_check.py` | `design/<block>/waivers.vlt` | `bash flow/lint/lint_all.sh` (CI) | All three are clean in CI. Every waiver line has a reason |
+| **RTL integration** | Verilator (elaborate) | `design/<block>/rtl/`, `<block>.f` | `make lint BLOCK=<block>` | The wrapper follows [`design/README.md`](design/README.md), elaborates through `<block>.f`, and is instantiated in `design/top` |
+| **SIM** ("VCS") | Verilator `--binary --timing` | `dv/<block>/tb_<block>.sv`, `dv/<block>/tests/` | `make sim BLOCK=<block>` | Every test in the MAS verification section runs **self-checking** and ends in `PASS`; a failure calls `$fatal` |
+| **LINT** | Verilator `--lint-only -Wall`, `naming_check.py`, `hardcode_check.py` | `design/<block>/waivers.vlt` | `make lint naming hardcode BLOCK=<block>` (CI) | All three are clean in CI. Every waiver line has a reason |
 | **SDC** | OpenSTA syntax | `design/<block>/constraints/<block>.sdc` | read by the SYN and GCA stages | Every clock and every input/output is constrained. Clock names follow the table in [`flow/sta/README.md`](flow/sta/README.md). CDC paths carry the constraint their MAS states |
 | **CDC** | Review against the MAS, plus lint | MAS crossing table | review in the pull request | Every crossing in the RTL is in the MAS crossing table, and every one goes through a shared cell in `design/common` or a handshake the MAS specifies. See [`flow/cdc/README.md`](flow/cdc/README.md) |
 | **RDC** | Review against the MAS | MAS reset table | review in the pull request | Every reset domain is listed in the MAS, and no flop is reset by one domain and sampled by another without the MAS saying why it is safe. See [`flow/rdc/README.md`](flow/rdc/README.md) |
-| **SYN** | Yosys, with the `yosys-slang` front end | none extra | `bash flow/syn/run_syn.sh <block>` | Synthesises with no latch and no multi-driven net. The cell count is recorded in the tracker comment |
-| **GCA** | OpenSTA `check_setup` | the block SDC | `bash flow/sta/run_gca.sh <block>` | `check_setup` reports no unconstrained clock, input, output or loop |
+| **SYN** | Yosys, with the `yosys-slang` front end | none extra | `make syn BLOCK=<block>` | Synthesises with no latch and no multi-driven net. The cell count is recorded in the tracker comment |
+| **GCA** | OpenSTA `check_setup` | the block SDC | `make gca BLOCK=<block>` | `check_setup` reports no unconstrained clock, input, output or loop |
 
 CDC and RDC have no mature open-source checker, so their evidence is the MAS table plus
 the review. That is why every crossing must go through a **named shared cell**: it

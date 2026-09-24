@@ -19,8 +19,11 @@
 # so this is useful from the first commit instead of only once every block exists.
 set -uo pipefail
 
+# An optional argument lints one block: bash flow/lint/lint_all.sh pwm
+if [ $# -gt 0 ]; then dirs="design/$1/"; else dirs="design/*/"; fi
+
 fail=0
-for dir in design/*/; do
+for dir in $dirs; do
   block=$(basename "$dir")
   flist="${dir}${block}.f"
 
