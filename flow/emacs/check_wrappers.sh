@@ -11,19 +11,17 @@
 # as running `make wrap` for every block.
 set -uo pipefail
 
-if ! command -v emacs >/dev/null 2>&1; then
-  if [ -n "${GITHUB_ACTIONS:-}" ]; then
-    echo "emacs not installed"; exit 1
-  fi
-  echo "  emacs not installed -- skipped (brew install emacs, or apt install emacs-nox)"
-  exit 0
+# emacs is needed only once a wrapper exists; then its absence is a failure,
+# not a skip, or an unregenerated wrapper would pass.
+if ! ls design/*/rtl/emacs/Makefile >/dev/null 2>&1; then
+  echo "  no emacs wrapper yet"; exit 0
 fi
+command -v emacs >/dev/null 2>&1 || {
+  echo "emacs not installed (brew install emacs, or apt install emacs-nox)"; exit 1; }
 
 fail=0
-found=0
 for mk in design/*/rtl/emacs/Makefile; do
   [ -f "$mk" ] || continue
-  found=1
   dir=$(dirname "$mk")
   block=$(echo "$dir" | cut -d/ -f2)
   rtl="design/${block}/rtl"
@@ -50,5 +48,4 @@ for mk in design/*/rtl/emacs/Makefile; do
   fi
 done
 
-[ "$found" = 0 ] && echo "  no emacs wrapper yet"
 exit $fail

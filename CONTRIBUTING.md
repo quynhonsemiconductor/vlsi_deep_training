@@ -53,6 +53,7 @@ What a wrapper must do, the emacs rules and the naming table are in
 ### 4. Check locally before pushing
 
 ```bash
+make hooks                  # once per clone: every git push runs make check
 make check                  # everything CI checks, before every push
 make lint BLOCK=<block>     # one check, one block, while you work
 make new-wrap BLOCK=<block> IP=<ip top .sv>   # scaffold an emacs wrapper, once

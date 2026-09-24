@@ -63,6 +63,7 @@ Needs Python 3 with PyYAML, `verilator` for lint, `emacs` for generated
 wrappers, and `pandoc` to build the specifications.
 
 ```bash
+make hooks                             # once: run make check before every push
 make check                             # every check CI runs
 make help                              # each check on its own, per block
 make docs                              # build the specifications
