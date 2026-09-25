@@ -33,7 +33,6 @@ module m_qnsc_wrap_apb_adv_timer
 //---------------------------------------------------------------
 // PAD, through IO MUX: TIM_EXT0-3 in, PWM_0-7 out
 //---------------------------------------------------------------
-output logic [7:0] o_pad_pwm,  // [3:0] = module 0, [7:4] = module 1
 /*AUTOINPUT("^i_pad")*/
 /*AUTOOUTPUT("^o_pad")*/
 
@@ -53,12 +52,11 @@ output logic [7:0] o_pad_pwm,  // [3:0] = module 0, [7:4] = module 1
 /*AUTOWIRE*/
 
 //---------------------------------------------------------------
-// Count sources and pads
+// Count sources: TIM_EXT0-3, then 28 constant zeros
 //---------------------------------------------------------------
 logic [31:0] w_ext_sig;
 
 assign w_ext_sig = {28'b0, w_tim_ext_sync};       // IN_SEL 4-31 select 0
-assign o_pad_pwm = {w_pwm_ch_1, w_pwm_ch_0};
 
 /*AUTO_LISP(setq verilog-auto-inout-ignore-regexp
   (concat
@@ -108,7 +106,8 @@ qnsc_sync #(
     .low_speed_clk_i                      (1'b0),
     .ext_sig_i                            (w_ext_sig[]),
     .events_o                             (o_int_pwm[]),
-    .ch_\([01]\)_o                        (w_pwm_ch_\1[]),
+    .ch_0_o                               (o_pad_pwm[3:0]),     // PWM_0-3, module 0
+    .ch_1_o                               (o_pad_pwm[7:4]),     // PWM_4-7, module 1
     .ch_\([23]\)_o                        (),
 );
 */
@@ -124,5 +123,6 @@ endmodule
 // verilog-library-extensions:(".v" ".sv")
 // verilog-auto-star-expand: nil
 // verilog-auto-inst-param-value: t
+// indent-tabs-mode: nil
 // eval: (setq large-file-warning-threshold nil)
 // End:
