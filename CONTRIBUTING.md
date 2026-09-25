@@ -8,6 +8,8 @@ copy of each rule rather than two that drift apart.
 
 | Document | What it gives you |
 |---|---|
+| [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md) | Setup to merged PR, step by step, for any code |
+| [`doc/EMACS_AUTO.md`](doc/EMACS_AUTO.md) | How to write a wrapper, or any module that instantiates others, with emacs AUTOs |
 | [`design/README.md`](design/README.md) | The per-block convention: directory shape, why the filelist is not optional, the naming table, how to import the contract |
 | [`doc/rules/`](doc/rules) | **Mandatory** Naming Rule (CI enforces it) and the EMACS quick guide |
 | [`util/qsoc_contract.yml`](util/qsoc_contract.yml) | Every number shared between blocks, and where each came from |
@@ -47,8 +49,9 @@ make new-wrap BLOCK=<block> IP=vendor/<org>/<ip>/<ip_top>.sv   # once
 make wrap BLOCK=<block>                                       # after every edit
 ```
 
-What a wrapper must do, the emacs rules and the naming table are in
-[`design/README.md`](design/README.md#the-wrapper-is-the-boundary).
+What a wrapper must do and the naming table are in
+[`design/README.md`](design/README.md#the-wrapper-is-the-boundary); the emacs guide is
+[`doc/EMACS_AUTO.md`](doc/EMACS_AUTO.md).
 
 ### 4. Check locally before pushing
 
@@ -65,7 +68,7 @@ make help                   # the full list
 
 Every CI step calls the same `make` target, so a green `make check` on your
 machine is a green CI. How a wrapper is written with emacs is in
-[`design/README.md`, "Writing a wrapper with emacs verilog-mode"](design/README.md#writing-a-wrapper-with-emacs-verilog-mode).
+[`doc/EMACS_AUTO.md`](doc/EMACS_AUTO.md).
 
 ### 5. Open the pull request
 

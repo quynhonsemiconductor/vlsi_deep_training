@@ -87,7 +87,7 @@ python3 util/vendor_ip.py --list       # which upstream IP is pinned, and at wha
 
 ## Contributing
 
-**Start with [`CONTRIBUTING.md`](CONTRIBUTING.md)** — what to read first, the five
+**New here? [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md)** walks from setup to a merged pull request. **Then [`CONTRIBUTING.md`](CONTRIBUTING.md)** — what to read first, the five
 steps for writing a block, and the checks that gate a pull request.
 
 `main` is protected: no direct pushes, and a code-owner review is required.

@@ -52,39 +52,11 @@ what the IP is missing — the byte-enable path the RAM controller lacks is the 
 
 ## Writing a wrapper with emacs verilog-mode
 
-The mentors ask for wrappers generated with emacs `verilog-mode`, as industry does.
-You write the port groups and an `AUTO_TEMPLATE` that maps each IP port to its QNSC
-name; `AUTOINST`, `AUTOINPUT`, `AUTOOUTPUT` and `AUTOWIRE` write the port list and
-the instance. The references are [`doc/rules/EMACS_quick_guide.pdf`](../doc/rules/EMACS_quick_guide.pdf)
-(template and every template function), `flow/emacs/template.src.sv.in` which follows
-it, and the I2C demo on the `share_review` branch.
-
-```bash
-make new-wrap BLOCK=pwm IP=vendor/pulp-platform/apb_adv_timer/rtl/apb_adv_timer.sv
-#   scaffolds design/pwm/rtl/emacs/ from flow/emacs/template.src.sv.in
-vim design/pwm/rtl/emacs/m_qnsc_wrap_apb_adv_timer.src.sv   # fill the AUTO_TEMPLATE
-make wrap BLOCK=pwm                                 # expand, copy to rtl/
-make check                                          # lint, naming, wrap-check, ...
-```
-
-Rules:
-
-1. Edit only the `.src.sv`. Commit it together with the generated files; CI
-   regenerates every wrapper and fails if the committed result differs.
-2. The **Others** group must end empty. A port that lands there has no template
-   line, and it will also fail the naming check.
-3. Internal signals are `w_*` or `r_*`. The template ignores `w_*` for ports, so an
-   IP output mapped to `w_<name>` becomes a wire (`AUTOWIRE`), not a port.
-4. `verilog-auto-inst-param-value` is `t`, as in the guide: a parameter set in the
-   instance, `#(.APB_ADDR_WIDTH(C_APB_PADDR_WIDTH))`, is substituted into the
-   generated widths, so no `sed` is needed. `PARAM_FIX` in the block Makefile (a
-   `sed` script run after the expansion) is only for what this cannot express.
-5. `filelist_emacs.f` is read only by emacs. `<block>.f` is still the filelist that
-   builds and lints the block.
-6. Declare no port by hand. Map every IP port in the `AUTO_TEMPLATE`, bit slices
-   included (`.ch_0_o (o_pad_pwm[3:0])`), and the AUTOs declare it. The `.src.sv`
-   then stays valid SystemVerilog before expansion, so the editor shows no false
-   errors in it.
+Wrappers, and any module that mainly instantiates others, are written with emacs
+`verilog-mode` AUTOs: `make new-wrap BLOCK=<block> IP=<ip top .sv>` scaffolds it,
+`make wrap BLOCK=<block>` expands it, CI checks the result. The full guide -- the
+files, the five parts you write, what emacs writes, the rules and the failure table
+-- is [`doc/EMACS_AUTO.md`](../doc/EMACS_AUTO.md).
 
 ## Instances are decided in `design/top`, not here
 
