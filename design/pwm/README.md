@@ -40,5 +40,5 @@ What the wrapper adds (MAS 5, 7.3, 10): `i_pad_tim_ext[3:0]` through
 
 ## Instances
 
-One, `u_pwm` in `design/top`, on `APB_M13` (`C_PWM_BASE`), interrupts to
+One, `u_pwm` in `design/top`, on `APB_M12` (`C_PWM_BASE`), interrupts to
 `INTMAP` line `C_INT_LINE_PWM`.

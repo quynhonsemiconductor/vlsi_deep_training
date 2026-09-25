@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-// QNSC wrapper of pulp-platform/apb_adv_timer: the QSoC PWM on APB_M13,
+// QNSC wrapper of pulp-platform/apb_adv_timer: the QSoC PWM on APB_M12,
 // C_PWM_BASE, INTMAP fast line C_INT_LINE_PWM.
 // Spec: doc/src/QNSC_PWM_MAS.md (V2.2).
 //
@@ -29,7 +29,7 @@ input logic		i_rst_n_peri,		// To u_sync_tim_ext of qnsc_sync.v, ...
 // End of automatics
 
 //---------------------------------------------------------------
-// APB slave, from P_BUS (APB_M13)
+// APB slave, from P_BUS (APB_M12)
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_bus_apb")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
