@@ -391,4 +391,4 @@ halt it, read `dpc`, resume it, and see the GPIO toggle again.
 | The debugger must control the CPU reset, selected by an external pin | Teacher, 2026-09-23 | `DBG_EN` and `CPUHOLD` -- 7.1 |
 | Reference design `VLSI_SYSDBG.drawio` | Teacher, 2026-09-23 | Used as the pattern and adapted to QSOC -- `_DECISIONS` D18 |
 | CPU clock under debugger control | Teacher, 2026-09-23 | Not needed: the `cpu` cluster is never gated, and holding reset stops the CPU |
-| IP list: "self-designed; only use `axi_from_mem` from `pulp-platform/axi`" | Teacher, 2026-09-25 | Not instantiated. The AXI manager of the teacher's reference design (7.5) drives the channels directly, so no adapter is needed; `axi_from_mem` is the only IP the block may use, not one it must. To confirm with the teacher -- `_DECISIONS` D21 |
+| IP list names `axi_from_mem` for the debugger | Owner, 2026-09-25 | An early pick from the V1.x memory-style port. The block is self-designed, as the teacher asks: its own AXI4 manager (7.5) connects to `AXI_S0` directly, and no IP is instantiated -- `_DECISIONS` D21 |

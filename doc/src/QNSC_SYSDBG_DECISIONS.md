@@ -18,7 +18,7 @@ Nothing here was deleted from the specification without being kept here first.
 
 | # | Decision | Why |
 |---|---|---|
-| D21 | **`axi_from_mem` is not instantiated; D13 stands** | The IP list says the debugger is self-designed and may use only `axi_from_mem`. The teacher's reference design (2026-09-23) has its own AXI manager driving `arvalid`, `awvalid`, `rready` and `bready` directly, and V3.0 follows it: one beat, one transaction, a few flip-flops per channel. `axi_from_mem` would add `axi_lite_from_mem`, `axi_lite_to_axi`, a FIFO and the `common_cells` dependency for the same single-beat access, and would reduce the response to one error bit. Read as a permission, not an obligation; to confirm with the teacher |
+| D21 | **Fully self-designed: no IP is instantiated, and D13 stands** | The teacher asks for `SYSDBG` to be self-designed. The early IP list named `axi_from_mem` because the V1.x bus port was memory-style; that was the owner's own pick, not a requirement. Since V3.0 the block has its own AXI4 manager -- one beat, one transaction, fixed attributes, a valid/ready pair per channel -- which connects to `axi_xbar` at `AXI_S0` with no adapter. `axi_from_mem` would add `axi_lite_from_mem`, `axi_lite_to_axi`, a FIFO and `common_cells` for the same access, and fold `SLVERR` and `DECERR` into one bit |
 | D22 | **Port names to `QNSC_RTL_Design_Naming_Rule` V1.0**: `o_dbg_req` (was `o_cpu_debug_req`), `o_dbg_cpu_hold` (was `o_cpu_hold`), AXI ports per channel (`o_bus_axi_ar_valid`, ...) | Rule 1.5 makes `debug` into `dbg`, 3.12 puts debug ports under `i_dbg_`/`o_dbg_`, and 3.4 names AXI by channel. JTAG and `DBG_EN` keep `i_jtag_*` and `i_dbg_en` (3.11, 3.12), as recorded in `design/README.md` |
 
 # V3.0 decisions (2026-09-23)

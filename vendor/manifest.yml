@@ -120,8 +120,8 @@ upstreams:
   ownership_note: >
     The BUS owner's. SYSDBG does not instantiate from it: since QNSC_SYSDBG_MAS
     V3.0 its own AXI4 manager drives AXI_S0 directly, following the teacher's
-    reference design. The IP list allows SYSDBG axi_from_mem only; it is kept
-    in files: so that choice stays open (QNSC_SYSDBG_DECISIONS D21).
+    reference design, and the block is fully self-designed
+    (QNSC_SYSDBG_DECISIONS D21).
   files:
   - src/axi_xbar.sv
   - src/axi_to_axi_lite.sv
