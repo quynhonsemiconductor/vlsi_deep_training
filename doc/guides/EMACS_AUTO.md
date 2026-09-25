@@ -16,7 +16,7 @@ them:
 tree). Write that by hand.
 
 References:
-- [`doc/rules/EMACS_quick_guide.pdf`](rules/EMACS_quick_guide.pdf): the template and
+- [`doc/rules/EMACS_quick_guide.pdf`](../rules/EMACS_quick_guide.pdf): the template and
   every template function.
 - [Veripool verilog-mode help](https://veripool.org/verilog-mode/help/).
 - Worked example: PR #26 (PWM).

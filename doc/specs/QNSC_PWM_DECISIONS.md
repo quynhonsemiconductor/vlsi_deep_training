@@ -91,7 +91,7 @@ The block is an APB slave on `P_BUS`, reached from the CPU through `AXI2APB` on
 outputs leave the chip through the IO mux. It also contributes four event lines to
 `INTMAP`.
 
-![Figure 1 -- The PWM block and where its outputs go](../img/fig_pwm_block.png){width=6.4in}
+![Figure 1 -- The PWM block and where its outputs go](../figures/img/fig_pwm_block.png){width=6.4in}
 
 # 2. Feature
 

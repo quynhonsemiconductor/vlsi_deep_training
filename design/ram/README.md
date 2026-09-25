@@ -1,6 +1,6 @@
 # `ram` — RAM controller (ISRAM, DSRAM)
 
-**Owner:** @Nghia-VanTrong   **Spec:** [`doc/src/QNSC_RAM_MAS.md`](../../doc/src/QNSC_RAM_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/ram`](../../dv/ram)
+**Owner:** @Nghia-VanTrong   **Spec:** [`doc/specs/QNSC_RAM_MAS.md`](../../doc/specs/QNSC_RAM_MAS.md) (build to .docx via `doc/build/build_docs.py`)   **DV:** [`../../dv/ram`](../../dv/ram)
 
 ## What this block is
 

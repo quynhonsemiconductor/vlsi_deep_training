@@ -8,12 +8,12 @@ copy of each rule rather than two that drift apart.
 
 | Document | What it gives you |
 |---|---|
-| [`doc/GETTING_STARTED.md`](doc/GETTING_STARTED.md) | Setup to merged PR, step by step, for any code |
-| [`doc/EMACS_AUTO.md`](doc/EMACS_AUTO.md) | How to write a wrapper, or any module that instantiates others, with emacs AUTOs |
+| [`doc/guides/GETTING_STARTED.md`](doc/guides/GETTING_STARTED.md) | Setup to merged PR, step by step, for any code |
+| [`doc/guides/EMACS_AUTO.md`](doc/guides/EMACS_AUTO.md) | How to write a wrapper, or any module that instantiates others, with emacs AUTOs |
 | [`design/README.md`](design/README.md) | The per-block convention: directory shape, why the filelist is not optional, the naming table, how to import the contract |
 | [`doc/rules/`](doc/rules) | **Mandatory** Naming Rule (CI enforces it) and the EMACS quick guide |
 | [`util/qsoc_contract.yml`](util/qsoc_contract.yml) | Every number shared between blocks, and where each came from |
-| Your block's MAS under [`doc/src/`](doc/src) | What your block must do |
+| Your block's MAS under [`doc/specs/`](doc/specs) | What your block must do |
 | [`doc/TRACKER.md`](doc/TRACKER.md) | Where every block stands, stage by stage. Update your row in the PR that finishes a stage |
 
 ## Writing a block — five steps
@@ -51,7 +51,7 @@ make wrap BLOCK=<block>                                       # after every edit
 
 What a wrapper must do and the naming table are in
 [`design/README.md`](design/README.md#the-wrapper-is-the-boundary); the emacs guide is
-[`doc/EMACS_AUTO.md`](doc/EMACS_AUTO.md).
+[`doc/guides/EMACS_AUTO.md`](doc/guides/EMACS_AUTO.md).
 
 ### 4. Check locally before pushing
 
@@ -68,13 +68,13 @@ make help                   # the full list
 
 Every CI step calls the same `make` target, so a green `make check` on your
 machine is a green CI. How a wrapper is written with emacs is in
-[`doc/EMACS_AUTO.md`](doc/EMACS_AUTO.md).
+[`doc/guides/EMACS_AUTO.md`](doc/guides/EMACS_AUTO.md).
 
 ### 5. Open the pull request
 
 - Title follows **Conventional Commits** — `feat(uart): add the APB wrapper`
 - The block `README.md` names the **owner** and links the **spec**. Until the MAS is
-  in `doc/src/`, link wherever it lives. `_TBD_` is not accepted
+  in `doc/specs/`, link wherever it lives. `_TBD_` is not accepted
 - To catch up with `main`, **rebase** your branch (`git fetch && git rebase
   origin/main`); do not merge `main` into it. The repository accepts only squash
   and rebase merges ([`POLICY.md`](.github/POLICY.md)), so a merge commit on the
@@ -185,6 +185,6 @@ block. Repository policy, CI and the ruleset are described in
 
 ## Specifications
 
-Markdown under [`doc/src/`](doc/src) is the source of truth; the `.docx` are built
-from it with `cd doc && python3 build_docs.py`. Rebuild before committing if you
+Markdown under [`doc/specs/`](doc/specs) is the source of truth; the `.docx` are built
+from it with `make docs`. Rebuild before committing if you
 changed the markdown — see [`doc/README.md`](doc/README.md).

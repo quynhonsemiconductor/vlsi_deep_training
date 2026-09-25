@@ -19,7 +19,7 @@ A block **designed in house** (SYSDBG, INTMAP) has no IP: its RTL is written her
 
 1. Clone: `git clone git@github.com:quynhonsemiconductor/vlsi_deep_training.git`.
 2. Install the tools in the table under "Getting started" in the root
-   [`README.md`](../README.md). macOS uses Homebrew; Ubuntu uses apt; Windows uses WSL2
+   [`README.md`](../../README.md). macOS uses Homebrew; Ubuntu uses apt; Windows uses WSL2
    with Ubuntu.
 3. `make doctor`. Install what it lists until it prints `ready for make check`.
 4. `make hooks`. After this:
@@ -36,11 +36,11 @@ A block **designed in house** (SYSDBG, INTMAP) has no IP: its RTL is written her
 
 | Document | Why |
 |---|---|
-| [`CONTRIBUTING.md`](../CONTRIBUTING.md) | Order of work, the checks, what not to do |
-| [`design/README.md`](../design/README.md) | Block layout, naming table, the decisions the rule leaves open |
-| [`doc/rules/`](rules) | **Mandatory** Naming Rule V1.0, and Tâm's EMACS quick guide |
-| Your block's MAS in [`doc/src/`](src) | The ports QSoC needs (Interface), tie-offs, instances |
-| [`util/qsoc_contract.yml`](../util/qsoc_contract.yml) | Addresses, interrupt lines, clock domains. Never typed by hand |
+| [`CONTRIBUTING.md`](../../CONTRIBUTING.md) | Order of work, the checks, what not to do |
+| [`design/README.md`](../../design/README.md) | Block layout, naming table, the decisions the rule leaves open |
+| [`doc/rules/`](../rules) | **Mandatory** Naming Rule V1.0, and Tâm's EMACS quick guide |
+| Your block's MAS in [`doc/specs/`](../specs) | The ports QSoC needs (Interface), tie-offs, instances |
+| [`util/qsoc_contract.yml`](../../util/qsoc_contract.yml) | Addresses, interrupt lines, clock domains. Never typed by hand |
 
 Worked example: PR #26, the PWM wrapper.
 
@@ -87,7 +87,7 @@ make naming BLOCK=<block>
 ## 5. Pull request
 
 1. Update `design/<block>/README.md` (Owner, Spec, IP, files, instances) and your row in
-   [`doc/TRACKER.md`](TRACKER.md) (`PR #n`).
+   [`doc/TRACKER.md`](../TRACKER.md) (`PR #n`).
 2. Commit. For a generated wrapper, commit both the source and the generated file.
 3. Title: a Conventional Commit, e.g. `feat(pwm): add the apb_adv_timer wrapper`.
 4. To catch up with `main`: `git fetch && git rebase origin/main`. Never merge `main`

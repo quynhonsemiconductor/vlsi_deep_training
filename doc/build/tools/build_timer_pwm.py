@@ -1,11 +1,11 @@
 import os
 import sys
-_DOC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # doc/
-sys.path.insert(0, os.path.join(_DOC, "tools"))
+_DOC = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # doc/
+sys.path.insert(0, os.path.join(_DOC, "build", "tools"))
 from diagen import Node as N, Edge as E, emit
 
-IMG = os.path.join(_DOC, "img")
-DRAWIO = os.path.join(_DOC, "drawio", "QNSC_Timer_PWM.drawio")
+IMG = os.path.join(_DOC, "figures", "img")
+DRAWIO = os.path.join(_DOC, "figures", "drawio", "QNSC_Timer_PWM.drawio")
 
 # ---------- Figure 1: TIMER0 and TIMER1 in QSOC ----------
 t = [

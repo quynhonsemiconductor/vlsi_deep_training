@@ -1,11 +1,11 @@
 import os
 import sys
-_DOC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # doc/
-sys.path.insert(0, os.path.join(_DOC, "tools"))
+_DOC = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # doc/
+sys.path.insert(0, os.path.join(_DOC, "build", "tools"))
 from diagen import Node as N, Edge as E, emit
 
-IMG = os.path.join(_DOC, "img")
-DRAWIO = os.path.join(_DOC, "drawio", "QNSC_RAM_Block.drawio")
+IMG = os.path.join(_DOC, "figures", "img")
+DRAWIO = os.path.join(_DOC, "figures", "drawio", "QNSC_RAM_Block.drawio")
 
 # m_qnsc_wrap_axi4_sram: the vendored controller, unmodified, plus the wstrb FIFO.
 # Wiring follows vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER/rtl at the pinned commit:

@@ -95,7 +95,7 @@ drive an SRAM.
 
 ## 1.2 Position in the system
 
-![Figure 1 -- Where the RAM sits in QSOC](../img/fig_qsoc_mem.png){width=6.4in}
+![Figure 1 -- Where the RAM sits in QSOC](../figures/img/fig_qsoc_mem.png){width=6.4in}
 
 Three blocks issue transactions on `S_BUS`: `CPU2AXI` on `AXI_S1`, `SYSDBG` on
 `AXI_S0`, and `DMA` on `AXI_S2`. Three memories answer them: `ROM` on `AXI_M0`,
@@ -155,7 +155,7 @@ at the data width), and error responses (`BRESP` and `RRESP` are hardwired to
 
 # 3. Block Diagram
 
-![Figure 2 -- The AXI4 SRAM controller and its macro](../img/fig_ram_simple.png){width=6.5in}
+![Figure 2 -- The AXI4 SRAM controller and its macro](../figures/img/fig_ram_simple.png){width=6.5in}
 
 # 4. Micro-architecture Details
 

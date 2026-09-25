@@ -56,7 +56,7 @@ Wrappers, and any module that mainly instantiates others, are written with emacs
 `verilog-mode` AUTOs: `make new-wrap BLOCK=<block> IP=<ip top .sv>` scaffolds it,
 `make wrap BLOCK=<block>` expands it, CI checks the result. The full guide -- the
 files, the five parts you write, what emacs writes, the rules and the failure table
--- is [`doc/EMACS_AUTO.md`](../doc/EMACS_AUTO.md).
+-- is [`doc/guides/EMACS_AUTO.md`](../doc/guides/EMACS_AUTO.md).
 
 ## Instances are decided in `design/top`, not here
 

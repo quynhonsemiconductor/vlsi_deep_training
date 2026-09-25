@@ -12,7 +12,7 @@ Three steps, all reproducible:
 3. Post-process: fill the "<IP name>" header placeholder, blank the corrupted
    footer runs inherited from the template, and point tables at TableGrid.
 
-Usage:  python3 build_docs.py
+Usage:  make docs   (or: python3 doc/build/build_docs.py)
 """
 import os
 import re
@@ -20,8 +20,11 @@ import shutil
 import subprocess
 import zipfile
 
-TEMPLATE = "template/QNSC_Technical_Document_Format.docx"
-REFERENCE = "template/QNSC_Reference_NoAutoNum.docx"
+# Paths are relative to doc/specs/, where this script works: the specifications
+# link their figures as ../figures/img/..., and the .docx go to docx/.
+os.chdir(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "specs"))
+TEMPLATE = "../build/template/QNSC_Technical_Document_Format.docx"
+REFERENCE = "../build/template/QNSC_Reference_NoAutoNum.docx"
 DOCS = [
     # The template is built with the specifications on purpose. It is the file
     # everybody copies, so if it stops rendering the whole team is blocked, and
@@ -330,16 +333,16 @@ def verify(path):
 def source_version(stem):
     """Read the version out of the metadata subtitle, which is where each source
     declares it and what the cover renders."""
-    head = open("src/%s.md" % stem, encoding="utf-8").read(600)
+    head = open("%s.md" % stem, encoding="utf-8").read(600)
     m = re.search(r"subtitle:.*?V([\d.]+)", head)
     return m.group(1) if m else "0.1"
 
 
 def build(stem, title):
     version = source_version(stem)
-    subprocess.run(["pandoc", "src/%s.md" % stem, "-o", "%s.docx" % stem,
+    subprocess.run(["pandoc", "%s.md" % stem, "-o", "docx/%s.docx" % stem,
                     "--reference-doc=" + REFERENCE, "--toc", "--toc-depth=2",
-                    "--resource-path=.:src:img"], check=True)
+                    "--resource-path=.:../figures/img"], check=True)
 
     def footer(xml):
         # (?:\s[^>]*)? is required: a bare "<w:t[^>]*>" also matches "<w:tab .../>"
@@ -444,11 +447,11 @@ def build(stem, title):
         return re.sub(r'<w:style [^>]*?w:styleId="SourceCode"[^>]*>.*?</w:style>',
                       add_mono, xml, flags=re.S)
 
-    rewrite("%s.docx" % stem, {r"word/footer\d+\.xml": footer,
+    rewrite("docx/%s.docx" % stem, {r"word/footer\d+\.xml": footer,
                                r"word/header\d+\.xml": header,
                                r"word/document\.xml": document,
                                r"word/styles\.xml": styles})
-    verify("%s.docx" % stem)
+    verify("docx/%s.docx" % stem)
     print("built %s.docx  (%s)  %d table, %d figure"
           % (stem, title, counts["tables"], counts["figures"]))
 

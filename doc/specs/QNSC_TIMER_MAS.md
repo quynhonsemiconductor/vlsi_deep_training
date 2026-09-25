@@ -43,13 +43,13 @@ Nghia Van Trong.
 
 # 3. Block diagram
 
-![TIMER0 and TIMER1 in QSOC](../img/fig_timer_block.png){width=6.4in}
+![TIMER0 and TIMER1 in QSOC](../figures/img/fig_timer_block.png){width=6.4in}
 
 Both instances are in the `peri` clock cluster. Each has its own clock gate,
 `CLK_EN[TBD]` in `SCRC`, and its own reset, `o_rst_n_timer_0` or `o_rst_n_timer_1` from
 `SCRC`.
 
-![Inside one TIMER instance](../img/fig_timer_inside.png){width=6.4in}
+![Inside one TIMER instance](../figures/img/fig_timer_inside.png){width=6.4in}
 
 # 4. IP used
 

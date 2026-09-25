@@ -1,6 +1,6 @@
 # `top` — chip top level and the shared contract package
 
-**Owner:** maintainers   **Spec:** the HAS (`doc/QSOC_HAS_Report_EN_v4_final 1.docx`) and [`util/qsoc_contract.yml`](../../util/qsoc_contract.yml)   **DV:** [`../../dv/top`](../../dv/top)
+**Owner:** maintainers   **Spec:** the HAS (`doc/reference/QSOC_HAS_Report_EN_v4_final.docx`) and [`util/qsoc_contract.yml`](../../util/qsoc_contract.yml)   **DV:** [`../../dv/top`](../../dv/top)
 
 ## What this block is
 

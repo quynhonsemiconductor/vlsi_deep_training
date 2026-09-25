@@ -1,11 +1,11 @@
 import os
 import sys
-_DOC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # doc/
-sys.path.insert(0, os.path.join(_DOC, "tools"))
+_DOC = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # doc/
+sys.path.insert(0, os.path.join(_DOC, "build", "tools"))
 from diagen import Node as N, Edge as E, emit
 
-IMG = os.path.join(_DOC, "img")
-DRAWIO = os.path.join(_DOC, "drawio", "QNSC_QSOC_MemMap.drawio")
+IMG = os.path.join(_DOC, "figures", "img")
+DRAWIO = os.path.join(_DOC, "figures", "drawio", "QNSC_QSOC_MemMap.drawio")
 
 # Figure 1 of both QNSC_RAM_MAS and QNSC_SYSDBG_MAS.
 # Masters above the bus, slaves below it; the author's two blocks are coloured.

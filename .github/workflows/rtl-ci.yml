@@ -14,7 +14,7 @@
 #      fact this project relies on is commit-specific: riscv-dbg's IdcodeValue,
 #      aon_timer's port list, apb_timer_unit's MODE_64 bit.
 #   4. A structural check on the specifications, reusing the checks already
-#      written in doc/build_docs.py rather than inventing new ones.
+#      written in doc/build/build_docs.py rather than inventing new ones.
 #
 # Every step calls a target of the root Makefile, so `make check` runs the same
 # commands locally.

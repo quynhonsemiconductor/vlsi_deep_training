@@ -41,7 +41,7 @@ Trong.
 
 # 3. Block diagram
 
-![PWM block: register file, clock gates, four timer modules, event multiplexer](../img/fig_pwm_block.png){width=6.5in}
+![PWM block: register file, clock gates, four timer modules, event multiplexer](../figures/img/fig_pwm_block.png){width=6.5in}
 
 Clock `i_clk_peri` (`peri` cluster, gated by `SCRC` `CLK_EN`), reset
 `i_rst_n_peri`. The register file and the event multiplexer run on `i_clk_peri`.
