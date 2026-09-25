@@ -1,6 +1,6 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,6 +14,7 @@ The reasoning behind each change is in
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, onto the template |
 | V2.1 | 2026-09-24 | Nghia VT | -- | Corrected against the RTL (`CH_EN`, output MODE, events, input stage, decode); full register fields; tie-off table; new block diagram |
 | V2.2 | 2026-09-25 | Nghia VT | -- | Pad ports named `o_pad_pwm`, `i_pad_tim_ext` (was `o_pwm`, `i_tim_ext`), per `QNSC_RTL_Design_Naming_Rule` 3.8 |
+| V2.3 | 2026-09-25 | Nghia VT | -- | 7.2: an unconfigured channel goes to 1 at `CMD.START` (reset `MODE` 0 is SET, reset `TH` 0 matches at once), seen in simulation of the wrapper. `TIM_EXT` synchronised by the shared `qnsc_sync` cell. Moved to `APB_M12` at `0x8003_0000` with the peripherals after the dropped GPIO3 |
 
 # 1. Overview
 
@@ -75,7 +76,7 @@ Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. `o_pad_pwm` and `o_int_pwm` are
 | `o_bus_apb_prdata` | out | 32 | read data; 0 at unimplemented offsets |
 | `o_bus_apb_pready` | out | 1 | constant 1, zero wait states |
 | `o_bus_apb_pslverr` | out | 1 | constant 0 |
-| `i_pad_tim_ext` | in | 4 | pads `TIM_EXT0`-`3` through IO MUX. Two flip-flops in the wrapper synchronise it to `i_clk_peri`, then `ext_sig_i[3:0]` |
+| `i_pad_tim_ext` | in | 4 | pads `TIM_EXT0`-`3` through IO MUX. Two flip-flops in the wrapper (`qnsc_sync`, `design/common`) synchronise it to `i_clk_peri`, then `ext_sig_i[3:0]` |
 | `o_pad_pwm` | out | 8 | `[3:0]` = `ch_0_o[3:0]`, `[7:4]` = `ch_1_o[3:0]`, to IO MUX -- 7.3 |
 | `o_int_pwm` | out | 4 | `events_o[3:0]`, one-cycle pulses, to `INTMAP` line 7 -- 7.5 |
 
@@ -147,6 +148,11 @@ Each channel output is a flip-flop in its `comparator`. A match is COUNTER equal
 
 MODE 2 with `SAW` = 1 gives an edge-aligned output; MODE 2 with `SAW` = 0 gives a
 centre-aligned output. `CMD.RST` drives the output to 0 in every MODE.
+
+**Unconfigured channels.** Out of reset every channel has `MODE` 0 (SET) and `TH` 0,
+so `CMD.START` drives each channel firmware did not configure to 1 at the first
+count of 0, and it stays 1. Before `CMD.START`, set every channel of the module:
+`MODE` 4 (RST) keeps an unused output at 0.
 
 ## 7.3 Channel outputs and pads
 

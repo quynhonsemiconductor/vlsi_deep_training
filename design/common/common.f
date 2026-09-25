@@ -9,4 +9,4 @@
 # affects every block that instantiates it.
 # =============================================================================
 
-# rtl/<shared_module>.sv
+rtl/qnsc_sync.sv
