@@ -1,6 +1,6 @@
 # `sysdbg` — system debug
 
-**Owner:** @nghia   **Spec:** [`doc/src/QNSC_SYSDBG_MAS.md`](../../doc/src/QNSC_SYSDBG_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/sysdbg`](../../dv/sysdbg)
+**Owner:** @Nghia-VanTrong   **Spec:** [`doc/src/QNSC_SYSDBG_MAS.md`](../../doc/src/QNSC_SYSDBG_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/sysdbg`](../../dv/sysdbg)
 
 ## What this block is
 

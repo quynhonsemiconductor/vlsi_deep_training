@@ -22,8 +22,8 @@ through a wrapper.
 | **Memory** | 2 KiB ROM · 64 KiB instruction RAM · 32 KiB data RAM |
 | **System bus** | AXI4 crossbar, fully connected, decode error on an unmapped address |
 | **Peripheral bus** | APB4 router, 16 slaves |
-| **Peripherals** | 2× UART · SPI host + device · I²C · 4× GPIO · 2× timer · PWM · watchdog · DMA |
-| **Interrupts** | 27 sources → 11 fast lines + 1 NMI, through a combinational OR tree |
+| **Peripherals** | 2× UART · SPI host + device · I²C · 3× GPIO · 2× timer · PWM · watchdog · DMA |
+| **Interrupts** | 26 sources → 11 fast lines + 1 NMI, through a combinational OR tree |
 | **Debug** | JTAG, in-house: halt, resume, and memory access without the CPU |
 | **Boot** | serial download into RAM, header + payload + CRC32, then jump |
 
@@ -59,23 +59,34 @@ Honest status, so nobody has to guess:
 
 ## Getting started
 
-Needs Python 3 with PyYAML, `verilator` for lint, and `pandoc` to build the
-specifications.
+Install these once. `make doctor` then says what is still missing.
+
+| Tool | Needed for | macOS (Homebrew) | Ubuntu / Debian |
+|---|---|---|---|
+| Python 3 + PyYAML | every check | `brew install python`, `pip3 install pyyaml` | `apt install python3 python3-yaml` |
+| `make`, `git`, `bash` | every check | Xcode command-line tools | `apt install make git` |
+| Verilator 5 | lint, simulation | `brew install verilator` | `apt install verilator` |
+| emacs | emacs wrappers | `brew install emacs` | `apt install emacs-nox` |
+| pandoc | `make docs` | `brew install pandoc` | `apt install pandoc` |
+| rsvg-convert | doc diagrams (optional) | `brew install librsvg` | `apt install librsvg2-bin` |
+| Yosys, OpenSTA, VCS | later stages | `make doctor` shows how | `make doctor` shows how |
+
+**Windows:** use WSL2 with Ubuntu and follow the Ubuntu column. The scripts are
+bash, and the training server is Linux, so WSL keeps everyone on the same tools.
 
 ```bash
-python3 flow/lint/naming_check.py      # naming rules
-python3 flow/lint/hardcode_check.py    # no shared value typed by hand
-bash    flow/lint/lint_all.sh          # Verilator, per block
-python3 util/gen_qnsc_pkg.py --check   # the generated package matches the contract
-
-cd doc && python3 build_docs.py        # build the specifications
+make doctor                            # once: what is missing on this machine
+make hooks                             # once per clone: make check before every push
+make check                             # every check CI runs
+make help                              # each check on its own, per block
+make docs                              # build the specifications
 python3 util/vendor_ip.py --list       # which upstream IP is pinned, and at what commit
 ```
 
 ## Contributing
 
 **Start with [`CONTRIBUTING.md`](CONTRIBUTING.md)** — what to read first, the five
-steps for writing a block, and the nine checks that gate a pull request.
+steps for writing a block, and the checks that gate a pull request.
 
 `main` is protected: no direct pushes, and a code-owner review is required.
 Ownership is per directory in [`.github/CODEOWNERS`](.github/CODEOWNERS).

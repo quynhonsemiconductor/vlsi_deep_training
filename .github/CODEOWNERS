@@ -27,9 +27,9 @@
 /design/                    @quynhonsemiconductor/vlsi-maintainers
 
 # ---- blocks: owner + maintainer -------------------------------------------
-# Replace the placeholder handles with GitHub usernames before enabling the
-# ruleset. A CODEOWNERS entry naming a user who cannot read the repo silently
-# matches nothing, which makes the required review unsatisfiable.
+# Maintainers review every block for now. To add a block owner, append their
+# GitHub username; a user who cannot read the repo silently matches nothing,
+# which makes the required review unsatisfiable.
 /design/ram/                @quynhonsemiconductor/vlsi-maintainers
 /design/rom/                @quynhonsemiconductor/vlsi-maintainers
 /design/sysdbg/             @quynhonsemiconductor/vlsi-maintainers
@@ -46,9 +46,10 @@
 /design/wdt/                @quynhonsemiconductor/vlsi-maintainers
 /design/iomux/              @quynhonsemiconductor/vlsi-maintainers
 /design/cpu/                @quynhonsemiconductor/vlsi-maintainers
+/design/common/             @quynhonsemiconductor/vlsi-maintainers
 
 # ---- shared surfaces: maintainers only ------------------------------------
-# design/top holds qsoc_top and qsoc_pkg. qsoc_pkg carries the cross-block
+# design/top holds the chip top and qnsc_pkg. qnsc_pkg carries the cross-block
 # contracts, so a change here can silently move another block's address map or
 # interrupt index. It is not a block owner's file.
 /design/top/                @quynhonsemiconductor/vlsi-maintainers
@@ -59,8 +60,8 @@
 # MODE_64. Two reviewers, and the manifest must be updated in the same PR.
 /vendor/                    @quynhonsemiconductor/vlsi-maintainers
 
-# The generator inputs are the source of truth for the APB router and the CSR
-# blocks. Editing the spreadsheet regenerates other people's RTL.
+# util/ holds the contract, the single source of truth for every shared number.
+# Editing it regenerates qnsc_pkg, which every block imports.
 /util/                      @quynhonsemiconductor/vlsi-maintainers
 
 # CI, ownership and the rulesets themselves.

@@ -13,7 +13,7 @@
                 <mxCell id="cpu" value="CPU" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" parent="1" vertex="1">
                     <mxGeometry x="430" y="62" width="160" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="irq" value="INTMAP&#xa;OR tree, in house&#xa;0 flip-flops, no bus port&#xa;27 IRQ from 8 blocks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" parent="1" vertex="1">
+                <mxCell id="irq" value="INTMAP&#xa;OR tree, in house&#xa;0 flip-flops, no bus port&#xa;26 IRQ from 8 blocks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" parent="1" vertex="1">
                     <mxGeometry x="1285" y="570" width="176" height="118" as="geometry"/>
                 </mxCell>
                 <mxCell id="dbg" value="SYSDBG" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;dashed=0;fontStyle=1;verticalAlign=middle;" parent="1" vertex="1">
@@ -61,7 +61,7 @@
                 <mxCell id="wdt" value="WDT" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" parent="1" vertex="1">
                     <mxGeometry x="600" y="730" width="130" height="70" as="geometry"/>
                 </mxCell>
-                <mxCell id="gpio" value="GPIO&#xa;0/1/2/3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" parent="1" vertex="1">
+                <mxCell id="gpio" value="GPIO&#xa;0/1/2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;dashed=0;verticalAlign=middle;" parent="1" vertex="1">
                     <mxGeometry x="750" y="730" width="140" height="70" as="geometry"/>
                 </mxCell>
                 <mxCell id="timer" value="TIMER 0/1&#xa;apb_timer_unit" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;dashed=0;verticalAlign=middle;" parent="1" vertex="1">
@@ -136,7 +136,7 @@
                 <mxCell id="pbus_wdt_20" value="APB_M2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.4060000000000001;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="wdt" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="pbus_gpio_21" value="APB_M3/4/5/6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.578;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="gpio" edge="1">
+                <mxCell id="pbus_gpio_21" value="APB_M3/4/5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.578;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="gpio" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="pbus_timer_22" value="APB_M7/8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.75;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="timer" edge="1">

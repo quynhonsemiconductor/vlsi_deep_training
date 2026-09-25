@@ -1,6 +1,6 @@
 # `timer` — general-purpose timer
 
-**Owner:** @nghia   **Spec:** [`doc/src/QNSC_TIMER_MAS.md`](../../doc/src/QNSC_TIMER_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/timer`](../../dv/timer)
+**Owner:** @Nghia-VanTrong   **Spec:** [`doc/src/QNSC_TIMER_MAS.md`](../../doc/src/QNSC_TIMER_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/timer`](../../dv/timer)
 
 ## What this block is
 
@@ -23,7 +23,8 @@ responsible for the pulse if the spec wants one.
 
 ## The wrapper is the boundary
 
-`rtl/qsoc_timer_wrap.sv` instantiates the vendored modules, ties off unused
-ports, and maps the APB signals to QSOC's naming (`qsoc_pkg`). Anything in
+`rtl/m_qnsc_wrap_apb_timer_unit.sv` instantiates the vendored modules, ties off
+unused ports, and maps the APB signals to the names in `qnsc_pkg`. The IP already
+speaks APB, so there is no bridge. Generated with emacs from `rtl/emacs/` ([`design/README.md`](../README.md#writing-a-wrapper-with-emacs-verilog-mode)). Anything in
 `rtl/` is ours; anything it instantiates from `vendor/` is not. That split is
 the answer to "self-designed or IP?" — visible without opening a file.

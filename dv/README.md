@@ -33,8 +33,8 @@ LINT stage uses. Never keep a second list of design files here.
 ## Running
 
 ```bash
-bash flow/sim/run_sim.sh <block>            # the default test
-bash flow/sim/run_sim.sh <block> <test>     # passes +test=<test> to the testbench
+make sim BLOCK=<block>                   # the default test
+make sim BLOCK=<block> TEST=<test>       # passes +test=<test> to the testbench
 ```
 
 Output goes to `build/sim/`, which is not committed.

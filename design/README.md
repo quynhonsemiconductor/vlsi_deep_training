@@ -9,6 +9,11 @@ any directory and know what to expect.
 ```
 design/<block>/
   rtl/               code written here, and nothing else
+    m_qnsc_wrap_<ip_module>.sv   the wrapper; generated when rtl/emacs/ exists
+    emacs/                       only for a wrapper generated with emacs
+      m_qnsc_wrap_<ip_module>.src.sv  the source you edit
+      Makefile                     DESIGN = ..., include flow/emacs/wrap.mk
+      filelist_emacs.f             the IP file whose ports verilog-mode reads
   <block>.f          filelist: what builds this block, in what order
   constraints/
     <block>.sdc      clocks, I/O delays, CDC constraints (SDC stage)
@@ -34,9 +39,48 @@ every wrapper, so it is a shared surface and not a block owner's file.
 never copied into `rtl/`. That is what makes "self-designed or IP?" answerable by
 reading one directory.
 
-A wrapper has four jobs: map ports to the names in `qsoc_pkg`, tie off what QSOC does
-not use, adapt the protocol if the IP speaks a different one, and add what the IP is
-missing — the byte-enable path the RAM controller lacks is the example.
+**Wrapper = core + bridge.** The wrapper is the layer around an existing IP that
+lets it fit into QSoC. The **core** is the IP itself. The **bridge** sits inside the
+wrapper and converts the IP's protocol to the chip bus; it exists only when the two
+differ — APB to TL-UL for SPI and WDT, APB to OBI for UART, none for PWM, whose IP
+already speaks APB. One wrapper per IP, and the IP owner owns it. `design/top`
+connects every wrapper by the naming rule.
+
+A wrapper has four jobs: map ports to the names in `qnsc_pkg`, tie off what QSOC does
+not use, adapt the protocol (the bridge) if the IP speaks a different one, and add
+what the IP is missing — the byte-enable path the RAM controller lacks is the example.
+
+## Writing a wrapper with emacs verilog-mode
+
+The mentors ask for wrappers generated with emacs `verilog-mode`, as industry does.
+You write the port groups and an `AUTO_TEMPLATE` that maps each IP port to its QNSC
+name; `AUTOINST`, `AUTOINPUT`, `AUTOOUTPUT` and `AUTOWIRE` write the port list and
+the instance. The references are Tâm's `MCU_guide_ws`: `DM/EMACS/EMACS_quick_guide.pdf`
+(template and every template function) and the demo in `IP/CPU/RTL/EMACS`; the I2C
+demo on the `share_review` branch applies it to this repository.
+
+```bash
+make new-wrap BLOCK=pwm IP=vendor/pulp-platform/apb_adv_timer/rtl/apb_adv_timer.sv
+#   scaffolds design/pwm/rtl/emacs/ from flow/emacs/template.src.sv
+vim design/pwm/rtl/emacs/m_qnsc_wrap_apb_adv_timer.src.sv   # fill the AUTO_TEMPLATE
+make wrap BLOCK=pwm                                 # expand, copy to rtl/
+make check                                          # lint, naming, wrap-check, ...
+```
+
+Rules:
+
+1. Edit only the `.src.sv`. Commit it together with the generated files; CI
+   regenerates every wrapper and fails if the committed result differs.
+2. The **Others** group must end empty. A port that lands there has no template
+   line, and it will also fail the naming check.
+3. Internal signals are `w_*` or `r_*`. The template ignores `w_*` for ports, so an
+   IP output mapped to `w_<name>` becomes a wire (`AUTOWIRE`), not a port.
+4. `verilog-auto-inst-param-value` is `t`, as in the guide: a parameter set in the
+   instance, `#(.APB_ADDR_WIDTH(C_APB_PADDR_WIDTH))`, is substituted into the
+   generated widths, so no `sed` is needed. `PARAM_FIX` in the block Makefile (a
+   `sed` script run after the expansion) is only for what this cannot express.
+5. `filelist_emacs.f` is read only by emacs. `<block>.f` is still the filelist that
+   builds and lints the block.
 
 ## Instances are decided in `design/top`, not here
 
@@ -54,6 +98,11 @@ instances is passed as a **parameter** — never a forked file.
 
 Reading the port name on the diagram tells you the count: `APB_M9/10` is two ports,
 so two instances.
+
+For the same reason, a shared wrapper never uses a per-instance constant:
+`C_UART_0_SIZE` inside a wrapper that also serves UART1 is wrong, even when the two
+values happen to be equal. Use a chip-wide constant (`C_APB_PADDR_WIDTH`) or a
+parameter that `design/top` sets per instance.
 
 ## The filelist is not optional
 
@@ -88,7 +137,7 @@ the single source of truth. To change a number:
 
 ```bash
 vim util/qsoc_contract.yml
-python3 util/gen_qnsc_pkg.py        # regenerate the package
+make pkg                            # regenerate the package
 # commit both files together
 ```
 
@@ -123,7 +172,7 @@ that come up most:
 | Thing | Form | Example |
 |---|---|---|
 | Module, in house | `m_qnsc_<function>` | `m_qnsc_intmap` |
-| Module, wrapper around IP | `m_qnsc_wrap_<ip_module>` | `m_qnsc_wrap_timer` |
+| Module, wrapper around IP | `m_qnsc_wrap_<ip_module>` | `m_qnsc_wrap_apb_uart`, `m_qnsc_wrap_apb_adv_timer` |
 | Module, generic and shared | `qnsc_<function>` (no `m_`) | `qnsc_fifo_sync` |
 | Port | `i_` / `o_` / `io_` prefix | `i_clk_sys`, `o_int_timer_0` |
 | Clock, reset | `i_clk_<domain>`, `i_rst_n_<domain>` | `i_rst_n_sys` |
@@ -135,20 +184,27 @@ that come up most:
 | Memory array | `mem_<function>` | `mem_data` |
 | Index | underscore before the digit | `timer_0`, never `timer0` |
 | Vocabulary | `int` not `irq`, `clk` not `clock`, `rst` not `reset` | `o_int_fast` |
-| Port to a pad, through IO MUX | `i_<function>_<pin>`, `o_<function>_<pin>`, `o_<function>_<pin>_oe` | `i_i2c_scl`, `o_i2c_scl_oe`, `i_jtag_tck`, `o_pwm` |
-| Output enable | `_oe`, **active high**; invert an IP's active-low enable inside the wrapper | `o_jtag_tdo_oe` |
-| DMA handshake | `o_dma_tx_req`, `o_dma_rx_req`, `i_dma_last` | |
+| Interrupt (3.6) | `o_int_<source>`, `i_int_<source>` | `o_int_timer_0`, `o_int_pwm` |
+| Pad (3.8) | `i_pad_<function>`, `o_pad_<function>`, `io_pad_<function>` | `i_pad_i2c_scl`, `o_pad_i2c_scl`, `o_pad_pwm` |
+| Output enable of a pad | the IP's polarity; active low ends in `_n` | `o_pad_i2c_scl_oe_n` |
+| JTAG (3.11) | `i_jtag_<function>`, `o_jtag_<function>` | `i_jtag_tck`, `o_jtag_tdo` |
+| Debug (3.12) | `i_dbg_<function>`, `o_dbg_<function>` | `o_dbg_req`, `o_dbg_cpu_hold` |
+| Memory (3.9) | `i_mem_<function>`, `o_mem_<function>` | `o_mem_addr`, `o_mem_be`, `i_mem_rdata` |
+| DMA (3.10) | `i_dma_<function>`, `o_dma_<function>` | `o_dma_tx_req`, `i_dma_last` |
+| CSR, boot (3.5, 3.13) | `i_csr_*`, `o_csr_*`, `i_boot_*` | `i_boot_addr` |
+| DFT, test, power, analog (3.14-3.17) | `i_dft_*`, `i_test_*`, `i_pwr_*`, `i_ana_*` | `i_dft_scan_en` |
 
-A pad-bound port is named after the **function**, not after the pad: `gpio`
-appears in a name only when the port belongs to the GPIO IP. Which package pin
-carries the function is the IO pad owner's table, never the wrapper's.
+A pad port carries `pad` and then the **function**, not the package pin:
+`i_pad_i2c_scl`, never `i_pad_pin_17`. Which package pin carries the function is
+the IO pad owner's table, never the wrapper's. The section numbers above are those
+of the rule document.
 
 `flow/lint/naming_check.py` enforces these in CI and reports each violation **inline
 on the pull request diff**. Run it before pushing:
 
 ```bash
-python3 flow/lint/naming_check.py            # whole design/ tree
-python3 flow/lint/naming_check.py design/timer
+make naming                  # whole design/ tree
+make naming BLOCK=timer
 ```
 
 It checks `design/**/rtl` only. **Vendored IP is out of scope** — it follows its

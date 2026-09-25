@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Run every CI check before a push, so a red CI is caught on your machine.
+#
+# Enabled once per clone with `make hooks` (git never enables a hook by itself).
+# Skip it once with `git push --no-verify`; CI still runs every check.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+echo "pre-push: make check   (skip once with: git push --no-verify)"
+make -s check

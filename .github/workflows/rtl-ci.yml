@@ -16,6 +16,9 @@
 #   4. A structural check on the specifications, reusing the checks already
 #      written in doc/build_docs.py rather than inventing new ones.
 #
+# Every step calls a target of the root Makefile, so `make check` runs the same
+# commands locally.
+#
 # Jobs are deliberately independent and none is guarded by an `if` on the event
 # action -- see the comment in pr-title.yml for why that guard produces a false
 # green.
@@ -56,7 +59,45 @@ jobs:
       # by `find` -- see the header of lint_all.sh for why that matters here.
       # Blocks whose filelist has no sources yet are skipped rather than failing.
       - name: Lint each block
-        run: bash flow/lint/lint_all.sh
+        run: make lint
+
+  # ---------------------------------------------------------------------------
+  filelists:
+    name: Filelist paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # Every path in a design/**/*.f is relative to the filelist and exists. An
+      # absolute path (/home/<user>/...) works only in the checkout it was
+      # written in; a missing file fails only when someone else builds.
+      - name: Check every filelist path
+        run: make filelists
+
+  # ---------------------------------------------------------------------------
+  wrappers:
+    name: Generated wrappers
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install emacs
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends emacs-nox
+          emacs --version | head -1
+
+      # rtl/<wrapper>.sv is generated from rtl/emacs/<wrapper>.src.sv by emacs
+      # verilog-mode. Regenerate each one and fail if the committed file differs,
+      # so the compiled wrapper cannot drift from the source that is reviewed.
+      - name: Regenerate every emacs wrapper and compare
+        run: make wrap-check
 
   # ---------------------------------------------------------------------------
   hardcode:
@@ -81,7 +122,7 @@ jobs:
       # mapped region is almost certainly an address. Scope is design/**/rtl, so
       # vendored IP and the generated package itself are excluded.
       - name: Check no shared value is hardcoded
-        run: python3 flow/lint/hardcode_check.py
+        run: make hardcode
 
   # ---------------------------------------------------------------------------
   contract:
@@ -103,7 +144,7 @@ jobs:
       # eleven interrupt sources against twelve. Generating instead of retyping
       # makes the disagreement impossible rather than merely detectable.
       - name: Check the generated package matches the contract
-        run: python3 util/gen_qnsc_pkg.py --check
+        run: make pkg-check
 
   # ---------------------------------------------------------------------------
   naming:
@@ -126,7 +167,7 @@ jobs:
       # Scope is design/**/rtl only. Vendored IP keeps its upstream conventions
       # and must not be renamed -- editing vendor/ is itself a CI failure.
       - name: Check naming against QNSC_RTL_Design_Naming_Rule V1.0
-        run: python3 flow/lint/naming_check.py
+        run: make naming
 
   # ---------------------------------------------------------------------------
   vendor-guard:
@@ -144,7 +185,7 @@ jobs:
         # expression directly into the shell command (template-injection).
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: bash flow/lint/vendor_guard.sh "${BASE_SHA:-HEAD~1}"
+        run: make vendor-guard BASE="${BASE_SHA:-HEAD~1}"
 
   # ---------------------------------------------------------------------------
   docs:
@@ -168,12 +209,7 @@ jobs:
       # copy drifts. Checked before the build, so a stale table fails on its
       # own message rather than as an unreadable docx diff.
       - name: Generated tables match the contract
-        run: python3 doc/tools/gen_doc_tables.py --check
+        run: make tables
 
       - name: Build and check
-        run: |
-          if [ -f doc/build_docs.py ]; then
-            cd doc && python3 build_docs.py
-          else
-            echo "doc/build_docs.py not present yet -- skipping"
-          fi
+        run: make docs
