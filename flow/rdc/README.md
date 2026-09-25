@@ -23,7 +23,7 @@ reset table plus review.
 |---|---|---|---|
 | POR | power-on only | everything | — |
 | `i_rst_n_sysbus` | POR, watchdog, software reset | `S_BUS`, the SYSDBG AXI side | SYSDBG TCK and system sides |
-| CPU reset | SCRC, OR `o_cpu_hold` in debug boot | Ibex | the rest of the chip |
+| CPU reset | SCRC, OR `o_dbg_cpu_hold` in debug boot | Ibex | the rest of the chip |
 | per-peripheral resets | SCRC `SOFT_RST_CTRL` | one peripheral | everything else |
 | `i_jtag_trst_n` AND POR | JTAG probe, power-on | SYSDBG TCK side | SYSDBG AXI and system sides |
 

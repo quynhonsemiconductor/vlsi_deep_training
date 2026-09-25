@@ -24,8 +24,8 @@
 <rect x="513.0" y="182.0" width="54.0" height="14" fill="#ffffff"/>
 <text x="540.0" y="193.0" font-size="10" fill="#000000" text-anchor="middle">o_dbg_en</text>
 <polyline points="480.0,250.0 540.0,250.0 540.0,312.0 600.0,312.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="507.0" y="273.0" width="66.0" height="14" fill="#ffffff"/>
-<text x="540.0" y="284.0" font-size="10" fill="#000000" text-anchor="middle">o_cpu_hold</text>
+<rect x="495.0" y="273.0" width="90.0" height="14" fill="#ffffff"/>
+<text x="540.0" y="284.0" font-size="10" fill="#000000" text-anchor="middle">o_dbg_cpu_hold</text>
 <polyline points="685.0,440.0 685.0,375.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
 <polyline points="770.0,210.0 900.0,210.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
 <rect x="799.0" y="202.0" width="72.0" height="14" fill="#ffffff"/>
