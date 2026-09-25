@@ -9,7 +9,7 @@
 #   make lint BLOCK=pwm        one block; omit BLOCK for all
 #   make wrap BLOCK=pwm        regenerate an emacs wrapper
 #   make doctor                which tools this machine has, and how to get the rest
-#   make hooks                 once per clone: run make check before every push
+#   make hooks                 once per clone: make check before push, editor paths after pull
 #   make help                  the full list
 # =============================================================================
 BLOCK ?=
@@ -19,10 +19,11 @@ BASE  ?= origin/main
 SCOPE = $(if $(BLOCK),design/$(BLOCK))
 
 .PHONY: help check filelists lint naming hardcode pkg pkg-check tables docs \
-        vendor-guard new-wrap wrap wrap-check vcs sim syn gca hooks doctor
+        vendor-guard new-wrap wrap wrap-check vcs sim syn gca hooks doctor ide
 
 help:
 	@echo "make doctor         which tools are here, and how to install the rest"
+	@echo "make ide            editor lint search paths (.vscode/verilator.f)"
 	@echo "make hooks          once per clone: run make check before every push"
 	@echo "make check          all CI checks: filelists lint naming hardcode pkg-check tables wrap-check vendor-guard"
 	@echo "make filelists      paths in every .f are relative and exist"
@@ -40,14 +41,18 @@ help:
 	@echo "make vcs            compile with VCS, on the server        BLOCK="
 	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=]"
 
+ide:
+	@python3 flow/ide/gen_verilator_f.py > /dev/null
+
 doctor:
 	bash flow/setup/doctor.sh
 
 hooks:
 	git config core.hooksPath .githooks
-	@echo "pre-push hook on: every git push runs make check (skip once with --no-verify)"
+	@echo "hooks on: git push runs make check (skip once with --no-verify);"
+	@echo "          git pull and branch switches refresh the editor lint paths"
 
-check: filelists lint naming hardcode pkg-check tables wrap-check vendor-guard
+check: ide filelists lint naming hardcode pkg-check tables wrap-check vendor-guard
 
 filelists:
 	python3 flow/lint/filelist_check.py

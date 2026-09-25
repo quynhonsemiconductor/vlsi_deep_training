@@ -45,8 +45,11 @@ for dir in $dirs; do
     continue
   fi
 
+  # The block's own waivers, plus those of the shared contract package, which
+  # every block compiles.
   waiver=""
   [ -f "${dir}waivers.vlt" ] && waiver="${dir}waivers.vlt"
+  [ "$block" != top ] && [ -f design/top/waivers.vlt ] && waiver="$waiver design/top/waivers.vlt"
 
   # -F, not -f: paths inside the filelist are relative to the filelist itself
   # (../../vendor/...), and -f would resolve them against the repository root.

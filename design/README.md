@@ -56,12 +56,12 @@ The mentors ask for wrappers generated with emacs `verilog-mode`, as industry do
 You write the port groups and an `AUTO_TEMPLATE` that maps each IP port to its QNSC
 name; `AUTOINST`, `AUTOINPUT`, `AUTOOUTPUT` and `AUTOWIRE` write the port list and
 the instance. The references are [`doc/rules/EMACS_quick_guide.pdf`](../doc/rules/EMACS_quick_guide.pdf)
-(template and every template function), `flow/emacs/template.src.sv` which follows
+(template and every template function), `flow/emacs/template.src.sv.in` which follows
 it, and the I2C demo on the `share_review` branch.
 
 ```bash
 make new-wrap BLOCK=pwm IP=vendor/pulp-platform/apb_adv_timer/rtl/apb_adv_timer.sv
-#   scaffolds design/pwm/rtl/emacs/ from flow/emacs/template.src.sv
+#   scaffolds design/pwm/rtl/emacs/ from flow/emacs/template.src.sv.in
 vim design/pwm/rtl/emacs/m_qnsc_wrap_apb_adv_timer.src.sv   # fill the AUTO_TEMPLATE
 make wrap BLOCK=pwm                                 # expand, copy to rtl/
 make check                                          # lint, naming, wrap-check, ...
@@ -81,6 +81,10 @@ Rules:
    `sed` script run after the expansion) is only for what this cannot express.
 5. `filelist_emacs.f` is read only by emacs. `<block>.f` is still the filelist that
    builds and lints the block.
+6. Declare no port by hand. Map every IP port in the `AUTO_TEMPLATE`, bit slices
+   included (`.ch_0_o (o_pad_pwm[3:0])`), and the AUTOs declare it. The `.src.sv`
+   then stays valid SystemVerilog before expansion, so the editor shows no false
+   errors in it.
 
 ## Instances are decided in `design/top`, not here
 

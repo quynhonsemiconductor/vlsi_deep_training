@@ -1,0 +1,8 @@
+# Verible style lint, read by verible-verilog-lint and the Verible editor
+# extension. Adjusted where Verible's defaults disagree with
+# doc/rules/QNSC_RTL_Design_Naming_Rule.pdf.
+
+# Rule 2.4: parameters and constants are P_/C_ plus uppercase words joined by _.
+parameter-name-style=localparam_style:ALL_CAPS;parameter_style:ALL_CAPS
+# Tables and generated comments in qnsc_pkg run past Verible's 100 columns.
+line-length=length:150

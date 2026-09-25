@@ -7,7 +7,7 @@
 # Writes three files and nothing else:
 #   Makefile             DESIGN = m_qnsc_wrap_<ip_module>, includes flow/emacs/wrap.mk
 #   filelist_emacs.f     the IP file, so verilog-mode can read its ports
-#   <design>.src.sv      flow/emacs/template.src.sv with the names filled in
+#   <design>.src.sv      flow/emacs/template.src.sv.in with the names filled in
 # Then fill the AUTO_TEMPLATE and run `make wrap BLOCK=<block>`.
 set -euo pipefail
 
@@ -36,7 +36,7 @@ printf '../../../../%s\n' "$ip" > "$dir/filelist_emacs.f"
 upper=$(echo "$block" | tr '[:lower:]' '[:upper:]')
 sed -e "s/@DESIGN@/$design/g" -e "s/@IP_MODULE@/$module/g" \
     -e "s/@BLOCK_UPPER@/$upper/g" -e "s/@BLOCK@/$block/g" \
-    "$here/template.src.sv" > "$dir/$design.src.sv"
+    "$here/template.src.sv.in" > "$dir/$design.src.sv"
 
 echo "wrote design/$block/rtl/emacs/{Makefile, filelist_emacs.f, $design.src.sv}"
 echo "next: fill the AUTO_TEMPLATE for $module, then make wrap BLOCK=$block"
