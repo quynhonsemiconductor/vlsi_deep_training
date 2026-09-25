@@ -71,15 +71,14 @@ Install these once. `make doctor` then says what is still missing.
 | rsvg-convert | doc diagrams (optional) | `brew install librsvg` | `apt install librsvg2-bin` |
 | Yosys, OpenSTA, VCS | later stages | `make doctor` shows how | `make doctor` shows how |
 
-**Editor:** in VS Code, accept the recommended extensions (Verible, Verilog-HDL). `.vscode/settings.json` points their Verilator lint at the search paths `make ide` writes, and turns format-on-save off for RTL.
+**Editor:** in VS Code, accept the recommended extensions (Verible, Verilog-HDL). `.vscode/settings.json` points their Verilator lint at the search paths that `make hooks` keeps current after every pull and branch switch, and turns format-on-save off for RTL.
 
 **Windows:** use WSL2 with Ubuntu and follow the Ubuntu column. The scripts are
 bash, and the training server is Linux, so WSL keeps everyone on the same tools.
 
 ```bash
 make doctor                            # once: what is missing on this machine
-make ide                               # once: editor lint search paths (VS Code)
-make hooks                             # once per clone: make check before every push
+make hooks                             # once per clone: make check before push; editor paths after pull
 make check                             # every check CI runs
 make help                              # each check on its own, per block
 make docs                              # build the specifications

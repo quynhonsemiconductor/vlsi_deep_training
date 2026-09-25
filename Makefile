@@ -9,7 +9,7 @@
 #   make lint BLOCK=pwm        one block; omit BLOCK for all
 #   make wrap BLOCK=pwm        regenerate an emacs wrapper
 #   make doctor                which tools this machine has, and how to get the rest
-#   make hooks                 once per clone: run make check before every push
+#   make hooks                 once per clone: make check before push, editor paths after pull
 #   make help                  the full list
 # =============================================================================
 BLOCK ?=
@@ -49,7 +49,8 @@ doctor:
 
 hooks:
 	git config core.hooksPath .githooks
-	@echo "pre-push hook on: every git push runs make check (skip once with --no-verify)"
+	@echo "hooks on: git push runs make check (skip once with --no-verify);"
+	@echo "          git pull and branch switches refresh the editor lint paths"
 
 check: ide filelists lint naming hardcode pkg-check tables wrap-check vendor-guard
 
