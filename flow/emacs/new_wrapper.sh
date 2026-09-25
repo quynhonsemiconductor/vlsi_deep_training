@@ -22,8 +22,12 @@ dir="$repo/design/$block/rtl/emacs"
 module=$(sed -nE 's/^[[:space:]]*module[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/p' "$repo/$ip" | head -1)
 [ -n "$module" ] || { echo "no module found in $ip"; exit 1; }
 
-# Naming Rule 2.1: a wrapper is m_qnsc_wrap_<ip_module>.
-design="m_qnsc_wrap_$module"
+# Naming Rule 2.1: a wrapper is m_qnsc_wrap_<ip_module>. A vendor prefix on the
+# IP module is dropped (m_vlsi_axi4_sram gives m_qnsc_wrap_axi4_sram); see the
+# decisions table in design/README.md.
+name="$module"
+case "$name" in m_*_*) name="${name#m_*_}";; esac
+design="m_qnsc_wrap_$name"
 [ -e "$dir/$design.src.sv" ] && { echo "$dir/$design.src.sv exists -- not overwritten"; exit 1; }
 
 mkdir -p "$dir"

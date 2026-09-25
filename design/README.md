@@ -199,6 +199,17 @@ A pad port carries `pad` and then the **function**, not the package pin:
 the IO pad owner's table, never the wrapper's. The section numbers above are those
 of the rule document.
 
+### Decided where the rule and the demos leave a choice
+
+Agreed on 2026-09-25 and sent to Tâm; if the rule's author asks otherwise, this
+table changes first.
+
+| Question | Decision | Basis |
+|---|---|---|
+| Where does the generated wrapper live? | `make wrap` copies it to `rtl/<wrapper>.sv`, the file `<block>.f` compiles; `rtl/emacs/` keeps the source and the intermediate copy | The I2C demo on `share_review`, made for this repository. The CPU demo keeps it in `EMACS/` only |
+| JTAG and `DBG_EN` pins: `i_pad_*` or their own prefix? | Their own: `i_jtag_tck`, `o_jtag_tdo`, `i_dbg_en`. Every other pad-bound port is `i_pad_*` / `o_pad_*` | The rule has dedicated sections 3.11 (JTAG) and 3.12 (Debug); a dedicated section wins over the general 3.8 (Pad) |
+| Wrapper name: block or IP module? | The IP module: `m_qnsc_wrap_apb_i2c`, `m_qnsc_wrap_apb_adv_timer`. A vendor prefix is dropped: `m_vlsi_axi4_sram` gives `m_qnsc_wrap_axi4_sram` | Rule 2.1 and its example `m_qnsc_wrap_apb_uart`. The I2C demo's `m_qnsc_wrap_i2c` predates this table |
+
 `flow/lint/naming_check.py` enforces these in CI and reports each violation **inline
 on the pull request diff**. Run it before pushing:
 
