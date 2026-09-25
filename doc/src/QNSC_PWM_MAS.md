@@ -17,7 +17,7 @@ The reasoning behind each change is in
 
 # 1. Overview
 
-`PWM` is one instance of `pulp-platform/apb_adv_timer` on `APB_M13`, at `0x80034000`,
+`PWM` is one instance of `pulp-platform/apb_adv_timer` on `APB_M12`, at `0x80030000`,
 16 KiB. It has four timer modules of four channels each, so sixteen channel outputs.
 The eight channels of modules 0 and 1 drive pads `PWM_0` to `PWM_7`. Four event
 lines drive `INTMAP` fast line 7.
@@ -234,7 +234,7 @@ Two gates are in series: `SCRC` `CLK_EN` gates `i_clk_peri` for the whole block,
 
 # 8. Instances
 
-One, on `APB_M13`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
+One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 `TIMER_NBITS` = 16. The four timer modules are internal to the IP.
 
 # 9. What is not provided here, and who provides it

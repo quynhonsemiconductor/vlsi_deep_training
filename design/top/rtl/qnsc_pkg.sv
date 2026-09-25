@@ -44,21 +44,21 @@ package qnsc_pkg;
   localparam int unsigned             C_GPIO_1_SIZE = 16384;  // 16 KiB
   localparam logic [C_ADDR_WIDTH-1:0] C_GPIO_2_BASE = 32'h80014000;
   localparam int unsigned             C_GPIO_2_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_TIMER_0_BASE = 32'h8001C000;
+  localparam logic [C_ADDR_WIDTH-1:0] C_TIMER_0_BASE = 32'h80018000;
   localparam int unsigned             C_TIMER_0_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_TIMER_1_BASE = 32'h80020000;
+  localparam logic [C_ADDR_WIDTH-1:0] C_TIMER_1_BASE = 32'h8001C000;
   localparam int unsigned             C_TIMER_1_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_UART_0_BASE = 32'h80024000;
+  localparam logic [C_ADDR_WIDTH-1:0] C_UART_0_BASE = 32'h80020000;
   localparam int unsigned             C_UART_0_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_UART_1_BASE = 32'h80028000;
+  localparam logic [C_ADDR_WIDTH-1:0] C_UART_1_BASE = 32'h80024000;
   localparam int unsigned             C_UART_1_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_SPI_BASE = 32'h8002C000;
+  localparam logic [C_ADDR_WIDTH-1:0] C_SPI_BASE = 32'h80028000;
   localparam int unsigned             C_SPI_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_I2C_BASE = 32'h80030000;
+  localparam logic [C_ADDR_WIDTH-1:0] C_I2C_BASE = 32'h8002C000;
   localparam int unsigned             C_I2C_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_PWM_BASE = 32'h80034000;
+  localparam logic [C_ADDR_WIDTH-1:0] C_PWM_BASE = 32'h80030000;
   localparam int unsigned             C_PWM_SIZE = 16384;  // 16 KiB
-  localparam logic [C_ADDR_WIDTH-1:0] C_DMA_CFG_BASE = 32'h80038000;
+  localparam logic [C_ADDR_WIDTH-1:0] C_DMA_CFG_BASE = 32'h80034000;
   localparam int unsigned             C_DMA_CFG_SIZE = 16384;  // 16 KiB
 
   // ---- interrupt lines -----------------------------------------------------

@@ -12,9 +12,9 @@ t = [
     N("pbus", 200, 40, 840, 50, "P_BUS  (APB4, 20 MHz)", "yellow", 13, True),
 
     N("t0", 200, 170, 300, 140,
-      "TIMER0\napb_timer_unit\n0x8001_C000\nMODE_64 = 1", "red", 11, True),
+      "TIMER0\napb_timer_unit\n0x8001_8000\nMODE_64 = 1", "red", 11, True),
     N("t1", 740, 170, 300, 140,
-      "TIMER1\napb_timer_unit\n0x8002_0000\nMODE_64 = 0", "red", 11, True),
+      "TIMER1\napb_timer_unit\n0x8001_C000\nMODE_64 = 0", "red", 11, True),
 
     N("g0", 20, 177, 115, 56, "SCRC clock gate\nCLK_EN[TBD]\nopen at reset", "box", 9),
     N("r0", 20, 250, 115, 40, "SCRC\no_rst_n_timer_0", "box", 9),
@@ -33,8 +33,8 @@ t = [
     N("f6", 852.5, 570, 120, 50, "irq_fast_i[6]\nmcause 22", "grey", 10, True),
 ]
 e = [
-    E("pbus", "b@0.1786", "t0", "t", "APB_M7"),
-    E("pbus", "b@0.8214", "t1", "t", "APB_M8"),
+    E("pbus", "b@0.1786", "t0", "t", "APB_M6"),
+    E("pbus", "b@0.8214", "t1", "t", "APB_M7"),
     E("g0", "r", "t0", "l@0.25", "HCLK"),
     E("r0", "r", "t0", "l@0.7143", "HRESETn"),
     E("g1", "r", "t1", "l@0.25", "HCLK"),
@@ -115,7 +115,7 @@ def _ch(y):
 
 p = [
     N("pbus2", 270, -30, 390, 40, "P_BUS  (APB)", "yellow", 13, True),
-    N("pwm", 170, 90, 800, 640, "PWM   apb_adv_timer   0x8003_4000",
+    N("pwm", 170, 90, 800, 640, "PWM   apb_adv_timer   0x8003_0000",
       "group", 12, True, va="top"),
 
     N("regs", 300, 130, 330, 56,
@@ -156,7 +156,7 @@ p = [
       "grey", 10),
 ]
 q = [
-    E("pbus2", "b", "regs", "t", "APB_M13"),
+    E("pbus2", "b", "regs", "t", "APB_M12"),
     E("regs", "l", "cg", "t", "CH_EN"),
     E("regs", "b@0.6364", "m0", "t", "config, per module"),
     E("regs", "r@0.6786", "evmux", "l@0.3", "EVENT_CFG"),

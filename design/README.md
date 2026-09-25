@@ -90,13 +90,13 @@ instances is passed as a **parameter** — never a forked file.
 
 | Block | Ports on the block diagram | Instances |
 |---|---|---:|
-| `uart` | `APB_M9/10` | 2 |
-| `gpio` | `APB_M3/4/5` | 3 (GPIO3 dropped with the 40-pin package; `APB_M6` unused) |
-| `timer` | `APB_M7/8` | 2 (64-bit vs two 32-bit) |
+| `uart` | `APB_M8/9` | 2 |
+| `gpio` | `APB_M3/4/5` | 3 (GPIO3 dropped with the 40-pin package; the ports after it moved up one) |
+| `timer` | `APB_M6/7` | 2 (64-bit vs two 32-bit) |
 | `ram` | `AXI_M1`, `AXI_M2` | 2 (ISRAM, DSRAM — differ only in depth) |
 | `pwm`, `i2c`, `spi`, `dma` | one port each | 1 |
 
-Reading the port name on the diagram tells you the count: `APB_M9/10` is two ports,
+Reading the port name on the diagram tells you the count: `APB_M8/9` is two ports,
 so two instances.
 
 For the same reason, a shared wrapper never uses a per-instance constant:

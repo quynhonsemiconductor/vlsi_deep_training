@@ -21,7 +21,7 @@ through a wrapper.
 | **Clock** | one external 20 MHz input, no PLL — the PDK carries no analogue IP |
 | **Memory** | 2 KiB ROM · 64 KiB instruction RAM · 32 KiB data RAM |
 | **System bus** | AXI4 crossbar, fully connected, decode error on an unmapped address |
-| **Peripheral bus** | APB4 router, 16 slaves |
+| **Peripheral bus** | APB4 router, 14 slaves (`APB_M0`--`APB_M13`) |
 | **Peripherals** | 2× UART · SPI host + device · I²C · 3× GPIO · 2× timer · PWM · watchdog · DMA |
 | **Interrupts** | 26 sources → 11 fast lines + 1 NMI, through a combinational OR tree |
 | **Debug** | JTAG, in-house: halt, resume, and memory access without the CPU |
