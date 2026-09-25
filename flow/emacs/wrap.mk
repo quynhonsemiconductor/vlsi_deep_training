@@ -27,7 +27,7 @@ all: emacs_wrapper rtl_fix
 
 emacs_wrapper:
 	cp -f $(SRC_FILE) $(DST_FILE)
-	$(EMACS) --batch $(DST_FILE) -f verilog-batch-auto
+	$(EMACS) --batch $(DST_FILE) --eval "(setq-default indent-tabs-mode nil)" -f verilog-batch-auto
 
 # -i.bak works with both GNU sed (Linux server) and BSD sed (macOS).
 rtl_fix:

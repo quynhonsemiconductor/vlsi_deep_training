@@ -55,6 +55,7 @@ What a wrapper must do, the emacs rules and the naming table are in
 ```bash
 make doctor                 # once: which tools are missing (install list in README)
 make hooks                  # once per clone: every git push runs make check
+make ide                    # once per clone: VS Code lint finds qnsc_pkg and the IP
 make check                  # everything CI checks, before every push
 make lint BLOCK=<block>     # one check, one block, while you work
 make new-wrap BLOCK=<block> IP=<ip top .sv>   # scaffold an emacs wrapper, once

@@ -7,6 +7,10 @@
 // the AUTO comments and writes rtl/@DESIGN@.sv, the file @BLOCK@.f compiles.
 // Template functions: doc/rules/EMACS_quick_guide.pdf.
 //
+// Declare no port by hand: map every IP port in the AUTO_TEMPLATE, bit slices
+// included (.ch_0_o (o_pad_x[3:0])), so the AUTOs declare them. Then this file
+// is valid SystemVerilog before expansion, and the editor shows no false errors.
+//
 // Wrapper = core + bridge. The core is the IP; the bridge, only when the IP
 // speaks another protocol than the chip bus, converts it (APB to TL-UL, APB to
 // OBI, ...). One wrapper per IP, owned by the IP owner.
@@ -86,6 +90,7 @@ module @DESIGN@
 //   .\(.*\)_padoen_o                      (o_pad_@BLOCK@_\1_oe_n[]),   active low: _n
 //   .irq_o                                (o_int_@BLOCK@),
 //   .dft_\(.*\)_i                         (1'b0),                        tie-off
+//   .ch_0_o                               (o_pad_@BLOCK@[3:0]),          a slice; AUTOOUTPUT declares [7:0]
 //   .unused_o                             (),                            left open
 //   .ERR_\(.*\) (@"(if (equal vl-dir \"input\") \"'0\" \"\")"),   inputs to 0, outputs open
 // Instance parameters are substituted into widths (verilog-auto-inst-param-value t):
@@ -105,5 +110,6 @@ endmodule
 // verilog-library-extensions:(".v" ".sv")
 // verilog-auto-star-expand: nil
 // verilog-auto-inst-param-value: t
+// indent-tabs-mode: nil
 // eval: (setq large-file-warning-threshold nil)
 // End:

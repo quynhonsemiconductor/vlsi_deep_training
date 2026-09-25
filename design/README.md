@@ -81,6 +81,10 @@ Rules:
    `sed` script run after the expansion) is only for what this cannot express.
 5. `filelist_emacs.f` is read only by emacs. `<block>.f` is still the filelist that
    builds and lints the block.
+6. Declare no port by hand. Map every IP port in the `AUTO_TEMPLATE`, bit slices
+   included (`.ch_0_o (o_pad_pwm[3:0])`), and the AUTOs declare it. The `.src.sv`
+   then stays valid SystemVerilog before expansion, so the editor shows no false
+   errors in it.
 
 ## Instances are decided in `design/top`, not here
 
