@@ -1,6 +1,6 @@
 # `rom` — boot ROM
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/rom`](../../dv/rom)
+**Owner:** @Nam-HaoNguyen   **Spec:** _TBD_   **DV:** [`../../dv/rom`](../../dv/rom)
 
 ## What this block is
 

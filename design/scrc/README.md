@@ -1,6 +1,6 @@
 # `scrc` — system clock and reset control
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/scrc`](../../dv/scrc)
+**Owner:** @Nam-HaoNguyen   **Spec:** _TBD_   **DV:** [`../../dv/scrc`](../../dv/scrc)
 
 ## What this block is
 

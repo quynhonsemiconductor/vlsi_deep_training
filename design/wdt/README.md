@@ -1,6 +1,6 @@
 # `wdt` — watchdog timer
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/wdt`](../../dv/wdt)
+**Owner:** @hieu-vubuiminh   **Spec:** _TBD_   **DV:** [`../../dv/wdt`](../../dv/wdt)
 
 ## What this block is
 
