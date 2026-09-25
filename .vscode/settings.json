@@ -7,6 +7,9 @@
   "verilog.linting.linter": "verilator",
   "verilog.linting.verilator.arguments": "-Wall -f .vscode/verilator.f",
 
+  // Verible reads the repository's .rules.verible_lint (naming rule constants).
+  "verible.arguments": ["--rules_config_search"],
+
   // Format on demand only (Shift+Alt+F). Saving must never reformat an
   // emacs-generated wrapper or a file under vendor/.
   "[systemverilog]": { "editor.formatOnSave": false },

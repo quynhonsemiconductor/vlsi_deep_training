@@ -8,7 +8,7 @@ and moved here once the team repository existed. Edit them here only.
 |---|---|---|
 | `QNSC_RTL_Design_Naming_Rule.docx` | Naming Rule, editable source | -- |
 | `QNSC_RTL_Design_Naming_Rule.pdf` | Naming Rule **V1.0**, the released version | `flow/lint/naming_rules.yml` + `naming_check.py` (`make naming`) |
-| `EMACS_quick_guide.pdf` | How to write a wrapper with emacs verilog-mode: the template and every template function | `flow/emacs/template.src.sv`, `make new-wrap`, `make wrap-check` |
+| `EMACS_quick_guide.pdf` | How to write a wrapper with emacs verilog-mode: the template and every template function | `flow/emacs/template.src.sv.in`, `make new-wrap`, `make wrap-check` |
 
 How the rules are applied in this repository, and the decisions for the cases the
 rule leaves open, are in [`design/README.md`](../../design/README.md#naming).

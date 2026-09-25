@@ -56,12 +56,12 @@ The mentors ask for wrappers generated with emacs `verilog-mode`, as industry do
 You write the port groups and an `AUTO_TEMPLATE` that maps each IP port to its QNSC
 name; `AUTOINST`, `AUTOINPUT`, `AUTOOUTPUT` and `AUTOWIRE` write the port list and
 the instance. The references are [`doc/rules/EMACS_quick_guide.pdf`](../doc/rules/EMACS_quick_guide.pdf)
-(template and every template function), `flow/emacs/template.src.sv` which follows
+(template and every template function), `flow/emacs/template.src.sv.in` which follows
 it, and the I2C demo on the `share_review` branch.
 
 ```bash
 make new-wrap BLOCK=pwm IP=vendor/pulp-platform/apb_adv_timer/rtl/apb_adv_timer.sv
-#   scaffolds design/pwm/rtl/emacs/ from flow/emacs/template.src.sv
+#   scaffolds design/pwm/rtl/emacs/ from flow/emacs/template.src.sv.in
 vim design/pwm/rtl/emacs/m_qnsc_wrap_apb_adv_timer.src.sv   # fill the AUTO_TEMPLATE
 make wrap BLOCK=pwm                                 # expand, copy to rtl/
 make check                                          # lint, naming, wrap-check, ...

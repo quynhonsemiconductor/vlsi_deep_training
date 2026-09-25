@@ -1,0 +1,7 @@
+`verilator_config
+// Waivers for the shared contract package. lint_all.sh passes this file with
+// every block, because every block compiles qnsc_pkg. Each line has its reason.
+
+// qnsc_pkg holds every shared number; a block imports it and uses only its own
+// few constants, so the rest are always "unused" in that block's lint.
+lint_off -rule UNUSEDPARAM -file "*design/top/rtl/qnsc_pkg.sv"
