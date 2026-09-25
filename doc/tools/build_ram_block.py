@@ -80,7 +80,7 @@ e = [
     E("misc", "b@0.15", "arb", "t@0.15", "req_write, req_read"),
     E("arb", "t@0.85", "misc", "b@0.85", "arb_sel, write_en"),
     # strobe FIFO: popped by the write strobe, drives the byte enables
-    E("misc", "t@0.85", "sf", "b@0.8", "o_sram_we (pop)", mid=117),
+    E("misc", "t@0.85", "sf", "b@0.8", "o_mem_we (pop)", mid=117),
     E("sf", "r", "sram", "t", "bwe[3:0]"),
     # macro
     E("misc", "r@" + mf(235), "sram", "l@" + sf(235), "addr[15:2] / [14:2]"),

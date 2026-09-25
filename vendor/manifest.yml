@@ -117,14 +117,11 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/bus
-  - design/sysdbg
   ownership_note: >
-    Listed against both because both instantiate from it, but the protocol
-    adapters are the BUS owner's to write and verify -- QNSC_SYSDBG_MAS section
-    4.1 places axi_lite_to_axi at the crossbar rather than inside the debug block,
-    so that every protocol conversion in the chip has one owner. SYSDBG's own
-    master port is memory-style (req/gnt/rsp_valid); axi_from_mem is what turns
-    that into AXI, and it lives at AXI_S0.
+    The BUS owner's. SYSDBG does not instantiate from it: since QNSC_SYSDBG_MAS
+    V3.0 its own AXI4 manager drives AXI_S0 directly, following the teacher's
+    reference design. The IP list allows SYSDBG axi_from_mem only; it is kept
+    in files: so that choice stays open (QNSC_SYSDBG_DECISIONS D21).
   files:
   - src/axi_xbar.sv
   - src/axi_to_axi_lite.sv
@@ -134,8 +131,8 @@ upstreams:
   - src/axi_lite_to_axi.sv
   notes: 'axi_xbar is fully connected -- every slave port reaches every master port through one shared
     address map -- which is what lets SYSDBG''s master read ROM. Each slave port has a private decode-error
-    slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi, used by SYSDBG
-    with MaxRequests = 1.
+    slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi; not used by
+    SYSDBG since its V3.0.
 
     '
 - name: pulp-platform/riscv-dbg

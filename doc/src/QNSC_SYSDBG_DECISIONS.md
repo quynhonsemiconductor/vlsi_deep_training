@@ -14,6 +14,13 @@ Nothing here was deleted from the specification without being kept here first.
 
 ---
 
+# V3.1 decisions (2026-09-25)
+
+| # | Decision | Why |
+|---|---|---|
+| D21 | **`axi_from_mem` is not instantiated; D13 stands** | The IP list says the debugger is self-designed and may use only `axi_from_mem`. The teacher's reference design (2026-09-23) has its own AXI manager driving `arvalid`, `awvalid`, `rready` and `bready` directly, and V3.0 follows it: one beat, one transaction, a few flip-flops per channel. `axi_from_mem` would add `axi_lite_from_mem`, `axi_lite_to_axi`, a FIFO and the `common_cells` dependency for the same single-beat access, and would reduce the response to one error bit. Read as a permission, not an obligation; to confirm with the teacher |
+| D22 | **Port names to `QNSC_RTL_Design_Naming_Rule` V1.0**: `o_dbg_req` (was `o_cpu_debug_req`), `o_dbg_cpu_hold` (was `o_cpu_hold`), AXI ports per channel (`o_bus_axi_ar_valid`, ...) | Rule 1.5 makes `debug` into `dbg`, 3.12 puts debug ports under `i_dbg_`/`o_dbg_`, and 3.4 names AXI by channel. JTAG and `DBG_EN` keep `i_jtag_*` and `i_dbg_en` (3.11, 3.12), as recorded in `design/README.md` |
+
 # V3.0 decisions (2026-09-23)
 
 The teacher's review of 2026-09-23 asked three things: who loads the 4 KiB debug
@@ -42,7 +49,7 @@ turned up four defects. Each row gives the decision and the reason for it.
 | D17 | **`CPUHOLD` data register, IR `1000`**, reset 1 by TRST and POR | Replaces `CTRL.cpu_hold` (D2) in the data-register style. A JTAG reset re-holds the CPU in debug boot, and has no effect in normal boot |
 | D18 | **Five choices where the teacher's example, drawn for a different SoC, is adapted to QSOC**: `CPUDBG` at `0111` (the example reuses `1110`, the `IDCODE` code); unused codes act as `BYPASS`, not X (IEEE 1149.1); a read starts at Update-DR of `ADDR` (the example's `update_ir` cannot start a bus access, and its write page uses `update_dr`); `AxiIdWidth` = 5, the HAS `S_BUS` slave-port width (the example shows 4); `STATUS` = {`busy`, `resp[1:0]`} (the example gives only the width) | Each one is either a clash, a rule from a standard, or a QSOC fact from the HAS. None needs the teacher's ruling |
 | D19 | **`HALTED` flag in the debug window instead of an `i_cpu_debug_mode` port** | `ibex_top` does not export `debug_mode`; only `rvfi_ext_debug_mode` exists, and only when RVFI is compiled in. Bringing it out would mean patching vendored RTL, which the repository rule forbids. The window code already runs on every halt, so it can report the halt itself. The teacher's drawing has no halted signal either |
-| D20 | **`o_cpu_hold` is a flip-flop output** | It is the OR of three terms that change in the same cycle at `DBG_EN` capture. As a combinational output it could glitch low, which would briefly release the CPU reset |
+| D20 | **`o_cpu_hold` (now `o_dbg_cpu_hold`, D22) is a flip-flop output** | It is the OR of three terms that change in the same cycle at `DBG_EN` capture. As a combinational output it could glitch low, which would briefly release the CPU reset |
 
 The reset table of 7.3 also answers a question raised in review: during a
 debug-boot load the CPU is held and the watchdog is disabled, so no reset except
