@@ -112,7 +112,7 @@
         <mxCell id="arb_misc_15" value="arb_sel, write_en" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.85;exitY=0.0;entryX=0.85;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="arb" target="misc">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="misc_sf_16" value="o_sram_we (pop)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.85;exitY=0.0;entryX=0.8;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="sf">
+        <mxCell id="misc_sf_16" value="o_mem_we (pop)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.85;exitY=0.0;entryX=0.8;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="misc" target="sf">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="sf_sram_17" value="bwe[3:0]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sf" target="sram">

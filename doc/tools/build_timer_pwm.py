@@ -17,9 +17,9 @@ t = [
       "TIMER1\napb_timer_unit\n0x8002_0000\nMODE_64 = 0", "red", 11, True),
 
     N("g0", 20, 177, 115, 56, "SCRC clock gate\nCLK_EN[TBD]\nopen at reset", "box", 9),
-    N("r0", 20, 250, 115, 40, "SCRC\no_rst_timer0_n", "box", 9),
+    N("r0", 20, 250, 115, 40, "SCRC\no_rst_n_timer_0", "box", 9),
     N("g1", 560, 177, 115, 56, "SCRC clock gate\nCLK_EN[TBD]\nclosed at reset", "box", 9),
-    N("r1", 560, 250, 115, 40, "SCRC\no_rst_timer1_n", "box", 9),
+    N("r1", 560, 250, 115, 40, "SCRC\no_rst_n_timer_1", "box", 9),
 
     N("tie0", 176, 380, 120, 56, "event_lo_i = 0\nevent_hi_i = 0\nref_clk_i = 0", "box", 9),
     N("nc0h", 385, 380, 50, 30, "n.c.", "box", 9),
@@ -152,7 +152,7 @@ p = [
 
     N("intmap2", 1020, 150, 170, 60, "INTMAP\nfast line 7  (mcause 23)", "grey", 10, True),
     N("iomux_out", 1020, 240, 170, 160,
-      "IO MUX\n\nPWM_0 .. 3 = o_pwm[3:0]\n\nPWM_4 .. 7 = o_pwm[7:4]",
+      "IO MUX\n\nPWM_0 .. 3 = o_pad_pwm[3:0]\n\nPWM_4 .. 7 = o_pad_pwm[7:4]",
       "grey", 10),
 ]
 q = [
@@ -182,16 +182,16 @@ q = [
     E("m3", "r", "chbus", "l@" + _ch(_MY[3] + 35), "ch_3_o[3:0]"),
 
     E("chbus", "r@" + _ch(_MY[0] + 35), "iomux_out", "l@%.4f" % ((_MY[0] + 35 - 240) / 160),
-      "o_pwm[3:0]"),
+      "o_pad_pwm[3:0]"),
     E("chbus", "r@" + _ch(_MY[1] + 35), "iomux_out", "l@%.4f" % ((_MY[1] + 35 - 240) / 160),
-      "o_pwm[7:4]"),
+      "o_pad_pwm[7:4]"),
     E("chbus", "t", "evmux", "l@0.7", "16"),
     E("chbus", "b", "pool", "r", "ch[15:0]"),
     E("evmux", "r", "intmap2", "l", "events_o[3:0]"),
 
     E("text", "r", "pool", "l"),
     E("tpads", "r", "iomux_in", "l"),
-    E("iomux_in", "r", "sync2ff", "l", "i_tim_ext"),
+    E("iomux_in", "r", "sync2ff", "l", "i_pad_tim_ext"),
     E("sync2ff", "r", "pool", "b@0.4815", "ext_sig_i[3:0]"),
 ]
 

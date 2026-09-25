@@ -55,7 +55,7 @@
         <mxCell id="dben" value="DBG_EN&#10;2FF + capture" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="800" y="470" width="180" height="60" as="geometry"/>
         </mxCell>
-        <mxCell id="outs" value="o_cpu_debug_req&#10;o_dbg_en  ·  o_cpu_hold" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="outs" value="o_dbg_req&#10;o_dbg_en  ·  o_dbg_cpu_hold" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1000" y="430" width="180" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="sbus" value="S_BUS  AXI_S0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
@@ -266,7 +266,7 @@
         <mxCell id="dbg_mux_3" value="o_dbg_en" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.45;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="mux">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="dbg_gate_4" value="o_cpu_hold" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.85;entryX=0.0;entryY=0.3;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="gate">
+        <mxCell id="dbg_gate_4" value="o_dbg_cpu_hold" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.85;entryX=0.0;entryY=0.3;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dbg" target="gate">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="scrc_gate_5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scrc" target="gate">

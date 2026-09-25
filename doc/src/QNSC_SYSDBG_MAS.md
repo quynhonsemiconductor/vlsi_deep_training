@@ -1,6 +1,6 @@
 ---
 title: "SYSDBG"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -12,6 +12,7 @@ The reasoning behind each change, and every version before V3.0, is in
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V3.0 | 2026-09-23 | Nghia VT | -- | Rewritten after the teacher's reference design: JTAG data registers, native AXI4 manager, 4-phase handshake. Adds the `DBG_EN` pin and CPU hold |
+| V3.1 | 2026-09-25 | Nghia VT | -- | Port names to `QNSC_RTL_Design_Naming_Rule` V1.0: `o_dbg_req`, `o_dbg_cpu_hold`, AXI named per channel (`o_bus_axi_ar_valid`, ...). No change in behaviour |
 
 # 1. Overview
 
@@ -75,19 +76,19 @@ In house. Nothing is instantiated.
 | `o_jtag_tdo_oe` | out | 1 | 1 in Shift-IR and Shift-DR only |
 | `i_dbg_en` | in | 1 | From the `DBG_EN` pad. Asynchronous, captured once -- 7.1 |
 | `o_dbg_en` | out | 1 | Captured `DBG_EN`. Selects the Ibex boot address and forces the JTAG pins |
-| `o_cpu_hold` | out | 1 | 1 holds the CPU in reset. From a flip-flop, reset 1. Into the `SCRC` CPU reset synchroniser |
-| `o_cpu_debug_req` | out | 1 | To Ibex `debug_req_i`. Level, from a flip-flop |
-| `o_bus_axi_arvalid`, `i_bus_axi_arready` | out, in | 1 | AR handshake |
-| `o_bus_axi_araddr` | out | 32 | Read address, `[1:0]` = 0 |
-| `i_bus_axi_rvalid`, `o_bus_axi_rready` | in, out | 1 | R handshake |
-| `i_bus_axi_rdata` | in | 32 | Read data |
-| `i_bus_axi_rresp` | in | 2 | Read response |
-| `o_bus_axi_awvalid`, `i_bus_axi_awready` | out, in | 1 | AW handshake |
-| `o_bus_axi_awaddr` | out | 32 | Write address, `[1:0]` = 0 |
-| `o_bus_axi_wvalid`, `i_bus_axi_wready` | out, in | 1 | W handshake |
-| `o_bus_axi_wdata` | out | 32 | Write data |
-| `i_bus_axi_bvalid`, `o_bus_axi_bready` | in, out | 1 | B handshake |
-| `i_bus_axi_bresp` | in | 2 | Write response |
+| `o_dbg_cpu_hold` | out | 1 | 1 holds the CPU in reset. From a flip-flop, reset 1. Into the `SCRC` CPU reset synchroniser |
+| `o_dbg_req` | out | 1 | To Ibex `debug_req_i`. Level, from a flip-flop |
+| `o_bus_axi_ar_valid`, `i_bus_axi_ar_ready` | out, in | 1 | AR handshake |
+| `o_bus_axi_ar_addr` | out | 32 | Read address, `[1:0]` = 0 |
+| `i_bus_axi_r_valid`, `o_bus_axi_r_ready` | in, out | 1 | R handshake |
+| `i_bus_axi_r_data` | in | 32 | Read data |
+| `i_bus_axi_r_resp` | in | 2 | Read response |
+| `o_bus_axi_aw_valid`, `i_bus_axi_aw_ready` | out, in | 1 | AW handshake |
+| `o_bus_axi_aw_addr` | out | 32 | Write address, `[1:0]` = 0 |
+| `o_bus_axi_w_valid`, `i_bus_axi_w_ready` | out, in | 1 | W handshake |
+| `o_bus_axi_w_data` | out | 32 | Write data |
+| `i_bus_axi_b_valid`, `o_bus_axi_b_ready` | in, out | 1 | B handshake |
+| `i_bus_axi_b_resp` | in | 2 | Write response |
 | Other AXI4 signals | -- | -- | Constant outputs or unused inputs -- section 10 |
 
 : SYSDBG parameters
@@ -133,16 +134,16 @@ reset value is 1.
 
 ```
 captured   = 0 from i_rst_n_por, 1 once DBG_EN has been captured
-o_cpu_hold = !captured | (o_dbg_en & cpu_hold_sync)      -- registered, reset 1
+o_dbg_cpu_hold = !captured | (o_dbg_en & cpu_hold_sync)      -- registered, reset 1
 ```
 
-- Until the capture, `o_cpu_hold = 1`.
-- **`DBG_EN = 0`:** after the capture, `o_cpu_hold = 0` permanently. `CPUHOLD` has
+- Until the capture, `o_dbg_cpu_hold = 1`.
+- **`DBG_EN = 0`:** after the capture, `o_dbg_cpu_hold = 0` permanently. `CPUHOLD` has
   no effect.
-- **`DBG_EN = 1`:** `o_cpu_hold` follows `CPUHOLD`, which is 1 at reset. The host
+- **`DBG_EN = 1`:** `o_dbg_cpu_hold` follows `CPUHOLD`, which is 1 at reset. The host
   writes 0 to start the CPU. Writing 1 puts it back in reset, with `ISRAM` untouched.
 
-`o_cpu_hold` holds the CPU **only**. It is not a reset source and sets no bit in
+`o_dbg_cpu_hold` holds the CPU **only**. It is not a reset source and sets no bit in
 `RESET_CAUSE`.
 
 ## 7.2 Boot flows
@@ -253,7 +254,7 @@ Each transaction is one 4-phase handshake:
 
 ## 7.7 Halt and resume
 
-- **Halt.** `CPUDBG = 1` drives `o_cpu_debug_req` high. Ibex saves the PC in `dpc`
+- **Halt.** `CPUDBG = 1` drives `o_dbg_req` high. Ibex saves the PC in `dpc`
   and jumps to `DmHaltAddr` = `0x2000_0800`. The window code sets `HALTED` = 1; the
   host reads it to confirm the halt.
 - **Halt before starting.** `CPUDBG = 1` while the CPU is held, or across a watchdog
@@ -292,7 +293,7 @@ One, in `design/top`, with the default parameters.
 
 | Function | Where it lives |
 |---|---|
-| Reset of the chip or of any domain | Nowhere. `o_cpu_hold` holds the CPU only |
+| Reset of the chip or of any domain | Nowhere. `o_dbg_cpu_hold` holds the CPU only |
 | CPU clock control | Not needed. The `cpu` cluster is never gated |
 | Byte and halfword access, bursts | Nowhere. Word only; the host does read-modify-write |
 | Debug ROM, program buffer | Nowhere. The debug window in `ISRAM`, 7.8 |
@@ -304,14 +305,14 @@ One, in `design/top`, with the default parameters.
 
 | Port | Tied to | Why |
 |---|---|---|
-| `o_bus_axi_arlen`, `o_bus_axi_awlen` | 0 | One beat |
-| `o_bus_axi_arsize`, `o_bus_axi_awsize` | `3'b010` | 4 bytes, word only |
-| `o_bus_axi_arburst`, `o_bus_axi_awburst` | `2'b01`, INCR | Legal for one beat |
-| `o_bus_axi_arid`, `o_bus_axi_awid` | 0 | One transaction outstanding |
-| `o_bus_axi_{ar,aw}lock`, `prot`, `cache`, `qos`, `region` | 0 | No exclusive access, protection, cache hints or QoS |
-| `o_bus_axi_wstrb` | `4'b1111` | Word only |
-| `o_bus_axi_wlast` | 1 | One beat |
-| `i_bus_axi_rid`, `i_bus_axi_rlast`, `i_bus_axi_bid` | Unused | One beat, one ID |
+| `o_bus_axi_ar_len`, `o_bus_axi_aw_len` | 0 | One beat |
+| `o_bus_axi_ar_size`, `o_bus_axi_aw_size` | `3'b010` | 4 bytes, word only |
+| `o_bus_axi_ar_burst`, `o_bus_axi_aw_burst` | `2'b01`, INCR | Legal for one beat |
+| `o_bus_axi_ar_id`, `o_bus_axi_aw_id` | 0 | One transaction outstanding |
+| `o_bus_axi_{ar,aw}_lock`, `_prot`, `_cache`, `_qos`, `_region` | 0 | No exclusive access, protection, cache hints or QoS |
+| `o_bus_axi_w_strb` | `4'b1111` | Word only |
+| `o_bus_axi_w_last` | 1 | One beat |
+| `i_bus_axi_r_id`, `i_bus_axi_r_last`, `i_bus_axi_b_id` | Unused | One beat, one ID |
 
 # 11. Requirements on others, and open items
 
@@ -321,10 +322,10 @@ One, in `design/top`, with the default parameters.
 |---|---|---|
 | `DBG_EN` on a dedicated input pad, pull-down on the board. If no pad is free, it may share a pad whose IO MUX default is an input, since it is sampled only after power-on | Top, pad owner | Debug boot |
 | `i_rst_n_por` from power-on only, not from the watchdog | `SCRC` | `DBG_EN` capture and hold surviving a watchdog bite |
-| CPU reset = `SCRC` CPU reset OR `o_cpu_hold`, through the CPU reset synchroniser | `SCRC` | Debug boot |
+| CPU reset = `SCRC` CPU reset OR `o_dbg_cpu_hold`, through the CPU reset synchroniser | `SCRC` | Debug boot |
 | `boot_addr_i = o_dbg_en ? 0x2000_1000 : 0x0000_0000` | CPU owner | Debug boot running the loaded image |
 | `DmHaltAddr = 0x2000_0800`, `DmExceptionAddr = 0x2000_0810`. `DmBaseAddr`/`DmAddrMask` act only with PMP, which is off | CPU owner | 7.8 |
-| `fetch_enable_i` tied to `IbexMuBiOn`. The CPU is held by reset (`o_cpu_hold`), not by fetch enable | CPU owner | Debug boot; a second hold would need its own release |
+| `fetch_enable_i` tied to `IbexMuBiOn`. The CPU is held by reset (`o_dbg_cpu_hold`), not by fetch enable | CPU owner | Debug boot; a second hold would need its own release |
 | `AXI_S0` connected to `SYSDBG` directly, AXI4, ID width `AxiIdWidth`. No `axi_from_mem` | Bus owner | Every bus access |
 | Remove the `0xF000_0000` `SYSDBG` register region from HAS Table 7-1 (already gone from `qsoc_contract.yml`) | HAS owner | Consistency. There are no memory-mapped registers |
 | The five JTAG pads forced to JTAG while `o_dbg_en = 1` | IO MUX owner | Debug boot with firmware that remaps pins |
@@ -353,9 +354,9 @@ One, in `design/top`, with the default parameters.
    table cross.
 8. `i_rst_n_sysbus` asserted during a transaction: the transaction is issued
    again after release, and completes.
-9. `DBG_EN`: `o_cpu_hold` = 1 until the capture, then 0 for `DBG_EN = 0`, or
+9. `DBG_EN`: `o_dbg_cpu_hold` = 1 until the capture, then 0 for `DBG_EN = 0`, or
    `CPUHOLD` for `DBG_EN = 1`. Toggling the pad afterwards changes nothing.
-   `o_cpu_hold` never glitches (it is a flip-flop output).
+   `o_dbg_cpu_hold` never glitches (it is a flip-flop output).
 10. With Ibex, debug boot: load the window and image, `CPUDBG = 1`, `CPUHOLD = 0`.
     `HALTED` = 1 and `dpc = 0x2000_1080`. `CPUDBG = 0`, `RESUME` = 1: `HALTED` = 0
     and the core runs without halting again.
@@ -390,3 +391,4 @@ halt it, read `dpc`, resume it, and see the GPIO toggle again.
 | The debugger must control the CPU reset, selected by an external pin | Teacher, 2026-09-23 | `DBG_EN` and `CPUHOLD` -- 7.1 |
 | Reference design `VLSI_SYSDBG.drawio` | Teacher, 2026-09-23 | Used as the pattern and adapted to QSOC -- `_DECISIONS` D18 |
 | CPU clock under debugger control | Teacher, 2026-09-23 | Not needed: the `cpu` cluster is never gated, and holding reset stops the CPU |
+| IP list names `axi_from_mem` for the debugger | Owner, 2026-09-25 | An early pick from the V1.x memory-style port. The block is self-designed, as the teacher asks: its own AXI4 manager (7.5) connects to `AXI_S0` directly, and no IP is instantiated -- `_DECISIONS` D21 |

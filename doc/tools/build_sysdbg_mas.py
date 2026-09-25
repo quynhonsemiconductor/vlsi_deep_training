@@ -51,7 +51,7 @@ blk = [
       "group", 11, True, "top"),
     N("sync", 800, 390, 180, 60, "dbgreq  ·  cpu_hold\n2FF", "box", 10),
     N("dben", 800, 470, 180, 60, "DBG_EN\n2FF + capture", "box", 10),
-    N("outs", 1000, 430, 180, 60, "o_cpu_debug_req\no_dbg_en  ·  o_cpu_hold", "box", 10),
+    N("outs", 1000, 430, 180, 60, "o_dbg_req\no_dbg_en  ·  o_dbg_cpu_hold", "box", 10),
 
     N("sbus", 1250, 100, 150, 70, "S_BUS  AXI_S0", "yellow", 10),
     N("cpu", 1250, 230, 150, 90, "Ibex CPU", "blue", 11, True),
@@ -136,7 +136,7 @@ wire_e = [
     E("jpad", "r", "dbg", "l@0.5", "JTAG"),
     E("dbg", "r@0.1", "iomux", "l", "o_dbg_en"),
     E("dbg", "r@0.45", "mux", "l", "o_dbg_en"),
-    E("dbg", "r@0.85", "gate", "l@0.3", "o_cpu_hold"),
+    E("dbg", "r@0.85", "gate", "l@0.3", "o_dbg_cpu_hold"),
     E("scrc", "t", "gate", "b"),
     E("mux", "r", "cpu", "l@0.25", "boot_addr_i"),
     E("gate", "r", "cpu", "l@0.75", "rst_ni"),
