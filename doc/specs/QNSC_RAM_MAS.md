@@ -47,7 +47,7 @@ File `design/ram/rtl/m_qnsc_wrap_axi4_sram.sv`, owner Nghia Van Trong.
 
 # 3. Block diagram
 
-![The RAM block: wrapper, unmodified controller and macro. Heavy outline: the strobe FIFO QSOC adds](../img/fig_ram_simple.png){width=6.5in}
+![The RAM block: wrapper, unmodified controller and macro. Heavy outline: the strobe FIFO QSOC adds](../figures/img/fig_ram_simple.png){width=6.5in}
 
 Clock `i_clk_mem` and reset `i_rst_n_mem` come from the `mem` cluster. The clock is
 never gated; the reset is asserted by power-on, watchdog and software reset.

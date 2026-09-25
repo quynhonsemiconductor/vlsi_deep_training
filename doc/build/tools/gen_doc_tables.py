@@ -21,8 +21,8 @@ to the generator. Only memory_map takes one today:
 Text outside the markers is never touched, so a section can introduce or qualify
 its table in prose and keep only the rows generated.
 
-    python3 doc/tools/gen_doc_tables.py            rewrite every region
-    python3 doc/tools/gen_doc_tables.py --check     fail if any is stale (CI)
+    python3 doc/build/tools/gen_doc_tables.py            rewrite every region
+    python3 doc/build/tools/gen_doc_tables.py --check     fail if any is stale (CI)
 
 --check is the half that matters: it makes a specification that has drifted from
 the contract a failing pull request rather than something found in review.
@@ -36,9 +36,9 @@ import sys
 
 import yaml
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOT = pathlib.Path(__file__).resolve().parents[3]
 CONTRACT = ROOT / "util" / "qsoc_contract.yml"
-SRC = ROOT / "doc" / "src"
+SRC = ROOT / "doc" / "specs"
 
 MARKER = re.compile(
     r"(?P<open><!--\s*gen:(?P<name>[a-z_]+)(?P<args>(?:\s+[a-z_]+=[^\s>]+)*)\s*-->\n)"
@@ -256,7 +256,7 @@ def main():
     if args.check:
         if stale:
             print("stale generated table(s), regenerate with "
-                  "doc/tools/gen_doc_tables.py:", file=sys.stderr)
+                  "doc/build/tools/gen_doc_tables.py:", file=sys.stderr)
             for s in stale:
                 print("  " + s, file=sys.stderr)
             return 1

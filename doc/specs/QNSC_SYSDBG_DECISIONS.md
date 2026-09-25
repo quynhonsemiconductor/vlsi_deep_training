@@ -41,7 +41,7 @@ turned up four defects. Each row gives the decision and the reason for it.
 | D9 | **Bus command aborted while `i_rst_n_sysbus = 0`** | A watchdog or software reset resets `axi_from_mem` with the bus. V2.0's "keep waiting" would then have waited forever for a response that can no longer come |
 | D10 | **CDC reduced to `cmd_req`, `cmd_ack`, `timeout`** | V2.0 named four toggles and then said only two cross. The response rides on `cmd_ack`, so a separate `rsp_req`/`rsp_ack` pair is not needed. The `TCK`-side handshake is reset by power-on only, so a JTAG reset cannot break a command in flight |
 | D11 | **Port names to `QNSC_RTL_Design_Naming_Rule`** (`i_`/`o_`, `i_clk_cpu`) | The template requires it; V2.0 used the Ibex suffix style |
-| D12 | **JTAG internals follow the teacher's reference, `drawio/VLSI_SYSDBG.drawio`** (2026-09-23): IR plus separate data registers (`ADDR` 33, `DATA` 32, `STATUS` 3, `CPUDBG`, `IDCODE`, `BYPASS`) in place of the 68-bit `ACCESS` register and command FSM | This is the teacher's design. The data registers are the interface, so the `CTRL`/`STATUS`/`ID` window at `0xF000_0000`, its decode, and its `LOCAL` state all go away |
+| D12 | **JTAG internals follow the teacher's reference, `figures/drawio/VLSI_SYSDBG.drawio`** (2026-09-23): IR plus separate data registers (`ADDR` 33, `DATA` 32, `STATUS` 3, `CPUDBG`, `IDCODE`, `BYPASS`) in place of the 68-bit `ACCESS` register and command FSM | This is the teacher's design. The data registers are the interface, so the `CTRL`/`STATUS`/`ID` window at `0xF000_0000`, its decode, and its `LOCAL` state all go away |
 | D13 | **Native AXI4 manager** (one beat, 4 bytes, fixed attributes) in place of the `req`/`gnt` port and `axi_from_mem` | Also from the reference. One adapter fewer at `AXI_S0`. Word only: a halfword patch is a read-modify-write. (The Ibex triggers mentioned here earlier are off: `DbgTriggerEn = 0`, per the CPU owner.) |
 | D14 | **4-phase handshake**, separate `read_req`/`read_ack` and `write_req`/`write_ack`, data buses crossing under `set_max_delay` | Supersedes D10. `busy` is simply "handshake not back to idle", and Update-DR is ignored while busy, which is what keeps `addr_reg` and `wdata_reg` stable for the unsynchronised crossing |
 | D15 | **No bus timeout. The AXI domain is reset by the `S_BUS` reset, and a request still held is re-issued on release** | Supersedes D8 and D9. `S_BUS` answers `DECERR` for unmapped addresses and `SCRC` answers for gated peripherals, so every access gets a response. The one case that loses a response, a bus reset, is covered by the re-issue, which is harmless for a single-word read or write |
@@ -157,7 +157,7 @@ to take the address constants that the Ibex integration must declare.
 
 ## 1.2 Position in the system
 
-![Where the debugger sits in QSOC](../img/fig_qsoc_mem.png){width=6.4in}
+![Where the debugger sits in QSOC](../figures/img/fig_qsoc_mem.png){width=6.4in}
 
 Three blocks issue transactions on `S_BUS`: `CPU2AXI` on `AXI_S1`, `SYSDBG` on
 `AXI_S0`, and `DMA` on `AXI_S2`. Three memories answer them: `ROM` on `AXI_M0`,
@@ -244,7 +244,7 @@ port it already has. The function is the same; the port is not needed, and **no
 
 # 3. Block Diagram
 
-![Internal structure, the two clock domains, and the crossing between them](../img/fig_sysdbg_internal.png){width=6.5in}
+![Internal structure, the two clock domains, and the crossing between them](../figures/img/fig_sysdbg_internal.png){width=6.5in}
 
 # 4. Micro-architecture Details
 
@@ -450,7 +450,7 @@ integration checklist of section 5.1 alongside the clock-gate rule.
 
 One data register carries a whole command, so **one scan is one operation**.
 
-![The ACCESS register, bit by bit](../img/fig_jtag_cmd.png){width=6.3in}
+![The ACCESS register, bit by bit](../figures/img/fig_jtag_cmd.png){width=6.3in}
 
 : ACCESS data register fields
 
@@ -511,7 +511,7 @@ itself or grant itself debug access.
 
 ## 4.8 Command FSM
 
-![Command FSM](../img/fig_sysdbg_fsm.png){width=6.0in}
+![Command FSM](../figures/img/fig_sysdbg_fsm.png){width=6.0in}
 
 : Command FSM states
 
@@ -555,7 +555,7 @@ system bus at all -- and knows a slave is not answering. `dm_sba` in
 The sections above describe the blocks. This is the same design followed as a
 single path, and it exercises every one of them.
 
-![Halting the CPU, end to end](../img/fig_halt_flow.png){width=6.3in}
+![Halting the CPU, end to end](../figures/img/fig_halt_flow.png){width=6.3in}
 
 Reading a memory word is the same path with `op = READ` and an address that is
 not `0xF...`, so that step 5 enters `BUS` rather than `LOCAL`. Resuming is the
@@ -727,7 +727,7 @@ the same.
 
 ## 4.12 Reading a CPU register
 
-![What one bus port can and cannot reach](../img/fig_sysdbg_ports.png){width=6.2in}
+![What one bus port can and cannot reach](../figures/img/fig_sysdbg_ports.png){width=6.2in}
 
 : What each part of the block delivers
 
@@ -833,7 +833,7 @@ needs no halt; reading a register always does.
 A debugger cannot be demonstrated without software on the host side. This is a
 deliverable of the block, not an afterthought.
 
-![Host software stack](../img/fig_host_stack.png){width=5.6in}
+![Host software stack](../figures/img/fig_host_stack.png){width=5.6in}
 
 : Host software deliverables
 

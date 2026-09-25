@@ -1,6 +1,6 @@
 # `intmap` — interrupt map
 
-**Owner:** @Nghia-VanTrong   **Spec:** [`doc/src/QNSC_Interrupt_Map_MAS.md`](../../doc/src/QNSC_Interrupt_Map_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/intmap`](../../dv/intmap)
+**Owner:** @Nghia-VanTrong   **Spec:** [`doc/specs/QNSC_Interrupt_Map_MAS.md`](../../doc/specs/QNSC_Interrupt_Map_MAS.md) (build to .docx via `doc/build/build_docs.py`)   **DV:** [`../../dv/intmap`](../../dv/intmap)
 
 ## What this block is
 

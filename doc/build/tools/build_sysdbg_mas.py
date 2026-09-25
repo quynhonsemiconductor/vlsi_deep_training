@@ -1,11 +1,11 @@
 """Figures for QNSC_SYSDBG_MAS V3.0.
 
-    python3 tools/build_sysdbg_mas.py
+    python3 doc/build/tools/build_sysdbg_mas.py
 
 New file names, so the V1.x figures that QNSC_SYSDBG_DECISIONS.md and the
 presentation still show are left as they were drawn.
 
-The structure follows the teacher's reference drawing, drawio/VLSI_SYSDBG.drawio:
+The structure follows the teacher's reference drawing, figures/drawio/VLSI_SYSDBG.drawio:
 a JTAG TAP in the TCK domain, an AXI manager in the AXI domain, and a 4-phase
 handshake between them.
 
@@ -13,12 +13,12 @@ Labels are signal and state names only. What they mean is in the specification.
 """
 import os
 import sys
-_DOC = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # doc/
-sys.path.insert(0, os.path.join(_DOC, "tools"))
+_DOC = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # doc/
+sys.path.insert(0, os.path.join(_DOC, "build", "tools"))
 from diagen import Node as N, Edge as E, emit
 
-IMG = os.path.join(_DOC, "img")
-DRAWIO = os.path.join(_DOC, "drawio", "QNSC_SYSDBG_MAS.drawio")
+IMG = os.path.join(_DOC, "figures", "img")
+DRAWIO = os.path.join(_DOC, "figures", "drawio", "QNSC_SYSDBG_MAS.drawio")
 
 # --------------------------------------------------------------- 1. block
 blk = [

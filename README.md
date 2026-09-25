@@ -8,7 +8,7 @@ There is no flash and no external memory interface, which shapes everything else
 the application is downloaded into RAM over the serial port after every reset, and
 runs from there.
 
-![QSOC block diagram](doc/img/fig_qsoc_full_mono.png)
+![QSOC block diagram](doc/figures/img/fig_qsoc_full_mono.png)
 
 Blocks with a **bold border** are designed here. The rest integrate upstream IP
 through a wrapper.
@@ -87,7 +87,7 @@ python3 util/vendor_ip.py --list       # which upstream IP is pinned, and at wha
 
 ## Contributing
 
-**Start with [`CONTRIBUTING.md`](CONTRIBUTING.md)** — what to read first, the five
+**New here? [`doc/guides/GETTING_STARTED.md`](doc/guides/GETTING_STARTED.md)** walks from setup to a merged pull request. **Then [`CONTRIBUTING.md`](CONTRIBUTING.md)** — what to read first, the five
 steps for writing a block, and the checks that gate a pull request.
 
 `main` is protected: no direct pushes, and a code-owner review is required.

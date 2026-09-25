@@ -80,7 +80,7 @@ TIMER0 and TIMER1 are APB slaves on `P_BUS`, reached from the CPU through `AXI2A
 on `AXI_M3`. They drive no pads. Their only outputs to the rest of QSOC are interrupt
 lines into `INTMAP`.
 
-![Figure 1 -- TIMER0 and TIMER1 in QSOC](../img/fig_timer_block.png){width=6.4in}
+![Figure 1 -- TIMER0 and TIMER1 in QSOC](../figures/img/fig_timer_block.png){width=6.4in}
 
 # 2. Feature
 

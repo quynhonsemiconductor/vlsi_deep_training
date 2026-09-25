@@ -20,8 +20,8 @@ The mapping from colour to meaning comes from diagen's STYLES: the red family wa
 used for the blocks written here, which is the one distinction worth keeping.
 
 Usage:
-    python3 tools/svg_mono.py img/fig_qsoc_full.svg
-    python3 tools/svg_mono.py img/fig_qsoc_full.svg -o img/fig_qsoc_full_mono.svg
+    python3 doc/build/tools/svg_mono.py doc/figures/img/fig_qsoc_full.svg
+    python3 doc/build/tools/svg_mono.py doc/figures/img/fig_qsoc_full.svg -o doc/figures/img/fig_qsoc_full_mono.svg
 
 Writes the .svg and, if rsvg-convert is available, the .png beside it.
 """

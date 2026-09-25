@@ -33,7 +33,7 @@ help:
 	@echo "make pkg            regenerate qnsc_pkg.sv from the contract"
 	@echo "make pkg-check      qnsc_pkg.sv matches the contract"
 	@echo "make tables         specification tables match the contract"
-	@echo "make docs           build every .docx from doc/src"
+	@echo "make docs           build every .docx from doc/specs"
 	@echo "make vendor-guard   vendor/ unedited since BASE             [BASE=origin/main]"
 	@echo "make new-wrap       scaffold rtl/emacs for a new wrapper   BLOCK= IP=<ip top .sv>"
 	@echo "make wrap           regenerate one emacs wrapper           BLOCK="
@@ -73,10 +73,10 @@ pkg-check:
 	python3 util/gen_qnsc_pkg.py --check
 
 tables:
-	python3 doc/tools/gen_doc_tables.py --check
+	python3 doc/build/tools/gen_doc_tables.py --check
 
 docs:
-	cd doc && python3 build_docs.py
+	python3 doc/build/build_docs.py
 
 vendor-guard:
 	bash flow/lint/vendor_guard.sh $(BASE)

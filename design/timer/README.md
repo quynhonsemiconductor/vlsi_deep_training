@@ -1,6 +1,6 @@
 # `timer` — general-purpose timer
 
-**Owner:** @Nghia-VanTrong   **Spec:** [`doc/src/QNSC_TIMER_MAS.md`](../../doc/src/QNSC_TIMER_MAS.md) (build to .docx via `doc/build_docs.py`)   **DV:** [`../../dv/timer`](../../dv/timer)
+**Owner:** @Nghia-VanTrong   **Spec:** [`doc/specs/QNSC_TIMER_MAS.md`](../../doc/specs/QNSC_TIMER_MAS.md) (build to .docx via `doc/build/build_docs.py`)   **DV:** [`../../dv/timer`](../../dv/timer)
 
 ## What this block is
 

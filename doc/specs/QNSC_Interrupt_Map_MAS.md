@@ -39,7 +39,7 @@ Block directory `design/intmap`, module `m_qnsc_intmap`, owner Nghia Van Trong.
 
 # 3. Block diagram
 
-![INTMAP: 5 OR gates and 6 wires onto irq_fast_i[10:0], one wire onto irq_nm_i](../img/fig_intr_map.png)
+![INTMAP: 5 OR gates and 6 wires onto irq_fast_i[10:0], one wire onto irq_nm_i](../figures/img/fig_intr_map.png)
 
 One combinational layer, no clock, reset or bus port. The tie-offs are in `design/top`.
 

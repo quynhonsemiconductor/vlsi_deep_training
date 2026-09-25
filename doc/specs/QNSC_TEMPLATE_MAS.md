@@ -7,9 +7,9 @@ author: "QUY NHON SEMICONDUCTORS -- QNSC"
 <!--
   QNSC micro-architecture specification -- canonical template.
 
-  Copy this file to doc/src/QNSC_<BLOCK>_MAS.md, then add the pair
+  Copy this file to doc/specs/QNSC_<BLOCK>_MAS.md, then add the pair
       ("QNSC_<BLOCK>_MAS", "<BLOCK>")
-  to DOCS in doc/build_docs.py. Build with:  cd doc && python3 build_docs.py
+  to DOCS in doc/build/build_docs.py. Build with:  make docs
 
   The three metadata lines above are the cover. Do not write a cover by hand and
   do not add a top-level "# <block> MAS" heading -- the title would then appear
@@ -73,8 +73,8 @@ The reasoning behind each change is in
 
 # 3. Block diagram
 
-<!-- Reference an image in doc/img/. The caption is numbered automatically, so
-     write only the text: ![Something](../img/fig_<block>.png)
+<!-- Reference an image in doc/figures/img/. The caption is numbered automatically, so
+     write only the text: ![Something](../figures/img/fig_<block>.png)
      Say which clock and reset domain the block is in, and where it sits on the
      bus. Monochrome diagrams only. -->
 
@@ -123,7 +123,7 @@ The reasoning behind each change is in
      should make one claim. State the error and boundary cases, not only the
      happy path: what is silently dropped, what is held, what is lost.
      Tables that restate util/qsoc_contract.yml are generated, not typed --
-     see doc/tools/gen_doc_tables.py and use a <!-- gen:name --> region. -->
+     see doc/build/tools/gen_doc_tables.py and use a <!-- gen:name --> region. -->
 
 ## 7.1 <Feature>
 

@@ -7,7 +7,7 @@
 | `vendor_ip.py` | Copies an upstream IP into `vendor/` at the commit pinned in `vendor/manifest.yml`, applies `vendor/patches/`, and records the SHA in `vendor/vendor.lock.yml` | `python3 util/vendor_ip.py --list` |
 
 The specification tables that restate the contract are generated from it too,
-by [`doc/tools/gen_doc_tables.py`](../doc/tools/gen_doc_tables.py) (`make tables`).
+by [`doc/build/tools/gen_doc_tables.py`](../doc/build/tools/gen_doc_tables.py) (`make tables`).
 
 How to change a shared number is in
 [`CONTRIBUTING.md`, "Changing a shared number"](../CONTRIBUTING.md#changing-a-shared-number).

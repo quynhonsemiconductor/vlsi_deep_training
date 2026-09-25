@@ -43,7 +43,7 @@ Block directory `design/sysdbg`, module `m_qnsc_sysdbg`, owner Nghia Van Trong.
 
 # 3. Block diagram
 
-![SYSDBG block diagram](../img/fig_sysdbg_block.png){width=6.5in}
+![SYSDBG block diagram](../figures/img/fig_sysdbg_block.png){width=6.5in}
 
 Three domains, as labelled in the figure: TCK (`i_jtag_tck`, reset `i_jtag_trst_n`
 AND `i_rst_n_por`), AXI (`i_clk_cpu`, reset `i_rst_n_sysbus`) and system (`i_clk_cpu`,
@@ -148,7 +148,7 @@ o_dbg_cpu_hold = !captured | (o_dbg_en & cpu_hold_sync)      -- registered, rese
 
 ## 7.2 Boot flows
 
-![Debug boot wiring](../img/fig_sysdbg_boot_wiring.png){width=6.0in}
+![Debug boot wiring](../figures/img/fig_sysdbg_boot_wiring.png){width=6.0in}
 
 : Effect of `DBG_EN`
 
@@ -213,7 +213,7 @@ single-step (`dcsr.step`) or resume. No hardware trigger is needed.
 
 ## 7.5 AXI manager
 
-![Read handshake](../img/fig_sysdbg_handshake.png){width=6.5in}
+![Read handshake](../figures/img/fig_sysdbg_handshake.png){width=6.5in}
 
 `set_ar` is the rising edge of the synchronised `read_req`. `set_aw` is the same for
 `write_req`.

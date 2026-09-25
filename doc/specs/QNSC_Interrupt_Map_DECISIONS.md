@@ -207,7 +207,7 @@ outside section 6 describes the design as it now is.
 
 # 3. Block Diagram
 
-![Figure 1 -- INTMAP: 27 sources, one OR per peripheral, 12 wires to the CPU](../img/fig_intr_map.png){width=6.5in}
+![Figure 1 -- INTMAP: 27 sources, one OR per peripheral, 12 wires to the CPU](../figures/img/fig_intr_map.png){width=6.5in}
 
 # 4. The Two Sides of the Count
 
@@ -807,7 +807,7 @@ earlier designs are the documented route back.
 | RTL to write and verify | **an OR tree** | the whole controller | a wrapper |
 | Depends on unproven IP | **no** | no | **yes** -- never elaborated |
 
-![Figure 2 -- The three designs, and what this one trades](../img/fig_intr_levels.png){width=6.4in}
+![Figure 2 -- The three designs, and what this one trades](../figures/img/fig_intr_levels.png){width=6.4in}
 
 ## 6.1 Why the OR tree wins for QSOC
 
