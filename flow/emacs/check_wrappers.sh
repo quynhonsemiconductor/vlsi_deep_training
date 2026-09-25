@@ -34,8 +34,10 @@ for mk in design/*/rtl/emacs/Makefile; do
     continue
   fi
 
-  # Only generated files are compared; the .src.sv and the Makefile are inputs.
-  spec=("$rtl/*.sv" ":(exclude)*.src.sv")
+  # Only the two generated files are compared: the copy in rtl/emacs/ and the
+  # one in rtl/. The .src.sv, the Makefile and hand-written rtl/ files are not.
+  design=$(sed -nE 's/^DESIGN[[:space:]]*=[[:space:]]*([A-Za-z0-9_]+).*/\1/p' "$mk" | head -1)
+  spec=("$dir/$design.sv" "$rtl/$design.sv")
   new=$(git ls-files --others --exclude-standard -- "${spec[@]}")
   diff=$(git diff -w -- "${spec[@]}")
   if [ -n "$new$diff" ]; then
