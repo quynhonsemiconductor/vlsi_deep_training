@@ -1,6 +1,6 @@
 # `cpu` — CPU and its bus adapter (CPU2AXI)
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/cpu`](../../dv/cpu)
+**Owner:** @SinhHPT   **Spec:** _TBD_   **DV:** [`../../dv/cpu`](../../dv/cpu)
 
 ## What this block is
 

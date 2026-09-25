@@ -153,6 +153,23 @@ gh api repos/quynhonsemiconductor/vlsi_deep_training/rulesets | jq '.[].name'
 gh ruleset check --repo quynhonsemiconductor/vlsi_deep_training   # if gh version supports it
 ```
 
+## Who approves and who merges
+
+Only the `vlsi-maintainers` team -- Tâm (`@Stork1323`), the teacher (`@quannhqnsc`),
+`@Nghia-VanTrong` and `@SinhHPT` -- approves and merges into `main`:
+
+- **Approve.** `CODEOWNERS` names only that team, so only its approval satisfies the
+  required code-owner review. Anyone can comment or leave a review; it does not count.
+- **Merge.** A second ruleset, `main-merge-by-maintainers`, restricts updates to `main`.
+  Its bypass list is the maintainers team, in `pull_request` mode (through a pull
+  request only), plus the repository admin role. A member's merge button stays
+  disabled even when every check is green and the review is approved.
+- `main-protection` still applies to the maintainers: the eleven checks and one
+  approval from someone other than the author.
+
+Block owners are named in each block README and in `doc/TRACKER.md`; they own the
+work, not the merge.
+
 ## Keeping the ruleset in step with CI
 
 A new CI job is not a gate until its name is added to `required_status_checks`.

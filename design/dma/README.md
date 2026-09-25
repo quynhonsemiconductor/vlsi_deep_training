@@ -1,6 +1,6 @@
 # `dma` — DMA engine
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/dma`](../../dv/dma)
+**Owner:** @Vinh-OngBao   **Spec:** _TBD_   **DV:** [`../../dv/dma`](../../dv/dma)
 
 ## What this block is
 

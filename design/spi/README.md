@@ -1,6 +1,6 @@
 # `spi` — SPI host and SPI device
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/spi`](../../dv/spi)
+**Owner:** @hieu-vubuiminh   **Spec:** _TBD_   **DV:** [`../../dv/spi`](../../dv/spi)
 
 ## What this block is
 

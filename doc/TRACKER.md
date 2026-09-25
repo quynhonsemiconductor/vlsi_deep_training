@@ -31,7 +31,7 @@ The overall lead checks it against the repository before each review.
 | 15 | SYSCSR | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | Register file inside SCRC |
 | 16 | SCRC | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | |
 | 17 | INTMAP | `design/intmap` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.2 |
-| 18 | IO MUX | `design/iomux` | _TBD_ | - | - | - | - | - | - | - | - | Not on the assistant's tracker yet |
+| 18 | IO MUX | `design/iomux` | Bui Hieu | - | - | - | - | - | - | - | - | Not on the assistant's tracker yet |
 | 19 | TOP | `design/top` | Trong Nghia (lead) | - | - | - | - | - | - | - | - | `qnsc_pkg.sv` only so far |
 
 ## Names that differ between the tracker and the repository

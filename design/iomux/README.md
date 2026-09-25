@@ -1,6 +1,6 @@
 # `iomux` — IO pin multiplexer
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/iomux`](../../dv/iomux)
+**Owner:** @hieu-vubuiminh   **Spec:** _TBD_   **DV:** [`../../dv/iomux`](../../dv/iomux)
 
 ## What this block is
 

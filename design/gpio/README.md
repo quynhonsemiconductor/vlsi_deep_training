@@ -1,6 +1,6 @@
 # `gpio` — general-purpose IO ports
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/gpio`](../../dv/gpio)
+**Owner:** @hieu-vubuiminh   **Spec:** _TBD_   **DV:** [`../../dv/gpio`](../../dv/gpio)
 
 ## What this block is
 

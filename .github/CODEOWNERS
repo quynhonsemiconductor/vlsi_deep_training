@@ -23,30 +23,14 @@
 # ---- default ---------------------------------------------------------------
 *                           @quynhonsemiconductor/vlsi-maintainers
 
-# ---- every RTL change is seen by a maintainer, plus the block owner below ---
+# ---- blocks ------------------------------------------------------------------
+# Only the maintainers approve: Tam (@Stork1323, the teacher's assistant), the
+# teacher (@quannhqnsc), @Nghia-VanTrong (lead) and @SinhHPT. Block owners are
+# named in each block README and in doc/TRACKER.md; their approval does not
+# satisfy the code-owner review. Merging is limited to the same team by the
+# main-merge-by-maintainers ruleset (.github/POLICY.md).
 /design/                    @quynhonsemiconductor/vlsi-maintainers
-
-# ---- blocks: owner + maintainer -------------------------------------------
-# Maintainers review every block for now. To add a block owner, append their
-# GitHub username; a user who cannot read the repo silently matches nothing,
-# which makes the required review unsatisfiable.
-/design/ram/                @quynhonsemiconductor/vlsi-maintainers
-/design/rom/                @quynhonsemiconductor/vlsi-maintainers
-/design/sysdbg/             @quynhonsemiconductor/vlsi-maintainers
-/design/intmap/             @quynhonsemiconductor/vlsi-maintainers
-/design/timer/              @quynhonsemiconductor/vlsi-maintainers
-/design/pwm/                @quynhonsemiconductor/vlsi-maintainers
-/design/scrc/               @quynhonsemiconductor/vlsi-maintainers
-/design/dma/                @quynhonsemiconductor/vlsi-maintainers
-/design/bus/                @quynhonsemiconductor/vlsi-maintainers
-/design/spi/                @quynhonsemiconductor/vlsi-maintainers
-/design/uart/               @quynhonsemiconductor/vlsi-maintainers
-/design/i2c/                @quynhonsemiconductor/vlsi-maintainers
-/design/gpio/               @quynhonsemiconductor/vlsi-maintainers
-/design/wdt/                @quynhonsemiconductor/vlsi-maintainers
-/design/iomux/              @quynhonsemiconductor/vlsi-maintainers
-/design/cpu/                @quynhonsemiconductor/vlsi-maintainers
-/design/common/             @quynhonsemiconductor/vlsi-maintainers
+/dv/                        @quynhonsemiconductor/vlsi-maintainers
 
 # ---- shared surfaces: maintainers only ------------------------------------
 # design/top holds the chip top and qnsc_pkg. qnsc_pkg carries the cross-block
