@@ -23,49 +23,14 @@
 # ---- default ---------------------------------------------------------------
 *                           @quynhonsemiconductor/vlsi-maintainers
 
-# ---- every RTL change is seen by a maintainer, plus the block owner below ---
+# ---- blocks ------------------------------------------------------------------
+# Only the maintainers approve: Tam (@Stork1323, the teacher's assistant), the
+# teacher (@quannhqnsc), @Nghia-VanTrong (lead) and @SinhHPT. Block owners are
+# named in each block README and in doc/TRACKER.md; their approval does not
+# satisfy the code-owner review. Merging is limited to the same team by the
+# main-merge-by-maintainers ruleset (.github/POLICY.md).
 /design/                    @quynhonsemiconductor/vlsi-maintainers
-
-# ---- blocks: owner + maintainer -------------------------------------------
-# Each block: its owner (the IP list) plus the maintainers. The author of a PR
-# cannot approve it, so a block owner's own PR is approved by a maintainer, and a
-# change someone else makes to a block can be approved by its owner. SYSCSR has
-# no directory of its own; it is built under design/scrc. IO MUX has no owner yet.
-#
-# Maintainers: Tam (@Stork1323, the teacher's assistant), the teacher
-# (@quannhqnsc), @Nghia-VanTrong (lead) and @SinhHPT.
-/design/ram/                @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/dv/ram/                    @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/design/rom/                @Nam-HaoNguyen @quynhonsemiconductor/vlsi-maintainers
-/dv/rom/                    @Nam-HaoNguyen @quynhonsemiconductor/vlsi-maintainers
-/design/sysdbg/             @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/dv/sysdbg/                 @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/design/intmap/             @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/dv/intmap/                 @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/design/timer/              @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/dv/timer/                  @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/design/pwm/                @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/dv/pwm/                    @Nghia-VanTrong @quynhonsemiconductor/vlsi-maintainers
-/design/scrc/               @Nam-HaoNguyen @quynhonsemiconductor/vlsi-maintainers
-/dv/scrc/                   @Nam-HaoNguyen @quynhonsemiconductor/vlsi-maintainers
-/design/dma/                @Vinh-OngBao @quynhonsemiconductor/vlsi-maintainers
-/dv/dma/                    @Vinh-OngBao @quynhonsemiconductor/vlsi-maintainers
-/design/bus/                @SinhHPT @quynhonsemiconductor/vlsi-maintainers
-/dv/bus/                    @SinhHPT @quynhonsemiconductor/vlsi-maintainers
-/design/spi/                @hieu-vubuiminh @quynhonsemiconductor/vlsi-maintainers
-/dv/spi/                    @hieu-vubuiminh @quynhonsemiconductor/vlsi-maintainers
-/design/uart/               @Vinh-OngBao @quynhonsemiconductor/vlsi-maintainers
-/dv/uart/                   @Vinh-OngBao @quynhonsemiconductor/vlsi-maintainers
-/design/i2c/                @Vinh-OngBao @quynhonsemiconductor/vlsi-maintainers
-/dv/i2c/                    @Vinh-OngBao @quynhonsemiconductor/vlsi-maintainers
-/design/gpio/               @hieu-vubuiminh @quynhonsemiconductor/vlsi-maintainers
-/dv/gpio/                   @hieu-vubuiminh @quynhonsemiconductor/vlsi-maintainers
-/design/wdt/                @hieu-vubuiminh @quynhonsemiconductor/vlsi-maintainers
-/dv/wdt/                    @hieu-vubuiminh @quynhonsemiconductor/vlsi-maintainers
-/design/iomux/              @quynhonsemiconductor/vlsi-maintainers
-/design/cpu/                @SinhHPT @quynhonsemiconductor/vlsi-maintainers
-/dv/cpu/                    @SinhHPT @quynhonsemiconductor/vlsi-maintainers
-/design/common/             @quynhonsemiconductor/vlsi-maintainers
+/dv/                        @quynhonsemiconductor/vlsi-maintainers
 
 # ---- shared surfaces: maintainers only ------------------------------------
 # design/top holds the chip top and qnsc_pkg. qnsc_pkg carries the cross-block
