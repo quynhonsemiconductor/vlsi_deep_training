@@ -1,6 +1,6 @@
 ---
 title: "RAM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,6 +13,7 @@ The reasoning behind each change is in [`QNSC_RAM_DECISIONS.md`](QNSC_RAM_DECISI
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only; memory map generated from the contract |
 | V2.1 | 2026-09-24 | Nghia VT | -- | `ISRAM` contents survive every reset except power loss. `PARA_ID_WD` = 7, from the HAS |
 | V2.2 | 2026-09-24 | Nghia VT | -- | Wrapper interface, strobe FIFO, timing, reset and tie-offs specified; figure and macro address corrected |
+| V2.3 | 2026-09-25 | Nghia VT | -- | Port names to `QNSC_RTL_Design_Naming_Rule` V1.0: AXI named per channel (`i_bus_axi_aw_valid`, ...), macro port `o_mem_*` / `i_mem_rdata` (was `o_sram_*`, `o_sram_bwe` is `o_mem_be`). No change in behaviour |
 
 # 1. Overview
 
@@ -68,28 +69,28 @@ never gated; the reset is asserted by power-on, watchdog and software reset.
 |---|---|---:|---|
 | `i_clk_mem` | in | 1 | `mem` cluster clock, 20 MHz |
 | `i_rst_n_mem` | in | 1 | Asynchronous active-low reset, 7.6 |
-| `i_bus_axi_awvalid`, `o_bus_axi_awready` | in, out | 1 | AW handshake. `awready` = address FSM idle and `AWFIFO` not full |
-| `i_bus_axi_awaddr`, `i_bus_axi_araddr` | in | 32 | Byte address |
-| `i_bus_axi_awlen`, `i_bus_axi_arlen` | in | 8 | Beats minus one |
-| `i_bus_axi_awburst`, `i_bus_axi_arburst` | in | 2 | `00` FIXED, `01` INCR; `10` and `11` see 7.4 |
-| `i_bus_axi_awid`, `i_bus_axi_arid` | in | 7 | Returned on `bid`, `rid` |
-| `i_bus_axi_wvalid`, `o_bus_axi_wready` | in, out | 1 | W handshake. `wready` = `WFIFO` not full |
-| `i_bus_axi_wdata` | in | 32 | Write data |
-| `i_bus_axi_wstrb` | in | 4 | Byte lane enables, 7.3 |
-| `i_bus_axi_wlast` | in | 1 | Connected to the IP, not used, section 10 |
-| `o_bus_axi_bvalid`, `i_bus_axi_bready` | out, in | 1 | B handshake. `bvalid` = `BFIFO` not empty |
-| `i_bus_axi_arvalid`, `o_bus_axi_arready` | in, out | 1 | AR handshake. `arready` = address FSM idle and `ARFIFO` not full |
-| `o_bus_axi_rvalid`, `i_bus_axi_rready` | out, in | 1 | R handshake. `rvalid` = `RFIFO` not empty |
-| `o_bus_axi_rdata` | out | 32 | Read data |
-| `o_bus_axi_bid`, `o_bus_axi_rid` | out | 7 | ID of the request |
-| `o_bus_axi_bresp`, `o_bus_axi_rresp` | out | 2 | Always `00`, OKAY |
-| `o_bus_axi_rlast` | out | 1 | Last beat of the burst |
-| `o_sram_addr` | out | 14 / 13 | Word address, IP byte address `[15:2]` (`ISRAM`) or `[14:2]` (`DSRAM`) |
-| `o_sram_wdata` | out | 32 | Write data |
-| `o_sram_we` | out | 1 | High for one cycle per write beat |
-| `o_sram_bwe` | out | 4 | Byte write enables, active high; bit *n* writes `wdata[8n+7:8n]`. Zero when `o_sram_we` = 0 |
-| `o_sram_oe` | out | 1 | High in the read-issue cycle |
-| `i_sram_rdata` | in | 32 | Read data, sampled in the cycle after `o_sram_oe` |
+| `i_bus_axi_aw_valid`, `o_bus_axi_aw_ready` | in, out | 1 | AW handshake. `awready` = address FSM idle and `AWFIFO` not full |
+| `i_bus_axi_aw_addr`, `i_bus_axi_ar_addr` | in | 32 | Byte address |
+| `i_bus_axi_aw_len`, `i_bus_axi_ar_len` | in | 8 | Beats minus one |
+| `i_bus_axi_aw_burst`, `i_bus_axi_ar_burst` | in | 2 | `00` FIXED, `01` INCR; `10` and `11` see 7.4 |
+| `i_bus_axi_aw_id`, `i_bus_axi_ar_id` | in | 7 | Returned on `bid`, `rid` |
+| `i_bus_axi_w_valid`, `o_bus_axi_w_ready` | in, out | 1 | W handshake. `wready` = `WFIFO` not full |
+| `i_bus_axi_w_data` | in | 32 | Write data |
+| `i_bus_axi_w_strb` | in | 4 | Byte lane enables, 7.3 |
+| `i_bus_axi_w_last` | in | 1 | Connected to the IP, not used, section 10 |
+| `o_bus_axi_b_valid`, `i_bus_axi_b_ready` | out, in | 1 | B handshake. `bvalid` = `BFIFO` not empty |
+| `i_bus_axi_ar_valid`, `o_bus_axi_ar_ready` | in, out | 1 | AR handshake. `arready` = address FSM idle and `ARFIFO` not full |
+| `o_bus_axi_r_valid`, `i_bus_axi_r_ready` | out, in | 1 | R handshake. `rvalid` = `RFIFO` not empty |
+| `o_bus_axi_r_data` | out | 32 | Read data |
+| `o_bus_axi_b_id`, `o_bus_axi_r_id` | out | 7 | ID of the request |
+| `o_bus_axi_b_resp`, `o_bus_axi_r_resp` | out | 2 | Always `00`, OKAY |
+| `o_bus_axi_r_last` | out | 1 | Last beat of the burst |
+| `o_mem_addr` | out | 14 / 13 | Word address, IP byte address `[15:2]` (`ISRAM`) or `[14:2]` (`DSRAM`) |
+| `o_mem_wdata` | out | 32 | Write data |
+| `o_mem_we` | out | 1 | High for one cycle per write beat |
+| `o_mem_be` | out | 4 | Byte write enables, active high; bit *n* writes `wdata[8n+7:8n]`. Zero when `o_mem_we` = 0 |
+| `o_mem_oe` | out | 1 | High in the read-issue cycle |
+| `i_mem_rdata` | in | 32 | Read data, sampled in the cycle after `o_mem_oe` |
 
 : RAM parameters
 
@@ -100,7 +101,7 @@ never gated; the reset is asserted by power-on, watchdog and software reset.
 | `PARA_ID_WD` | 7 | 7 | AXI ID width, the `S_BUS` master-port ID width of HAS Table 5-1 |
 | `PARA_LEN_WD` | 8 | 8 | `AxLEN` width |
 | `PARA_FIFO_DEPTH` | 8 | 8 | Depth of all six FIFOs, a power of two |
-| `PARA_SRAM_DEPTH` | 16384 | 8192 | Macro depth in words; sets the `o_sram_addr` width to `$clog2(PARA_SRAM_DEPTH)` |
+| `PARA_SRAM_DEPTH` | 16384 | 8192 | Macro depth in words; sets the `o_mem_addr` width to `$clog2(PARA_SRAM_DEPTH)` |
 
 # 6. Register map
 
@@ -116,7 +117,7 @@ never gated; the reset is asserted by power-on, watchdog and software reset.
 |---|---|---|---|---|
 | `AWFIFO` | `ADDR + ID + 1` | address, ID, last flag | write FSM, one per beat | write grant |
 | `WFIFO` | `DATA` | write data | `wvalid & wready` | write grant |
-| `STRBFIFO` | 4 | `wstrb` | `wvalid & wready` | `o_sram_we` |
+| `STRBFIFO` | 4 | `wstrb` | `wvalid & wready` | `o_mem_we` |
 | `ARFIFO` | `ADDR + ID + 1` | address, ID, last flag | read FSM, one per beat | read issue |
 | `RFIFO` | `DATA + ID + 2 + 1` | data, ID, `RRESP`, last flag | cycle after read issue | `rvalid & rready` |
 | `BFIFO` | `ID + 2` | ID, `BRESP` | write grant of a last beat | `bvalid & bready` |
@@ -166,9 +167,9 @@ The IP has no `WSTRB` input. The wrapper adds `u_strbfifo`, an `m_vlsi_fifo`
 4 bits wide with `PARA_DEPTH` = `$clog2(PARA_FIFO_DEPTH)`, so it holds
 `PARA_FIFO_DEPTH` entries, the same as `WFIFO`:
 
-- **Push** `i_bus_axi_wstrb` on `i_bus_axi_wvalid & o_bus_axi_wready`, the `WFIFO` push.
-- **Pop** on `o_sram_we`, which is the `WFIFO` pop.
-- **Output** `o_sram_bwe = o_sram_we ? head : 4'b0000`.
+- **Push** `i_bus_axi_w_strb` on `i_bus_axi_w_valid & o_bus_axi_w_ready`, the `WFIFO` push.
+- **Pop** on `o_mem_we`, which is the `WFIFO` pop.
+- **Output** `o_mem_be = o_mem_we ? head : 4'b0000`.
 
 `STRBFIFO` and `WFIFO` hold the same number of entries in every cycle, so the head
 of `STRBFIFO` is the strobe of the beat being written. A beat with `wstrb` =
@@ -200,7 +201,7 @@ any assertion of `i_rst_n_mem` while power is applied.
 
 : The two instances
 
-| Instance | Port | `PARA_SRAM_DEPTH` | `o_sram_addr` |
+| Instance | Port | `PARA_SRAM_DEPTH` | `o_mem_addr` |
 |---|---|---:|---|
 | `ISRAM` | `AXI_M1` | 16384 | `[15:2]` |
 | `DSRAM` | `AXI_M2` | 8192 | `[14:2]` |
@@ -230,7 +231,7 @@ size, so every routed address selects exactly one word.
 |---|---|---|
 | `S_BUS` `awsize`, `arsize` | open | The IP has no `AxSIZE`; the increment is 4 bytes |
 | `S_BUS` `awprot`, `arprot`, `awcache`, `arcache`, `awlock`, `arlock`, `awqos`, `arqos` | open | No protection, cache, exclusive or QoS function |
-| IP `i_wlast` | `i_bus_axi_wlast`, unused inside | The last beat comes from `AxLEN` |
+| IP `i_wlast` | `i_bus_axi_w_last`, unused inside | The last beat comes from `AxLEN` |
 | IP `BRESP`, `RRESP` source | `2'b00` inside the IP | No error source; firmware sees OKAY for every access |
 | Macro margin pins | databook default | Margin at default |
 | Macro retention pins | inactive | Retention off |
@@ -268,7 +269,7 @@ Checks QSOC adds:
 4. Every value of the timing table of 7.1, measured at the block ports.
 5. `B` and `R` return in acceptance order, each with its request's ID -- 7.1.
 6. Against an independent address model, aligned WRAP gives INCR addresses -- 7.4.
-7. `o_sram_addr` is `[15:2]` / `[14:2]`; an unaligned single beat hits its word -- 7.2.
+7. `o_mem_addr` is `[15:2]` / `[14:2]`; an unaligned single beat hits its word -- 7.2.
 8. `BRESP` and `RRESP` are `00` for every access -- 7.5.
 9. Reset values of 7.6; a pattern survives an `i_rst_n_mem` pulse -- 7.6.
 10. Macro pin tie-offs match the databook -- section 10.

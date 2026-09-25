@@ -16,13 +16,13 @@
         <mxCell id="g0" value="SCRC clock gate&#10;CLK_EN[TBD]&#10;open at reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="20" y="177" width="115" height="56" as="geometry"/>
         </mxCell>
-        <mxCell id="r0" value="SCRC&#10;o_rst_timer0_n" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="r0" value="SCRC&#10;o_rst_n_timer_0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="20" y="250" width="115" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="g1" value="SCRC clock gate&#10;CLK_EN[TBD]&#10;closed at reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="560" y="177" width="115" height="56" as="geometry"/>
         </mxCell>
-        <mxCell id="r1" value="SCRC&#10;o_rst_timer1_n" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="r1" value="SCRC&#10;o_rst_n_timer_1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="560" y="250" width="115" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="tie0" value="event_lo_i = 0&#10;event_hi_i = 0&#10;ref_clk_i = 0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
@@ -263,7 +263,7 @@
         <mxCell id="intmap2" value="INTMAP&#10;fast line 7  (mcause 23)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1020" y="150" width="170" height="60" as="geometry"/>
         </mxCell>
-        <mxCell id="iomux_out" value="IO MUX&#10;&#10;PWM_0 .. 3 = o_pwm[3:0]&#10;&#10;PWM_4 .. 7 = o_pwm[7:4]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="iomux_out" value="IO MUX&#10;&#10;PWM_0 .. 3 = o_pad_pwm[3:0]&#10;&#10;PWM_4 .. 7 = o_pad_pwm[7:4]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1020" y="240" width="170" height="160" as="geometry"/>
         </mxCell>
         <mxCell id="pbus2_regs_0" value="APB_M13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus2" target="regs">
@@ -326,10 +326,10 @@
         <mxCell id="m3_chbus_19" value="ch_3_o[3:0]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.9053;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="m3" target="chbus">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="chbus_iomux_out_20" value="o_pwm[3:0]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.09209999999999997;entryX=0.0;entryY=0.21879999999999988;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="chbus" target="iomux_out">
+        <mxCell id="chbus_iomux_out_20" value="o_pad_pwm[3:0]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.09209999999999997;entryX=0.0;entryY=0.21879999999999988;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="chbus" target="iomux_out">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="chbus_iomux_out_21" value="o_pwm[7:4]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.3632000000000001;entryX=0.0;entryY=0.8625;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="chbus" target="iomux_out">
+        <mxCell id="chbus_iomux_out_21" value="o_pad_pwm[7:4]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.3632000000000001;entryX=0.0;entryY=0.8625;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="chbus" target="iomux_out">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="chbus_evmux_22" value="16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=0.0;entryX=0.0;entryY=0.7;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="chbus" target="evmux">
@@ -347,7 +347,7 @@
         <mxCell id="tpads_iomux_in_26" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tpads" target="iomux_in">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="iomux_in_sync2ff_27" value="i_tim_ext" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="iomux_in" target="sync2ff">
+        <mxCell id="iomux_in_sync2ff_27" value="i_pad_tim_ext" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="iomux_in" target="sync2ff">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="sync2ff_pool_28" value="ext_sig_i[3:0]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.4815;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sync2ff" target="pool">

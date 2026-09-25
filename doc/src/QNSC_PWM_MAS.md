@@ -1,6 +1,6 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.1"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.2"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,6 +13,7 @@ The reasoning behind each change is in
 |---|---|---|---|---|
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, onto the template |
 | V2.1 | 2026-09-24 | Nghia VT | -- | Corrected against the RTL (`CH_EN`, output MODE, events, input stage, decode); full register fields; tie-off table; new block diagram |
+| V2.2 | 2026-09-25 | Nghia VT | -- | Pad ports named `o_pad_pwm`, `i_pad_tim_ext` (was `o_pwm`, `i_tim_ext`), per `QNSC_RTL_Design_Naming_Rule` 3.8 |
 
 # 1. Overview
 
@@ -60,7 +61,7 @@ Timer module `i` runs on `i_clk_peri` gated by `CH_EN[i]`.
 
 # 5. Interface
 
-Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. `o_pwm` and `o_int_pwm` are 0 in reset.
+Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. `o_pad_pwm` and `o_int_pwm` are 0 in reset.
 
 : PWM interface
 
@@ -74,8 +75,8 @@ Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. `o_pwm` and `o_int_pwm` are 0 i
 | `o_bus_apb_prdata` | out | 32 | read data; 0 at unimplemented offsets |
 | `o_bus_apb_pready` | out | 1 | constant 1, zero wait states |
 | `o_bus_apb_pslverr` | out | 1 | constant 0 |
-| `i_tim_ext` | in | 4 | pads `TIM_EXT0`-`3` through IO MUX. Two flip-flops in the wrapper synchronise it to `i_clk_peri`, then `ext_sig_i[3:0]` |
-| `o_pwm` | out | 8 | `[3:0]` = `ch_0_o[3:0]`, `[7:4]` = `ch_1_o[3:0]`, to IO MUX -- 7.3 |
+| `i_pad_tim_ext` | in | 4 | pads `TIM_EXT0`-`3` through IO MUX. Two flip-flops in the wrapper synchronise it to `i_clk_peri`, then `ext_sig_i[3:0]` |
+| `o_pad_pwm` | out | 8 | `[3:0]` = `ch_0_o[3:0]`, `[7:4]` = `ch_1_o[3:0]`, to IO MUX -- 7.3 |
 | `o_int_pwm` | out | 4 | `events_o[3:0]`, one-cycle pulses, to `INTMAP` line 7 -- 7.5 |
 
 # 6. Register map
@@ -156,10 +157,10 @@ carry two independent periods with four channels under each.
 
 | Pad function | Wrapper output | Channel |
 |---|---|---|
-| `PWM_0`..`PWM_3` | `o_pwm[3:0]` | `ch_0_o[3:0]`, module 0 |
-| `PWM_4`..`PWM_7` | `o_pwm[7:4]` | `ch_1_o[3:0]`, module 1 |
+| `PWM_0`..`PWM_3` | `o_pad_pwm[3:0]` | `ch_0_o[3:0]`, module 0 |
+| `PWM_4`..`PWM_7` | `o_pad_pwm[7:4]` | `ch_1_o[3:0]`, module 1 |
 
-The IO MUX sees only `o_pwm[7:0]`. Which package pin carries each function is the
+The IO MUX sees only `o_pad_pwm[7:0]`. Which package pin carries each function is the
 pad owner's table.
 
 `ch_2_o` and `ch_3_o` reach only the event multiplexer and the input pool.
@@ -283,7 +284,7 @@ One, on `APB_M13`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 
 The IP has no testbench.
 
-1. `ch_i_o[n]` is channel `n` of module `i`; `o_pwm[3:0]` = `ch_0_o`, `o_pwm[7:4]` =
+1. `ch_i_o[n]` is channel `n` of module `i`; `o_pad_pwm[3:0]` = `ch_0_o`, `o_pad_pwm[7:4]` =
    `ch_1_o`.
 2. Every register field resets to the value in section 6; reserved bits and `CMD`
    read 0.

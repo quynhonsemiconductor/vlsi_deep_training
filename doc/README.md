@@ -8,10 +8,11 @@ toolchain that builds them. **The source of truth is Markdown, not the `.docx`.*
 | Path | Role | Tracked |
 |------|------|---------|
 | `src/*.md` | Spec source (the truth) | ✅ |
+| `rules/` | Team rules: Naming Rule (`.docx` source + `.pdf` release) and the EMACS quick guide. Sources, owned by Tâm -- see [`rules/README.md`](rules/README.md) | ✅ |
 | `template/QNSC_Technical_Document_Format.docx` | pandoc reference template | ✅ |
 | `tools/*.py` | Diagram generators and the contract-table generator | ✅ |
 | `drawio/*.drawio` | Editable diagram sources | ✅ |
-| `img/*.png`, `*.svg` | Rendered diagrams (committed so specs are readable without the drawio CLI) | ✅ |
+| `img/*.png`, `*.svg` | Rendered diagrams (committed so specs are readable without running the scripts) | ✅ |
 | `build_docs.py` | Builds the `.docx` specs from `src/*.md` | ✅ |
 | `*.docx` (the specs) | **Generated** by `build_docs.py`, committed so a reviewer without pandoc can open them | ✅ |
 | `template/QNSC_Reference_NoAutoNum.docx` | Build intermediate | ❌ gitignored |

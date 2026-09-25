@@ -9,7 +9,7 @@ copy of each rule rather than two that drift apart.
 | Document | What it gives you |
 |---|---|
 | [`design/README.md`](design/README.md) | The per-block convention: directory shape, why the filelist is not optional, the naming table, how to import the contract |
-| `DM/RULES/FE/Release/QNSC_RTL_Design_Naming_Rule.pdf` (in `MCU_guide_ws`) | **Mandatory** naming rules. CI enforces them |
+| [`doc/rules/`](doc/rules) | **Mandatory** Naming Rule (CI enforces it) and the EMACS quick guide |
 | [`util/qsoc_contract.yml`](util/qsoc_contract.yml) | Every number shared between blocks, and where each came from |
 | Your block's MAS under [`doc/src/`](doc/src) | What your block must do |
 | [`doc/TRACKER.md`](doc/TRACKER.md) | Where every block stands, stage by stage. Update your row in the PR that finishes a stage |

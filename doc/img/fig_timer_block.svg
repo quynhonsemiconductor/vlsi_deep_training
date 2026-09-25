@@ -69,12 +69,12 @@
 <text x="77.5" y="208.0" font-size="9" text-anchor="middle" fill="#000000">CLK_EN[TBD]</text>
 <text x="77.5" y="220.0" font-size="9" text-anchor="middle" fill="#000000">open at reset</text>
 <text x="77.5" y="267.0" font-size="9" text-anchor="middle" fill="#000000">SCRC</text>
-<text x="77.5" y="279.0" font-size="9" text-anchor="middle" fill="#000000">o_rst_timer0_n</text>
+<text x="77.5" y="279.0" font-size="9" text-anchor="middle" fill="#000000">o_rst_n_timer_0</text>
 <text x="617.5" y="196.0" font-size="9" text-anchor="middle" fill="#000000">SCRC clock gate</text>
 <text x="617.5" y="208.0" font-size="9" text-anchor="middle" fill="#000000">CLK_EN[TBD]</text>
 <text x="617.5" y="220.0" font-size="9" text-anchor="middle" fill="#000000">closed at reset</text>
 <text x="617.5" y="267.0" font-size="9" text-anchor="middle" fill="#000000">SCRC</text>
-<text x="617.5" y="279.0" font-size="9" text-anchor="middle" fill="#000000">o_rst_timer1_n</text>
+<text x="617.5" y="279.0" font-size="9" text-anchor="middle" fill="#000000">o_rst_n_timer_1</text>
 <text x="236.0" y="399.0" font-size="9" text-anchor="middle" fill="#000000">event_lo_i = 0</text>
 <text x="236.0" y="411.0" font-size="9" text-anchor="middle" fill="#000000">event_hi_i = 0</text>
 <text x="236.0" y="423.0" font-size="9" text-anchor="middle" fill="#000000">ref_clk_i = 0</text>

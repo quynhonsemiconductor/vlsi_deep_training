@@ -1,6 +1,6 @@
 ---
 title: "TIMER"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.1"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.2"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,6 +13,7 @@ The reasoning behind each change is in
 |---|---|---|---|---|
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, on the MAS template |
 | V2.1 | 2026-09-24 | Nghia VT | -- | One-shot and `CFG_REG_HI[31]` behaviour corrected from the RTL; wrapper interface, full register map, tie-offs and two figures added |
+| V2.2 | 2026-09-25 | Nghia VT | -- | `SCRC` reset outputs named `o_rst_n_timer_0`, `o_rst_n_timer_1` (was `o_rst_timer0_n`), per `QNSC_RTL_Design_Naming_Rule` 1.3 and 1.4 |
 
 # 1. Overview
 
@@ -44,7 +45,7 @@ Nghia Van Trong.
 ![TIMER0 and TIMER1 in QSOC](../img/fig_timer_block.png){width=6.4in}
 
 Both instances are in the `peri` clock cluster. Each has its own clock gate,
-`CLK_EN[TBD]` in `SCRC`, and its own reset, `o_rst_timer0_n` or `o_rst_timer1_n` from
+`CLK_EN[TBD]` in `SCRC`, and its own reset, `o_rst_n_timer_0` or `o_rst_n_timer_1` from
 `SCRC`.
 
 ![Inside one TIMER instance](../img/fig_timer_inside.png){width=6.4in}
@@ -67,7 +68,7 @@ is named in the description.
 | Signal | Dir | Width | Description |
 |---|---|---:|---|
 | `i_clk_peri` | in | 1 | gated `peri` clock, to `HCLK` |
-| `i_rst_n_peri` | in | 1 | asynchronous active-low reset from `o_rst_timer0_n` / `o_rst_timer1_n`, to `HRESETn` |
+| `i_rst_n_peri` | in | 1 | asynchronous active-low reset from `o_rst_n_timer_0` / `o_rst_n_timer_1`, to `HRESETn` |
 | `i_bus_apb_paddr` | in | 12 | to `PADDR`; only `[5:0]` decoded -- 7.6 |
 | `i_bus_apb_pwdata` | in | 32 | to `PWDATA` |
 | `i_bus_apb_pwrite`, `i_bus_apb_psel`, `i_bus_apb_penable` | in | 1 each | to `PWRITE`, `PSEL`, `PENABLE` |
