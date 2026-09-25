@@ -1,6 +1,6 @@
 ---
 title: "TIMER"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,6 +14,7 @@ The reasoning behind each change is in
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, on the MAS template |
 | V2.1 | 2026-09-24 | Nghia VT | -- | One-shot and `CFG_REG_HI[31]` behaviour corrected from the RTL; wrapper interface, full register map, tie-offs and two figures added |
 | V2.2 | 2026-09-25 | Nghia VT | -- | `SCRC` reset outputs named `o_rst_n_timer_0`, `o_rst_n_timer_1` (was `o_rst_timer0_n`), per `QNSC_RTL_Design_Naming_Rule` 1.3 and 1.4 |
+| V2.3 | 2026-09-25 | Nghia VT | -- | Ports and addresses moved up one slot after GPIO3 was dropped: `TIMER0` on `APB_M6` at `0x8001_8000`, `TIMER1` on `APB_M7` at `0x8001_C000` |
 
 # 1. Overview
 
@@ -29,8 +30,8 @@ Nghia Van Trong.
 
 | Instance | Base | APB port | Mode | Clock gate out of reset | Interrupt |
 |---|---|---|---|---|---|
-| `TIMER0` | `0x8001_C000` | `APB_M7` | 64-bit: firmware writes `MODE_64` = 1 | open | `irq_lo_o` to `irq_fast_i[10]` (mcause 26); `irq_hi_o` not connected |
-| `TIMER1` | `0x8002_0000` | `APB_M8` | two 32-bit: `MODE_64` stays 0 | closed | `irq_lo_o` and `irq_hi_o` to `irq_fast_i[6]` (mcause 22) |
+| `TIMER0` | `0x8001_8000` | `APB_M6` | 64-bit: firmware writes `MODE_64` = 1 | open | `irq_lo_o` to `irq_fast_i[10]` (mcause 26); `irq_hi_o` not connected |
+| `TIMER1` | `0x8001_C000` | `APB_M7` | two 32-bit: `MODE_64` stays 0 | closed | `irq_lo_o` and `irq_hi_o` to `irq_fast_i[6]` (mcause 22) |
 
 # 2. Features
 

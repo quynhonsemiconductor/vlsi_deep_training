@@ -7,10 +7,10 @@
         <mxCell id="pbus" value="P_BUS  (APB4, 20 MHz)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="200" y="40" width="840" height="50" as="geometry"/>
         </mxCell>
-        <mxCell id="t0" value="TIMER0&#10;apb_timer_unit&#10;0x8001_C000&#10;MODE_64 = 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="t0" value="TIMER0&#10;apb_timer_unit&#10;0x8001_8000&#10;MODE_64 = 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="200" y="170" width="300" height="140" as="geometry"/>
         </mxCell>
-        <mxCell id="t1" value="TIMER1&#10;apb_timer_unit&#10;0x8002_0000&#10;MODE_64 = 0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="t1" value="TIMER1&#10;apb_timer_unit&#10;0x8001_C000&#10;MODE_64 = 0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="740" y="170" width="300" height="140" as="geometry"/>
         </mxCell>
         <mxCell id="g0" value="SCRC clock gate&#10;CLK_EN[TBD]&#10;open at reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
@@ -52,10 +52,10 @@
         <mxCell id="f6" value="irq_fast_i[6]&#10;mcause 22" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="852.5" y="570" width="120" height="50" as="geometry"/>
         </mxCell>
-        <mxCell id="pbus_t0_0" value="APB_M7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.1786;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="t0">
+        <mxCell id="pbus_t0_0" value="APB_M6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.1786;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="t0">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="pbus_t1_1" value="APB_M8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.8214;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="t1">
+        <mxCell id="pbus_t1_1" value="APB_M7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.8214;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus" target="t1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="g0_t0_2" value="HCLK" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="g0" target="t0">
@@ -206,7 +206,7 @@
         <mxCell id="pbus2" value="P_BUS  (APB)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="270" y="-30" width="390" height="40" as="geometry"/>
         </mxCell>
-        <mxCell id="pwm" value="PWM   apb_adv_timer   0x8003_4000" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=12;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+        <mxCell id="pwm" value="PWM   apb_adv_timer   0x8003_0000" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=12;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="170" y="90" width="800" height="640" as="geometry"/>
         </mxCell>
         <mxCell id="regs" value="APB register file   adv_timer_apb_if&#10;CMD  CFG  TH  CHn_TH  CHn_LUT  COUNTER  EVENT_CFG  CH_EN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
@@ -266,7 +266,7 @@
         <mxCell id="iomux_out" value="IO MUX&#10;&#10;PWM_0 .. 3 = o_pad_pwm[3:0]&#10;&#10;PWM_4 .. 7 = o_pad_pwm[7:4]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1020" y="240" width="170" height="160" as="geometry"/>
         </mxCell>
-        <mxCell id="pbus2_regs_0" value="APB_M13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus2" target="regs">
+        <mxCell id="pbus2_regs_0" value="APB_M12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pbus2" target="regs">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="regs_cg_1" value="CH_EN" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="regs" target="cg">

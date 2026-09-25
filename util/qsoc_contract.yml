@@ -112,55 +112,55 @@ memory_map:
     size: 0x00004000
     port: APB_M5
     kind: peripheral
-  # 0x8001_8000 / APB_M6 is unused: GPIO3 was dropped with the 40-pin package
-  # (GPIO MAS V1.2, 2026-09-23). The timers keep their addresses; the hole
-  # answers DECERR like any other unmapped address.
+  # GPIO3 was dropped with the 40-pin package (GPIO MAS V1.2, 2026-09-23). The
+  # peripherals after it moved up one slot, port and address (P_BUS owner,
+  # 2026-09-25), so APB_Mn stays at 0x8000_0000 + n x 0x4000 with no hole.
   - name: timer_0
+    base: 0x80018000
+    size: 0x00004000
+    port: APB_M6
+    kind: peripheral
+    note: apb_timer_unit in 64-bit mode; QSOC's timebase.
+  - name: timer_1
     base: 0x8001C000
     size: 0x00004000
     port: APB_M7
     kind: peripheral
-    note: apb_timer_unit in 64-bit mode; QSOC's timebase.
-  - name: timer_1
+    note: apb_timer_unit as two independent 32-bit timers.
+  - name: uart_0
     base: 0x80020000
     size: 0x00004000
     port: APB_M8
     kind: peripheral
-    note: apb_timer_unit as two independent 32-bit timers.
-  - name: uart_0
+    note: Carries the boot download.
+  - name: uart_1
     base: 0x80024000
     size: 0x00004000
     port: APB_M9
     kind: peripheral
-    note: Carries the boot download.
-  - name: uart_1
+  - name: spi
     base: 0x80028000
     size: 0x00004000
     port: APB_M10
-    kind: peripheral
-  - name: spi
-    base: 0x8002C000
-    size: 0x00004000
-    port: APB_M11
     kind: peripheral
     note: >
       One APB4 slave for both SPI blocks: host at wrapper offset 0x0000-0x0FFF,
       reserved 0x1000-0x1FFF, device at 0x2000-0x3FFF.
   - name: i2c
+    base: 0x8002C000
+    size: 0x00004000
+    port: APB_M11
+    kind: peripheral
+  - name: pwm
     base: 0x80030000
     size: 0x00004000
     port: APB_M12
     kind: peripheral
-  - name: pwm
+    note: A separate apb_adv_timer instance, not a pad function of the timers.
+  - name: dma_cfg
     base: 0x80034000
     size: 0x00004000
     port: APB_M13
-    kind: peripheral
-    note: A separate apb_adv_timer instance, not a pad function of the timers.
-  - name: dma_cfg
-    base: 0x80038000
-    size: 0x00004000
-    port: APB_M14
     kind: peripheral
     note: Register interface of the DMA. Its data path is an AXI master on AXI_S2.
 

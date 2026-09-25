@@ -115,16 +115,16 @@
                 <mxCell id="a2a_pbus_13" value="APB_S0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.07799999999999999;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="a2a" target="pbus" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="pbus_dma_14" value="APB_M14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.278;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="dma" edge="1">
+                <mxCell id="pbus_dma_14" value="APB_M13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.278;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="dma" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="pbus_pwm_15" value="APB_M13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.46699999999999997;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="pwm" edge="1">
+                <mxCell id="pbus_pwm_15" value="APB_M12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.46699999999999997;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="pwm" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="pbus_i2c_16" value="APB_M12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.644;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="i2c" edge="1">
+                <mxCell id="pbus_i2c_16" value="APB_M11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.644;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="i2c" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="pbus_spi_17" value="APB_M11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.822;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="spi" edge="1">
+                <mxCell id="pbus_spi_17" value="APB_M10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.822;exitY=0.0;entryX=0.5;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="spi" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="pbus_sysctl_18" value="APB_M0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.07200000000000001;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="sysctl" edge="1">
@@ -139,10 +139,10 @@
                 <mxCell id="pbus_gpio_21" value="APB_M3/4/5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.578;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="gpio" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="pbus_timer_22" value="APB_M7/8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.75;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="timer" edge="1">
+                <mxCell id="pbus_timer_22" value="APB_M6/7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.75;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="timer" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="pbus_uart_23" value="APB_M9/10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.9170000000000001;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="uart" edge="1">
+                <mxCell id="pbus_uart_23" value="APB_M8/9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.9170000000000001;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" parent="1" source="pbus" target="uart" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
             </root>
