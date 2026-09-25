@@ -93,9 +93,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends emacs-nox
           emacs --version | head -1
 
-      # rtl/<wrapper>.sv is generated from rtl/emacs/<wrapper>.src.sv by emacs
-      # verilog-mode. Regenerate each one and fail if the committed file differs,
-      # so the compiled wrapper cannot drift from the source that is reviewed.
+      # The AUTO blocks of rtl/<wrapper>.sv are written by emacs verilog-mode.
+      # Regenerate each wrapper and fail if the committed file differs, so the
+      # compiled wrapper cannot drift from the AUTO comments that are reviewed.
       - name: Regenerate every emacs wrapper and compare
         run: make wrap-check
 

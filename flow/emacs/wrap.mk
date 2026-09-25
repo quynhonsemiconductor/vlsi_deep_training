@@ -7,15 +7,13 @@
 #   PARAM_FIX = <sed script>                                   # optional, rare
 #   include ../../../../flow/emacs/wrap.mk
 #
-# `make` copies <DESIGN>.src.sv to <DESIGN>.sv, expands the AUTO comments
-# (AUTOINST, AUTOINPUT, AUTOWIRE, AUTO_TEMPLATE) and copies the result to rtl/,
-# which is the file <block>.f compiles. Instance parameters are already
-# substituted by verilog-auto-inst-param-value t; PARAM_FIX is a sed script run
-# after the expansion, only for what that cannot express.
-#
-# The target names are those of the I2C demo on share_review, so the format is
-# the same for every block. Edit only the .src.sv; CI regenerates the wrapper
-# and fails if the committed rtl/<DESIGN>.sv differs (flow/emacs/check_wrappers.sh).
+# `make` expands the AUTO comments (AUTOINST, AUTOINPUT, AUTOWIRE,
+# AUTO_TEMPLATE) of rtl/<DESIGN>.sv, the file <block>.f compiles -- in place,
+# or from rtl/emacs/<DESIGN>.src.sv in the I2C demo format (see below).
+# Instance parameters are substituted by verilog-auto-inst-param-value t;
+# PARAM_FIX is a sed script run after the expansion, only for what that cannot
+# express. CI regenerates every wrapper and fails if the committed
+# rtl/<DESIGN>.sv differs (flow/emacs/check_wrappers.sh).
 # =============================================================================
 SRC_FILE = $(DESIGN).src.sv
 DST_FILE = $(DESIGN).sv

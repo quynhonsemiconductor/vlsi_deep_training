@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Regenerate every emacs wrapper and fail if the committed file differs.
 #
-# rtl/<wrapper>.sv is generated from rtl/emacs/<wrapper>.src.sv. A hand edit to
-# the generated file, or a .src.sv change committed without running make, would
-# leave the compiled wrapper and its source disagreeing -- the same drift the
-# qnsc_pkg check stops. Whitespace is ignored, because verilog-mode aligns
+# The AUTO blocks of rtl/<wrapper>.sv are written by emacs, either in place or
+# from rtl/emacs/<wrapper>.src.sv (flow/emacs/wrap.mk). A hand edit inside an
+# AUTO block, or an AUTO comment or template changed without running make,
+# would leave the compiled wrapper and its source disagreeing -- the same drift
+# the qnsc_pkg check stops. Whitespace is ignored, because verilog-mode aligns
 # columns slightly differently between emacs versions.
 #
 # The regenerated files are left in the working tree: locally that is the same
