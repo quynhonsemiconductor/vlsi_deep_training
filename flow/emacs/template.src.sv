@@ -5,7 +5,7 @@
 //
 // Edit this .src.sv, then `make wrap BLOCK=@BLOCK@`: emacs verilog-mode expands
 // the AUTO comments and writes rtl/@DESIGN@.sv, the file @BLOCK@.f compiles.
-// Template functions: DM/EMACS/EMACS_quick_guide.pdf in MCU_guide_ws.
+// Template functions: doc/rules/EMACS_quick_guide.pdf.
 //
 // Wrapper = core + bridge. The core is the IP; the bridge, only when the IP
 // speaks another protocol than the chip bus, converts it (APB to TL-UL, APB to

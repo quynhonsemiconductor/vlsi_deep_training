@@ -75,3 +75,5 @@
 # Specifications are reviewed by maintainers because they are the contract the
 # RTL is checked against, not commentary on it.
 /doc/                       @quynhonsemiconductor/vlsi-maintainers
+# The team rules are Tâm's: a change to them needs his review.
+/doc/rules/                 @Stork1323
