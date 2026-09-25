@@ -21,7 +21,7 @@ The overall lead checks it against the repository before each review.
 | 5 | S_BUS | `design/bus` | Truong Sinh | - | - | - | - | - | - | - | - | |
 | 6 | P_BUS | `design/bus` | Truong Sinh | - | - | - | - | - | - | - | - | |
 | 7 | DMA | `design/dma` | Bao Vinh | - | - | - | - | - | - | - | - | |
-| 8 | PWM | `design/pwm` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.1 |
+| 8 | PWM | `design/pwm` | Trong Nghia | PR #26 | - | PR #26 | - | - | - | - | - | MAS V2.3; wrapper to be instantiated in `design/top` |
 | 9 | TIMER | `design/timer` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.1 |
 | 10 | I2C | `design/i2c` | Bao Vinh | PR #11 | - | PR #11 | - | - | - | - | - | |
 | 11 | SPI | `design/spi` | Bui Hieu | - | - | - | - | - | - | - | - | |

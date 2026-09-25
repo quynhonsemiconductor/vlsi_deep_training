@@ -23,6 +23,22 @@ the spec needs it visible, the wrapper exposes it.
 
 ## The wrapper is the boundary
 
-`rtl/m_qnsc_wrap_apb_adv_timer.sv`: instantiate, tie off, port-map to the names in
-`qnsc_pkg`. The IP already speaks APB, so there is no bridge. Generated with emacs from `rtl/emacs/` ([`design/README.md`](../README.md#writing-a-wrapper-with-emacs-verilog-mode)).
-Ours in `rtl/`, borrowed in `vendor/`.
+The IP already speaks APB, so the wrapper is the core with no bridge. Ours in
+`rtl/`, borrowed in `vendor/`; [`pwm.f`](./pwm.f) lists both.
+
+| File | What it is |
+|---|---|
+| `rtl/m_qnsc_wrap_apb_adv_timer.sv` | **the wrapper, one file**: port groups, added logic and `AUTO_TEMPLATE`s written by hand; the blocks between `// Beginning of automatic` and `// End of automatics` written by `make wrap BLOCK=pwm` in place |
+| `rtl/emacs/Makefile`, `rtl/emacs/filelist_emacs.f` | how emacs is run, and the modules whose ports it reads (`apb_adv_timer`, `qnsc_sync`) |
+| `rtl/pulp_clock_gating.sv` | the clock gate `apb_adv_timer` instantiates but does not ship, mapped onto OpenTitan `prim_clock_gating` |
+| `waivers.vlt` | lint waivers, each with its reason |
+
+What the wrapper adds (MAS 5, 7.3, 10): `i_pad_tim_ext[3:0]` through
+`qnsc_sync` into `ext_sig_i[3:0]` (`[31:4]` = 0), `o_pad_pwm[7:0]` =
+`{ch_1_o, ch_0_o}`, `ch_2_o`/`ch_3_o` open, `dft_cg_enable_i` and
+`low_speed_clk_i` tied to 0.
+
+## Instances
+
+One, `u_pwm` in `design/top`, on `APB_M12` (`C_PWM_BASE`), interrupts to
+`INTMAP` line `C_INT_LINE_PWM`.

@@ -87,7 +87,7 @@ machine is a green CI. How a wrapper is written with emacs is in
 | `PR title (conventional commits)` | the title is not a conventional commit |
 | `Verilator lint` | your block does not lint through its filelist |
 | `Filelist paths` | a path in a `.f` is absolute, or names a file that does not exist |
-| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` |
+| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make wrap` regenerates from its AUTO comments |
 | `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** |
 | `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region |
 | `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract |

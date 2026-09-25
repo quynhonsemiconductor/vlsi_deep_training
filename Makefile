@@ -37,7 +37,7 @@ help:
 	@echo "make vendor-guard   vendor/ unedited since BASE             [BASE=origin/main]"
 	@echo "make new-wrap       scaffold rtl/emacs for a new wrapper   BLOCK= IP=<ip top .sv>"
 	@echo "make wrap           regenerate one emacs wrapper           BLOCK="
-	@echo "make wrap-check     every emacs wrapper matches its .src.sv"
+	@echo "make wrap-check     every emacs wrapper matches its AUTO expansion"
 	@echo "make vcs            compile with VCS, on the server        BLOCK="
 	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=]"
 

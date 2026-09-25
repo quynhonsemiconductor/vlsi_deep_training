@@ -5,5 +5,11 @@
 # Skip it once with `git push --no-verify`; CI still runs every check.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
+
+# A push that only deletes remote branches sends nothing to check.
+refs=$(cat)
+if [ -n "$refs" ] && ! echo "$refs" | awk '$2 !~ /^0+$/ {found=1} END {exit !found}'; then
+  exit 0
+fi
 echo "pre-push: make check   (skip once with: git push --no-verify)"
 make -s check
