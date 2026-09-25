@@ -33,5 +33,5 @@
 
 # ---- ours -------------------------------------------------------------------
 rtl/pulp_clock_gating.sv
-# Generated from rtl/emacs/m_qnsc_wrap_apb_adv_timer.src.sv by `make wrap BLOCK=pwm`.
+# One file, AUTOs expanded in place by `make wrap BLOCK=pwm`.
 rtl/m_qnsc_wrap_apb_adv_timer.sv

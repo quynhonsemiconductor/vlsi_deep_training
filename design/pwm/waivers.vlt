@@ -2,6 +2,6 @@
 // PWM lint waivers. Every line carries its reason (CONTRIBUTING.md, LINT stage).
 
 // ch_2_o and ch_3_o are left open on purpose: modules 2 and 3 have no pads
-// (QNSC_PWM_MAS section 10). The pattern covers rtl/ and the emacs/ intermediate copy.
-lint_off -rule PINCONNECTEMPTY -file "*design/pwm/rtl/*m_qnsc_wrap_apb_adv_timer.sv" -match "*'ch_2_o'*"
-lint_off -rule PINCONNECTEMPTY -file "*design/pwm/rtl/*m_qnsc_wrap_apb_adv_timer.sv" -match "*'ch_3_o'*"
+// (QNSC_PWM_MAS section 10).
+lint_off -rule PINCONNECTEMPTY -file "*design/pwm/rtl/m_qnsc_wrap_apb_adv_timer.sv" -match "*'ch_2_o'*"
+lint_off -rule PINCONNECTEMPTY -file "*design/pwm/rtl/m_qnsc_wrap_apb_adv_timer.sv" -match "*'ch_3_o'*"

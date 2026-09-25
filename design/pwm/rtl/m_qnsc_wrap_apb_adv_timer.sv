@@ -4,9 +4,12 @@
 // C_PWM_BASE, INTMAP fast line C_INT_LINE_PWM.
 // Spec: doc/src/QNSC_PWM_MAS.md (V2.2).
 //
-// Edit this .src.sv, then `make wrap BLOCK=pwm`: emacs verilog-mode expands
-// the AUTO comments and writes rtl/m_qnsc_wrap_apb_adv_timer.sv, the file
-// pwm.f compiles. Template functions: doc/rules/EMACS_quick_guide.pdf.
+// One file, expanded in place by emacs verilog-mode (Veripool's intended flow):
+// edit anything outside the blocks between "// Beginning of automatic ..." and
+// "// End of automatics", then run `make wrap BLOCK=pwm`. emacs rewrites those
+// blocks in this same file from the AUTO comments and the AUTO_TEMPLATEs; CI
+// re-runs it and fails if the result differs from what is committed.
+// Template functions: doc/rules/EMACS_quick_guide.pdf.
 //
 // Wrapper = core + bridge. The IP already speaks APB, so there is no bridge.
 // What the wrapper adds (MAS 5, 7.3, 10):
@@ -173,7 +176,7 @@ apb_adv_timer #(
 
 endmodule
 // Local Variables:
-// verilog-library-flags:("-f filelist_emacs.f")
+// verilog-library-flags:("-F emacs/filelist_emacs.f")
 // verilog-library-extensions:(".v" ".sv")
 // verilog-auto-star-expand: nil
 // verilog-auto-inst-param-value: t
