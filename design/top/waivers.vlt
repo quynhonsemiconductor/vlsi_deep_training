@@ -5,3 +5,8 @@
 // qnsc_pkg holds every shared number; a block imports it and uses only its own
 // few constants, so the rest are always "unused" in that block's lint.
 lint_off -rule UNUSEDPARAM -file "*design/top/rtl/qnsc_pkg.sv"
+
+// Our RTL starts with `timescale 1ns/1ps, as the emacs template and Tam's demos
+// do; vendored files and qnsc_pkg have none. Every tool sets the same default
+// (run_vcs -timescale=1ns/1ps, Verilator --timing), so the mix is harmless.
+lint_off -rule TIMESCALEMOD
