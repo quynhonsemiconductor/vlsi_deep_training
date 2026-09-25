@@ -304,8 +304,8 @@ def main(argv: list[str]) -> int:
     print(f"\nnaming-check: {len(findings)} violation(s)")
     for rule, n in sorted(by_rule.items()):
         print(f"  {n:4}  {rule}")
-    print("\nRule: DM/RULES/FE/Release/QNSC_RTL_Design_Naming_Rule.pdf "
-          "(MCU_guide_ws), section 4.3 Enforcement Checklist.")
+    print("\nRule: doc/rules/QNSC_RTL_Design_Naming_Rule.pdf, "
+          "section 4.3 Enforcement Checklist.")
     print("A deliberate exception needs a trailing '// naming-check: ignore -- <reason>'.")
     return 1
 

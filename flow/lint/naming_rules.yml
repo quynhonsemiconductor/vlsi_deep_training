@@ -14,7 +14,7 @@
 # When you change a `pattern`, change the `message` beside it too -- the script
 # prints the message verbatim and cannot tell that the two have diverged.
 #
-# Source: DM/RULES/FE/Release/QNSC_RTL_Design_Naming_Rule.pdf (MCU_guide_ws)
+# Source: doc/rules/QNSC_RTL_Design_Naming_Rule.pdf (moved from MCU_guide_ws 3d66c27)
 # Version enforced: V1.0, 15/09/2026, Tam Nguyen
 # =============================================================================
 

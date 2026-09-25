@@ -55,9 +55,9 @@ what the IP is missing — the byte-enable path the RAM controller lacks is the 
 The mentors ask for wrappers generated with emacs `verilog-mode`, as industry does.
 You write the port groups and an `AUTO_TEMPLATE` that maps each IP port to its QNSC
 name; `AUTOINST`, `AUTOINPUT`, `AUTOOUTPUT` and `AUTOWIRE` write the port list and
-the instance. The references are Tâm's `MCU_guide_ws`: `DM/EMACS/EMACS_quick_guide.pdf`
-(template and every template function) and the demo in `IP/CPU/RTL/EMACS`; the I2C
-demo on the `share_review` branch applies it to this repository.
+the instance. The references are [`doc/rules/EMACS_quick_guide.pdf`](../doc/rules/EMACS_quick_guide.pdf)
+(template and every template function), `flow/emacs/template.src.sv` which follows
+it, and the I2C demo on the `share_review` branch.
 
 ```bash
 make new-wrap BLOCK=pwm IP=vendor/pulp-platform/apb_adv_timer/rtl/apb_adv_timer.sv
@@ -166,7 +166,7 @@ behaviour across the chip.
 ## Naming
 
 **`QNSC_RTL_Design_Naming_Rule` V1.0 is mandatory.** The full document is
-`DM/RULES/FE/Release/QNSC_RTL_Design_Naming_Rule.pdf` in `MCU_guide_ws`. The rules
+[`doc/rules/QNSC_RTL_Design_Naming_Rule.pdf`](../doc/rules/QNSC_RTL_Design_Naming_Rule.pdf). The rules
 that come up most:
 
 | Thing | Form | Example |
