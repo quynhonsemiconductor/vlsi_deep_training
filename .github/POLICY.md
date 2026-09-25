@@ -156,9 +156,9 @@ gh ruleset check --repo quynhonsemiconductor/vlsi_deep_training   # if gh versio
 ## Keeping the ruleset in step with CI
 
 A new CI job is not a gate until its name is added to `required_status_checks`.
-The live ruleset requires the first nine contexts above; `Filelist paths` and
-`Generated wrappers` were added to CI later and are required once a maintainer
-updates the ruleset:
+The live ruleset requires all eleven contexts above (checked 2026-09-25). When a
+job is added to or renamed in a workflow, update the list here and in the ruleset
+in the same change:
 
 ```bash
 gh api repos/quynhonsemiconductor/vlsi_deep_training/rulesets --jq '.[] | "\(.id) \(.name)"'
