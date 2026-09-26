@@ -30,7 +30,7 @@ The overall lead checks it against the repository before each review.
 | 14 | WDT | `design/wdt` | Bui Hieu | - | - | - | - | - | - | - | - | |
 | 15 | SYSCSR | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | Register file inside SCRC |
 | 16 | SCRC | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | |
-| 17 | INTMAP | `design/intmap` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.2 |
+| 17 | INTMAP | `design/intmap` | Trong Nghia | PR #31 | - | PR #31 | - | - | - | - | - | MAS V2.3; RTL generated with the AI flow, to be instantiated in `design/top` |
 | 18 | IO MUX | `design/iomux` | Bui Hieu | - | - | - | - | - | - | - | - | Not on the assistant's tracker yet |
 | 19 | TOP | `design/top` | Trong Nghia (lead) | - | - | - | - | - | - | - | - | `qnsc_pkg.sv` only so far |
 
