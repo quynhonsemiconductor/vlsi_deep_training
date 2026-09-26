@@ -15,11 +15,18 @@
 # =============================================================================
 
 # ---- include directories ----------------------------------------------------
-# +incdir+../../vendor/<upstream>/<path>
+# i2c_master_defines.sv is pulled in by `include from the three sources below, so
+# it is on the include path and deliberately NOT listed as a source.
++incdir+../../vendor/pulp-platform/apb_i2c
+
+# ---- shared contract --------------------------------------------------------
+../top/rtl/qnsc_pkg.sv
 
 # ---- upstream IP, in compile order -----------------------------------------
-# ../../vendor/<upstream>/rtl/<leaf>.sv
-# ../../vendor/<upstream>/rtl/<top_of_ip>.sv
+# pulp-platform/apb_i2c, with vendor/patches/pulp-platform_apb_i2c/ applied
+../../vendor/pulp-platform/apb_i2c/i2c_master_bit_ctrl.sv
+../../vendor/pulp-platform/apb_i2c/i2c_master_byte_ctrl.sv
+../../vendor/pulp-platform/apb_i2c/apb_i2c.sv
 
 # ---- ours -------------------------------------------------------------------
-# rtl/<wrapper>.sv
+rtl/m_qnsc_wrap_apb_i2c.sv
