@@ -14,12 +14,9 @@
 #     not ours -- see vendor/manifest.yml for its pinned commit and licence.
 # =============================================================================
 
-# ---- include directories ----------------------------------------------------
-# +incdir+../../vendor/<upstream>/<path>
-
-# ---- upstream IP, in compile order -----------------------------------------
-# ../../vendor/<upstream>/rtl/<leaf>.sv
-# ../../vendor/<upstream>/rtl/<top_of_ip>.sv
+# ---- contract package ------------------------------------------------------
+../top/rtl/qnsc_pkg.sv
 
 # ---- ours -------------------------------------------------------------------
-# rtl/<wrapper>.sv
+# Designed in house; no upstream IP.
+rtl/m_qnsc_intmap.sv
