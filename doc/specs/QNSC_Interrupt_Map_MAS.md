@@ -1,6 +1,6 @@
 ---
 title: "Interrupt Map"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,6 +14,7 @@ The reasoning behind each change, and the versions before `V2.0`, are in
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only. History and reasoning moved to `_DECISIONS`; tables in 7.2 and 10 generated from `util/qsoc_contract.yml` |
 | V2.1 | 2026-09-24 | Nghia VT | -- | NMI stated as a wire through the block; source ports, widths and timer shape added; figure redrawn; reasoning moved to `_DECISIONS` |
 | V2.2 | 2026-09-24 | Nghia VT | -- | GPIO3 dropped with the 40-pin package: 26 sources, `i_int_gpio` 3 bits |
+| V2.3 | 2026-09-26 | Nghia VT | -- | Decisions from the RTL generation: line indices from `qnsc_pkg` (7.1); open item 2 closed by a simulation-only X check per input (7.6) |
 
 # 1. Overview
 
@@ -89,22 +90,24 @@ None. The block has no address and is not a bus slave. Enabling is in the core
 ## 7.1 One OR gate per multi-source group
 
 ```systemverilog
-assign o_int_fast[0]  =  i_int_dma;
-assign o_int_fast[1]  = |i_int_spi_device;
-assign o_int_fast[2]  = |i_int_spi_host;
-assign o_int_fast[3]  =  i_int_i2c;
-assign o_int_fast[4]  =  i_int_uart_0;
-assign o_int_fast[5]  =  i_int_uart_1;
-assign o_int_fast[6]  = |i_int_timer_1;
-assign o_int_fast[7]  = |i_int_pwm;
-assign o_int_fast[8]  =  i_int_wdt_wakeup;
-assign o_int_fast[9]  = |i_int_gpio;
-assign o_int_fast[10] =  i_int_timer_0;
-assign o_int_nm       =  i_int_wdt_bark;
+assign o_int_fast[C_INT_LINE_DMA]        =  i_int_dma;          // line 0
+assign o_int_fast[C_INT_LINE_SPI_DEVICE] = |i_int_spi_device;   // line 1
+assign o_int_fast[C_INT_LINE_SPI_HOST]   = |i_int_spi_host;     // line 2
+assign o_int_fast[C_INT_LINE_I2C]        =  i_int_i2c;          // line 3
+assign o_int_fast[C_INT_LINE_UART_0]     =  i_int_uart_0;       // line 4
+assign o_int_fast[C_INT_LINE_UART_1]     =  i_int_uart_1;       // line 5
+assign o_int_fast[C_INT_LINE_TIMER_1]    = |i_int_timer_1;      // line 6
+assign o_int_fast[C_INT_LINE_PWM]        = |i_int_pwm;          // line 7
+assign o_int_fast[C_INT_LINE_WDT_WAKEUP] =  i_int_wdt_wakeup;   // line 8
+assign o_int_fast[C_INT_LINE_GPIO]       = |i_int_gpio;         // line 9
+assign o_int_fast[C_INT_LINE_TIMER_0]    =  i_int_timer_0;      // line 10
+assign o_int_nm                          =  i_int_wdt_bark;
 ```
 
 Five outputs are OR reductions and seven are wires. **Zero flip-flops**: every
-output follows its inputs combinationally, with no cycle of delay.
+output follows its inputs combinationally, with no cycle of delay. The line
+indices and the width of `o_int_fast` (`C_INT_FAST_LINES_USED`) come from
+`qnsc_pkg`, so the line order has one source, the contract.
 
 ## 7.2 Line assignment
 
@@ -185,6 +188,13 @@ Clearing it needs a register write to the gated peripheral, which cannot
 complete, so the core re-enters that handler while the `mie` bit is set.
 **Firmware clears a peripheral's interrupt before gating it** (11).
 
+## 7.6 An unknown input is reported in simulation
+
+Inside `` `ifndef SYNTHESIS ``, one deferred assertion per input (`assert final`)
+checks that the input is 0 or 1 and names it when it is X or Z. It adds no hardware.
+An X would otherwise pass an OR gate silently, and Ibex checks only the whole bundle
+(`IbexIrqX`). A 4-state simulator is needed to see it; Verilator is 2-state.
+
 # 8. Instances
 
 One. It is instantiated in `design/top` and has no parameters.
@@ -232,12 +242,11 @@ One. It is instantiated in `design/top` and has no parameters.
 
 1. **Timing and area.** Deepest path: the 8-input OR on `spi_device`. The numbers
    come from the first synthesis run.
-2. **X on an input.** An X passes the OR; `ibex_top.sv` `IbexIrqX` checks only the
-   bundle. Open: whether this block asserts each `i_int_*` known.
+2. ~~**X on an input.**~~ Closed in V2.3: a simulation-only check per input (7.6).
 
 # 12. Verification
 
-Ten checks, none needing a bus model:
+Eleven checks, none needing a bus model:
 
 1. Each single-source input raises exactly its own line.
 2. Each OR group raises its line for every member, individually.
@@ -252,6 +261,7 @@ Ten checks, none needing a bus model:
 9. A held input keeps its line asserted for as long as it is held (7.5).
 10. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
     `always_ff`.
+11. An X on any input raises that input's 7.6 assertion (4-state simulator).
 
 # Appendix A. Acronyms
 
