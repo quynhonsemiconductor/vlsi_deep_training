@@ -30,7 +30,7 @@ The overall lead checks it against the repository before each review.
 | 14 | WDT | `design/wdt` | Bui Hieu | - | - | - | - | - | - | - | - | |
 | 15 | SYSCSR | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | Register file inside SCRC |
 | 16 | SCRC | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | |
-| 17 | INTMAP | `design/intmap` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.2 |
+| 17 | INTMAP | `design/intmap` | Trong Nghia | PR #32 | - | PR #32 | - | waived | waived | - | - | MAS V2.3; RTL generated with the teacher's AI flow; to be instantiated in `design/top`. CDC, RDC waived: no clock, no reset, no flip-flop (MAS §1, §5) |
 | 18 | IO MUX | `design/iomux` | Bui Hieu | - | - | - | - | - | - | - | - | Not on the assistant's tracker yet |
 | 19 | TOP | `design/top` | Trong Nghia (lead) | - | - | - | - | - | - | - | - | `qnsc_pkg.sv` only so far |
 
