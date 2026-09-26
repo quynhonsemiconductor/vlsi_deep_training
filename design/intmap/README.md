@@ -9,6 +9,13 @@ maps them onto the CPU's fast interrupt lines. There is no vendored IP here;
 everything in `rtl/` is ours. The empty vendor column is the answer to
 "self-designed or IP?".
 
+`rtl/m_qnsc_intmap.sv`: twelve `assign` statements and a simulation-only X check
+per input (MAS 7.1-7.6). It was **generated with the teacher's AI RTL flow**
+(`quynhonsemiconductor/VLSIT_RTL_Generator_AI_Model`, branch `qsoc`, run record in
+`Result/INTMAP_26_09_2026/`): 21 requirements REQ-001..021 extracted from the MAS
+and tagged in the source. It is used as generated, and reviewed and checked here
+like hand-written RTL. To regenerate it, rerun the flow on the MAS, not by hand.
+
 ## The contract it depends on
 
 INTMAP is a contract surface: the source count and per-source index are shared
