@@ -36,6 +36,9 @@ pulp-platform/apb_uart:
 pulp-platform/axi:
   commit: 70b8e54fd460e3308e58be596ceb3566a6e3576e
   url: https://github.com/pulp-platform/axi
+pulp-platform/common_cells:
+  commit: db42769334b4589b4b3fc671b34513bdb98be565
+  url: https://github.com/pulp-platform/common_cells
 pulp-platform/idma:
   commit: 2e0b0fe53b6f8823319e2428e2e9abc2db149b7d
   url: https://github.com/pulp-platform/idma
