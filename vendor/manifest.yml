@@ -64,6 +64,7 @@ upstreams:
   used_by:
   - design/spi
   - design/wdt
+  - design/cpu
   partial: true
   files:
   - hw/ip/spi_host/rtl/**
@@ -72,6 +73,7 @@ upstreams:
   - hw/ip/tlul/rtl/**
   - hw/ip/prim/rtl/**
   - hw/ip/prim_generic/rtl/**
+  - hw/dv/sv/dv_utils/dv_fcov_macros.svh
   - LICENSE
   notes: 'Vendored subset for SPI (spi_host/spi_device) and the AON timer used as WDT. Taking whole rtl/
     dirs plus all of tlul/rtl and prim/rtl + prim_generic/rtl is deliberate: spi_host references tlul_socket_1n,
@@ -81,7 +83,11 @@ upstreams:
     connects intr_wkup_timer_expired_o and nmi_wdog_timer_bark_o; alert_*, racl_* and lc_escalate_en_i
     are tied off in the wrapper (lc_escalate_en_i = lc_ctrl_pkg::Off). Still to add: hw/ip/lc_ctrl/rtl/lc_ctrl_pkg.sv,
     lc_ctrl_state_pkg.sv, lc_ctrl_reg_pkg.sv and hw/top_earlgrey/rtl/top_pkg.sv, autogen/top_racl_pkg.sv, which aon_timer,
-    spi_* and tlul_adapter_host import (QNSC_WDT_MAS 4).'
+    spi_* and tlul_adapter_host import (QNSC_WDT_MAS 4). design/cpu also draws one file from here:
+    hw/dv/sv/dv_utils/dv_fcov_macros.svh, which lowRISC/ibex''s rtl/*.sv files include directly
+    (ibex_core.sv, ibex_controller.sv, ibex_id_stage.sv, ibex_if_stage.sv, ibex_load_store_unit.sv) but
+    do not themselves vendor -- the lowRISC/ibex entry below lists only rtl/**, LICENSE and NOTICE, so this
+    one header has to come from the opentitan tree instead, same as prim/prim_generic already do for it.'
 - name: pulp-platform/timer_unit
   url: https://github.com/pulp-platform/timer_unit
   commit: 4c69615c89db9397a9747d6f6d6a36727854f0bc
@@ -119,24 +125,78 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/bus
+  - design/cpu
   ownership_note: >
-    The BUS owner's. SYSDBG does not instantiate from it: since QNSC_SYSDBG_MAS
-    V3.0 its own AXI4 manager drives AXI_S0 directly, following the teacher's
-    reference design, and the block is fully self-designed
-    (QNSC_SYSDBG_DECISIONS D21).
+    Listed against both because both instantiate from it, but "who owns the
+    protocol conversion" is decided per block, not once for the whole upstream.
+    For BUS: the protocol adapters are the BUS owner's to write and verify.
+    SYSDBG does not instantiate from it at all: since QNSC_SYSDBG_MAS V3.0 its
+    own AXI4 manager drives AXI_S0 directly, following the teacher's reference
+    design, and the block is fully self-designed (QNSC_SYSDBG_DECISIONS D21).
+    For CPU: design/cpu/README.md itself names the block "CPU and its bus
+    adapter (CPU2AXI)", so the merge of Ibex's two memory-style ports (instr,
+    data) into one AXI4 master is the CPU owner's to write and verify, not
+    BUS's -- axi_mux and axi_id_prepend live in design/cpu/rtl/m_qnsc_cpu2axi.sv
+    for that reason.
   files:
+  - src/axi_pkg.sv
   - src/axi_xbar.sv
   - src/axi_to_axi_lite.sv
   - src/axi_lite_to_apb.sv
   - src/axi_from_mem.sv
   - src/axi_lite_from_mem.sv
   - src/axi_lite_to_axi.sv
+  - src/axi_mux.sv
+  - src/axi_id_prepend.sv
+  - src/axi_intf.sv
+  - include/axi/typedef.svh
+  - include/axi/assign.svh
   notes: 'axi_xbar is fully connected -- every slave port reaches every master port through one shared
     address map -- which is what lets SYSDBG''s master read ROM. Each slave port has a private decode-error
     slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi; not used by
-    SYSDBG since its V3.0.
+    SYSDBG since its V3.0. src/axi_pkg.sv is added here too: every other file in this entry imports it
+    (axi_pkg::resp_t, cache_t, prot_t, ...) but it was missing from the files list and the vendored tree
+    before this PR -- a pre-existing gap, caught only because this is the first PR to actually compile
+    design/cpu/cpu.f end to end. axi_mux and axi_id_prepend are added for design/cpu''s CPU2AXI bridge:
+    two axi_from_mem instances (one per Ibex memory-style port) feed axi_mux, which arbitrates them onto
+    one AXI4 master port with axi_id_prepend widening each leaf ID by one bit to keep responses
+    distinguishable. axi_intf.sv is vendored too even though nothing here instantiates it: axi_mux.sv and
+    axi_lite_to_axi.sv both bundle an interface-based _intf sibling module in the same file, referencing
+    the AXI_BUS/AXI_LITE interfaces axi_intf.sv defines, and flow/lint/lint_all.sh elaborates every
+    parentless module when its Verilator invocation omits --top-module. At this pinned commit axi_mux
+    has no test_i port (added in a later axi release) -- the bridge''s instantiation omits it rather than
+    tying it to a port that does not exist.
 
     '
+- name: pulp-platform/common_cells
+  url: https://github.com/pulp-platform/common_cells
+  commit: db42769334b4589b4b3fc671b34513bdb98be565
+  license: SHL-0.51
+  used_by:
+  - design/cpu
+  partial: true
+  notes: 'Dependency of pulp-platform/axi''s axi_mux (design/cpu''s CPU2AXI bridge), vendored at the
+    exact commit axi''s own Bender.lock pins for common_cells at 70b8e54f, not at a newer common_cells
+    release -- axi_mux at that commit calls cc_spill_register and cc_rr_arb_tree under the pre-rename
+    cc_ naming scheme, so a newer, unprefixed common_cells tree does not match. cc_rr_arb_tree pulls
+    in cc_lzc (trailing-zero counters for its fair-arbitration mode) and cc_pkg (LZC_TRAILING_ZERO_CNT).
+    cc_spill_register instantiates cc_spill_register_flushable; axi_lite_from_mem and axi_mux both
+    instantiate cc_fifo directly (the old-era name for what a newer common_cells calls fifo_v3).
+    include/common_cells/registers.svh unconditionally includes deprecated/registers.svh for legacy
+    macro aliases (FFARN etc.) even though only FFARNC is actually used here -- vendored anyway
+    since the include is unguarded, not because the aliases are needed.
+
+    '
+  files:
+  - src/cc_pkg.sv
+  - src/cc_lzc.sv
+  - src/cc_fifo.sv
+  - src/cc_spill_register_flushable.sv
+  - src/cc_rr_arb_tree.sv
+  - src/cc_spill_register.sv
+  - include/common_cells/assertions.svh
+  - include/common_cells/registers.svh
+  - include/common_cells/deprecated/registers.svh
 - name: pulp-platform/riscv-dbg
   url: https://github.com/pulp-platform/riscv-dbg
   commit: 643607e19df3435cfd77cc56143e2637f5900a6e
