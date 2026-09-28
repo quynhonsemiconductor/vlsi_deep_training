@@ -22,7 +22,7 @@ doc/
 | [`rules/`](rules) | Naming Rule (`.docx` source and `.pdf` release) and the EMACS quick guide. See [`rules/README.md`](rules/README.md) | Tâm reviews every change |
 | [`specs/`](specs) | `QNSC_<BLOCK>_MAS.md` (the specification) and `QNSC_<BLOCK>_DECISIONS.md` (why), plus `QNSC_TEMPLATE_MAS.md`. **The Markdown is the source of truth** | yes |
 | `specs/docx/` | The `.docx` built from `specs/*.md`, committed so a reader without pandoc can open them | generated |
-| [`reference/`](reference) | `QSOC_HAS_Report_EN_v4_final.docx`, `QNSC_Diagram.drawio`, `VLSI_SCRC.drawio`: material from the teacher | no |
+| [`reference/`](reference) | `QSOC_HAS_Report_EN_v4_final.docx`, `QNSC_Diagram.drawio`, `VLSI_SCRC.drawio`, `VLSI_SYSDBG.drawio`: material from the teacher | no |
 | [`figures/`](figures) | `img/*.png`, `*.svg` (rendered, committed) and `drawio/*.drawio` (editable), written by the scripts in `build/tools/` | generated |
 | [`build/`](build) | `build_docs.py`; `tools/` (figure scripts, `diagen.py`, `gen_doc_tables.py`, `svg_mono.py`); `template/` (the pandoc reference template) | when the build changes |
 

@@ -12,7 +12,7 @@ debug boot (`DBG_EN` pin). No vendored IP is instantiated here: everything in
 
 ## Reference (read, not instantiated)
 
-- `doc/figures/drawio/VLSI_SYSDBG.drawio` — the teacher's reference design, drawn for a
+- `doc/reference/VLSI_SYSDBG.drawio` — the teacher's reference design, drawn for a
   different SoC. The MAS follows its structure and adapts it to QSOC; the
   differences are recorded in `QNSC_SYSDBG_DECISIONS.md`, D18.
 - `pulp-platform/riscv-dbg` — vendored for reference only. Its default
