@@ -18,7 +18,7 @@ guard that `design/top` instantiates once per gateable slave.
 | From | Module | Recorded in |
 |------|--------|-------------|
 | `nguyenquanicd/MRV-CPU` | `m_vlsit_mrv_cpu` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
-| `nguyenquanicd/APB-CSR-Generator` | generates `m_qnsc_scrc_csr`, `m_qnsc_scrc_syscsr` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
+| `nguyenquanicd/APB-CSR-Generator` | generates `m_qnsc_scrc_csr`, `m_qnsc_syscsr_csr` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 | `nguyenquanicd/APB-BUS-Generator` | the internal 2-master bus -- name clash with `P_BUS`, MAS section 11 | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
 The reset filter, synchronisers and clock gates are library cells, instantiated
