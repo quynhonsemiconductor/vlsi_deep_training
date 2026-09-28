@@ -69,7 +69,7 @@ branches of it, not other frequencies. The IP's second clock input,
 
 # 5. Interface
 
-Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. `o_pad_pwm` and `o_int_pwm` are 0 in reset.
+Names follow `QNSC_RTL_Design_Naming_Rule` V1.1. `o_pad_pwm` and `o_int_pwm` are 0 in reset.
 
 : PWM interface
 
