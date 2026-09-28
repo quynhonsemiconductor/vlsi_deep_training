@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Post-process m_qnsc_wrap_ibex.sv after Emacs AUTOINST/AUTOWIRE regeneration.
+"""Post-process m_qnsc_wrap_cpu_ibex.sv after Emacs AUTOINST/AUTOWIRE regeneration.
 
 verilog-mode's AUTOINST cannot parse a few constructs in ibex_top's port list
 correctly. Run this every time the Makefile's `ibex` target regenerates the
-file from m_qnsc_wrap_ibex.src.sv -- these are real, repeatable tool
+file from m_qnsc_wrap_cpu_ibex.src.sv -- these are real, repeatable tool
 limitations, not one-off hand edits, and re-running `make ibex` without this
 step reproduces every one of them:
 
@@ -23,7 +23,10 @@ step reproduces every one of them:
   5. cheriot_enable_i/fetch_enable_i/mcounteren_writable_i/crash_dump_o/
      lockstep_cmp_en_o are typed with ibex_mubi_t/crash_dump_t, which
      AUTOINPUT/AUTOOUTPUT's generic "Others" catch-all does not infer --
-     their port declarations are added explicitly.
+     their port declarations are added explicitly, qualified as
+     ibex_pkg::ibex_mubi_t/ibex_pkg::crash_dump_t since this wrapper has no
+     import ibex_pkg::*  (module_rules.py NO-IMPORT: a file expanded by
+     emacs verilog-mode has no import; design/README.md).
   6. AUTOINST also restates BaseIsa/PMPRstCfg/PMPRstMsecCfg/RV32M/RV32B/
      RV32ZC/RegFile/RndCnstLfsrSeed/RndCnstLfsrPerm as if they were port
      connections, duplicating what the legitimate `#()` parameter override
@@ -32,7 +35,7 @@ step reproduces every one of them:
 import re
 import sys
 
-PATH = sys.argv[1] if len(sys.argv) > 1 else "m_qnsc_wrap_ibex.sv"
+PATH = sys.argv[1] if len(sys.argv) > 1 else "m_qnsc_wrap_cpu_ibex.sv"
 
 lines = open(PATH, encoding="utf-8").readlines()
 lines = [l for l in lines if "rvfi_" not in l]
@@ -73,15 +76,15 @@ text = "".join(out)
 text = text.replace(
     "input logic [31:0]\ti_hart_id,\t\t// To u_ibex_top of ibex_top.v\n",
     "input logic [31:0]\ti_hart_id,\t\t// To u_ibex_top of ibex_top.v\n"
-    "input  ibex_mubi_t\ti_cheriot_enable,\t// To u_ibex_top of ibex_top.v\n"
-    "input  ibex_mubi_t\ti_fetch_enable,\t\t// To u_ibex_top of ibex_top.v\n"
-    "input  ibex_mubi_t\ti_mcounteren_writable,\t// To u_ibex_top of ibex_top.v\n"
+    "input  ibex_pkg::ibex_mubi_t\ti_cheriot_enable,\t// To u_ibex_top of ibex_top.v\n"
+    "input  ibex_pkg::ibex_mubi_t\ti_fetch_enable,\t\t// To u_ibex_top of ibex_top.v\n"
+    "input  ibex_pkg::ibex_mubi_t\ti_mcounteren_writable,\t// To u_ibex_top of ibex_top.v\n"
 )
 text = text.replace(
     "output logic\t\to_trvk_revbm_req\t// From u_ibex_top of ibex_top.v\n",
     "output logic\t\to_trvk_revbm_req,\t// From u_ibex_top of ibex_top.v\n"
-    "output crash_dump_t\to_crash_dump,\t\t// From u_ibex_top of ibex_top.v\n"
-    "output ibex_mubi_t\to_lockstep_cmp_en\t// From u_ibex_top of ibex_top.v\n"
+    "output ibex_pkg::crash_dump_t\to_crash_dump,\t\t// From u_ibex_top of ibex_top.v\n"
+    "output ibex_pkg::ibex_mubi_t\to_lockstep_cmp_en\t// From u_ibex_top of ibex_top.v\n"
 )
 
 if not text.startswith("`default_nettype none"):

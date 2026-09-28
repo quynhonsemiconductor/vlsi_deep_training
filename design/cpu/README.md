@@ -36,8 +36,8 @@ The block's outward boundary is `rtl/emacs/m_qnsc_wrap_cpu.sv`, generated via
 Emacs `verilog-mode` AUTOINST/AUTO_TEMPLATE from `m_qnsc_wrap_cpu.src.sv` (see
 `rtl/emacs/Makefile`; `make all` regenerates all three wrapper files and
 applies the same tool-limitation fixups every time, not by hand). It
-instantiates two intermediate wrappers -- `m_qnsc_wrap_ibex` (boundary around
-`ibex_top`) and `m_qnsc_wrap_cpu2axi` (boundary around the CPU2AXI bridge,
+instantiates two intermediate wrappers -- `m_qnsc_wrap_cpu_ibex` (boundary around
+`ibex_top`) and `m_qnsc_wrap_cpu_cpu2axi` (boundary around the CPU2AXI bridge,
 flattening its AXI4 master port to `i_bus_axi_*`/`o_bus_axi_*` per the naming
 rule, since neither `ibex_top` nor the pulp-platform AXI IP speak that
 convention natively).
@@ -47,7 +47,8 @@ convention natively).
 | Port | Direction | Note |
 |---|---|---|
 | `i_clk_cpu`, `i_rst_n_cpu` | in | CPU clock domain |
-| `i_dbg_en` | in | boot-address mux: 0 = cold boot (`0x0`), 1 = debug-ROM entry (`qnsc_pkg::C_ISRAM_DBG_BASE`) |
+| `i_cfg_boot_addr[31:0]` | in | `cpu` is IP, so it takes the resolved boot address as a value, not a mux driven from `qnsc_pkg` internally (design/README.md, "Shared numbers"). `design/top` ties it: `i_dbg_en ? qnsc_pkg::C_ISRAM_BASE : 32'h0` |
+| `i_cfg_hart_id[31:0]` | in | `design/top` ties this; `32'h0` while QSOC has one core |
 | `i_dbg_req` | in | from SYSDBG |
 | `i_int_fast[10:0]` | in | 11 real fast-IRQ sources; padded to Ibex's 15 internally |
 | `i_int_nm` | in | WDT bark (NMI), from INTMAP |
