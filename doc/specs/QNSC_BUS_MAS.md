@@ -43,8 +43,10 @@ No diagram yet. In words: three AXI4 masters (`AXI_S0`/`AXI_S1`/`AXI_S2`) enter
 `axi_xbar`; three of its four master ports (`AXI_M0`/`AXI_M1`/`AXI_M2`) leave
 this block directly as flattened AXI4; the fourth (`AXI_M3`) stays internal,
 passing through `axi_to_axi_lite` then `axi_lite_to_apb` before leaving as one
-flat APB4 port. Clock and reset are shared with `cpu` and `sysdbg`
-(`qnsc_pkg`'s "cpu" clock cluster: hardwired on, never gated).
+flat APB4 port. `axi_xbar` is clocked from `sbus`; the AXI2APB bridge
+(`axi_to_axi_lite` + `axi_lite_to_apb`) is clocked from `pbus` -- each its own
+hardwired-on domain (`qnsc_pkg`'s "sbus"/"pbus" clusters), a separate CTRL
+instance from `cpu`'s own, per `QNSC_SCRC_MAS` V3.0 Table 5-2.
 
 # 4. IP used
 
@@ -65,8 +67,10 @@ per-file dependency reasoning, traced from the pinned commit's actual source.
 
 | Signal | Dir | Width | Description |
 |---|---|---:|---|
-| `i_clk_cpu` | in | 1 | Shared with `cpu`/`sysdbg`; hardwired on, never gated |
-| `i_rst_n_cpu` | in | 1 | Active-low reset, same domain |
+| `i_clk_sbus` | in | 1 | S_BUS's own domain; hardwired on, never gated; clocks `axi_xbar` |
+| `i_rst_n_sbus` | in | 1 | Active-low reset, same domain; also reaches SYSDBG as `i_rst_n_sysbus` |
+| `i_clk_pbus` | in | 1 | P_BUS's own domain; hardwired on; clocks the AXI2APB bridge |
+| `i_rst_n_pbus` | in | 1 | Active-low reset, same domain |
 | `i_axi_s_0_*` | in | AXI4 | From SYSDBG (`AXI_S0`), 5-bit ID, no protocol adapter needed (SYSDBG's own AXI4 manager since V3.0) |
 | `i_axi_s_1_*` | in | AXI4 | From CPU's CPU2AXI bridge (`AXI_S1`), 5-bit ID |
 | `i_axi_s_2_*` | in | AXI4 | From DMA (`AXI_S2`), 5-bit ID assumed -- open item, section 11 |
@@ -90,8 +94,8 @@ Every AXI4 port above carries the full per-channel field set (`aw_id`/`addr`/
 
 # 6. Register map
 
-None. `bus` is not a bus slave; it has no clock, no reset logic of its own
-(shared with `cpu`), and no registers.
+None. `bus` is not a bus slave; it has no reset logic of its own (its two
+clock/reset pairs are tied from SCRC, per section 5), and no registers.
 
 # 7. Functional behaviour
 
@@ -194,6 +198,7 @@ instance of each bus.
 |---|---|---|
 | Confirm DMA's actual `AXI_S2` ID width | DMA owner | This block assumes 5-bit for uniformity with SYSDBG/CPU; if DMA's real width differs, `s_bus_pkg::P_SLV_ID_W` and every ID-width-dependent field need revisiting. `HAS` para 852's "identifier width 7" more likely describes this crossbar's own auto-widened master-port ID (5 + ceil(log2(3)) = 7) than DMA's own port width -- flagged, not resolved, by reading the HAS text alone (design/README.md's own caution against closing an ambiguity by reading only one's own RTL applies here to reading only the HAS, too) |
 | Generate and wire in `P_BUS`'s router | This block's owner | Every peripheral block is unreachable from the CPU until this lands |
+| Confirm the AXI2APB bridge belongs on `pbus`, not `sbus` | Bus/SCRC owner | A judgement call, not yet confirmed (`QNSC_BUS_DECISIONS.md`); not a functional risk either way since both domains are the same physical clock when ungated, but the block's own domain-boundary claim should still be settled |
 
 Accepted limits:
 
