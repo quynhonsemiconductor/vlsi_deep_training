@@ -158,8 +158,8 @@ upstreams:
   used_by:
   - design/dma
   notes: 'Used unmodified (QNSC_DMA_MAS V3.0): frontend reg32_2d generated with --cpuif apb4-flat, idma_nd_midend,
-    idma_transfer_id_gen, backend rw_axi generated with gen_idma.py. Generated files and their commands in
-    util/gen/idma. No hardware request from peripherals; the wrapper drives o_int_dma = idle.
+    idma_transfer_id_gen, backend rw_axi generated with gen_idma.py. Generated files and their commands go in
+    util/gen/idma. Needs common_cells cc_stream_* modules and apb typedef.svh. No hardware request from peripherals; the wrapper drives o_int_dma = idle.
 
     '
   files:
@@ -171,6 +171,10 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/uart
+  notes: 'Instantiated unmodified by m_qnsc_wrap_uart (QNSC_UART_MAS V3.0). Needs obi_peripherals (obi_uart), apb,
+    obi and common_cells at the versions apb_uart pins; they are still to be vendored. No DMA request lines.
+
+    '
   files:
   - src/**
   - LICENSE*

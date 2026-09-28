@@ -1,6 +1,6 @@
 ---
 title: "DMA"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,6 +13,7 @@ research report it was based on are in
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Ong Bao Vinh | -- | Upstream iDMA used unmodified (frontend `reg`, 32-bit, 2D, APB), per the mentor: open-source 32-bit DMA, IP not redesigned. In-house frontend, descriptor engine and peripheral channels of V2.0 removed; `APB_M13`; idle interrupt |
+| V3.1 | 2026-09-28 | Nghia VT (lead) | -- | Section 4: the libraries iDMA needs (`common_cells`, `axi`, `apb`) |
 
 # 1. Overview
 
@@ -68,6 +69,9 @@ The block is in the `peri` clock cluster, `SCRC` `CLK_EN[10]`.
 | From | Module | Commit | Licence |
 |---|---|---|---|
 | `pulp-platform/iDMA` | `idma_reg.sv.tpl`, `idma_reg.rdl` (frontend), `idma_nd_midend`, `idma_transfer_id_gen`, backend templates, `idma_pkg` | `2e0b0fe5` | SHL-0.51 |
+| `pulp-platform/common_cells` | `cc_stream_fifo_optimal_wrap`, `cc_passthrough_stream_fifo`, `cc_fall_through_register`, `cc_stream_fork`, `cc_stream_join`, `cc_popcount`, `cc_rr_arb_tree`; `registers.svh` | `db427693` (v2.0.0-beta.3+3), the copy `design/bus` uses; iDMA asks for 2.0.0-beta.3 | SHL-0.51 |
+| `pulp-platform/axi` | `axi/typedef.svh` | `70b8e54f`, vendored | SHL-0.51 |
+| `pulp-platform/apb` | `apb/typedef.svh` | `6ae8bf8d`, as iDMA pins | SHL-0.51 |
 
 Facts this specification relies on, read at that commit:
 
@@ -260,7 +264,7 @@ One `m_qnsc_wrap_dma` in `design/top`.
 
 | Port | Tied to | Why |
 |---|---|---|
-| Frontend `midend_busy_i` | midend `busy_o` | Reported in `STATUS[9]` |
+| Frontend `midend_busy_i` | midend `busy_o` | Reported in `STATUS[8]` |
 | Backend error-handler request | none (`NO_ERROR_HANDLING` has no port) | 7.5 |
 | AXI `user` on every channel | 0 | Not used on `S_BUS` |
 | AXI `ar_prot`, `aw_prot` | as driven by the backend | Not checked by any QSOC slave |
@@ -287,6 +291,7 @@ One `m_qnsc_wrap_dma` in `design/top`.
 Open items, DMA owner:
 
 - Generate the files of 7.6 and commit them with the commands.
+- Add the `cc_*` modules of section 4 to the `common_cells` copy, and vendor `apb`.
 - Run the upstream `rw_axi` backend jobs and a wrapper test in simulation.
 
 Accepted limits:
