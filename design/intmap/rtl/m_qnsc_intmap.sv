@@ -11,7 +11,7 @@ module m_qnsc_intmap
 (
   // No clock, no reset, no bus port: the block holds no state        // REQ-016 REQ-018
   // ---- interrupt sources ----                                      // REQ-016
-  input  logic                             i_int_dma,         // DMA dma_irq_o
+  input  logic                             i_int_dma,         // DMA o_int_dma, idle level
   input  logic [7:0]                       i_int_spi_device,  // SPI device intr_*_o, port declaration order
   input  logic [1:0]                       i_int_spi_host,    // bit 0 intr_error_o, bit 1 intr_spi_event_o
   input  logic                             i_int_i2c,         // I2C interrupt_o
