@@ -6,11 +6,10 @@
 //               + 1x axi_mux (same IP). Self-designed merge point --
 //               axi_from_mem and axi_mux themselves are external, unmodified
 //               IP; see vendor/manifest.yml for the pinned commit.
-// Parent      : m_qnsc_wrap_cpu_cpu2axi (flattens the AXI4 port to i_bus_axi_*/
+// Parent      : m_qnsc_wrap_cpu (flattens the AXI4 port to i_bus_axi_*/
 //               o_bus_axi_* at the wrapper boundary; this module keeps the
 //               packed-struct port the vendor IP itself speaks)
-// Spec ref    : spec/cpu_cpu2axi_spec.md §4.2, §5.4, §6.2
-// REQ-IDs     : REQ-007, REQ-012..REQ-018, REQ-020, REQ-027, REQ-028
+// Spec ref    : doc/specs/QNSC_CPU_MAS.md
 //==============================================================================
 module m_qnsc_cpu2axi
   import cpu2axi_pkg::*;

@@ -4,8 +4,7 @@
 // Description : AXI4 struct typedefs for the CPU2AXI bridge and its S_BUS-facing
 //               master port. "leaf" = pre-mux, per-memory-port ID width (4 bit).
 //               "axi_s_1" = post-mux, S_BUS AXI_S1 slave-port ID width (5 bit).
-// Spec ref    : spec/cpu_cpu2axi_spec.md §4.2, §5.3
-// REQ-IDs     : REQ-007, REQ-014, REQ-018, REQ-020, REQ-021
+// Spec ref    : doc/specs/QNSC_CPU_MAS.md
 //==============================================================================
 `include "axi/typedef.svh"
 
