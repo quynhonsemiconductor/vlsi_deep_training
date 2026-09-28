@@ -17,8 +17,8 @@ Three rules, from design/README.md ("Shared numbers: who may use qnsc_pkg" and
                 named after the block (its name in the contract), not the IP module,
                 so the name stays when the IP is replaced. A block built from several
                 IPs may nest one wrapper per IP inside it, named
-                m_qnsc_wrap_<block>_<part> (design/cpu: m_qnsc_wrap_cpu around
-                m_qnsc_wrap_cpu_ibex and m_qnsc_wrap_cpu_cpu2axi). Two configurations
+                m_qnsc_wrap_<block>_<part>, when composing them as separate
+                sub-modules is easier than one flat wrapper. Two configurations
                 of one IP are two blocks (design/isram, design/dsram).
   4. NO-IMPORT  A file expanded by emacs verilog-mode (it contains an AUTO
                 comment) has no import statement. verilog-mode's parser does not

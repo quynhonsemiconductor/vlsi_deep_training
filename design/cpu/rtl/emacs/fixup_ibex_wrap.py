@@ -14,6 +14,8 @@ in_instantiation = False
 for l in lines:
     if "u_ibex_top(/*AUTOINST*/" in l:
         in_instantiation = True
+    if "u_m_qnsc_cpu2axi(/*AUTOINST*/" in l:
+        in_instantiation = False  # past ibex_top's own instantiation
     if "prim_ram_1p_pkg::ram_1p_cfg_rsp_t(prim_ram_1p_pkg" in l:
         continue
     if "prim_ram_1p_pkg::ram_1p_cfg_req_t(prim_ram_1p_pkg" in l:
