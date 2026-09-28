@@ -13,7 +13,10 @@ Three rules, from design/README.md ("Shared numbers: who may use qnsc_pkg" and
   2. NO-PARAM   A wrapper (m_qnsc_wrap_*) declares no parameter. The IP owner
                 fixes the IP's configuration inside the wrapper; design/top only
                 connects. An empty #() is accepted, as in the I2C demo.
-  3. NO-IMPORT  A file expanded by emacs verilog-mode (it contains an AUTO
+  3. WRAP-NAME  A wrapper in design/<block> is m_qnsc_wrap_<block>, or
+                m_qnsc_wrap_<block>_<variant>: named after the block, not the IP
+                module, so the name stays when the IP is replaced.
+  4. NO-IMPORT  A file expanded by emacs verilog-mode (it contains an AUTO
                 comment) has no import statement. verilog-mode's parser does not
                 resolve package declarations; an integration module generated
                 with emacs names a constant as qnsc_pkg::C_X at the connection.
@@ -51,6 +54,7 @@ IGNORE = re.compile(r"//\s*module-rules:\s*ignore")
 AUTO = re.compile(r"/\*\s*AUTO[A-Z_]*")
 IMPORT = re.compile(r"\bimport\s+\w+\s*::")
 QNSC_PKG = re.compile(r"\bqnsc_pkg\b")
+WRAP_NAME = re.compile(r"\bmodule\s+(?P<name>m_qnsc_wrap_\w+)")
 # module <name> [import ...;] #( ... ) (
 WRAP_HEADER = re.compile(
     r"\bmodule\s+(?P<name>m_qnsc_wrap_\w+)\s*(?:import[^;]*;\s*)*#\s*\(",
@@ -131,6 +135,13 @@ def check_file(path: Path, integration: set[str]) -> list[Finding]:
                 "a file expanded by emacs verilog-mode has no import: the parser "
                 "does not resolve packages. Name the item as pkg::item where it "
                 "is used (design/README.md)")
+
+    for m in WRAP_NAME.finditer(src):
+        name = m.group("name")
+        if name != f"m_qnsc_wrap_{block}" and not name.startswith(f"m_qnsc_wrap_{block}_"):
+            add(m.start(), "WRAP-NAME",
+                f"a wrapper in design/{block} is m_qnsc_wrap_{block} (named after the "
+                f"block, not the IP module), not {name} (design/README.md, Naming)")
 
     for m in WRAP_HEADER.finditer(src):
         body = paren_body(src, m.end() - 1)

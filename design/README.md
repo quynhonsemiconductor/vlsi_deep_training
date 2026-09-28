@@ -9,9 +9,9 @@ any directory and know what to expect.
 ```
 design/<block>/
   rtl/               code written here, and nothing else
-    m_qnsc_wrap_<ip_module>.sv   the wrapper; generated when rtl/emacs/ exists
+    m_qnsc_wrap_<block>.sv       the wrapper; generated when rtl/emacs/ exists
     emacs/                       only for a wrapper generated with emacs
-      m_qnsc_wrap_<ip_module>.src.sv  the source you edit
+      m_qnsc_wrap_<block>.src.sv      the source you edit
       Makefile                     DESIGN = ..., include flow/emacs/wrap.mk
       filelist_emacs.f             the IP file whose ports verilog-mode reads
   <block>.f          filelist: what builds this block, in what order
@@ -202,7 +202,7 @@ that come up most:
 | Thing | Form | Example |
 |---|---|---|
 | Module, in house | `m_qnsc_<function>` | `m_qnsc_intmap` |
-| Module, wrapper around IP | `m_qnsc_wrap_<ip_module>` | `m_qnsc_wrap_apb_uart`, `m_qnsc_wrap_apb_adv_timer` |
+| Module, wrapper around IP | `m_qnsc_wrap_<block>`: the block's name in the contract, without an index | `m_qnsc_wrap_pwm`, `m_qnsc_wrap_uart` (for `uart_0`, `uart_1`), `m_qnsc_wrap_timer` |
 | Module, generic and shared | `qnsc_<function>` (no `m_`) | `qnsc_fifo_sync` |
 | Port | `i_` / `o_` / `io_` prefix | `i_clk_sys`, `o_int_timer_0` |
 | Clock, reset | `i_clk_<domain>`, `i_rst_n_<domain>` | `i_rst_n_sys` |
@@ -238,7 +238,7 @@ table changes first.
 |---|---|---|
 | Where does the generated wrapper live? | `make wrap` copies it to `rtl/<wrapper>.sv`, the file `<block>.f` compiles; `rtl/emacs/` keeps the source and the intermediate copy | The I2C demo on `share_review`, made for this repository. The CPU demo keeps it in `EMACS/` only |
 | JTAG and `DBG_EN` pins: `i_pad_*` or their own prefix? | Their own: `i_jtag_tck`, `o_jtag_tdo`, `i_dbg_en`. Every other pad-bound port is `i_pad_*` / `o_pad_*` | The rule has dedicated sections 3.11 (JTAG) and 3.12 (Debug); a dedicated section wins over the general 3.8 (Pad) |
-| Wrapper name: block or IP module? | **Under review, see "Pending".** Until then: the IP module, `m_qnsc_wrap_apb_i2c`, `m_qnsc_wrap_apb_adv_timer` | Rule 2.1 and its example `m_qnsc_wrap_apb_uart`. The I2C demo's `m_qnsc_wrap_i2c` and Tâm's review of PR #26 point the other way |
+| Wrapper name: block or IP module? | **The block**, as named in the contract, without an index: `m_qnsc_wrap_pwm` (IP `apb_adv_timer`), `m_qnsc_wrap_uart` (`apb_uart`, used by `uart_0` and `uart_1`), `m_qnsc_wrap_i2c`, `m_qnsc_wrap_timer`, `m_qnsc_wrap_ram`. The name stays when the IP is replaced | Tâm's review of PR #26 (2026-09-28): a short IP name, `m_qnsc_wrap_pwm` or `m_qnsc_wrap_timer_pwm`, not the IP module's. `pwm` is chosen because it is the contract's name, and `timer_pwm` reads as one of `timer_0`/`timer_1`. His I2C demo is `m_qnsc_wrap_i2c`. Rule 2.1's example `m_qnsc_wrap_apb_uart` is to be updated in the rule document |
 | Package and parameters in a wrapper? | None: no `import`, no parameter; the IP's configuration is fixed at the instance. Chip values arrive on `i_cfg_*` ports; a copied contract number is tagged `// contract: <key>` | Tâm's review of PR #26 (2026-09-28) and his I2C demo, `apb_i2c #(.P_APB_ADDR_WIDTH(12))`. Extended to all IP and to every emacs file in "Shared numbers" above |
 
 ### Pending with Tâm
@@ -247,7 +247,6 @@ Raised on 2026-09-28; this section changes when he answers.
 
 | Question | Proposal |
 |---|---|
-| Wrapper name: which "short name"? The review offers `m_qnsc_wrap_timer_pwm` or `m_qnsc_wrap_pwm`, and rule 2.1's example is `m_qnsc_wrap_apb_uart` | The block name in the contract, without the index: `m_qnsc_wrap_pwm`, `m_qnsc_wrap_uart` (for `uart_0`/`uart_1`), `m_qnsc_wrap_timer` |
 | Two instances that differ in structure (the two RAM depths), now that a wrapper has no parameter | One wrapper per configuration, `m_qnsc_wrap_<block>_<variant>` |
 
 `flow/lint/naming_check.py` enforces these in CI and reports each violation **inline

@@ -27,6 +27,7 @@ Findings from reading the RTL, handled in our wrapper:
 
 ## The wrapper is the boundary
 
-`rtl/m_qnsc_wrap_axi4_sram.sv` (module `m_qnsc_wrap_axi4_sram`, after the IP's
-`m_vlsi_axi4_sram`) instantiates the vendored controller unmodified and adds the
+`rtl/m_qnsc_wrap_ram.sv` (module `m_qnsc_wrap_ram`, around the IP's
+`m_vlsi_axi4_sram`; one wrapper or one per depth is pending with Tâm, see
+[`design/README.md`](../README.md), "Pending") instantiates the vendored controller unmodified and adds the
 WSTRB logic. Generated with emacs from `rtl/emacs/` ([`design/README.md`](../README.md#writing-a-wrapper-with-emacs-verilog-mode)). Ours in `rtl/`, borrowed in `vendor/`.

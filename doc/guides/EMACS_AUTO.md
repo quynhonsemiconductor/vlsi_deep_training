@@ -46,7 +46,7 @@ References:
 **(1) Port groups.** Write comments, not ports. Each comment gathers ports by name:
 
 ```systemverilog
-module m_qnsc_wrap_apb_adv_timer (                     // no import, no parameter
+module m_qnsc_wrap_pwm (                               // no import, no parameter
 /*AUTOINPUT("^i_clk\|^i_rst")*/                        // clock and reset
 /*AUTOINPUT("^i_bus_apb")*/ /*AUTOOUTPUT("^o_bus_apb")*/ // APB
 /*AUTOINPUT("^i_pad")*/     /*AUTOOUTPUT("^o_pad")*/     // pads

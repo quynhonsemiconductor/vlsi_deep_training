@@ -3,7 +3,7 @@
 #
 # A block's design/<block>/rtl/emacs/Makefile is only:
 #
-#   DESIGN    = m_qnsc_wrap_<ip_module>
+#   DESIGN    = m_qnsc_wrap_<block>
 #   PARAM_FIX = <sed script>                                   # optional, rare
 #   include ../../../../flow/emacs/wrap.mk
 #

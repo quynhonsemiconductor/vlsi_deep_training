@@ -23,6 +23,6 @@ the spec needs it visible, the wrapper exposes it.
 
 ## The wrapper is the boundary
 
-`rtl/m_qnsc_wrap_apb_adv_timer.sv`: instantiate, tie off, port-map to the names in
-`qnsc_pkg`. The IP already speaks APB, so there is no bridge. Generated with emacs from `rtl/emacs/` ([`design/README.md`](../README.md#writing-a-wrapper-with-emacs-verilog-mode)).
+`rtl/m_qnsc_wrap_pwm.sv`: instantiate, tie off, port-map to the names of the naming
+rule. The IP already speaks APB, so there is no bridge. Generated with emacs from `rtl/emacs/` ([`design/README.md`](../README.md#writing-a-wrapper-with-emacs-verilog-mode)).
 Ours in `rtl/`, borrowed in `vendor/`.

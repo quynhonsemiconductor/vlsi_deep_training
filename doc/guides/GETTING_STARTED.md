@@ -69,7 +69,7 @@ git switch -c feat/<block>-<what>          # e.g. feat/pwm-wrapper
   parameter (`design/README.md`, "Shared numbers").
 - A signal from another clock domain goes through `design/common/rtl/qnsc_sync.sv`, or
   through a handshake your MAS specifies.
-- Module names: `m_qnsc_<function>` for in-house modules, `m_qnsc_wrap_<ip_module>`
+- Module names: `m_qnsc_<function>` for in-house modules, `m_qnsc_wrap_<block>`
   for wrappers, `qnsc_<function>` for shared cells.
 
 **Filelist** `design/<block>/<block>.f`: list the package, then the shared cells, then

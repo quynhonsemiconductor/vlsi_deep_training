@@ -38,7 +38,7 @@ Upstream IP is **listed**, never copied into `rtl/`. Order matters: packages and
 `` `define `` files first, then leaf modules, then the IP's top, then your wrapper
 last. Rationale in [`design/README.md`](design/README.md).
 
-### 3. Write the wrapper `design/<block>/rtl/m_qnsc_wrap_<ip_module>.sv`
+### 3. Write the wrapper `design/<block>/rtl/m_qnsc_wrap_<block>.sv`
 
 Wrapper = core (the IP) + bridge (only if the IP speaks another protocol than the
 chip bus). It is generated with emacs verilog-mode from a template:
