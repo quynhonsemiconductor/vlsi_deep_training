@@ -1,6 +1,6 @@
 ---
 title: "SCRC"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -12,6 +12,7 @@ The reasoning behind each change, the V1.0--V2.3 history and the V2.3 text are i
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V3.0 | 2026-09-27 | Nghia VT (lead), for Nguyen Hao Nam | -- | V2.3 moved onto the MAS template; Naming Rule ports; `APB_M0`/`APB_M1`; one SPI domain (bit 13 reserved); per-peripheral soft reset removed; WDT never gated; monochrome figures after the mentor's `VLSI_SCRC.drawio`; timing diagrams; deviations from the HAS listed |
+| V3.1 | 2026-09-28 | Nghia VT (lead), for Nguyen Hao Nam | -- | Owner decisions on the two proposals: no stretch after POR, adopted (7.3, `SCRC_RST_001`); two CSRs, rejected, the mentor's APB BUS and WFs stay. Open item on the APB BUS name narrowed to renaming the generated module |
 
 # 1. Overview
 
@@ -36,7 +37,8 @@ Block directory `design/scrc`, top module `m_qnsc_scrc`, owner Nguyen Hao Nam.
 - One root clock, 18 domain outputs: 7 always-on, 11 gateable -- 7.1.
 - Glitch filter and synchroniser on `PORSTN`, from library cells -- 7.2.
 - Three reset sources merged by the Reset Request Controller (`RRC`) into a
-  16-cycle chip reset, with the cause reported to `SYSCSR` -- 7.3.
+  chip reset, 16 cycles after a WDT bite or `SW_RST`, with the cause reported to
+  `SYSCSR` -- 7.3.
 - Register access rights enforced in hardware per master -- 7.4.
 - Power-up sequence after every chip reset: all domains together, APB guards
   opened, CPU released last -- 7.5.
@@ -253,7 +255,7 @@ while the clock is stopped completes when the clock runs again.
 
 ![Watchdog bite through RRC](../figures/img/wave_scrc_rrc.png){width=6.0in}
 
-- Every `RRC` flip-flop is reset by `w_rst_n_por` only.
+- Every `RRC` flip-flop, `CNT` included, is reset to 0 by `w_rst_n_por` only.
 - `i_wdt_rst_req` passes a 2-FF synchroniser (`m_qnsc_scrc_sync`). `SW_RST` is
   already on `w_clk_root`.
 - A request while `CNT` = 0 loads `CNT` = 15 and asserts `w_rst_n_sys` from the
@@ -269,8 +271,9 @@ while the clock is stopped completes when the clock runs again.
   `SW_RST` and `RST_REL`. `RST_REL` = 0 asserts every domain reset except `sysdbg`,
   `wdt` included, and the WDT reset clears `i_wdt_rst_req`. Both requests drop
   inside the 16 cycles, so a WDT or SW reset lasts exactly 16 cycles.
-- On power-on, `CNT` resets to 15 and the flip-flop to 0: `w_rst_n_sys` releases
-  16 cycles after `w_rst_n_por`.
+- On power-on there is no stretch: `w_rst_n_sys` releases one cycle after
+  `w_rst_n_por`. None is needed, because every domain stays in reset through
+  `RST_REL` = 0 until the program of 7.5 releases it.
 - The APB write of `SW_RST` = 1 completes before `w_rst_n_sys` asserts. Its
   response may not reach Ibex, which is reset with the rest of the chip.
 
@@ -480,23 +483,14 @@ Open items:
 
 - **APB BUS name clash.** APB-BUS-Generator always names its top
   `m_vlsi_apb_router`, as for `P_BUS`, so both cannot be compiled into one design,
-  and the name fails Naming Rule 2.1. Options: rename the generated files, or
-  replace the 2:1 bus with a hand-written arbiter. SCRC owner with the bus owner.
+  and the name fails Naming Rule 2.1. The generator stays (the mentor's design);
+  the generated module is renamed when it is committed to `util/gen`, with the
+  command. SCRC owner with the bus owner.
 - **Library cells.** DLY, ICG, the synchronisers and the filter flip-flop are
   library cells. Their SMIC 28 nm names are not known yet; Verilator needs a
   behavioural model of each, and SYN needs them instantiated, not inferred. SCRC
   owner, with the lead for the flow.
 - **CRM ROM depth.** Not fixed; the program is a few dozen words. SCRC owner.
-
-Proposals under review (SCRC owner; the first also with the mentor), detail in
-DECISIONS 4. Neither changes any other block, the address map or firmware:
-
-- **Two CSRs instead of APB BUS + WFs.** `CSR_I` on `APB_M0`, `CSR_M` on `MCPU`,
-  each writable only by its master; the other side's fields appear as `ro`. Removes
-  the APB BUS, both WFs and the name clash above. A wrong-side write is then
-  ignored instead of answered with `PSLVERR`.
-- **No stretch after POR.** Every `RRC` flip-flop resets to 0; `w_rst_n_sys`
-  releases one cycle after `w_rst_n_por`. The 16-cycle stretch stays for WDT and SW.
 
 Accepted limits:
 
@@ -514,7 +508,7 @@ Accepted limits:
 2. `SCRC_CLK_002` The seven always-on clocks, `wdt` included, never stop, for any register value.
 3. `SCRC_CLK_003` After any chip reset every gateable clock runs except `timer_1`.
 4. `SCRC_RST_001` A WDT bite and `SW_RST` each hold `w_rst_n_sys` low for exactly
-   16 cycles; after POR it releases 16 cycles after `w_rst_n_por`. Each asserts
+   16 cycles; after POR it releases one cycle after `w_rst_n_por`. Each asserts
    every domain reset except `sysdbg` (WDT, SW).
 5. `SCRC_RST_002` Each domain reset releases 2 domain-clock edges after its input rises.
 6. `SCRC_RST_003` All non-CPU domains release in the same cycle; the CPU releases
@@ -584,7 +578,8 @@ Accepted limits:
 | Ports did not follow the Naming Rule | lead, V3.0 | 3, 5, 8 |
 | Figures had colour and drifted from the text | lead, V3.0 | redrawn; timing diagrams added |
 | `timer_1` status after boot not stated | lead, V3.0 | 7.5, `SCRC_RST_008` |
-| POR stretch: `CNT` and flip-flop reset values | lead, V3.0 | 7.3; **owner to confirm** |
+| No stretch after POR | lead proposal, adopted by the owner | 7.3, `SCRC_RST_001` |
+| Two CSRs instead of APB BUS + WFs | lead proposal | Rejected by the owner: the mentor's design stays, DECISIONS 4 |
 | Guard reset `o_rst_n_pbus` | lead, V3.0 | 7.7; **owner to confirm** |
 | Generated bus top name clashes with `P_BUS` | lead, V3.0 | 11, open |
 | `spi` and `spi_device` were two domains; the SPI wrapper takes one `PCLK`/`PRESETn` for both IPs | SPI MAS V1.3, lead | one domain, bit 13 reserved |
