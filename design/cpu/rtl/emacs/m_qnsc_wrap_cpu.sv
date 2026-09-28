@@ -1,14 +1,7 @@
 `default_nettype none
 `timescale 1ns/1ps
-//==============================================================================
-// Module      : m_qnsc_wrap_cpu
-// Description : CPU block's single outward boundary. ibex_top and
-//               m_qnsc_cpu2axi are connected directly to each other in this
-//               one module -- leader review 2026-09-28: connect the core to
-//               the bridge first, then wrap the pair in one m_qnsc_wrap_cpu,
-//               not two sub-wrapper modules composed by a third. See
-//               doc/specs/QNSC_CPU_DECISIONS.md.
-//==============================================================================
+// m_qnsc_wrap_cpu -- ibex_top + m_qnsc_cpu2axi in one module.
+// See doc/specs/QNSC_CPU_DECISIONS.md.
 module m_qnsc_wrap_cpu
 #(
 )
@@ -23,19 +16,13 @@ input logic		i_rst_n_cpu,		// To u_ibex_top of ibex_top.v, ...
 // End of automatics
 
 //---------------------------------------------------------------
-// Config -- values the chip decides, tied by design/top from
-// qnsc_pkg (design/README.md, "Shared numbers: who may use
-// qnsc_pkg"). IP itself takes fixed values or i_cfg_* ports, never
-// qnsc_pkg directly.
+// Config -- tied by design/top from qnsc_pkg (cpu is IP, no
+// qnsc_pkg import here).
 //---------------------------------------------------------------
-// design/top ties this from i_dbg_en ? qnsc_pkg::C_ISRAM_BASE : 32'h0.
-// C_ISRAM_BASE, not C_ISRAM_DBG_BASE: debug boot jumps straight to the
-// downloaded application at ISRAM's program region (0x2000_1000, entry at
-// +0x80 = 0x2000_1080 per HAS Table 6-4 row 18 / ROM MAS V2.1 Section 8),
-// not to the 4 KiB debug/DM window C_ISRAM_DBG_BASE (0x2000_0000) that
-// DmBaseAddr below uses -- those are two different regions.
+// i_dbg_en ? C_ISRAM_BASE : 0. Must be C_ISRAM_BASE, not
+// C_ISRAM_DBG_BASE (see DmBaseAddr below) -- see DECISIONS.
 input  logic [31:0] i_cfg_boot_addr,
-input  logic [31:0] i_cfg_hart_id,   // design/top ties this; 32'h0 while QSOC has one core
+input  logic [31:0] i_cfg_hart_id,
 
 //---------------------------------------------------------------
 // Boot / Debug
@@ -45,8 +32,8 @@ input  logic i_dbg_req,
 //---------------------------------------------------------------
 // Interrupt
 //---------------------------------------------------------------
-input  logic [10:0] i_int_fast,  // 11 real fast-IRQ sources; padded to ibex's 15 internally
-input  logic         i_int_nm,   // WDT bark (NMI), from INTMAP
+input  logic [10:0] i_int_fast,  // padded to ibex's 15 internally
+input  logic         i_int_nm,   // WDT bark (NMI)
 
 //---------------------------------------------------------------
 // DFT
@@ -62,11 +49,7 @@ output logic		o_pwr_sleep,		// From u_ibex_top of ibex_top.v
 // End of automatics
 
 //---------------------------------------------------------------
-// AXI4 master bus -- flattened per QNSC naming rule (no packed
-// structs on the wrapper boundary). AW/W/AR are driven by the
-// bridge (o_bus_axi_*); B/R are driven by the slave subsystem
-// (i_bus_axi_*). *_ready runs against the channel's own flow
-// direction: i_bus_axi_aw_ready / o_bus_axi_b_ready etc.
+// AXI4 master bus, flattened (no packed structs on the boundary).
 //---------------------------------------------------------------
 input  logic                    i_bus_axi_aw_ready,
 output logic [cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_aw_id,
@@ -119,14 +102,7 @@ input  logic [cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_r_user,
 input  logic                    i_bus_axi_r_valid
 );
 
-//---------------------------------------------------------------
-// Point-to-point wires connecting ibex_top directly to
-// m_qnsc_cpu2axi -- "connect cpu to bridge first" (leader review
-// 2026-09-28). Pre-declared with explicit widths: AUTOWIRE cannot
-// reliably infer width for a wire referenced across two separate
-// AUTOINST/AUTO_TEMPLATE blocks (same tool limitation seen below
-// on ibex_top's own scramble_key/nonce).
-//---------------------------------------------------------------
+// ibex_top <-> m_qnsc_cpu2axi, pre-declared for explicit width.
 logic        w_ibex_bridge_instr_req;
 logic        w_ibex_bridge_instr_gnt;
 logic        w_ibex_bridge_instr_rvalid;
@@ -248,21 +224,17 @@ ibex_top #(
     .ICache           (1'b0),
     .ICacheECC        (1'b0),
     .BranchPredictor  (1'b0),
-    .DbgTriggerEn     (1'b1),  // leader review 2026-09-28: enable hw trigger CSRs for HW breakpoints
-    .DbgHwBreakNum    (2),     // leader review 2026-09-28: 2 HW breakpoints for GDB/OpenOCD debugging
+    .DbgTriggerEn     (1'b1),  // leader review: HW trigger CSRs on
+    .DbgHwBreakNum    (2),     // leader review: 2 HW breakpoints
     .SecureIbex       (1'b0),
     .LockstepOffset   (1),
     .ICacheScramble   (1'b0),
-    // IP does not use qnsc_pkg (design/README.md) -- the debug/DM window base
-    // is written as a fixed value with a contract tag instead of
-    // qnsc_pkg::C_ISRAM_DBG_BASE; contract_tag.py checks the literal against
-    // util/qsoc_contract.yml so it cannot silently drift from the real value.
     .DmBaseAddr       (32'h2000_0000),                    // contract: memory_map.isram_dbg.base
     .DmAddrMask       (32'h0000_0FFF),
     .DmHaltAddr       (32'h2000_0000 + 32'h0000_0800),     // contract: memory_map.isram_dbg.base
     .DmExceptionAddr  (32'h2000_0000 + 32'h0000_0810),     // contract: memory_map.isram_dbg.base
     .CsrMvendorId     (32'h0),
-    .CsrMimpId        (32'h1)  // leader review 2026-09-28: encode implementation/revision
+    .CsrMimpId        (32'h1)  // leader review: implementation/revision id
 ) u_ibex_top(/*AUTOINST*/
 	     // Interfaces
 	     .cheriot_enable_i		(ibex_pkg::IbexMuBiOff), // Templated
@@ -380,13 +352,7 @@ m_qnsc_cpu2axi u_m_qnsc_cpu2axi(/*AUTOINST*/
 				.i_data_addr	(w_ibex_bridge_data_addr[31:0]), // Templated
 				.i_data_wdata	(w_ibex_bridge_data_wdata[31:0])); // Templated
 
-//---------------------------------------------------------------
-// Boundary normalization: pack/unpack the QNSC flattened AXI4
-// master port against the pulp-platform packed-struct port used
-// by the (unmodified, third-party-adjacent) cpu2axi_bridge core.
-// AUTOINST cannot decompose SV packed structs, so this glue is
-// hand-written, not tool-generated.
-//---------------------------------------------------------------
+// Pack/unpack: struct <-> flat AXI4 (hand-written, not AUTOINST).
 assign o_bus_axi_aw_id     = w_bridge_axi_req.aw.id;
 assign o_bus_axi_aw_addr   = w_bridge_axi_req.aw.addr;
 assign o_bus_axi_aw_len    = w_bridge_axi_req.aw.len;
