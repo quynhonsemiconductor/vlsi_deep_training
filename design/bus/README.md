@@ -51,7 +51,8 @@ rule -- every AXI channel is flattened field by field, matching
 
 | Port | Direction | Note |
 |---|---|---|
-| `i_clk_cpu`, `i_rst_n_cpu` | in | shared with `cpu`/`sysdbg` (qnsc_pkg's "cpu" clock cluster: hardwired on, never gated) |
+| `i_clk_sbus`, `i_rst_n_sbus` | in | S_BUS's own domain (qnsc_pkg's "sbus" cluster: hardwired on, never gated) -- clocks the crossbar itself |
+| `i_clk_pbus`, `i_rst_n_pbus` | in | P_BUS's own domain ("pbus" cluster, also hardwired on) -- clocks the AXI2APB bridge, since it is P_BUS's ingress logic |
 | `i_axi_s_0_*` | in | AXI4 from SYSDBG (`AXI_S0`) |
 | `i_axi_s_1_*` | in | AXI4 from CPU's CPU2AXI bridge (`AXI_S1`) |
 | `i_axi_s_2_*` | in | AXI4 from DMA (`AXI_S2`) |
