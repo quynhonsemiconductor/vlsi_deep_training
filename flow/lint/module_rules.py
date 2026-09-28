@@ -13,9 +13,10 @@ Three rules, from design/README.md ("Shared numbers: who may use qnsc_pkg" and
   2. NO-PARAM   A wrapper (m_qnsc_wrap_*) declares no parameter. The IP owner
                 fixes the IP's configuration inside the wrapper; design/top only
                 connects. An empty #() is accepted, as in the I2C demo.
-  3. WRAP-NAME  A wrapper in design/<block> is m_qnsc_wrap_<block>, or
-                m_qnsc_wrap_<block>_<variant>: named after the block, not the IP
-                module, so the name stays when the IP is replaced.
+  3. WRAP-NAME  A wrapper in design/<block> is m_qnsc_wrap_<block>: named after
+                the block (its name in the contract), not the IP module, so the
+                name stays when the IP is replaced. Two configurations of one IP
+                are two blocks (design/isram, design/dsram), each with its wrapper.
   4. NO-IMPORT  A file expanded by emacs verilog-mode (it contains an AUTO
                 comment) has no import statement. verilog-mode's parser does not
                 resolve package declarations; an integration module generated
@@ -138,7 +139,7 @@ def check_file(path: Path, integration: set[str]) -> list[Finding]:
 
     for m in WRAP_NAME.finditer(src):
         name = m.group("name")
-        if name != f"m_qnsc_wrap_{block}" and not name.startswith(f"m_qnsc_wrap_{block}_"):
+        if name != f"m_qnsc_wrap_{block}":
             add(m.start(), "WRAP-NAME",
                 f"a wrapper in design/{block} is m_qnsc_wrap_{block} (named after the "
                 f"block, not the IP module), not {name} (design/README.md, Naming)")

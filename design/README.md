@@ -83,16 +83,17 @@ instances:
 - **A value** (a boot address, a hart id, an instance number): an `i_cfg_*` input
   port of the wrapper, which `design/top` ties per instance.
 - **A structure** (a depth, a width, a number of channels) cannot be a port and is
-  not a parameter either, because the wrapper declares none. **Pending with Tâm**
-  (see "Pending" below): one wrapper per configuration, or a parameter as a stated
-  exception. Until it is decided, the only QSOC case -- the two RAMs -- waits.
+  not a parameter either, because the wrapper declares none. The two configurations
+  are **two blocks, each with its own wrapper** named after its contract name: the
+  two RAMs are `design/isram` (`m_qnsc_wrap_isram`, depth 16384) and `design/dsram`
+  (`m_qnsc_wrap_dsram`, depth 8192), both around the same IP (Tâm, 2026-09-28).
 
 | Block | Ports on the block diagram | Instances |
 |---|---|---:|
 | `uart` | `APB_M8/9` | 2 |
 | `gpio` | `APB_M3/4/5` | 3 (GPIO3 dropped with the 40-pin package; the ports after it moved up one) |
 | `timer` | `APB_M6/7` | 2 (64-bit vs two 32-bit, chosen by firmware) |
-| `ram` | `AXI_M1`, `AXI_M2` | 2 (ISRAM, DSRAM — differ only in depth: pending) |
+| `isram`, `dsram` | `AXI_M1`, `AXI_M2` | 1 each: one IP, two configurations (depth), so two blocks |
 | `pwm`, `i2c`, `spi`, `dma` | one port each | 1 |
 
 Reading the port name on the diagram tells you the count: `APB_M8/9` is two ports,
@@ -127,7 +128,7 @@ Which module may read it depends on what the module is:
 
 | Kind | Blocks | Rule |
 |---|---|---|
-| **IP** — bought or designed here | every wrapper (`cpu`, `uart`, `i2c`, `spi`, `gpio`, `timer`, `pwm`, `wdt`, `dma`, `rom`, `ram`), `sysdbg`, and `design/common` | **Does not use `qnsc_pkg`.** Its own configuration is written as fixed values. A wrapper declares no parameter |
+| **IP** — bought or designed here | every wrapper (`cpu`, `uart`, `i2c`, `spi`, `gpio`, `timer`, `pwm`, `wdt`, `dma`, `rom`, `isram`, `dsram`), `sysdbg`, and `design/common` | **Does not use `qnsc_pkg`.** Its own configuration is written as fixed values. A wrapper declares no parameter |
 | **Integration** — exists only to put this chip together | `top`, `bus`, `intmap`, `iomux`, `scrc` | Uses `qnsc_pkg`: this is where the chip's numbers are consumed |
 
 The list is data, in [`flow/lint/module_rules.yml`](../flow/lint/module_rules.yml);
@@ -195,7 +196,7 @@ behaviour across the chip.
 
 ## Naming
 
-**`QNSC_RTL_Design_Naming_Rule` V1.0 is mandatory.** The full document is
+**`QNSC_RTL_Design_Naming_Rule` V1.1 is mandatory.** The full document is
 [`doc/rules/QNSC_RTL_Design_Naming_Rule.pdf`](../doc/rules/QNSC_RTL_Design_Naming_Rule.pdf). The rules
 that come up most:
 
@@ -238,16 +239,8 @@ table changes first.
 |---|---|---|
 | Where does the generated wrapper live? | `make wrap` copies it to `rtl/<wrapper>.sv`, the file `<block>.f` compiles; `rtl/emacs/` keeps the source and the intermediate copy | The I2C demo on `share_review`, made for this repository. The CPU demo keeps it in `EMACS/` only |
 | JTAG and `DBG_EN` pins: `i_pad_*` or their own prefix? | Their own: `i_jtag_tck`, `o_jtag_tdo`, `i_dbg_en`. Every other pad-bound port is `i_pad_*` / `o_pad_*` | The rule has dedicated sections 3.11 (JTAG) and 3.12 (Debug); a dedicated section wins over the general 3.8 (Pad) |
-| Wrapper name: block or IP module? | **The block**, as named in the contract, without an index: `m_qnsc_wrap_pwm` (IP `apb_adv_timer`), `m_qnsc_wrap_uart` (`apb_uart`, used by `uart_0` and `uart_1`), `m_qnsc_wrap_i2c`, `m_qnsc_wrap_timer`, `m_qnsc_wrap_ram`. The name stays when the IP is replaced | Tâm's review of PR #26 (2026-09-28): a short IP name, `m_qnsc_wrap_pwm` or `m_qnsc_wrap_timer_pwm`, not the IP module's. `pwm` is chosen because it is the contract's name, and `timer_pwm` reads as one of `timer_0`/`timer_1`. His I2C demo is `m_qnsc_wrap_i2c`. Rule 2.1's example `m_qnsc_wrap_apb_uart` is to be updated in the rule document |
+| Wrapper name: block or IP module? | **The block** (rule 2.1, V1.1), as named in the contract, without an index: `m_qnsc_wrap_pwm` (IP `apb_adv_timer`), `m_qnsc_wrap_uart` (`apb_uart`, used by `uart_0` and `uart_1`), `m_qnsc_wrap_i2c`, `m_qnsc_wrap_timer`, `m_qnsc_wrap_isram` and `m_qnsc_wrap_dsram` (one IP, two configurations, two blocks). The name stays when the IP is replaced | Tâm's review of PR #26 (2026-09-28): a short IP name, `m_qnsc_wrap_pwm` or `m_qnsc_wrap_timer_pwm`, not the IP module's. `pwm` is chosen because it is the contract's name, and `timer_pwm` reads as one of `timer_0`/`timer_1`. His I2C demo is `m_qnsc_wrap_i2c`. Tâm confirmed it on 2026-09-28, with `m_qnsc_wrap_isram`/`m_qnsc_wrap_dsram` for the two RAMs; rule 2.1 is updated in V1.1 |
 | Package and parameters in a wrapper? | None: no `import`, no parameter; the IP's configuration is fixed at the instance. Chip values arrive on `i_cfg_*` ports; a copied contract number is tagged `// contract: <key>` | Tâm's review of PR #26 (2026-09-28) and his I2C demo, `apb_i2c #(.P_APB_ADDR_WIDTH(12))`. Extended to all IP and to every emacs file in "Shared numbers" above |
-
-### Pending with Tâm
-
-Raised on 2026-09-28; this section changes when he answers.
-
-| Question | Proposal |
-|---|---|
-| Two instances that differ in structure (the two RAM depths), now that a wrapper has no parameter | One wrapper per configuration, `m_qnsc_wrap_<block>_<variant>` |
 
 `flow/lint/naming_check.py` enforces these in CI and reports each violation **inline
 on the pull request diff**. Run it before pushing:

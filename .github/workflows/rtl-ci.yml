@@ -194,7 +194,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # QNSC_RTL_Design_Naming_Rule V1.0 is mandatory and entirely mechanical, so
+      # QNSC_RTL_Design_Naming_Rule V1.1 is mandatory and entirely mechanical, so
       # it is enforced by a deterministic script rather than by review or by a
       # language model: this is a required check, and a gate that can return a
       # different verdict for the same input is worse than no gate.
@@ -204,7 +204,7 @@ jobs:
       #
       # Scope is design/**/rtl only. Vendored IP keeps its upstream conventions
       # and must not be renamed -- editing vendor/ is itself a CI failure.
-      - name: Check naming against QNSC_RTL_Design_Naming_Rule V1.0
+      - name: Check naming against QNSC_RTL_Design_Naming_Rule V1.1
         run: make naming
 
   # ---------------------------------------------------------------------------

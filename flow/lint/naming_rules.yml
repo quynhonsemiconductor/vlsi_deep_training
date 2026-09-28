@@ -15,10 +15,10 @@
 # prints the message verbatim and cannot tell that the two have diverged.
 #
 # Source: doc/rules/QNSC_RTL_Design_Naming_Rule.pdf (moved from MCU_guide_ws 3d66c27)
-# Version enforced: V1.0, 15/09/2026, Tam Nguyen
+# Version enforced: V1.1, 28/09/2026 (wrapper name, rule 2.1). V1.0: 15/09/2026, Tam Nguyen
 # =============================================================================
 
-version: "1.0"
+version: "1.1"
 document: QNSC_RTL_Design_Naming_Rule
 
 # What the checker looks at. Vendored IP keeps its upstream conventions and is

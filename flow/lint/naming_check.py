@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-naming_check.py -- enforce QNSC_RTL_Design_Naming_Rule V1.0 on RTL written here.
+naming_check.py -- enforce QNSC_RTL_Design_Naming_Rule V1.1 on RTL written here.
 
 The rule is mandatory and mechanical, so it is checked by a deterministic script
 rather than by review or by a language model: the same input must always give the

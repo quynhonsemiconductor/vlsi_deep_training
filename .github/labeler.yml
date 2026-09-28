@@ -6,7 +6,7 @@
 # ---- blocks ----------------------------------------------------------------
 area/ram:
   - changed-files:
-    - any-glob-to-any-file: ["design/ram/**", "dv/ram/**"]
+    - any-glob-to-any-file: ["design/isram/**", "design/dsram/**", "dv/isram/**", "dv/dsram/**"]
 
 area/sysdbg:
   - changed-files:
