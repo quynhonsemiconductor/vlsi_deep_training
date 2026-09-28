@@ -31,3 +31,10 @@ Facts it must agree with:
   until firmware clears it at the peripheral.
 - Each `apb_gpio` instance OR's to one fast line; `aon_timer` contributes
   `intr_wkup_timer_expired_o` and `nmi_wdog_timer_bark_o`.
+
+## Sign-off stages waived
+
+| Stage | Reason |
+|---|---|
+| CDC | No clock: the block is a combinational OR tree (MAS 1, 5) |
+| RDC | No reset and no flip-flop (MAS 1, 5) |
