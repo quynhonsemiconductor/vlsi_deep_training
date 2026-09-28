@@ -1,0 +1,85 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="WDT in QSOC" id="pg0">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="826" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="pbus" value="P_BUS&#10;APB_M2" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="10" y="70" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="scrcc" value="SCRC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="10" y="260" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="wrap" value="m_qnsc_wrap_wdt" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=12;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="690" height="360" as="geometry"/>
+        </mxCell>
+        <mxCell id="bridge" value="qnsc_apb_to_tlul&#10;APB FSM +&#10;tlul_adapter_host" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="320" y="70" width="170" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="tie" value="tie-offs&#10;lc_escalate_en = Off&#10;sleep_mode = 0&#10;alert, racl idle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="320" y="250" width="170" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="core" value="aon_timer  (upstream, unmodified)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=10;dashed=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="520" y="50" width="450" height="310" as="geometry"/>
+        </mxCell>
+        <mxCell id="reg" value="registers&#10;TL-UL reg top&#10;CDC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="540" y="90" width="120" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="wdog" value="watchdog&#10;32-bit count" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="700" y="80" width="130" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="wkup" value="wake-up&#10;prescaler&#10;64-bit count" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="700" y="200" width="130" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="rst" value="rst_req&#10;sticky" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="860" y="80" width="90" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="intr" value="INTR_STATE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="860" y="190" width="90" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="scrcr" value="SCRC&#10;RRC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="70" width="110" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="intm" value="INTMAP&#10;NMI, line 8" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1110" y="190" width="110" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="pbus_bridge_0" value="APB" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.375;exitDx=0;exitDy=0;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="pbus" target="bridge">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="scrcc_wrap_1" value="o_clk_wdt, o_rst_n_wdt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.75;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="scrcc" target="wrap">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="bridge_reg_2" value="TL-UL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.17999999999999997;exitDx=0;exitDy=0;entryDx=0;entryDy=0;startArrow=classic;startFill=1;" edge="1" parent="1" source="bridge" target="reg">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="tie_core_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.806;exitDx=0;exitDy=0;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="tie" target="core">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="reg_wdog_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.2;entryX=0.0;entryY=0.5299999999999999;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="reg" target="wdog">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="reg_wkup_5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.8;entryX=0.0;entryY=0.2;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="reg" target="wkup">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="wdog_rst_6" value="bite" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.3;entryX=0.0;entryY=0.36;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="wdog" target="rst">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="wdog_intr_7" value="bark" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.8;entryX=0.0;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="wdog" target="intr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="wkup_intr_8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.75;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="wkup" target="intr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rst_scrcr_9" value="o_wdt_rst_req" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5829999999999999;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="rst" target="scrcr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="intr_intm_10" value="o_int_wdt_bark" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.3;entryX=0.0;entryY=0.3;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="intr" target="intm">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="intr_intm_11" value="o_int_wdt_wakeup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.8;entryX=0.0;entryY=0.8;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="intr" target="intm">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

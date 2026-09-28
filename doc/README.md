@@ -71,6 +71,7 @@ committed ones.
 | `build_dma.py` | `fig_dma_block`, `fig_dma_flow`, `fig_dma_regs`, `wave_dma_job` | DMA MAS |
 | `build_uart.py` | `fig_uart_block`, `fig_uart_regs`, `wave_uart_frame` | UART MAS |
 | `build_i2c.py` | `fig_i2c_block`, `fig_i2c_regs`, `wave_i2c_write` | I2C MAS |
+| `build_wdt.py` | `fig_wdt_block`, `fig_wdt_regs`, `wave_wdt_flow` | WDT MAS |
 | `regfig.py` | the register bit-field renderer `build_syscsr.py` uses | any MAS |
 | `wavegen.py` | the timing-diagram renderer `build_scrc.py` uses; monochrome, `.svg` + `.png` | any MAS |
 | `svg_mono.py` | `fig_qsoc_full_mono` from `fig_qsoc_full.svg` | root README |

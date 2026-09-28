@@ -79,7 +79,9 @@ upstreams:
     live in prim_generic, not prim. A hand-picked minimal set breaks at the next bump; the whole-dir set
     is self-contained and buildable. All three blocks are TL-UL and need an APB-to-TL-UL wrapper. aon_timer
     connects intr_wkup_timer_expired_o and nmi_wdog_timer_bark_o; alert_*, racl_* and lc_escalate_en_i
-    are tied off in the wrapper.'
+    are tied off in the wrapper (lc_escalate_en_i = lc_ctrl_pkg::Off). Still to add: hw/ip/lc_ctrl/rtl/lc_ctrl_pkg.sv,
+    lc_ctrl_state_pkg.sv, lc_ctrl_reg_pkg.sv and hw/top_earlgrey/rtl/top_pkg.sv, autogen/top_racl_pkg.sv, which aon_timer,
+    spi_* and tlul_adapter_host import (QNSC_WDT_MAS 4).'
 - name: pulp-platform/timer_unit
   url: https://github.com/pulp-platform/timer_unit
   commit: 4c69615c89db9397a9747d6f6d6a36727854f0bc
