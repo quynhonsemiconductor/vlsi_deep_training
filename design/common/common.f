@@ -16,3 +16,4 @@
 # after its module, so the editor finds it through design/common/rtl.
 #
 # rtl/<shared_module>.sv
+rtl/qnsc_sync.sv
