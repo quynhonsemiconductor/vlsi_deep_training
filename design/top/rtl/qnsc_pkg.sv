@@ -100,9 +100,11 @@ package qnsc_pkg;
   //     cpu, bus, sysdbg
   //   i_clk_mem   hardwired on, not writable
   //     rom, isram, dsram
+  //   i_clk_wdt   hardwired on, not writable
+  //     wdt
   //   i_clk_peri  gateable via CLK_EN in SCRC
-  //     wdt, timer_0, timer_1, uart_0, uart_1, spi, i2c, gpio, dma, pwm
-  localparam int unsigned C_CLK_CLUSTERS = 3;
+  //     timer_0, timer_1, uart_0, uart_1, spi, i2c, gpio, dma, pwm
+  localparam int unsigned C_CLK_CLUSTERS = 4;
 
   localparam int unsigned C_RST_SOURCES = 3;   // power_on, watchdog, software
 
