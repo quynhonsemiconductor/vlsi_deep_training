@@ -38,7 +38,7 @@ confirmed already correct as configured. Three were changed:
 
 `util/qsoc_contract.yml` is not where these three values live -- they are
 pure `ibex_top` build-time parameters, not numbers shared across blocks, so
-they are set directly in `m_qnsc_wrap_ibex.src.sv` rather than imported from
+they are set directly in `m_qnsc_wrap_cpu_ibex.src.sv` rather than imported from
 `qnsc_pkg`.
 
 ## The debug-boot address bug (found 2026-09-28)
@@ -52,11 +52,58 @@ the *correct* contract constant for this call site" -- so no automated check
 flagged it. It surfaced only by reading `QNSC_ROM_MAS` (which states plainly
 that debug boot's first fetch is at `0x2000_1080`) side by side with this
 block's own boot-address logic, and confirming against the already-ratified
-QSOC HAS report, which independently states the same address. The fix:
-`P_BOOT_ADDR_DBG` now reads `qnsc_pkg::C_ISRAM_BASE`.
+QSOC HAS report, which independently states the same address. The fix, at the
+time: the wrapper's own `P_BOOT_ADDR_DBG` localparam changed from
+`qnsc_pkg::C_ISRAM_DBG_BASE` to `qnsc_pkg::C_ISRAM_BASE`. That localparam and
+its internal mux no longer exist -- see the next section.
 
 The general lesson, not specific to this bug: a hardcode-check style
 automated tool can confirm a literal *is* an agreed constant; it cannot
 confirm it is the *right* constant for that specific use, when more than one
 constant is a legal match at the type level. That check still has to be done
 by a person holding both specs at once.
+
+## Moving qnsc_pkg out of the wrapper (2026-09-28, #35)
+
+A rule change (`chore/ip-integration-rules`, #35) settled a review comment on
+another block's wrapper: IP does not import `qnsc_pkg` or reference it
+directly -- design/top ties any chip-decided value in on an `i_cfg_*` port,
+and a structural value that must equal the contract carries a
+`// contract: <key>` tag instead (design/README.md, "Shared numbers: who may
+use `qnsc_pkg`"). `cpu` is IP, and `m_qnsc_wrap_cpu.src.sv` used both patterns
+the rule now forbids:
+
+- The boot-address mux above (`w_boot_addr = i_dbg_en ? qnsc_pkg::C_ISRAM_BASE
+  : 32'h0`) computed a chip value from `qnsc_pkg` inside the wrapper. Fixed by
+  deleting the mux and the `import qnsc_pkg::*;` it needed, and taking the
+  already-resolved value on a new `i_cfg_boot_addr` port instead -- exactly
+  how Ibex itself already takes `boot_addr_i`. `i_dbg_en` no longer has a
+  reason to be a `cpu` port; the mux and the debug-enable signal both move to
+  whichever integration block computes `i_cfg_boot_addr` (design/top).
+- `P_HART_ID` was a module parameter, which the rule also forbids ("a wrapper
+  has no parameter"; an empty `#()` is what's accepted). Hart id is one of the
+  rule's own worked examples of an `i_cfg_*` value, so it became
+  `i_cfg_hart_id`, tied by design/top (`32'h0` while QSOC has one core).
+- `m_qnsc_wrap_cpu_ibex.src.sv`'s `DmBaseAddr`/`DmHaltAddr`/`DmExceptionAddr`
+  read `qnsc_pkg::C_ISRAM_DBG_BASE` directly. These are `ibex_top`
+  *parameters*, not ports, so they cannot become `i_cfg_*` ports (a parameter
+  is elaboration-time, not a runtime connection) -- they took the rule's other
+  path instead, a fixed value tagged `// contract: memory_map.isram_dbg.base`,
+  which `contract_tag.py` checks against `util/qsoc_contract.yml` on every
+  run.
+- Removing `import ibex_pkg::*;`/`import cpu2axi_pkg::*;` (module_rules.py's
+  NO-IMPORT: an emacs-expanded file has no import at all, regardless of which
+  package) surfaced one more real AUTOINPUT gap: `ibex_top`'s own
+  `cheriot_enable_i`/`fetch_enable_i`/`mcounteren_writable_i`/`crash_dump_o`/
+  `lockstep_cmp_en_o` are typed `ibex_mubi_t`/`crash_dump_t`, bare names that
+  only resolved before because `ibex_top` carries its own `import
+  ibex_pkg::*;` -- copied verbatim by AUTOINPUT into a wrapper with no import
+  of its own. Fixed in `fixup_ibex_wrap.py` by qualifying them
+  `ibex_pkg::ibex_mubi_t`/`ibex_pkg::crash_dump_t` where they're declared,
+  which needs no import.
+- `m_qnsc_wrap_cpu_ibex`/`m_qnsc_wrap_cpu_cpu2axi` (this block's two internal
+  sub-boundaries, composed by `m_qnsc_wrap_cpu`) were renamed from
+  `m_qnsc_wrap_ibex`/`m_qnsc_wrap_cpu2axi` to satisfy module_rules.py's
+  WRAP-NAME check: a wrapper in `design/cpu` is `m_qnsc_wrap_cpu` or
+  `m_qnsc_wrap_cpu_<variant>`, and these are the block's own variant naming
+  for its two sub-boundaries, not a separate block.

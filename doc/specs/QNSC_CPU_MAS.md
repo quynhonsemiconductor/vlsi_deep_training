@@ -34,9 +34,11 @@ their interfaces are exposed as top-level ports, described in Section 9.
 - Sleep on WFI: the core gates its own clock, and wakes on an enabled
   interrupt, NMI, debug request, already being in debug mode, or a single
   step -- 7.3.
-- Boot-address mux: cold boot fetches from ROM (`0x0000_0000`); debug boot
-  fetches from the downloaded application in ISRAM instead
-  (`qnsc_pkg::C_ISRAM_BASE`), bypassing ROM entirely -- 7.4.
+- Boot address: cold boot fetches from ROM (`0x0000_0000`); debug boot fetches
+  from the downloaded application in ISRAM instead (`qnsc_pkg::C_ISRAM_BASE`),
+  bypassing ROM entirely. `cpu` is IP, so it does not resolve this itself --
+  it takes the already-resolved address on `i_cfg_boot_addr`, tied by
+  `design/top` from `qnsc_pkg` -- 7.4.
 - CPU2AXI merge: two Ibex memory-style ports arbitrated round-robin onto one
   AXI4 master port, with the port index folded into the AXI ID so responses
   return unambiguously -- 7.5.
@@ -45,11 +47,11 @@ their interfaces are exposed as top-level ports, described in Section 9.
 
 # 3. Block diagram
 
-No diagram yet. In words: `m_qnsc_wrap_cpu` instantiates `m_qnsc_wrap_ibex`
-(boundary around `ibex_top`) and `m_qnsc_wrap_cpu2axi` (boundary around the
+No diagram yet. In words: `m_qnsc_wrap_cpu` instantiates `m_qnsc_wrap_cpu_ibex`
+(boundary around `ibex_top`) and `m_qnsc_wrap_cpu_cpu2axi` (boundary around the
 CPU2AXI merge, flattening its AXI4 master port to the naming rule's
 `i_bus_axi_*`/`o_bus_axi_*`). The two memory-style ports run directly between
-`m_qnsc_wrap_ibex` and `m_qnsc_wrap_cpu2axi`, point to point, and never leave
+`m_qnsc_wrap_cpu_ibex` and `m_qnsc_wrap_cpu_cpu2axi`, point to point, and never leave
 `m_qnsc_wrap_cpu`.
 
 # 4. IP used
@@ -76,7 +78,8 @@ pre-rename commit rather than a current release.
 |---|---|---|---|
 | `i_clk_cpu` | in | 1 | CPU clock domain, always-on |
 | `i_rst_n_cpu` | in | 1 | Active-low reset, already released together with the other domains by SCRC |
-| `i_dbg_en` | in | 1 | Boot-address mux select: 0 cold boot (ROM), 1 debug boot (ISRAM application) |
+| `i_cfg_boot_addr` | in | 32 | Resolved boot address, tied by `design/top`: `i_dbg_en ? qnsc_pkg::C_ISRAM_BASE : 32'h0` (cold boot fetches ROM at `0x0`; debug boot fetches the downloaded application in ISRAM) |
+| `i_cfg_hart_id` | in | 32 | Tied by `design/top`; `32'h0` while QSOC has one core |
 | `i_dbg_req` | in | 1 | From SYSDBG; requests debug mode |
 | `i_int_fast` | in | 11 | From INTMAP, `mcause` 16-26; padded to Ibex's 15-bit port internally |
 | `i_int_nm` | in | 1 | Watchdog bark (NMI), from INTMAP |
@@ -96,8 +99,8 @@ pre-rename commit rather than a current release.
 | `i_bus_axi_r_id`, `_data`, `_resp`, `_last`, `_user`, `_valid` | in | per-field | AXI4 R channel, from S_BUS |
 
 Every AXI4 signal above is flattened per the naming rule; no packed struct
-crosses the wrapper boundary. Internally, `m_qnsc_wrap_ibex` and
-`m_qnsc_wrap_cpu2axi` connect through a memory-style port pair per side
+crosses the wrapper boundary. Internally, `m_qnsc_wrap_cpu_ibex` and
+`m_qnsc_wrap_cpu_cpu2axi` connect through a memory-style port pair per side
 (instruction: `req`/`gnt`/`rvalid`/`addr`/`rdata`/`err`; data: adds
 `we`/`be`/`wdata`), named identically on both wrappers so the point-to-point
 wiring is name-for-name.
@@ -147,8 +150,12 @@ still work, since neither is gated by `mie`.
 
 ## 7.4 Boot address
 
+`cpu` is IP (design/README.md, "Shared numbers: who may use `qnsc_pkg`"), so
+it does not import `qnsc_pkg` or compute this mux itself. `design/top` ties
+`i_cfg_boot_addr` directly to Ibex's `boot_addr_i`:
+
 ```
-w_boot_addr = i_dbg_en ? qnsc_pkg::C_ISRAM_BASE : 32'h0000_0000
+i_cfg_boot_addr = i_dbg_en ? qnsc_pkg::C_ISRAM_BASE : 32'h0000_0000
 ```
 
 Ibex forms its own reset entry point as `{boot_addr_i[31:8], 8'h80}`, so cold
@@ -160,7 +167,10 @@ same port, so a debug boot's trap-vector table lives in ISRAM as well, not
 ROM. `DmBaseAddr`/`DmAddrMask`/`DmHaltAddr`/`DmExceptionAddr` are a separate,
 unrelated set of `ibex_top` parameters (Section 10): they configure the RISC-V
 Debug Module's own halt/exception entry points inside the 4 KiB debug window,
-not the boot-address mux.
+not the boot-address mux. Being IP, `m_qnsc_wrap_cpu_ibex` writes `DmBaseAddr`
+as the fixed value `32'h2000_0000` tagged `// contract: memory_map.isram_dbg.base`
+rather than importing `qnsc_pkg::C_ISRAM_DBG_BASE`; `contract_tag.py` still
+checks the literal against `util/qsoc_contract.yml` so it cannot drift.
 
 ## 7.5 CPU2AXI merge
 
@@ -240,9 +250,9 @@ Accepted limits, stated rather than hidden:
 
 1. `ibex_config_tb`-equivalent: a hand-assembled RV32IM program (`addi`,
    `add`, `mul`, `sw`, `lw`, `csrrs`, `jal`) executes correctly against
-   `m_qnsc_wrap_ibex` directly, confirming the parameter set boots and runs.
+   `m_qnsc_wrap_cpu_ibex` directly, confirming the parameter set boots and runs.
 2. Full-hierarchy TB: the same program, driven through `m_qnsc_wrap_cpu`'s
-   complete path (`m_qnsc_wrap_ibex` -> `m_qnsc_wrap_cpu2axi` -> flattened
+   complete path (`m_qnsc_wrap_cpu_ibex` -> `m_qnsc_wrap_cpu_cpu2axi` -> flattened
    AXI4 -> a behavioural AXI4 memory responder), confirming the CPU2AXI merge
    preserves data correctness end to end.
 3. Bridge-only TB: `m_qnsc_cpu2axi` driven directly on both memory-style
