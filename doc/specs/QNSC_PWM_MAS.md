@@ -1,6 +1,6 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.5"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,7 +14,9 @@ The reasoning behind each change is in
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, onto the template |
 | V2.1 | 2026-09-24 | Nghia VT | -- | Corrected against the RTL (`CH_EN`, output MODE, events, input stage, decode); full register fields; tie-off table; new block diagram |
 | V2.2 | 2026-09-25 | Nghia VT | -- | Pad ports named `o_pad_pwm`, `i_pad_tim_ext` (was `o_pwm`, `i_tim_ext`), per `QNSC_RTL_Design_Naming_Rule` 3.8 |
-| V2.3 | 2026-09-28 | Nghia VT | -- | `SCRC` bit from `QNSC_SCRC_MAS` V3.0: `CLK_EN[15]`; requirement on `SCRC` closed |
+| V2.3 | 2026-09-25 | Nghia VT | -- | 7.2: an unconfigured channel goes to 1 at `CMD.START` (reset `MODE` 0 is SET, reset `TH` 0 matches at once), seen in simulation of the wrapper. `TIM_EXT` synchronised by the shared `qnsc_sync` cell. Moved to `APB_M12` at `0x8003_0000` with the peripherals after the dropped GPIO3 |
+| V2.4 | 2026-09-28 | Nghia VT | Tâm | Module `m_qnsc_wrap_pwm` (Naming Rule V1.1). `APB_ADDR_WIDTH` fixed at 12 in the wrapper (no package, no parameter). Review answers: one clock domain and why `low_speed_clk_i` is 0 (section 3); `TIM_EXT` bits independent, minimum pulse (7.4); four event lines on one `INTMAP` line (7.5) |
+| V2.5 | 2026-09-28 | Nghia VT | -- | `SCRC` bit from `QNSC_SCRC_MAS` V3.0: `CLK_EN[15]`; requirement on `SCRC` closed |
 
 # 1. Overview
 
@@ -25,7 +27,7 @@ lines drive `INTMAP` fast line 7.
 
 The block has no event status register, no period-end interrupt and no DMA request.
 
-Block directory `design/pwm`, module `m_qnsc_wrap_apb_adv_timer`, owner Nghia Van
+Block directory `design/pwm`, module `m_qnsc_wrap_pwm`, owner Nghia Van
 Trong.
 
 # 2. Features
@@ -47,6 +49,11 @@ Trong.
 Clock `i_clk_peri` (`peri` cluster, gated by `SCRC` `CLK_EN[15]`), reset
 `i_rst_n_peri`. The register file and the event multiplexer run on `i_clk_peri`.
 Timer module `i` runs on `i_clk_peri` gated by `CH_EN[i]`.
+
+The block has **one clock domain**, `i_clk_peri`. The four module clocks are gated
+branches of it, not other frequencies. The IP's second clock input,
+`low_speed_clk_i`, is tied 0: QSOC has one frequency and no slow clock source
+(contract, `clock_domains`). A slower count comes from the prescaler (7.1).
 
 # 4. IP used
 
@@ -76,7 +83,7 @@ Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. `o_pad_pwm` and `o_int_pwm` are
 | `o_bus_apb_prdata` | out | 32 | read data; 0 at unimplemented offsets |
 | `o_bus_apb_pready` | out | 1 | constant 1, zero wait states |
 | `o_bus_apb_pslverr` | out | 1 | constant 0 |
-| `i_pad_tim_ext` | in | 4 | pads `TIM_EXT0`-`3` through IO MUX. Two flip-flops in the wrapper synchronise it to `i_clk_peri`, then `ext_sig_i[3:0]` |
+| `i_pad_tim_ext` | in | 4 | pads `TIM_EXT0`-`3` through IO MUX. Two flip-flops in the wrapper (`qnsc_sync`, `design/common`) synchronise it to `i_clk_peri`, then `ext_sig_i[3:0]` |
 | `o_pad_pwm` | out | 8 | `[3:0]` = `ch_0_o[3:0]`, `[7:4]` = `ch_1_o[3:0]`, to IO MUX -- 7.3 |
 | `o_int_pwm` | out | 4 | `events_o[3:0]`, one-cycle pulses, to `INTMAP` line 7 -- 7.5 |
 
@@ -149,6 +156,11 @@ Each channel output is a flip-flop in its `comparator`. A match is COUNTER equal
 MODE 2 with `SAW` = 1 gives an edge-aligned output; MODE 2 with `SAW` = 0 gives a
 centre-aligned output. `CMD.RST` drives the output to 0 in every MODE.
 
+**Unconfigured channels.** Out of reset every channel has `MODE` 0 (SET) and `TH` 0,
+so `CMD.START` drives each channel firmware did not configure to 1 at the first
+count of 0, and it stays 1. Before `CMD.START`, set every channel of the module:
+`MODE` 4 (RST) keeps an unused output at 0.
+
 ## 7.3 Channel outputs and pads
 
 `ch_i_o[n]` is channel `n` of module `i`. Modules 0 and 1 drive the pads, so the pads
@@ -196,6 +208,12 @@ and qualifies it with `CFG.IN_MODE`. Start and stop come only from `CMD`.
 `CFG.CLK_SEL` = 1 additionally requires a rising edge of `low_speed_clk_i`, which
 is tied 0, so a module with `CLK_SEL` = 1 does not count.
 
+The four `TIM_EXT` bits are **independent** signals: each is its own external
+trigger, and each module selects **one** of them with `IN_SEL`. No module reads them
+as a multi-bit value, so synchronising each bit on its own with `qnsc_sync` (two
+flip-flops to `i_clk_peri`) is correct. A level or pulse on `TIM_EXTn` must last at
+least two `i_clk_peri` cycles (100 ns at 20 MHz) to be seen.
+
 ## 7.5 Event lines
 
 Event line `k` is `EN[k] & new & ~old`, where `new` and `old` are two successive
@@ -213,6 +231,12 @@ Event line `k` is `EN[k] & new & ~old`, where `new` and `old` are two successive
 The block has no software-readable event status. `timer_module.status_o` is not
 connected to the register file. An event that the core does not take is not
 recorded anywhere.
+
+The four event lines are not one per module: each selects any of the sixteen
+channels. `INTMAP` ORs all four onto **one** core interrupt, fast line 7, so the core
+sees one PWM interrupt whether one or four lines are enabled. Because nothing records
+which line fired, firmware that must know the source enables one event line at a
+time.
 
 ## 7.6 Address decode
 
