@@ -1,47 +1,16 @@
-# =============================================================================
-# Filelist for the cpu block.
-#
-# This is the single place that says which files build this block, and in what
-# order. CI lints the block through this file, so a file not listed here is not
-# compiled and not checked.
-#
-# Rules:
-#   - Upstream IP is LISTED here, never copied into rtl/. Paths are relative to
-#     this file, so they start with ../../vendor/...
-#   - Order matters. Packages and `define files first, then leaf modules, then
-#     the IP's top, then our wrapper last.
-#   - Anything under rtl/ is code written here. Anything under ../../vendor/ is
-#     not ours -- see vendor/manifest.yml for its pinned commit and licence.
-#
-# +define+ASSERTS_OFF is REQUIRED here, not optional. Both lowRISC/ibex
-# (via prim_assert.sv) and pulp-platform/common_cells (via
-# include/common_cells/assertions.svh) define a macro literally named ASSERT
-# and a gating flag literally named INC_ASSERT. prim_assert.sv makes its own
-# ASSERT a Verilator-safe no-op when VERILATOR is defined (always true here);
-# common_cells' assertions.svh is not Verilator-aware and unconditionally
-# (re)defines the SAME macro name for any non-SYNTHESIS/non-XSIM build, silently
-# overriding lowRISC's no-op for the rest of this compile unit. Without
-# ASSERTS_OFF, that re-enables real assert property(...) text buried inside
-# ibex's own CDC primitive (prim_sync_reqack.sv, pulled in transitively by
-# ibex_icache.sv), containing throughout/[->1] SVA sequence syntax Verilator
-# cannot parse -- a spurious, hard-to-trace lint failure that touches none of
-# this block's own code. See vendor/manifest.yml's pulp-platform/axi and
-# pulp-platform/common_cells entries for the full explanation.
+# Filelist for the cpu block. Order matters: packages, then leaves, then
+# ibex_top, then our wrapper last. Upstream IP paths point at ../../vendor/,
+# never copied into rtl/ -- see vendor/manifest.yml for commit + licence.
+
+# Required: ibex's prim_assert.sv and common_cells' assertions.svh both
+# define a macro named ASSERT; without this, common_cells' non-Verilator-safe
+# redefinition wins and re-enables SVA syntax Verilator can't parse deep
+# inside ibex_icache.sv. See vendor/manifest.yml for the full trace.
 +define+ASSERTS_OFF
 
-# --top-module is REQUIRED here too, not optional. flow/lint/lint_all.sh does
-# not pass --top-module itself, and pulp-platform/axi/src/axi_mux.sv bundles
-# BOTH the struct-based axi_mux we actually instantiate AND an interface-based
-# axi_mux_intf sibling in the same file (same for axi_lite_to_axi/
-# axi_lite_to_axi_intf). Without an explicit top, Verilator treats every
-# parentless module -- including axi_mux_intf, whose AXI_BUS/AXI_LITE
-# interface ports are only valid with the real parameter context an actual
-# instantiation would provide -- as its own elaboration root, which crashes
-# Verilator 5.020 with an Internal Error in V3Width (SEL has no expected
-# width) rather than a normal lint diagnostic. Naming our own top here
-# sidesteps it entirely: only m_qnsc_wrap_cpu and what it actually
-# instantiates gets elaborated, exactly like a real top-level integration
-# would only ever reach the struct-based axi_mux.
+# Required: axi_mux.sv bundles a struct-based axi_mux (ours) and an
+# interface-based axi_mux_intf sibling in one file. Without an explicit top,
+# Verilator elaborates axi_mux_intf too and crashes (V3Width Internal Error).
 --top-module m_qnsc_wrap_cpu
 
 # ---- include directories ----------------------------------------------------
@@ -51,20 +20,11 @@
 +incdir+../../vendor/pulp-platform/axi/include
 +incdir+../../vendor/pulp-platform/common_cells/include
 
-# ---- no qnsc_pkg here: cpu is IP, not integration (design/README.md,
-# ---- "Shared numbers: who may use qnsc_pkg"). The values it needs from the
-# ---- chip (boot address, hart id) arrive on i_cfg_* ports that design/top
-# ---- ties from qnsc_pkg; the debug/DM window base is a fixed value tagged
-# ---- `// contract: memory_map.isram_dbg.base` in m_qnsc_wrap_cpu_ibex.sv.
+# cpu is IP, not integration: no qnsc_pkg import. Chip values arrive on
+# i_cfg_* ports; the debug/DM window base is a tagged fixed value instead.
 
-# ---- upstream IP: lowRISC/ibex + lowRISC/opentitan (prim/prim_generic), ----
-# ---- in FuseSoC-resolved compile order --------------------------------------
-# ibex_trvk.sv (CHERIoT revocation bitmap) is deliberately NOT listed: it is
-# only instantiated inside ibex_top's "if (BaseIsa == BaseIsaRV32IorCHERIoT)"
-# generate branch, and this block's BaseIsa is plain BaseIsaRV32I -- confirmed
-# by lint (removing ibex_trvk.sv from the filelist changes nothing but the
-# warning count), not just assumed. See vendor/manifest.yml's lowRISC/ibex
-# entry.
+# lowRISC/ibex + opentitan (prim/prim_generic), FuseSoC compile order.
+# ibex_trvk.sv (CHERIoT) is not listed: unused since BaseIsa=RV32I here.
 ../../vendor/lowrisc/ibex/rtl/ibex_pkg.sv
 ../../vendor/lowrisc/ibex/rtl/ibex_cheriot_pkg.sv
 ../../vendor/lowrisc/opentitan/hw/ip/prim_generic/rtl/prim_ram_1p_pkg.sv
@@ -204,10 +164,7 @@
 ../../vendor/lowrisc/ibex/rtl/ibex_lockstep.sv
 ../../vendor/lowrisc/ibex/rtl/ibex_top.sv
 
-# ---- upstream IP: pulp-platform/axi + pulp-platform/common_cells ------------
-# common_cells is vendored at the OLDER commit axi's own Bender.lock pins
-# (db42769, pre-rename cc_ naming), not at a newer common_cells release --
-# see vendor/manifest.yml's pulp-platform/common_cells entry.
+# pulp-platform/axi + common_cells (pinned at axi's own Bender.lock commit).
 ../../vendor/pulp-platform/axi/src/axi_pkg.sv
 ../../vendor/pulp-platform/common_cells/src/cc_pkg.sv
 ../../vendor/pulp-platform/common_cells/src/cc_lzc.sv
@@ -222,13 +179,9 @@
 ../../vendor/pulp-platform/axi/src/axi_from_mem.sv
 ../../vendor/pulp-platform/axi/src/axi_mux.sv
 
-# ---- ours: CPU2AXI bridge (self-designed merge of Ibex's two memory-style ---
-# ---- ports into one AXI4 master; axi_from_mem/axi_mux themselves are IP) ----
+# ours: CPU2AXI bridge (merges Ibex's two memory-style ports into one AXI4).
 rtl/cpu2axi_pkg.sv
 rtl/m_qnsc_cpu2axi.sv
 
-# ---- ours: QNSC-naming-rule wrapper, generated via Emacs verilog-mode ------
-# ---- AUTOINST/AUTO_TEMPLATE from rtl/emacs/m_qnsc_wrap_cpu.src.sv -- see
-# ---- rtl/emacs/Makefile. Instantiates ibex_top and m_qnsc_cpu2axi directly,
-# ---- connected to each other in this one file (leader review 2026-09-28).
+# ours: the wrapper (generated, see rtl/emacs/Makefile).
 rtl/emacs/m_qnsc_wrap_cpu.sv
