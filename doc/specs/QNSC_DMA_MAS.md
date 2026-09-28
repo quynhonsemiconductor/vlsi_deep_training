@@ -264,7 +264,7 @@ One `m_qnsc_wrap_dma` in `design/top`.
 
 | Port | Tied to | Why |
 |---|---|---|
-| Frontend `midend_busy_i` | midend `busy_o` | Reported in `STATUS[9]` |
+| Frontend `midend_busy_i` | midend `busy_o` | Reported in `STATUS[8]` |
 | Backend error-handler request | none (`NO_ERROR_HANDLING` has no port) | 7.5 |
 | AXI `user` on every channel | 0 | Not used on `S_BUS` |
 | AXI `ar_prot`, `aw_prot` | as driven by the backend | Not checked by any QSOC slave |
