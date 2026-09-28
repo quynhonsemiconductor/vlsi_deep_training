@@ -5,7 +5,7 @@ Each folder answers one question.
 ```
 doc/
   README.md          this index
-  TRACKER.md         where every block stands, stage by stage
+  BLOCKS.md          every block: directory, owner, specification
   guides/            how do I work here?          -- team how-to
   rules/             what is mandatory?           -- Naming Rule, EMACS guide (owner: Tâm)
   specs/             what must my block do?       -- MAS and DECISIONS, Markdown source

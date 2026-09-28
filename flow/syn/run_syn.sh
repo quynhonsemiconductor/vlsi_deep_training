@@ -9,7 +9,7 @@
 # design/<block>/<block>.f.
 #
 # Pass criterion: no latch, no multi-driven or undriven net (check -assert), and
-# the cell count in build/syn/<block>/syn.log goes into the tracker comment.
+# the cell count in build/syn/<block>/syn.log is stated in the pull request.
 set -euo pipefail
 
 block=${1:?usage: run_syn.sh <block> [top]}

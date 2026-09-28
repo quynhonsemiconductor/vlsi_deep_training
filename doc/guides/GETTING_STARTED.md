@@ -89,8 +89,9 @@ make naming BLOCK=<block>
 
 ## 5. Pull request
 
-1. Update `design/<block>/README.md` (Owner, Spec, IP, files, instances) and your row in
-   [`doc/TRACKER.md`](../TRACKER.md) (`PR #n`).
+1. Update `design/<block>/README.md` (Owner, Spec, IP, files, instances). Stage status is
+   in the teacher's assistant's tracker; `doc/BLOCKS.md` changes only when a block, its
+   owner or its specification changes.
 2. Commit. For a generated wrapper, commit both the source and the generated file.
 3. Title: a Conventional Commit, e.g. `feat(pwm): add the apb_adv_timer wrapper`.
 4. To catch up with `main`: `git fetch && git rebase origin/main`. Never merge `main`
