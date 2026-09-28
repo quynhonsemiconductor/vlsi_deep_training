@@ -13,10 +13,13 @@ Three rules, from design/README.md ("Shared numbers: who may use qnsc_pkg" and
   2. NO-PARAM   A wrapper (m_qnsc_wrap_*) declares no parameter. The IP owner
                 fixes the IP's configuration inside the wrapper; design/top only
                 connects. An empty #() is accepted, as in the I2C demo.
-  3. WRAP-NAME  A wrapper in design/<block> is m_qnsc_wrap_<block>: named after
-                the block (its name in the contract), not the IP module, so the
-                name stays when the IP is replaced. Two configurations of one IP
-                are two blocks (design/isram, design/dsram), each with its wrapper.
+  3. WRAP-NAME  The wrapper of design/<block>, its boundary, is m_qnsc_wrap_<block>:
+                named after the block (its name in the contract), not the IP module,
+                so the name stays when the IP is replaced. A block built from several
+                IPs may nest one wrapper per IP inside it, named
+                m_qnsc_wrap_<block>_<part> (design/cpu: m_qnsc_wrap_cpu around
+                m_qnsc_wrap_cpu_ibex and m_qnsc_wrap_cpu_cpu2axi). Two configurations
+                of one IP are two blocks (design/isram, design/dsram).
   4. NO-IMPORT  A file expanded by emacs verilog-mode (it contains an AUTO
                 comment) has no import statement. verilog-mode's parser does not
                 resolve package declarations; an integration module generated
@@ -139,10 +142,11 @@ def check_file(path: Path, integration: set[str]) -> list[Finding]:
 
     for m in WRAP_NAME.finditer(src):
         name = m.group("name")
-        if name != f"m_qnsc_wrap_{block}":
+        if name != f"m_qnsc_wrap_{block}" and not name.startswith(f"m_qnsc_wrap_{block}_"):
             add(m.start(), "WRAP-NAME",
-                f"a wrapper in design/{block} is m_qnsc_wrap_{block} (named after the "
-                f"block, not the IP module), not {name} (design/README.md, Naming)")
+                f"a wrapper in design/{block} is m_qnsc_wrap_{block}, or "
+                f"m_qnsc_wrap_{block}_<part> for a wrapper nested inside it (named after "
+                f"the block, not the IP module), not {name} (design/README.md, Naming)")
 
     for m in WRAP_HEADER.finditer(src):
         body = paren_body(src, m.end() - 1)
