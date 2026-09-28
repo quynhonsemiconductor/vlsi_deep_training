@@ -1,6 +1,6 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,6 +14,7 @@ The reasoning behind each change is in
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, onto the template |
 | V2.1 | 2026-09-24 | Nghia VT | -- | Corrected against the RTL (`CH_EN`, output MODE, events, input stage, decode); full register fields; tie-off table; new block diagram |
 | V2.2 | 2026-09-25 | Nghia VT | -- | Pad ports named `o_pad_pwm`, `i_pad_tim_ext` (was `o_pwm`, `i_tim_ext`), per `QNSC_RTL_Design_Naming_Rule` 3.8 |
+| V2.3 | 2026-09-28 | Nghia VT | -- | `SCRC` bit from `QNSC_SCRC_MAS` V3.0: `CLK_EN[15]`; requirement on `SCRC` closed |
 
 # 1. Overview
 
@@ -43,7 +44,7 @@ Trong.
 
 ![PWM block: register file, clock gates, four timer modules, event multiplexer](../figures/img/fig_pwm_block.png){width=6.5in}
 
-Clock `i_clk_peri` (`peri` cluster, gated by `SCRC` `CLK_EN`), reset
+Clock `i_clk_peri` (`peri` cluster, gated by `SCRC` `CLK_EN[15]`), reset
 `i_rst_n_peri`. The register file and the event multiplexer run on `i_clk_peri`.
 Timer module `i` runs on `i_clk_peri` gated by `CH_EN[i]`.
 
@@ -222,7 +223,7 @@ error: `PSLVERR` is 0 and `PREADY` is 1.
 
 ## 7.7 Clock gating and safe stop
 
-Two gates are in series: `SCRC` `CLK_EN` gates `i_clk_peri` for the whole block, and
+Two gates are in series: `SCRC` `CLK_EN[15]` gates `i_clk_peri` for the whole block, and
 `CH_EN[i]` gates module `i`.
 
 - `CH_EN` resets to 0: every module is stopped and unclocked out of reset.
@@ -266,7 +267,6 @@ One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 | Item | Owner | What it blocks |
 |---|---|---|
 | `i_bus_apb_paddr[11:0]` = the low 12 bits of the offset (`P_BUS` subtracts the base; offset bits 13:12 are not used) | bus owner | register decode |
-| `CLK_EN` and `SOFT_RST_CTRL` bit positions for PWM | SCRC owner | firmware clock and reset control |
 | `SCRC` closes the PWM clock only after firmware's safe stop -- 7.7 | firmware owner | outputs frozen at a non-zero level at a power stage |
 | Pins for `PWM_0..7` and `TIM_EXT0..3`, and their IO MUX default after reset | IO pad / IO MUX owner | pin owner out of reset |
 

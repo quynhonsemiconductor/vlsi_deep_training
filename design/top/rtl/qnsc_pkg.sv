@@ -20,6 +20,7 @@ package qnsc_pkg;
   localparam int unsigned C_ADDR_WIDTH = 32;
   localparam int unsigned C_CLK_MHZ    = 20;
   localparam int unsigned C_APB_PADDR_WIDTH = 12;  // P_BUS -> every APB slave
+  localparam logic [31:0]  C_CHIP_ID = 32'h51534F43;  // SYSCSR CHIP_ID_REV, ASCII 'QSOC'
 
   // ---- memory map ----------------------------------------------------------
   // Source: QSOC_HAS Table 7-1. Every address in the 32-bit space belongs to
@@ -97,16 +98,18 @@ package qnsc_pkg;
   // The cluster name is what goes into the port name the naming rule requires:
   //   i_clk_<domain> / i_rst_n_<domain>
   //   i_clk_cpu   hardwired on, not writable
-  //     cpu, bus, sysdbg
+  //     cpu, bus, sysdbg, syscsr
   //   i_clk_mem   hardwired on, not writable
   //     rom, isram, dsram
+  //   i_clk_wdt   hardwired on, not writable
+  //     wdt
   //   i_clk_peri  gateable via CLK_EN in SCRC
-  //     wdt, timer_0, timer_1, uart_0, uart_1, spi, i2c, gpio, dma, pwm
-  localparam int unsigned C_CLK_CLUSTERS = 3;
+  //     timer_0, timer_1, uart_0, uart_1, spi, i2c, gpio, dma, pwm
+  localparam int unsigned C_CLK_CLUSTERS = 4;
 
   localparam int unsigned C_RST_SOURCES = 3;   // power_on, watchdog, software
 
-  // The CLK_EN and SOFT_RST_CTRL bit positions per peripheral belong to the
-  // SCRC register map and are not duplicated here -- see tbd: in the contract.
+  // The CLK_EN bit positions per peripheral belong to the
+  // SCRC register map and are not duplicated here -- see QNSC_SCRC_MAS Table 6-2.
 
 endpackage : qnsc_pkg

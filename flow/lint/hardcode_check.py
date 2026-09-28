@@ -90,6 +90,7 @@ def load_contract() -> tuple[dict[int, list[str]], list[tuple[int, int, str]]]:
         named.setdefault(r["size"], []).append(f"C_{n}_SIZE")
         regions.append((r["base"], r["base"] + r["size"] - 1, r["name"]))
 
+    named.setdefault(c["meta"]["chip_id"], []).append("C_CHIP_ID")
     # Interrupt line indices are small, so they are recorded but only reported on
     # an exact match in a context the checker cannot see -- kept out of `named`
     # to avoid flagging every loop bound that happens to equal 4.

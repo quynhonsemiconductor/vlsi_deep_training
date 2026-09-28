@@ -66,12 +66,12 @@
 <text x="890.0" y="250.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">0x8001_C000</text>
 <text x="890.0" y="264.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">MODE_64 = 0</text>
 <text x="77.5" y="196.0" font-size="9" text-anchor="middle" fill="#000000">SCRC clock gate</text>
-<text x="77.5" y="208.0" font-size="9" text-anchor="middle" fill="#000000">CLK_EN[TBD]</text>
+<text x="77.5" y="208.0" font-size="9" text-anchor="middle" fill="#000000">CLK_EN[3]</text>
 <text x="77.5" y="220.0" font-size="9" text-anchor="middle" fill="#000000">open at reset</text>
 <text x="77.5" y="267.0" font-size="9" text-anchor="middle" fill="#000000">SCRC</text>
 <text x="77.5" y="279.0" font-size="9" text-anchor="middle" fill="#000000">o_rst_n_timer_0</text>
 <text x="617.5" y="196.0" font-size="9" text-anchor="middle" fill="#000000">SCRC clock gate</text>
-<text x="617.5" y="208.0" font-size="9" text-anchor="middle" fill="#000000">CLK_EN[TBD]</text>
+<text x="617.5" y="208.0" font-size="9" text-anchor="middle" fill="#000000">CLK_EN[4]</text>
 <text x="617.5" y="220.0" font-size="9" text-anchor="middle" fill="#000000">closed at reset</text>
 <text x="617.5" y="267.0" font-size="9" text-anchor="middle" fill="#000000">SCRC</text>
 <text x="617.5" y="279.0" font-size="9" text-anchor="middle" fill="#000000">o_rst_n_timer_1</text>

@@ -35,6 +35,10 @@ DOCS = [
     ("QNSC_Interrupt_Map_MAS", "Interrupt Map"),
     ("QNSC_TIMER_MAS", "TIMER"),
     ("QNSC_PWM_MAS", "PWM"),
+    ("QNSC_SCRC_MAS", "SCRC"),
+    ("QNSC_SYSCSR_MAS", "SYSCSR"),
+    ("QNSC_ROM_MAS", "ROM"),
+    ("QNSC_BOOT_SPEC", "BOOT"),
 ]
 HEADINGS = ["Heading%d" % i for i in range(1, 7)]
 

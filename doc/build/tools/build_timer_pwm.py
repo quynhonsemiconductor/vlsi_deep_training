@@ -16,9 +16,9 @@ t = [
     N("t1", 740, 170, 300, 140,
       "TIMER1\napb_timer_unit\n0x8001_C000\nMODE_64 = 0", "red", 11, True),
 
-    N("g0", 20, 177, 115, 56, "SCRC clock gate\nCLK_EN[TBD]\nopen at reset", "box", 9),
+    N("g0", 20, 177, 115, 56, "SCRC clock gate\nCLK_EN[3]\nopen at reset", "box", 9),
     N("r0", 20, 250, 115, 40, "SCRC\no_rst_n_timer_0", "box", 9),
-    N("g1", 560, 177, 115, 56, "SCRC clock gate\nCLK_EN[TBD]\nclosed at reset", "box", 9),
+    N("g1", 560, 177, 115, 56, "SCRC clock gate\nCLK_EN[4]\nclosed at reset", "box", 9),
     N("r1", 560, 250, 115, 40, "SCRC\no_rst_n_timer_1", "box", 9),
 
     N("tie0", 176, 380, 120, 56, "event_lo_i = 0\nevent_hi_i = 0\nref_clk_i = 0", "box", 9),
