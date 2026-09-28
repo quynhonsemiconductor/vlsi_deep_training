@@ -39,10 +39,10 @@ Honest status, so nobody has to guess:
 |---|---|
 | Architecture and memory map | **agreed** — one contract file, checked by CI |
 | Specifications | **9 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA |
-| RTL | **started.** Scaffold, naming rules and CI in place; INTMAP RTL generated, CPU/UART/I2C wrappers under review — see [`doc/TRACKER.md`](doc/TRACKER.md) |
+| RTL | **started.** Scaffold, naming rules and CI in place; INTMAP RTL generated, CPU/UART/I2C wrappers under review |
 | Verification | not started |
 | Physical design | not started |
-| Per-IP status | [`doc/TRACKER.md`](doc/TRACKER.md), 19 IP rows, one column per sign-off stage |
+| Per-IP status | the teacher's assistant's tracker; directory, owner and specification of every block in [`doc/BLOCKS.md`](doc/BLOCKS.md) |
 
 ## Repository layout
 
@@ -54,7 +54,7 @@ Honest status, so nobody has to guess:
 | `util/` | The inter-block contract, its generator, and the vendoring tool |
 | `flow/` | Scripts for every sign-off stage: lint, sim, syn, STA/SDC, and the CDC/RDC rules |
 | `dv/` · `pd/` · `fpga/` | Verification, implementation, FPGA bring-up |
-| `doc/TRACKER.md` | Sign-off status of every IP, one column per stage |
+| `doc/BLOCKS.md` | Every block: directory, owner, specification |
 | `.github/` | CI, ownership and repository policy — see [`.github/POLICY.md`](.github/POLICY.md) |
 
 ## Getting started

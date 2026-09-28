@@ -167,7 +167,7 @@ Only the `vlsi-maintainers` team -- Tâm (`@Stork1323`), the teacher (`@quannhqn
 - `main-protection` still applies to the maintainers: the eleven checks and one
   approval from someone other than the author.
 
-Block owners are named in each block README and in `doc/TRACKER.md`; they own the
+Block owners are named in each block README and in `doc/BLOCKS.md`; they own the
 work, not the merge.
 
 ## Keeping the ruleset in step with CI

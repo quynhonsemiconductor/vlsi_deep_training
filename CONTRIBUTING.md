@@ -14,7 +14,7 @@ copy of each rule rather than two that drift apart.
 | [`doc/rules/`](doc/rules) | **Mandatory** Naming Rule (CI enforces it) and the EMACS quick guide |
 | [`util/qsoc_contract.yml`](util/qsoc_contract.yml) | Every number shared between blocks, and where each came from |
 | Your block's MAS under [`doc/specs/`](doc/specs) | What your block must do |
-| [`doc/TRACKER.md`](doc/TRACKER.md) | Where every block stands, stage by stage. Update your row in the PR that finishes a stage |
+| [`doc/BLOCKS.md`](doc/BLOCKS.md) | Every block: directory, owner, specification. Status is in the teacher's assistant's tracker, not here |
 
 ## Writing a block — five steps
 
@@ -157,10 +157,12 @@ who must supply it.
 
 ## Sign-off stages
 
-Every IP moves through the columns of [`doc/TRACKER.md`](doc/TRACKER.md). QSOC is a
-training project, so every stage runs on **open-source tools**. The tracker keeps the
-teacher's column names; the column "VCS" is the simulation stage and runs on
-Verilator here.
+Every IP moves through these stages; their status is kept in the teacher's
+assistant's tracker, not in this repository. QSOC is a training project, so every
+stage runs on **open-source tools**. The stage names are the tracker's; "VCS" is the
+simulation stage and runs on Verilator here. A stage that does not apply to a block
+(for example CDC in a block with no clock) is waived in the block's README, with the
+reason.
 
 | Stage | Tool | Files, per block | Command | `done` when |
 |---|---|---|---|---|
@@ -170,7 +172,7 @@ Verilator here.
 | **SDC** | OpenSTA syntax | `design/<block>/constraints/<block>.sdc` | read by the SYN and GCA stages | Every clock and every input/output is constrained. Clock names follow the table in [`flow/sta/README.md`](flow/sta/README.md). CDC paths carry the constraint their MAS states |
 | **CDC** | Review against the MAS, plus lint | MAS crossing table | review in the pull request | Every crossing in the RTL is in the MAS crossing table, and every one goes through a shared cell in `design/common` or a handshake the MAS specifies. See [`flow/cdc/README.md`](flow/cdc/README.md) |
 | **RDC** | Review against the MAS | MAS reset table | review in the pull request | Every reset domain is listed in the MAS, and no flop is reset by one domain and sampled by another without the MAS saying why it is safe. See [`flow/rdc/README.md`](flow/rdc/README.md) |
-| **SYN** | Yosys, with the `yosys-slang` front end | none extra | `make syn BLOCK=<block>` | Synthesises with no latch and no multi-driven net. The cell count is recorded in the tracker comment |
+| **SYN** | Yosys, with the `yosys-slang` front end | none extra | `make syn BLOCK=<block>` | Synthesises with no latch and no multi-driven net. The cell count is stated in the pull request |
 | **GCA** | OpenSTA `check_setup` | the block SDC | `make gca BLOCK=<block>` | `check_setup` reports no unconstrained clock, input, output or loop |
 
 CDC and RDC have no mature open-source checker, so their evidence is the MAS table plus

@@ -25,7 +25,7 @@ design/<block>/
 The testbench lives in `dv/<block>/` (see [`dv/README.md`](../dv/README.md)); the
 shared scripts for each sign-off stage live in `flow/`. What each stage requires is
 in [`CONTRIBUTING.md`, "Sign-off stages"](../CONTRIBUTING.md#sign-off-stages), and the
-status of every block is in [`doc/TRACKER.md`](../doc/TRACKER.md).
+directory, owner and specification of every block are in [`doc/BLOCKS.md`](../doc/BLOCKS.md).
 
 `design/common/` holds RTL instantiated by **more than one** block. It is owned by
 the maintainers, because a change there affects every block that instantiates it.
