@@ -1,11 +1,7 @@
 `timescale 1ns/1ps
 
 module m_qnsc_wrap_cpu
-  import ibex_pkg::*;
-  import cpu2axi_pkg::*;
-  import qnsc_pkg::*;
 #(
-  parameter logic [31:0] P_HART_ID = 32'h0
 )
 (
 //---------------------------------------------------------------
@@ -14,9 +10,23 @@ module m_qnsc_wrap_cpu
 /*AUTOINPUT("^i_clk\|^i_rst")*/
 
 //---------------------------------------------------------------
+// Config -- values the chip decides, tied by design/top from
+// qnsc_pkg (design/README.md, "Shared numbers: who may use
+// qnsc_pkg"). IP itself takes fixed values or i_cfg_* ports, never
+// qnsc_pkg directly.
+//---------------------------------------------------------------
+// design/top ties this from i_dbg_en ? qnsc_pkg::C_ISRAM_BASE : 32'h0.
+// C_ISRAM_BASE, not C_ISRAM_DBG_BASE: debug boot jumps straight to the
+// downloaded application at ISRAM's program region (0x2000_1000, entry at
+// +0x80 = 0x2000_1080 per HAS Table 6-4 row 18 / ROM MAS V2.1 Section 8),
+// not to the 4 KiB debug/DM window C_ISRAM_DBG_BASE (0x2000_0000) that
+// m_qnsc_wrap_cpu_ibex's DmBaseAddr uses -- those are two different regions.
+input  logic [31:0] i_cfg_boot_addr,
+input  logic [31:0] i_cfg_hart_id,   // design/top ties this; 32'h0 while QSOC has one core
+
+//---------------------------------------------------------------
 // Boot / Debug
 //---------------------------------------------------------------
-input  logic i_dbg_en,   // drives boot_addr mux: 0=cold boot, 1=debug-ROM entry
 input  logic i_dbg_req,
 
 //---------------------------------------------------------------
@@ -37,26 +47,15 @@ input  logic i_dft_test_en,
 
 //---------------------------------------------------------------
 // AXI4 master bus -- flattened per QNSC naming rule, pass-through
-// from m_qnsc_wrap_cpu2axi to the subsystem boundary.
+// from m_qnsc_wrap_cpu_cpu2axi to the subsystem boundary.
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_bus_axi")*/
 /*AUTOOUTPUT("^o_bus_axi")*/
 );
 
-localparam logic [31:0] P_BOOT_ADDR_COLD = 32'h0000_0000;
-// C_ISRAM_BASE, not C_ISRAM_DBG_BASE: debug boot jumps straight to the
-// downloaded application at ISRAM's program region (0x2000_1000, entry at
-// +0x80 = 0x2000_1080 per HAS Table 6-4 row 18 / ROM MAS V2.1 Section 8),
-// not to the 4 KiB debug/DM window C_ISRAM_DBG_BASE (0x2000_0000) that
-// DmBaseAddr already uses below -- those are two different regions.
-localparam logic [31:0] P_BOOT_ADDR_DBG  = qnsc_pkg::C_ISRAM_BASE;
-
-logic [31:0] w_boot_addr;
-assign w_boot_addr = i_dbg_en ? P_BOOT_ADDR_DBG : P_BOOT_ADDR_COLD;
-
 // Pre-declared with explicit widths: AUTOWIRE cannot reliably infer width
 // for a wire referenced across two separate AUTOINST/AUTO_TEMPLATE blocks
-// (same tool limitation seen on m_qnsc_wrap_ibex's scramble_key/nonce).
+// (same tool limitation seen on m_qnsc_wrap_cpu_ibex's scramble_key/nonce).
 logic        w_ibex_bridge_instr_req;
 logic        w_ibex_bridge_instr_gnt;
 logic        w_ibex_bridge_instr_rvalid;
@@ -75,8 +74,8 @@ logic        w_ibex_bridge_data_err;
 
 /*AUTOWIRE*/
 
-/* m_qnsc_wrap_ibex AUTO_TEMPLATE(
-    .i_boot_addr             (w_boot_addr),
+/* m_qnsc_wrap_cpu_ibex AUTO_TEMPLATE(
+    .i_boot_addr             (i_cfg_boot_addr),
     .i_dbg_req               (i_dbg_req),
     .i_int_software          (1'b0),
     .i_int_timer             (1'b0),
@@ -84,7 +83,7 @@ logic        w_ibex_bridge_data_err;
     .i_int_fast              ({4'b0, i_int_fast}),
     .i_int_nm                (i_int_nm),
     .i_dft_scan_rst_n        (1'b1),
-    .i_hart_id               (P_HART_ID),
+    .i_hart_id               (i_cfg_hart_id),
     .i_cheriot_enable        (ibex_pkg::IbexMuBiOff),
     .i_fetch_enable          (ibex_pkg::IbexMuBiOn),
     .i_mcounteren_writable   (ibex_pkg::IbexMuBiOn),
@@ -140,9 +139,9 @@ logic        w_ibex_bridge_data_err;
     .i_mem_data_err          (w_ibex_bridge_data_err),
 );
 */
-m_qnsc_wrap_ibex u_m_qnsc_wrap_ibex(/*AUTOINST*/);
+m_qnsc_wrap_cpu_ibex u_m_qnsc_wrap_cpu_ibex(/*AUTOINST*/);
 
-/* m_qnsc_wrap_cpu2axi AUTO_TEMPLATE(
+/* m_qnsc_wrap_cpu_cpu2axi AUTO_TEMPLATE(
     .i_mem_instr_req    (w_ibex_bridge_instr_req),
     .o_mem_instr_gnt    (w_ibex_bridge_instr_gnt),
     .o_mem_instr_rvalid (w_ibex_bridge_instr_rvalid),
@@ -160,7 +159,7 @@ m_qnsc_wrap_ibex u_m_qnsc_wrap_ibex(/*AUTOINST*/);
     .o_mem_data_err     (w_ibex_bridge_data_err),
 );
 */
-m_qnsc_wrap_cpu2axi u_m_qnsc_wrap_cpu2axi(/*AUTOINST*/);
+m_qnsc_wrap_cpu_cpu2axi u_m_qnsc_wrap_cpu_cpu2axi(/*AUTOINST*/);
 
 endmodule
 // Local Variables:

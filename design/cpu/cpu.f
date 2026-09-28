@@ -51,10 +51,11 @@
 +incdir+../../vendor/pulp-platform/axi/include
 +incdir+../../vendor/pulp-platform/common_cells/include
 
-# ---- shared contract package (../../design/top/rtl/qnsc_pkg.sv is GENERATED
-# ---- from util/qsoc_contract.yml -- see CONTRIBUTING.md, "Never retype a
-# ---- shared number"). Must precede anything importing it. ------------------
-../../design/top/rtl/qnsc_pkg.sv
+# ---- no qnsc_pkg here: cpu is IP, not integration (design/README.md,
+# ---- "Shared numbers: who may use qnsc_pkg"). The values it needs from the
+# ---- chip (boot address, hart id) arrive on i_cfg_* ports that design/top
+# ---- ties from qnsc_pkg; the debug/DM window base is a fixed value tagged
+# ---- `// contract: memory_map.isram_dbg.base` in m_qnsc_wrap_cpu_ibex.sv.
 
 # ---- upstream IP: lowRISC/ibex + lowRISC/opentitan (prim/prim_generic), ----
 # ---- in FuseSoC-resolved compile order --------------------------------------
@@ -228,6 +229,6 @@ rtl/m_qnsc_cpu2axi.sv
 
 # ---- ours: QNSC-naming-rule wrappers, generated via Emacs verilog-mode ------
 # ---- AUTOINST/AUTO_TEMPLATE from rtl/emacs/*.src.sv -- see rtl/emacs/Makefile
-rtl/emacs/m_qnsc_wrap_ibex.sv
-rtl/emacs/m_qnsc_wrap_cpu2axi.sv
+rtl/emacs/m_qnsc_wrap_cpu_ibex.sv
+rtl/emacs/m_qnsc_wrap_cpu_cpu2axi.sv
 rtl/emacs/m_qnsc_wrap_cpu.sv
