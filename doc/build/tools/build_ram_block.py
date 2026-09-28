@@ -7,7 +7,7 @@ from diagen import Node as N, Edge as E, emit
 IMG = os.path.join(_DOC, "figures", "img")
 DRAWIO = os.path.join(_DOC, "figures", "drawio", "QNSC_RAM_Block.drawio")
 
-# m_qnsc_wrap_axi4_sram: the vendored controller, unmodified, plus the wstrb FIFO.
+# m_qnsc_wrap_isram / m_qnsc_wrap_dsram: the vendored controller, unmodified, plus the wstrb FIFO.
 # Wiring follows vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER/rtl at the pinned commit:
 # FIFO data goes to u_sram_misc; the arbiter sees only requests and returns grants.
 
@@ -40,7 +40,7 @@ f = [
     N("ch_r", 25, ROW["r"], 150, H, "R", "blue", 11, True),
     N("ch_b", 25, ROW["b"], 150, H, "B", "blue", 11, True),
 
-    N("wrap", 230, 20, 750, 580, "m_qnsc_wrap_axi4_sram", "group", 12, True, "top"),
+    N("wrap", 230, 20, 750, 580, "m_qnsc_wrap_isram  /  m_qnsc_wrap_dsram", "group", 12, True, "top"),
     N("sf", 520, 60, 170, H, "u_strbfifo\nwstrb, 4 bit x 8", "red", 10),
 
     N("ctrl", 260, 130, 690, 450, "u_ctrl  |  m_vlsi_axi4_sram  (IP, unmodified)",

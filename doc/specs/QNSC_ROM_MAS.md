@@ -1,6 +1,6 @@
 ---
 title: "ROM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -12,6 +12,7 @@ The reasoning behind each change, the V1.0--V2.1 history and the V2.1 text are i
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Nguyen Hao Nam | -- | V2.1 moved onto the MAS template: generated constant image instead of `$readmemh`, ports as `QNSC_RAM_MAS`, controller behaviour referenced, timing diagrams, monochrome figures |
+| V3.1 | 2026-09-28 | Nghia VT | -- | Section 9: bootloader debugging is `QNSC_SYSDBG_MAS` 7.2 (was 7.1) |
 
 # 1. Overview
 
@@ -172,7 +173,7 @@ One `m_qnsc_wrap_rom` at `AXI_M0`.
 | Bootloader behaviour, its size budget and its build | `QNSC_BOOT_SPEC`; source `design/rom/boot/` |
 | Decode error above `0x0000_07FF` | `S_BUS` |
 | `boot_addr_i` and its debug-boot mux | CPU owner, `QNSC_SYSDBG_MAS` 11 |
-| Debugging the bootloader from its first instruction | `QNSC_SYSDBG_MAS` 7.1 |
+| Debugging the bootloader from its first instruction | `QNSC_SYSDBG_MAS` 7.2 |
 
 # 10. Tie-offs
 
