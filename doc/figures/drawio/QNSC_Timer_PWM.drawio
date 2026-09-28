@@ -13,13 +13,13 @@
         <mxCell id="t1" value="TIMER1&#10;apb_timer_unit&#10;0x8001_C000&#10;MODE_64 = 0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="740" y="170" width="300" height="140" as="geometry"/>
         </mxCell>
-        <mxCell id="g0" value="SCRC clock gate&#10;CLK_EN[TBD]&#10;open at reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="g0" value="SCRC clock gate&#10;CLK_EN[3]&#10;open at reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="20" y="177" width="115" height="56" as="geometry"/>
         </mxCell>
         <mxCell id="r0" value="SCRC&#10;o_rst_n_timer_0" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="20" y="250" width="115" height="40" as="geometry"/>
         </mxCell>
-        <mxCell id="g1" value="SCRC clock gate&#10;CLK_EN[TBD]&#10;closed at reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="g1" value="SCRC clock gate&#10;CLK_EN[4]&#10;closed at reset" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="560" y="177" width="115" height="56" as="geometry"/>
         </mxCell>
         <mxCell id="r1" value="SCRC&#10;o_rst_n_timer_1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">

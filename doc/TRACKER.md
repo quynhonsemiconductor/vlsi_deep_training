@@ -16,7 +16,7 @@ The overall lead checks it against the repository before each review.
 |---:|---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | CPU | `design/cpu` | Truong Sinh | PR #1 | - | - | - | - | - | - | - | |
 | 2 | SYSDBG | `design/sysdbg` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V3.0 |
-| 3 | ROM | `design/rom` | Hao Nam | - | - | - | - | - | - | - | - | |
+| 3 | ROM | `design/rom` | Hao Nam | - | - | - | - | - | - | - | - | MAS V3.0 (lead's rewrite of V2.1, owner review pending) |
 | 4 | SRAM | `design/isram`, `design/dsram` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.2 |
 | 5 | S_BUS | `design/bus` | Truong Sinh | - | - | - | - | - | - | - | - | |
 | 6 | P_BUS | `design/bus` | Truong Sinh | - | - | - | - | - | - | - | - | |
@@ -28,8 +28,8 @@ The overall lead checks it against the repository before each review.
 | 12 | UART | `design/uart` | Bao Vinh | PR #12 | - | PR #12 | - | - | - | - | - | |
 | 13 | GPIO | `design/gpio` | Bui Hieu | - | - | - | - | - | - | - | - | MAS V1.2, 3 banks |
 | 14 | WDT | `design/wdt` | Bui Hieu | - | - | - | - | - | - | - | - | |
-| 15 | SYSCSR | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | Register file inside SCRC |
-| 16 | SCRC | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | |
+| 15 | SYSCSR | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | MAS V3.0 (lead's rewrite of V2.2, owner review pending). Separate APB slave on `APB_M1`, RTL in `design/scrc` |
+| 16 | SCRC | `design/scrc` | Hao Nam | - | - | - | - | - | - | - | - | MAS V3.0 (lead's rewrite of V2.3, owner review pending) |
 | 17 | INTMAP | `design/intmap` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.2 |
 | 18 | IO MUX | `design/iomux` | Bui Hieu | - | - | - | - | - | - | - | - | Not on the assistant's tracker yet |
 | 19 | TOP | `design/top` | Trong Nghia (lead) | - | - | - | - | - | - | - | - | `qnsc_pkg.sv` only so far |
@@ -40,5 +40,5 @@ The overall lead checks it against the repository before each review.
 |---|---|
 | SRAM | `design/isram` and `design/dsram`: one IP, two configurations, two wrappers |
 | S_BUS, P_BUS | `design/bus` |
-| SYSCSR | the status register file inside `design/scrc` |
+| SYSCSR | the status registers in `design/scrc`, a separate APB slave on `APB_M1` |
 | VCS | the simulation column; QSOC runs it with Verilator, see `CONTRIBUTING.md` |

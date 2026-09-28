@@ -22,7 +22,7 @@ doc/
 | [`rules/`](rules) | Naming Rule (`.docx` source and `.pdf` release) and the EMACS quick guide. See [`rules/README.md`](rules/README.md) | Tâm reviews every change |
 | [`specs/`](specs) | `QNSC_<BLOCK>_MAS.md` (the specification) and `QNSC_<BLOCK>_DECISIONS.md` (why), plus `QNSC_TEMPLATE_MAS.md`. **The Markdown is the source of truth** | yes |
 | `specs/docx/` | The `.docx` built from `specs/*.md`, committed so a reader without pandoc can open them | generated |
-| [`reference/`](reference) | `QSOC_HAS_Report_EN_v4_final.docx`, `QNSC_Diagram.drawio`: material from the teacher | no |
+| [`reference/`](reference) | `QSOC_HAS_Report_EN_v4_final.docx`, `QNSC_Diagram.drawio`, `VLSI_SCRC.drawio`: material from the teacher | no |
 | [`figures/`](figures) | `img/*.png`, `*.svg` (rendered, committed) and `drawio/*.drawio` (editable), written by the scripts in `build/tools/` | generated |
 | [`build/`](build) | `build_docs.py`; `tools/` (figure scripts, `diagen.py`, `gen_doc_tables.py`, `svg_mono.py`); `template/` (the pandoc reference template) | when the build changes |
 
@@ -64,6 +64,12 @@ committed ones.
 | `build_sysdbg_mas.py` | `fig_sysdbg_block`, `fig_sysdbg_handshake`, `fig_sysdbg_boot_wiring` | SYSDBG MAS |
 | `build_sysdbg_design.py`, `build_sysdbg_ports.py` | the V1.x SYSDBG figures | SYSDBG DECISIONS |
 | `build_qsoc_mem.py` | `fig_qsoc_mem` | RAM and SYSDBG DECISIONS |
+| `build_scrc.py` | `fig_scrc_*` (7 figures), `wave_scrc_*` (4 timing diagrams) | SCRC MAS |
+| `build_syscsr.py` | `fig_syscsr_block`, `fig_syscsr_regs`, `wave_syscsr_cause` | SYSCSR MAS |
+| `build_rom.py` | `fig_rom_block`, `fig_rom_layout`, `wave_rom_read`, `wave_rom_image`, `wave_rom_write` | ROM MAS |
+| `build_boot.py` | `fig_boot_path`, `fig_boot_frame`, `fig_boot_flow`, `fig_boot_seq` | BOOT SPEC |
+| `regfig.py` | the register bit-field renderer `build_syscsr.py` uses | any MAS |
+| `wavegen.py` | the timing-diagram renderer `build_scrc.py` uses; monochrome, `.svg` + `.png` | any MAS |
 | `svg_mono.py` | `fig_qsoc_full_mono` from `fig_qsoc_full.svg` | root README |
 
 ```bash

@@ -2,7 +2,7 @@
 
 A general-purpose 32-bit microcontroller, designed from the block level up as a
 deep-training project. RV32IMC core, two bus levels, 98 KiB of on-chip memory and
-twelve peripherals, targeting **SMIC 28 nm**.
+a set of APB peripherals, targeting **SMIC 28 nm**.
 
 There is no flash and no external memory interface, which shapes everything else:
 the application is downloaded into RAM over the serial port after every reset, and
@@ -19,11 +19,11 @@ through a wrapper.
 |---|---|
 | **Core** | lowRISC **Ibex**, RV32IMC, two-stage pipeline, machine mode |
 | **Clock** | one external 20 MHz input, no PLL — the PDK carries no analogue IP |
-| **Memory** | 2 KiB ROM · 64 KiB instruction RAM · 32 KiB data RAM |
+| **Memory** | 2 KiB ROM · 64 KiB instruction RAM (4 KiB debug window + 60 KiB app) · 32 KiB data RAM |
 | **System bus** | AXI4 crossbar, fully connected, decode error on an unmapped address |
-| **Peripheral bus** | APB4 router, 14 slaves (`APB_M0`--`APB_M13`) |
-| **Peripherals** | 2× UART · SPI host + device · I²C · 3× GPIO · 2× timer · PWM · watchdog · DMA |
-| **Interrupts** | 26 sources → 11 fast lines + 1 NMI, through a combinational OR tree |
+| **Peripheral bus** | APB4 router, 14 slave ports (`APB_M0`--`APB_M13`) — GPIO3 was dropped with the 40-pin package |
+| **Peripherals** | 2× UART · SPI host + device · I²C · 3× GPIO · 2× timer · PWM · watchdog · DMA · clock/reset control (SCRC) |
+| **Interrupts** | 26 sources → 11 of the 15 fast lines + 1 NMI, through a combinational OR tree |
 | **Debug** | JTAG, in-house: halt, resume, and memory access without the CPU |
 | **Boot** | serial download into RAM, header + payload + CRC32, then jump |
 
@@ -38,11 +38,11 @@ Honest status, so nobody has to guess:
 | | |
 |---|---|
 | Architecture and memory map | **agreed** — one contract file, checked by CI |
-| Specifications | **5 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM |
-| RTL | **not started.** The scaffold, naming rules and CI are in place; wrappers are next |
+| Specifications | **8 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM |
+| RTL | **started.** Scaffold, naming rules and CI in place; INTMAP RTL generated, CPU/UART/I2C wrappers under review — see [`doc/TRACKER.md`](doc/TRACKER.md) |
 | Verification | not started |
 | Physical design | not started |
-| Per-IP status | [`doc/TRACKER.md`](doc/TRACKER.md), one column per sign-off stage |
+| Per-IP status | [`doc/TRACKER.md`](doc/TRACKER.md), 19 IP rows, one column per sign-off stage |
 
 ## Repository layout
 

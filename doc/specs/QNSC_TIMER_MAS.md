@@ -1,6 +1,6 @@
 ---
 title: "TIMER"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.4"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -15,6 +15,7 @@ The reasoning behind each change is in
 | V2.1 | 2026-09-24 | Nghia VT | -- | One-shot and `CFG_REG_HI[31]` behaviour corrected from the RTL; wrapper interface, full register map, tie-offs and two figures added |
 | V2.2 | 2026-09-25 | Nghia VT | -- | `SCRC` reset outputs named `o_rst_n_timer_0`, `o_rst_n_timer_1` (was `o_rst_timer0_n`), per `QNSC_RTL_Design_Naming_Rule` 1.3 and 1.4 |
 | V2.3 | 2026-09-25 | Nghia VT | -- | Ports and addresses moved up one slot after GPIO3 was dropped: `TIMER0` on `APB_M6` at `0x8001_8000`, `TIMER1` on `APB_M7` at `0x8001_C000` |
+| V2.4 | 2026-09-28 | Nghia VT | -- | `SCRC` bits from `QNSC_SCRC_MAS` V3.0: `CLK_EN[3]`, `CLK_EN[4]`; the error response is the `SCRC` APB guard; two requirements on `SCRC` closed |
 
 # 1. Overview
 
@@ -46,7 +47,7 @@ Nghia Van Trong.
 ![TIMER0 and TIMER1 in QSOC](../figures/img/fig_timer_block.png){width=6.4in}
 
 Both instances are in the `peri` clock cluster. Each has its own clock gate,
-`CLK_EN[TBD]` in `SCRC`, and its own reset, `o_rst_n_timer_0` or `o_rst_n_timer_1` from
+`CLK_EN[3]` or `CLK_EN[4]` in `SCRC`, and its own reset, `o_rst_n_timer_0` or `o_rst_n_timer_1` from
 `SCRC`.
 
 ![Inside one TIMER instance](../figures/img/fig_timer_inside.png){width=6.4in}
@@ -206,8 +207,8 @@ free-running mode no register identifies the source.
   region: `base + 0x40` is `CFG_REG_LO`.
 - `PSTRB` is not connected: a byte or halfword store writes all 32 bits of `PWDATA`.
 - While the clock gate is closed, the counters and compare flags hold their value,
-  so `o_int_timer` holds its value; the `SCRC` gated-domain responder answers accesses
-  to the region with an error.
+  so `o_int_timer` holds its value. While the clock is stopped, the `SCRC` APB guard answers accesses to the region with an error
+  (`QNSC_SCRC_MAS` 7.7).
 
 # 8. Instances
 
@@ -223,7 +224,7 @@ as written by firmware, the clock gate reset state and the `INTMAP` line -- sect
 | Interrupt status or flag | nowhere |
 | Interrupt acknowledge | firmware writes to the block -- 7.5 |
 | Source of `irq_fast_i[6]` between `TIMER1` `lo` and `hi` | nowhere in periodic or free-running mode -- 7.5 |
-| Error response | `SCRC` responder, only while the clock gate is closed -- 7.6 |
+| Error response | `SCRC` APB guard, while the clock is stopped (`QNSC_SCRC_MAS` 7.7) |
 | Greater-or-equal compare | nowhere -- 7.4 |
 | `mtime` and `mtimecmp` | nowhere; `irq_timer_i` is tied 0 at the core |
 | Aggregation onto a CPU interrupt line | `INTMAP` |
@@ -247,8 +248,6 @@ as written by firmware, the clock gate reset state and the `INTMAP` line -- sect
 | Item | Owner | What it blocks |
 |---|---|---|
 | `i_bus_apb_paddr[11:0]` = the low 12 bits of the offset (`P_BUS` subtracts the base; offset bits 13:12 are not used) | bus owner | register decode |
-| `CLK_EN` and `SOFT_RST_CTRL` bit positions for `TIMER0` and `TIMER1` | `SCRC` owner | the wrapper's clock and reset connection |
-| Gate reset values: `TIMER0` open, `TIMER1` closed | `SCRC` owner | `TIMER0` counting before firmware writes `SCRC` |
 
 Accepted limits and firmware rules:
 

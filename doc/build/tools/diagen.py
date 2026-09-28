@@ -35,6 +35,12 @@ STYLES = {
     "red":    dict(fill=_WHITE, stroke=_BLACK, dash=None, width=2.8),
     # Not a block: a boundary drawn around several.
     "group":  dict(fill="none",  stroke=_BLACK, dash="6 4", width=1.4),
+    # Not a block either: a port name at the boundary of the block being drawn.
+    "port":   dict(fill="none",  stroke="none", dash=None, width=0),
+    # A decision in a flowchart: drawn as a diamond in its bounding box.
+    "diamond": dict(fill=_WHITE, stroke=_BLACK, dash=None, width=1.4),
+    # Start or end of a flowchart: a box with fully rounded ends.
+    "term":   dict(fill=_WHITE, stroke=_BLACK, dash=None, width=1.4),
 }
 SIDES = {"l": (0, .5), "r": (1, .5), "t": (.5, 0), "b": (.5, 1)}
 
@@ -99,7 +105,13 @@ def to_svg(nodes, edges, title, pad=24, draw_title=False):
     for n in nodes:
         st = STYLES[n.style]
         d = f' stroke-dasharray="{st["dash"]}"' if st["dash"] else ""
-        o.append(f'<rect x="{n.x}" y="{n.y}" width="{n.w}" height="{n.h}" rx="3" '
+        if n.style == "diamond":
+            cx, cy = n.x + n.w / 2, n.y + n.h / 2
+            o.append(f'<polygon points="{cx},{n.y} {n.x + n.w},{cy} {cx},{n.y + n.h} {n.x},{cy}" '
+                     f'fill="{st["fill"]}" stroke="{st["stroke"]}" stroke-width="{st["width"]}"/>')
+            continue
+        rx = n.h / 2 if n.style == "term" else 3
+        o.append(f'<rect x="{n.x}" y="{n.y}" width="{n.w}" height="{n.h}" rx="{rx}" '
                  f'fill="{st["fill"]}" stroke="{st["stroke"]}" stroke-width="{st["width"]}"{d}/>')
     for e in edges:
         pts = route(idx[e.src], idx[e.dst], e.ss, e.ds, e.mid)
@@ -139,7 +151,9 @@ def to_drawio_page(nodes, edges, name, pid):
          "      <root>", '        <mxCell id="0"/>', '        <mxCell id="1" parent="0"/>']
     for n in nodes:
         st = STYLES[n.style]
-        s = (f'rounded=0;whiteSpace=wrap;html=1;fillColor={st["fill"]};'
+        shape = ("rhombus;" if n.style == "diamond" else
+                 "rounded=1;arcSize=50;" if n.style == "term" else "rounded=0;")
+        s = (f'{shape}whiteSpace=wrap;html=1;fillColor={st["fill"]};'
              f'strokeColor={st["stroke"]};fontSize={n.fs};'
              f'{"dashed=1;" if st["dash"] else "dashed=0;"}'
              f'{"fontStyle=1;" if n.bold else ""}'

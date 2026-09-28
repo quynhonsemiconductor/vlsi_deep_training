@@ -34,6 +34,10 @@ meta:
   # APB_ADDR_WIDTH = 12 and decodes only low bits, so 12 fits them all.
   # Decided 2026-09-24 by the overall lead; it closes the former tbd item.
   apb_paddr_width: 12
+  # SYSCSR CHIP_ID_REV. ASCII 'QSOC', most significant byte first: 0x51 'Q',
+  # 0x53 'S', 0x4F 'O', 0x43 'C'. Read by firmware, and by host tools through
+  # SYSDBG, to check they run on a QSOC. Mistyped once already ('QCOS').
+  chip_id: 0x51534F43
 
 # -----------------------------------------------------------------------------
 # Memory map. Source: QSOC_HAS Table 7-1, cross-checked against QNSC_RAM_MAS
@@ -274,7 +278,7 @@ interrupts:
 # QNSC_RAM_MAS 5.2, QNSC_SYSDBG_MAS section 3 and QNSC_PWM_MAS.
 #
 # One clock frequency for the whole chip, so nothing here crosses a frequency
-# boundary; a domain is a gate plus a soft-reset bit, not a separate clock.
+# boundary; a domain is a clock gate plus a reset synchroniser, not a separate clock.
 # -----------------------------------------------------------------------------
 clock_domains:
   # The chip has ONE frequency -- no PLL, no divider, because the SMIC 28 nm PDK
@@ -286,12 +290,13 @@ clock_domains:
   clusters:
     - name: cpu
       port_suffix: cpu
-      blocks: [cpu, bus, sysdbg]
+      blocks: [cpu, bus, sysdbg, syscsr]
       gateable: false
       note: >
         Gating the core or either bus removes the agent that would have to
         re-enable it -- nothing is left awake to recover. Gate enables are
-        hardwired active so no software mistake can stop them.
+        hardwired active so no software mistake can stop them. SYSCSR runs on
+        the P_BUS clock and must be readable after any reset.
     - name: mem
       port_suffix: mem
       blocks: [rom, isram, dsram]
@@ -347,13 +352,6 @@ reset_sources: [power_on, watchdog, software]
 # Not yet agreed. Named so the gap is visible.
 # -----------------------------------------------------------------------------
 tbd:
-  - item: CLK_EN and SOFT_RST_CTRL bit positions per peripheral
-    owner: SCRC owner
-    note: >
-      The cluster each block belongs to is settled above, which is what the
-      i_clk_<domain> port name needs. What is still missing is the BIT NUMBER
-      each peripheral occupies in SCRC's CLK_EN and SOFT_RST_CTRL registers --
-      that belongs to the SCRC register map, not here.
   - item: DMA peripheral channel for each requester
     owner: DMA owner
     note: >

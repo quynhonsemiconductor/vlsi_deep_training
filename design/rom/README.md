@@ -1,6 +1,6 @@
 # `rom` — boot ROM
 
-**Owner:** @Nam-HaoNguyen   **Spec:** _TBD_   **DV:** [`../../dv/rom`](../../dv/rom)
+**Owner:** @Nam-HaoNguyen   **Spec:** [`QNSC_ROM_MAS.md`](../../doc/specs/QNSC_ROM_MAS.md)   **DV:** [`../../dv/rom`](../../dv/rom)
 
 ## What this block is
 
@@ -15,8 +15,9 @@ an application into RAM.
 |------|--------|-------------|
 | `nguyenquanicd/AXI4-SRAM-CONTROLLER` | same controller as ISRAM and DSRAM | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
-Read-only is achieved in the wrapper by tying the write channel to its idle state
-rather than by a different controller.
+Read-only is achieved in the wrapper: the controller's write channel is tied idle
+and a small responder answers every write with `SLVERR`. The contents are a
+generated constant module, `m_qnsc_rom_image`, not a `$readmemh` array.
 
 ## The wrapper is the boundary
 
@@ -35,7 +36,7 @@ The Ibex reset vector is `boot_addr_i + 0x80`, and the trap vector table sits at
 | `0x080` – `0x7FF` | **1920 B** | all the boot code there is |
 
 1920 bytes is why the bootloader must use the **bitwise** CRC32: the table-driven
-variant is about 2.1 KiB and does not fit.
+variant needs a 1 KiB table on top of the code, and does not fit.
 
 ## Instances
 

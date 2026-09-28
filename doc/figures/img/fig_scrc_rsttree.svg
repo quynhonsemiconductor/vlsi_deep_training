@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1508" height="398" viewBox="-24 -14 1508 398" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
+<rect x="-24" y="-14" width="1508" height="398" fill="#ffffff"/>
+<rect x="0" y="40" width="110" height="40" rx="3" fill="none" stroke="none" stroke-width="0"/>
+<rect x="130" y="40" width="110" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="260" y="40" width="110" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="520" y="10" width="560" height="90" rx="3" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="6 4"/>
+<rect x="540" y="45" width="150" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="710" y="45" width="150" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="880" y="45" width="180" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="150" y="195" width="150" height="30" rx="3" fill="none" stroke="none" stroke-width="0"/>
+<rect x="150" y="225" width="150" height="30" rx="3" fill="none" stroke="none" stroke-width="0"/>
+<rect x="420" y="160" width="120" height="100" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="660" y="185" width="150" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="960" y="150" width="170" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="960" y="260" width="60" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1050" y="260" width="80" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1180" y="120" width="280" height="230" rx="3" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="6 4"/>
+<rect x="1200" y="150" width="240" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1200" y="200" width="240" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1200" y="260" width="240" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="870" y="330" width="220" height="30" rx="3" fill="none" stroke="none" stroke-width="0"/>
+<polyline points="110.0,60.0 130.0,60.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="240.0,60.0 260.0,60.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="370.0,60.0 520.0,60.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="409.0" y="52.0" width="72.0" height="14" fill="#ffffff"/>
+<text x="445.0" y="63.0" font-size="10" fill="#000000" text-anchor="middle">w_rst_n_por</text>
+<polyline points="315.0,80.0 315.0,180.0 420.0,180.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="300.0,210.0 420.0,210.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="300.0,240.0 420.0,240.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="540.0,210.0 660.0,210.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="564.0" y="202.0" width="72.0" height="14" fill="#ffffff"/>
+<text x="600.0" y="213.0" font-size="10" fill="#000000" text-anchor="middle">w_rst_n_sys</text>
+<polyline points="810.0,200.0 900.0,200.0 900.0,175.0 960.0,175.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="858.0" y="179.5" width="84.0" height="14" fill="#ffffff"/>
+<text x="900.0" y="190.5" font-size="10" fill="#000000" text-anchor="middle">RST_REL[17:0]</text>
+<polyline points="810.0,225.0 900.0,225.0 900.0,280.0 960.0,280.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="864.0" y="244.5" width="72.0" height="14" fill="#ffffff"/>
+<text x="900.0" y="255.5" font-size="10" fill="#000000" text-anchor="middle">RST_REL[31]</text>
+<polyline points="980.0,330.0 980.0,315.0 990.0,315.0 990.0,300.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="1020.0,280.0 1050.0,280.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="1130.0,165.0 1160.0,165.0 1160.0,170.0 1200.0,170.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="1130.0,185.0 1165.0,185.0 1165.0,220.0 1200.0,220.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="1130.0,280.0 1200.0,280.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<text x="55.0" y="63.3" font-size="10" text-anchor="middle" fill="#000000">i_rst_n_pad</text>
+<text x="185.0" y="63.3" font-size="10" text-anchor="middle" fill="#000000">Reset Filter</text>
+<text x="315.0" y="63.3" font-size="10" text-anchor="middle" fill="#000000">Reset Sync</text>
+<text x="800.0" y="26.0" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">reset by POR only</text>
+<text x="615.0" y="68.3" font-size="10" text-anchor="middle" fill="#000000">RRC flip-flops</text>
+<text x="785.0" y="68.3" font-size="10" text-anchor="middle" fill="#000000">SYSCSR</text>
+<text x="970.0" y="68.3" font-size="10" text-anchor="middle" fill="#000000">CTRL sysdbg</text>
+<text x="225.0" y="213.3" font-size="10" text-anchor="middle" fill="#000000">i_wdt_rst_req</text>
+<text x="225.0" y="243.3" font-size="10" text-anchor="middle" fill="#000000">SW_RST</text>
+<text x="480.0" y="206.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">RRC</text>
+<text x="480.0" y="220.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">stretch 16</text>
+<text x="735.0" y="213.3" font-size="10" text-anchor="middle" fill="#000000">MCPU, SCRC CSR</text>
+<text x="1045.0" y="178.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">CTRL x 17</text>
+<text x="990.0" y="283.3" font-size="10" text-anchor="middle" fill="#000000">AND</text>
+<text x="1090.0" y="283.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">CTRL cpu</text>
+<text x="1320.0" y="136.0" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">reset by POR, WDT, SW</text>
+<text x="1320.0" y="173.3" font-size="10" text-anchor="middle" fill="#000000">sbus, pbus, rom, ram, wdt</text>
+<text x="1320.0" y="223.3" font-size="10" text-anchor="middle" fill="#000000">11 peripheral domains</text>
+<text x="1320.0" y="283.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">cpu  (also CPU hold)</text>
+<text x="980.0" y="348.3" font-size="10" text-anchor="middle" fill="#000000">NOT i_dbg_cpu_hold</text>
+</svg>
