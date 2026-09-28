@@ -38,9 +38,9 @@ Honest status, so nobody has to guess:
 | | |
 |---|---|
 | Architecture and memory map | **agreed** — one contract file, checked by CI |
-| Specifications | **11 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA, UART, I2C |
-| RTL | **started.** Scaffold, naming rules and CI in place; INTMAP RTL generated, CPU/UART/I2C wrappers under review |
-| Verification | not started |
+| Specifications | **12 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA, UART, I2C, GPIO |
+| RTL | **started.** Scaffold, naming rules and CI in place; INTMAP RTL generated, CPU/UART/I2C/GPIO wrappers under review |
+| Verification | **started.** GPIO has a self-checking block-level regression under review |
 | Physical design | not started |
 | Per-IP status | the teacher's assistant's tracker; directory, owner and specification of every block in [`doc/BLOCKS.md`](doc/BLOCKS.md) |
 
