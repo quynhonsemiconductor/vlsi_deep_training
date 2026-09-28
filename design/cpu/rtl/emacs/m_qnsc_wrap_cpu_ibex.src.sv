@@ -1,9 +1,7 @@
 `default_nettype none
 `timescale 1ns/1ps
 
-module m_qnsc_wrap_ibex
-  import ibex_pkg::*;
-  import qnsc_pkg::*;
+module m_qnsc_wrap_cpu_ibex
 #(
 )
 (
@@ -175,10 +173,14 @@ ibex_top #(
     .SecureIbex       (1'b0),
     .LockstepOffset   (1),
     .ICacheScramble   (1'b0),
-    .DmBaseAddr       (qnsc_pkg::C_ISRAM_DBG_BASE),
+    // IP does not use qnsc_pkg (design/README.md) -- the debug/DM window base
+    // is written as a fixed value with a contract tag instead of
+    // qnsc_pkg::C_ISRAM_DBG_BASE; contract_tag.py checks the literal against
+    // util/qsoc_contract.yml so it cannot silently drift from the real value.
+    .DmBaseAddr       (32'h2000_0000),                    // contract: memory_map.isram_dbg.base
     .DmAddrMask       (32'h0000_0FFF),
-    .DmHaltAddr       (qnsc_pkg::C_ISRAM_DBG_BASE + 32'h0000_0800),
-    .DmExceptionAddr  (qnsc_pkg::C_ISRAM_DBG_BASE + 32'h0000_0810),
+    .DmHaltAddr       (32'h2000_0000 + 32'h0000_0800),     // contract: memory_map.isram_dbg.base
+    .DmExceptionAddr  (32'h2000_0000 + 32'h0000_0810),     // contract: memory_map.isram_dbg.base
     .CsrMvendorId     (32'h0),
     .CsrMimpId        (32'h1)  // leader review 2026-09-28: encode implementation/revision
 ) u_ibex_top(/*AUTOINST*/);

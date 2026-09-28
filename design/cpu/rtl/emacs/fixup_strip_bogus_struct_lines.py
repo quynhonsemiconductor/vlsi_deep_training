@@ -2,8 +2,8 @@
 """Strip the two bogus AUTOINST lines verilog-mode emits whenever it AUTOINSTs
 an instance with a packed-array-of-struct port (prim_ram_1p_pkg::ram_1p_cfg_*),
 which it mis-parses as if the struct type name were itself a port connection.
-Used by both m_qnsc_wrap_ibex.sv (direct ibex_top instantiation) and
-m_qnsc_wrap_cpu.sv (which AUTOINSTs m_qnsc_wrap_ibex and inherits the same
+Used by both m_qnsc_wrap_cpu_ibex.sv (direct ibex_top instantiation) and
+m_qnsc_wrap_cpu.sv (which AUTOINSTs m_qnsc_wrap_cpu_ibex and inherits the same
 inferred port).
 """
 import sys
