@@ -5,7 +5,7 @@
 New file names, so the V1.x figures that QNSC_SYSDBG_DECISIONS.md and the
 presentation still show are left as they were drawn.
 
-The structure follows the teacher's reference drawing, figures/drawio/VLSI_SYSDBG.drawio:
+The structure follows the teacher's reference drawing, reference/VLSI_SYSDBG.drawio:
 a JTAG TAP in the TCK domain, an AXI manager in the AXI domain, and a 4-phase
 handshake between them.
 
