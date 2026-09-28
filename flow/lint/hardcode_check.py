@@ -4,7 +4,13 @@ hardcode_check.py -- refuse a literal in RTL that the contract already names.
 
 The rule this enforces is the one the whole anti-drift design rests on:
 
-    a number shared between blocks is imported from qnsc_pkg, never typed.
+    a number shared between blocks is written once, in util/qsoc_contract.yml.
+
+An integration module (top, bus, INTMAP, IO MUX, SCRC) takes it from qnsc_pkg.
+IP does not use qnsc_pkg (design/README.md): it takes a chip value on an i_cfg_*
+port, or writes the number with a `// contract: <key>` tag that
+flow/lint/contract_tag.py checks against the contract. A tagged line is therefore
+not reported here.
 
 Every cross-block defect this project has paid for was one fact written twice --
 ROM 8 KiB against 2 KiB, APB_M11 against APB_S11, eleven interrupt sources against
@@ -56,7 +62,7 @@ CONTRACT = REPO / "util" / "qsoc_contract.yml"
 DEFAULT_SCOPE = REPO / "design"
 GENERATED_PKG = REPO / "design" / "top" / "rtl" / "qnsc_pkg.sv"
 CI = bool(os.environ.get("GITHUB_ACTIONS"))
-IGNORE = re.compile(r"//\s*hardcode-check:\s*ignore")
+IGNORE = re.compile(r"//\s*(hardcode-check:\s*ignore|contract:\s*[A-Za-z0-9_.]+)")
 
 # A sized literal: 32'h8002_4000, 16'd1024, 8'b0101, and the unsized 'h1234.
 LITERAL = re.compile(
@@ -84,6 +90,7 @@ def load_contract() -> tuple[dict[int, list[str]], list[tuple[int, int, str]]]:
         named.setdefault(r["size"], []).append(f"C_{n}_SIZE")
         regions.append((r["base"], r["base"] + r["size"] - 1, r["name"]))
 
+    named.setdefault(c["meta"]["chip_id"], []).append("C_CHIP_ID")
     # Interrupt line indices are small, so they are recorded but only reported on
     # an exact match in a context the checker cannot see -- kept out of `named`
     # to avoid flagging every loop bound that happens to equal 4.
@@ -159,8 +166,9 @@ def check_file(path: Path, named: dict[int, list[str]],
                 advice = f"use the one for your block -- {shownames}{more}"
             out.append(Finding(
                 path, ln, "contract value",
-                f"{shown} is {which} in util/qsoc_contract.yml. "
-                f"Import from qnsc_pkg and {advice}, rather than typing the number"))
+                f"{shown} is {which} in util/qsoc_contract.yml. In an integration "
+                f"module, take it from qnsc_pkg and {advice}. In IP, take it on an "
+                f"i_cfg_* port, or tag the line '// contract: <key>'"))
             return
         for lo, hi, name in regions:
             if lo <= value <= hi:
@@ -232,7 +240,7 @@ def main(argv: list[str]) -> int:
     for f in findings:
         f.emit()
     print(f"\nhardcode-check: {len(findings)} hardcoded value(s)")
-    print("\nA number shared between blocks is imported from qnsc_pkg, never typed.")
+    print("\nA number shared between blocks is written once, in the contract.")
     print("That is what stops two blocks disagreeing about one fact -- see")
     print("CONTRIBUTING.md, 'Do not'.")
     return 1

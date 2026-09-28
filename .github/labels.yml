@@ -15,7 +15,7 @@
 # so the eye groups them; the block name carries the distinction.
 - name: area/ram
   color: "1d76db"
-  description: RAM/ROM controller block
+  description: RAM controller block (ISRAM, DSRAM)
 - name: area/sysdbg
   color: "1d76db"
   description: System debug block (self-designed)
@@ -43,18 +43,39 @@
 - name: area/iomux
   color: "1d76db"
   description: IO multiplexer block
+- name: area/rom
+  color: "1d76db"
+  description: Boot ROM block
+- name: area/cpu
+  color: "1d76db"
+  description: CPU block (lowRISC ibex)
+- name: area/uart
+  color: "1d76db"
+  description: UART block
+- name: area/i2c
+  color: "1d76db"
+  description: I2C block
+- name: area/gpio
+  color: "1d76db"
+  description: GPIO block
+- name: area/wdt
+  color: "1d76db"
+  description: Watchdog block
+- name: area/common
+  color: "d93f0b"
+  description: Shared RTL under design/common
 
 # ---- shared contract surfaces -----------------------------------------------
 # Warmer colour: a change here can move another block's contract.
 - name: area/top
   color: "d93f0b"
-  description: design/top — qsoc_top and qsoc_pkg
+  description: design/top — the chip top and qnsc_pkg
 - name: area/vendor
   color: "d93f0b"
   description: Upstream IP under vendor/
 - name: area/gen
   color: "d93f0b"
-  description: Generator inputs under util/ (source of truth)
+  description: The contract and its generators under util/
 
 # ---- flow and documents -----------------------------------------------------
 - name: area/pd
@@ -68,11 +89,11 @@
   description: MAS/HAS specifications
 - name: area/ci
   color: "fbca04"
-  description: CI, workflows, lint scripts
+  description: CI, workflows, Makefile and flow scripts
 
 # ---- cross-cutting flag -----------------------------------------------------
-# Deliberately red. Raised when a PR touches a contract surface (qsoc_pkg,
-# generator input, or the vendor manifest) so a reviewer checks that the other
+# Deliberately red. Raised when a PR touches a contract surface (the contract,
+# qnsc_pkg, or the vendor manifest) so a reviewer checks that the other
 # side of the contract moved with it.
 - name: contract-change
   color: "b60205"

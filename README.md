@@ -2,13 +2,13 @@
 
 A general-purpose 32-bit microcontroller, designed from the block level up as a
 deep-training project. RV32IMC core, two bus levels, 98 KiB of on-chip memory and
-twelve peripherals, targeting **SMIC 28 nm**.
+a set of APB peripherals, targeting **SMIC 28 nm**.
 
 There is no flash and no external memory interface, which shapes everything else:
 the application is downloaded into RAM over the serial port after every reset, and
 runs from there.
 
-![QSOC block diagram](doc/img/fig_qsoc_full_mono.png)
+![QSOC block diagram](doc/figures/img/fig_qsoc_full_mono.png)
 
 Blocks with a **bold border** are designed here. The rest integrate upstream IP
 through a wrapper.
@@ -19,11 +19,11 @@ through a wrapper.
 |---|---|
 | **Core** | lowRISC **Ibex**, RV32IMC, two-stage pipeline, machine mode |
 | **Clock** | one external 20 MHz input, no PLL — the PDK carries no analogue IP |
-| **Memory** | 2 KiB ROM · 64 KiB instruction RAM · 32 KiB data RAM |
+| **Memory** | 2 KiB ROM · 64 KiB instruction RAM (4 KiB debug window + 60 KiB app) · 32 KiB data RAM |
 | **System bus** | AXI4 crossbar, fully connected, decode error on an unmapped address |
-| **Peripheral bus** | APB4 router, 16 slaves |
-| **Peripherals** | 2× UART · SPI host + device · I²C · 4× GPIO · 2× timer · PWM · watchdog · DMA |
-| **Interrupts** | 27 sources → 11 fast lines + 1 NMI, through a combinational OR tree |
+| **Peripheral bus** | APB4 router, 14 slave ports (`APB_M0`--`APB_M13`) — GPIO3 was dropped with the 40-pin package |
+| **Peripherals** | 2× UART · SPI host + device · I²C · 3× GPIO · 2× timer · PWM · watchdog · DMA · clock/reset control (SCRC) |
+| **Interrupts** | 26 sources → 11 of the 15 fast lines + 1 NMI, through a combinational OR tree |
 | **Debug** | JTAG, in-house: halt, resume, and memory access without the CPU |
 | **Boot** | serial download into RAM, header + payload + CRC32, then jump |
 
@@ -38,10 +38,11 @@ Honest status, so nobody has to guess:
 | | |
 |---|---|
 | Architecture and memory map | **agreed** — one contract file, checked by CI |
-| Specifications | **5 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM |
-| RTL | **not started.** The scaffold, naming rules and CI are in place; wrappers are next |
-| Verification | not started |
+| Specifications | **12 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA, UART, I2C, GPIO |
+| RTL | **started.** Scaffold, naming rules and CI in place; INTMAP RTL generated, CPU/UART/I2C/GPIO wrappers under review |
+| Verification | **started.** GPIO has a self-checking block-level regression under review |
 | Physical design | not started |
+| Per-IP status | the teacher's assistant's tracker; directory, owner and specification of every block in [`doc/BLOCKS.md`](doc/BLOCKS.md) |
 
 ## Repository layout
 
@@ -51,29 +52,43 @@ Honest status, so nobody has to guess:
 | `doc/` | Specifications and the toolchain that builds them — see [`doc/README.md`](doc/README.md) |
 | `vendor/` | Upstream IP, copied in at a pinned commit, never edited |
 | `util/` | The inter-block contract, its generator, and the vendoring tool |
-| `flow/` | Lint and the checks that gate a pull request |
-| `dv/` · `pd/` · `fpga/` | Verification, physical design, FPGA bring-up |
+| `flow/` | Scripts for every sign-off stage: lint, sim, syn, STA/SDC, and the CDC/RDC rules |
+| `dv/` · `pd/` · `fpga/` | Verification, implementation, FPGA bring-up |
+| `doc/BLOCKS.md` | Every block: directory, owner, specification |
 | `.github/` | CI, ownership and repository policy — see [`.github/POLICY.md`](.github/POLICY.md) |
 
 ## Getting started
 
-Needs Python 3 with PyYAML, `verilator` for lint, and `pandoc` to build the
-specifications.
+Install these once. `make doctor` then says what is still missing.
+
+| Tool | Needed for | macOS (Homebrew) | Ubuntu / Debian |
+|---|---|---|---|
+| Python 3 + PyYAML | every check | `brew install python`, `pip3 install pyyaml` | `apt install python3 python3-yaml` |
+| `make`, `git`, `bash` | every check | Xcode command-line tools | `apt install make git` |
+| Verilator 5 | lint, simulation | `brew install verilator` | `apt install verilator` |
+| emacs | emacs wrappers | `brew install emacs` | `apt install emacs-nox` |
+| pandoc | `make docs` | `brew install pandoc` | `apt install pandoc` |
+| rsvg-convert | doc diagrams (optional) | `brew install librsvg` | `apt install librsvg2-bin` |
+| Yosys, OpenSTA, VCS | later stages | `make doctor` shows how | `make doctor` shows how |
+
+**Editor:** in VS Code, accept the recommended extensions (Verible, Verilog-HDL). `.vscode/settings.json` points their Verilator lint at the search paths that `make hooks` keeps current after every pull and branch switch, and turns format-on-save off for RTL.
+
+**Windows:** use WSL2 with Ubuntu and follow the Ubuntu column. The scripts are
+bash, and the training server is Linux, so WSL keeps everyone on the same tools.
 
 ```bash
-python3 flow/lint/naming_check.py      # naming rules
-python3 flow/lint/hardcode_check.py    # no shared value typed by hand
-bash    flow/lint/lint_all.sh          # Verilator, per block
-python3 util/gen_qnsc_pkg.py --check   # the generated package matches the contract
-
-cd doc && python3 build_docs.py        # build the specifications
+make doctor                            # once: what is missing on this machine
+make hooks                             # once per clone: make check before push; editor paths after pull
+make check                             # every check CI runs
+make help                              # each check on its own, per block
+make docs                              # build the specifications
 python3 util/vendor_ip.py --list       # which upstream IP is pinned, and at what commit
 ```
 
 ## Contributing
 
-**Start with [`CONTRIBUTING.md`](CONTRIBUTING.md)** — what to read first, the five
-steps for writing a block, and the nine checks that gate a pull request.
+**New here? [`doc/guides/GETTING_STARTED.md`](doc/guides/GETTING_STARTED.md)** walks from setup to a merged pull request. **Then [`CONTRIBUTING.md`](CONTRIBUTING.md)** — what to read first, the five
+steps for writing a block, and the checks that gate a pull request.
 
 `main` is protected: no direct pushes, and a code-owner review is required.
 Ownership is per directory in [`.github/CODEOWNERS`](.github/CODEOWNERS).

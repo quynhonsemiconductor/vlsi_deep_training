@@ -3,8 +3,7 @@
 gen_qnsc_pkg.py -- generate design/top/rtl/qnsc_pkg.sv from util/qsoc_contract.yml.
 
 The package holds every number shared between blocks: base addresses, region
-sizes, interrupt line indices and their mcause values, and the clock-domain
-soft-reset bits. A wrapper imports it instead of retyping the number, so two
+sizes, interrupt line indices and their mcause values, and the clock clusters. A wrapper imports it instead of retyping the number, so two
 blocks cannot disagree about one fact.
 
 The four defects that motivated this were all one fact written twice:
@@ -65,6 +64,7 @@ def emit(c: dict) -> str:
     a(f"  localparam int unsigned C_ADDR_WIDTH = {meta['addr_width']};")
     a(f"  localparam int unsigned C_CLK_MHZ    = {meta['clock_mhz']};")
     a(f"  localparam int unsigned C_APB_PADDR_WIDTH = {meta['apb_paddr_width']};  // P_BUS -> every APB slave")
+    a(f"  localparam logic [31:0]  C_CHIP_ID = {hexlit(meta['chip_id'])};  // SYSCSR CHIP_ID_REV, ASCII 'QSOC'")
     a("")
 
     # ---- memory map ------------------------------------------------------
@@ -128,8 +128,8 @@ def emit(c: dict) -> str:
     a(f"  localparam int unsigned C_RST_SOURCES = {len(c['reset_sources'])};"
       f"   // {', '.join(c['reset_sources'])}")
     a("")
-    a("  // The CLK_EN and SOFT_RST_CTRL bit positions per peripheral belong to the")
-    a("  // SCRC register map and are not duplicated here -- see tbd: in the contract.")
+    a("  // The CLK_EN bit positions per peripheral belong to the")
+    a("  // SCRC register map and are not duplicated here -- see QNSC_SCRC_MAS Table 6-2.")
     a("")
     a("endpackage : qnsc_pkg")
     return "\n".join(L) + "\n"

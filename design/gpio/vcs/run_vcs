@@ -1,0 +1,14 @@
+#!/bin/tcsh
+
+setenv DESIGN m_qnsc_wrap_gpio
+
+if (! $?) then
+    vcs -sverilog +vcs+lic+wait \
+        -timescale=1ns/1ps \
+        -F filelist.f \
+        -top $DESIGN \
+        -debug_acess -kdb \
+        +error+100 \
+	+lint=TFIPC-L \
+        -l comp.log
+endif

@@ -1,0 +1,11 @@
+build/
+
+# macOS Finder metadata
+.DS_Store
+
+# Personal presentation notes: kept next to the specifications, never committed.
+doc/present/
+
+# Editor lint search paths, generated per clone by `make ide`.
+.vscode/verilator.f
+.vscode/verilator_vendor.vlt

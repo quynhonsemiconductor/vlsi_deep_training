@@ -19,8 +19,16 @@
 # so this is useful from the first commit instead of only once every block exists.
 set -uo pipefail
 
+# Without Verilator every log would be "command not found", which holds no
+# %Error, and every block would print ok. Fail instead.
+command -v verilator >/dev/null 2>&1 || {
+  echo "verilator not installed (brew install verilator, or apt install verilator)"; exit 1; }
+
+# An optional argument lints one block: bash flow/lint/lint_all.sh pwm
+if [ $# -gt 0 ]; then dirs="design/$1/"; else dirs="design/*/"; fi
+
 fail=0
-for dir in design/*/; do
+for dir in $dirs; do
   block=$(basename "$dir")
   flist="${dir}${block}.f"
 
@@ -37,13 +45,28 @@ for dir in design/*/; do
     continue
   fi
 
+  # The block's own waivers, plus those of the shared contract package, which
+  # every block compiles.
   waiver=""
   [ -f "${dir}waivers.vlt" ] && waiver="${dir}waivers.vlt"
+  [ "$block" != top ] && [ -f design/top/waivers.vlt ] && waiver="$waiver design/top/waivers.vlt"
 
-  if verilator --lint-only -Wall -Wno-fatal $waiver -f "$flist" \
-       2>&1 | tee "/tmp/lint-${block}.log" | grep -q '%Error'; then
+  # -F, not -f: paths inside the filelist are relative to the filelist itself
+  # (../../vendor/...), and -f would resolve them against the repository root.
+  # The log is written first and grepped second: with pipefail, piping verilator
+  # into grep took verilator's non-zero exit as the result and reported "ok".
+  log="/tmp/lint-${block}.log"
+  verilator --lint-only -Wall -Wno-fatal $waiver -F "$flist" > "$log" 2>&1
+  # A filelist that holds only packages (design/top today: qnsc_pkg.sv) has no
+  # module to elaborate. Verilator 5.020, the Ubuntu package CI installs, stops
+  # with "No top level module found"; newer releases accept it. Not a defect.
+  if [ "$(grep -c '%Error' "$log")" -le 2 ] && grep -q 'No top level module found' "$log"; then
+    printf '  %-10s no module yet, skipped\n' "$block"
+    continue
+  fi
+  if grep -q '%Error' "$log"; then
     printf '  %-10s FAIL\n' "$block"
-    sed 's/^/      /' "/tmp/lint-${block}.log"
+    sed 's/^/      /' "$log"
     fail=1
   else
     printf '  %-10s ok\n' "$block"

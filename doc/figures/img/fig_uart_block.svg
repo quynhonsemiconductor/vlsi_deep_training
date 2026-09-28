@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1178" height="378" viewBox="-14 -4 1178 378" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
+<rect x="-14" y="-4" width="1178" height="378" fill="#ffffff"/>
+<rect x="10" y="150" width="110" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="10" y="30" width="110" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="170" y="20" width="690" height="330" rx="3" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="6 4"/>
+<rect x="190" y="55" width="650" height="280" rx="3" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="6 4"/>
+<rect x="210" y="150" width="110" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="350" y="90" width="470" height="225" rx="3" fill="none" stroke="#000000" stroke-width="1.4" stroke-dasharray="6 4"/>
+<rect x="370" y="125" width="120" height="170" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="520" y="125" width="120" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="520" y="185" width="120" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="520" y="245" width="120" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="670" y="125" width="130" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="670" y="245" width="130" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="900" y="185" width="110" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="900" y="105" width="110" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="1050" y="185" width="90" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<polyline points="120.0,180.0 210.0,180.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+<rect x="153.0" y="172.0" width="24.0" height="14" fill="#ffffff"/>
+<text x="165.0" y="183.0" font-size="10" fill="#000000" text-anchor="middle">APB</text>
+<polyline points="120.0,55.0 145.0,55.0 145.0,53.0 170.0,53.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="100.0" y="46.0" width="90.0" height="14" fill="#ffffff"/>
+<text x="145.0" y="57.0" font-size="10" fill="#000000" text-anchor="middle">o_clk_uart_&lt;n&gt;</text>
+<polyline points="320.0,180.0 345.0,180.0 345.0,205.0 370.0,205.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+<rect x="333.0" y="184.5" width="24.0" height="14" fill="#ffffff"/>
+<text x="345.0" y="195.5" font-size="10" fill="#000000" text-anchor="middle">OBI</text>
+<polyline points="580.0,165.0 580.0,185.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="800.0,145.0 850.0,145.0 850.0,125.0 900.0,125.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="817.0" y="127.0" width="66.0" height="14" fill="#ffffff"/>
+<text x="850.0" y="138.0" font-size="10" fill="#000000" text-anchor="middle">o_int_uart</text>
+<polyline points="640.0,205.0 770.0,205.0 770.0,197.0 900.0,197.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="728.0" y="193.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="770.0" y="204.0" font-size="10" fill="#000000" text-anchor="middle">o_pad_uart_tx</text>
+<polyline points="900.0,233.0 770.0,233.0 770.0,260.0 640.0,260.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="728.0" y="238.5" width="84.0" height="14" fill="#ffffff"/>
+<text x="770.0" y="249.5" font-size="10" fill="#000000" text-anchor="middle">i_pad_uart_rx</text>
+<polyline points="1010.0,215.0 1050.0,215.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+<text x="65.0" y="176.8" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">P_BUS</text>
+<text x="65.0" y="189.8" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">APB_M8 / M9</text>
+<text x="65.0" y="58.3" font-size="10" text-anchor="middle" fill="#000000">SCRC</text>
+<text x="515.0" y="38.0" font-size="12" text-anchor="middle" fill="#000000" font-weight="bold">m_qnsc_wrap_uart</text>
+<text x="515.0" y="71.0" font-size="10" text-anchor="middle" fill="#000000">apb_uart  (upstream, unmodified)</text>
+<text x="265.0" y="183.3" font-size="10" text-anchor="middle" fill="#000000">apb_to_obi</text>
+<text x="585.0" y="106.0" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">obi_uart</text>
+<text x="430.0" y="200.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">registers</text>
+<text x="430.0" y="213.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">16550</text>
+<text x="430.0" y="226.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">DLAB</text>
+<text x="580.0" y="148.3" font-size="10" text-anchor="middle" fill="#000000">baud gen /16</text>
+<text x="580.0" y="201.8" font-size="10" text-anchor="middle" fill="#000000">TX FIFO 16</text>
+<text x="580.0" y="214.8" font-size="10" text-anchor="middle" fill="#000000">TSR</text>
+<text x="580.0" y="266.8" font-size="10" text-anchor="middle" fill="#000000">RX sync</text>
+<text x="580.0" y="279.8" font-size="10" text-anchor="middle" fill="#000000">FIFO 16, RSR</text>
+<text x="735.0" y="141.8" font-size="10" text-anchor="middle" fill="#000000">interrupt</text>
+<text x="735.0" y="154.8" font-size="10" text-anchor="middle" fill="#000000">priority</text>
+<text x="735.0" y="266.8" font-size="10" text-anchor="middle" fill="#000000">modem</text>
+<text x="735.0" y="279.8" font-size="10" text-anchor="middle" fill="#000000">inputs tied 1</text>
+<text x="955.0" y="211.8" font-size="10" text-anchor="middle" fill="#000000">IO MUX</text>
+<text x="955.0" y="224.8" font-size="10" text-anchor="middle" fill="#000000">RX idle = 1</text>
+<text x="955.0" y="121.8" font-size="10" text-anchor="middle" fill="#000000">INTMAP</text>
+<text x="955.0" y="134.8" font-size="10" text-anchor="middle" fill="#000000">line 4 / 5</text>
+<text x="1095.0" y="211.8" font-size="10" text-anchor="middle" fill="#000000">pads</text>
+<text x="1095.0" y="224.8" font-size="10" text-anchor="middle" fill="#000000">TX, RX</text>
+</svg>

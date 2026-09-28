@@ -18,8 +18,7 @@
 # +incdir+../../vendor/<upstream>/<path>
 
 # ---- upstream IP, in compile order -----------------------------------------
-# ../../vendor/<upstream>/rtl/<leaf>.sv
-# ../../vendor/<upstream>/rtl/<top_of_ip>.sv
+${GPIO_HOME}/../../vendor/pulp-platform/apb_gpio/rtl/apb_gpio.sv
 
 # ---- ours -------------------------------------------------------------------
-# rtl/<wrapper>.sv
+${GPIO_HOME}/rtl/m_qnsc_wrap_gpio.sv

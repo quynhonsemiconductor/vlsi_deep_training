@@ -1,6 +1,6 @@
 # `iomux` — IO pin multiplexer
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/iomux`](../../dv/iomux)
+**Owner:** @hieu-vubuiminh   **Spec:** _TBD_   **DV:** [`../../dv/iomux`](../../dv/iomux)
 
 ## What this block is
 
@@ -25,4 +25,4 @@ what is ours and what is borrowed.
 ## Instances
 
 _How many times `design/top` instantiates this wrapper, and what differs between
-them (parameters only -- do not fork the file)._
+them (a value on an `i_cfg_*` port -- see `design/README.md`, "Instances")._

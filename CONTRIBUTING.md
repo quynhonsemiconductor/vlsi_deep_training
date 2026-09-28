@@ -8,10 +8,13 @@ copy of each rule rather than two that drift apart.
 
 | Document | What it gives you |
 |---|---|
+| [`doc/guides/GETTING_STARTED.md`](doc/guides/GETTING_STARTED.md) | Setup to merged PR, step by step, for any code |
+| [`doc/guides/EMACS_AUTO.md`](doc/guides/EMACS_AUTO.md) | How to write a wrapper, or any module that instantiates others, with emacs AUTOs |
 | [`design/README.md`](design/README.md) | The per-block convention: directory shape, why the filelist is not optional, the naming table, how to import the contract |
-| `DM/RULES/FE/Release/QNSC_RTL_Design_Naming_Rule.pdf` (in `MCU_guide_ws`) | **Mandatory** naming rules. CI enforces them |
+| [`doc/rules/`](doc/rules) | **Mandatory** Naming Rule (CI enforces it) and the EMACS quick guide |
 | [`util/qsoc_contract.yml`](util/qsoc_contract.yml) | Every number shared between blocks, and where each came from |
-| Your block's MAS under [`doc/src/`](doc/src) | What your block must do |
+| Your block's MAS under [`doc/specs/`](doc/specs) | What your block must do |
+| [`doc/BLOCKS.md`](doc/BLOCKS.md) | Every block: directory, owner, specification. Status is in the teacher's assistant's tracker, not here |
 
 ## Writing a block — five steps
 
@@ -35,55 +38,59 @@ Upstream IP is **listed**, never copied into `rtl/`. Order matters: packages and
 `` `define `` files first, then leaf modules, then the IP's top, then your wrapper
 last. Rationale in [`design/README.md`](design/README.md).
 
-### 3. Write the wrapper `design/<block>/rtl/m_qnsc_wrap_<ip>.sv`
+### 3. Write the wrapper `design/<block>/rtl/m_qnsc_wrap_<block>.sv`
 
-```systemverilog
-import qnsc_pkg::*;
+Wrapper = core (the IP) + bridge (only if the IP speaks another protocol than the
+chip bus). It is generated with emacs verilog-mode from a template:
 
-module m_qnsc_wrap_uart (
-  input  logic i_clk_peri,
-  input  logic i_rst_n_peri,
-  // ... APB per the naming rule: i_bus_apb_<signal>
-  output logic o_int_uart_0
-);
-  apb_uart u_uart_0 (
-    .clk_i (i_clk_peri),   // left side is the vendored module's port name
-    ...
-  );
-endmodule
+```bash
+make new-wrap BLOCK=<block> IP=vendor/<org>/<ip>/<ip_top>.sv   # once
+# fill the AUTO_TEMPLATE in design/<block>/rtl/emacs/<wrapper>.src.sv
+make wrap BLOCK=<block>                                       # after every edit
 ```
 
-A wrapper does four things: **port-map** to the contract's names, **tie off** what
-QSOC does not use, **adapt the protocol** if the IP speaks a different one, and
-**add what the IP is missing** — the byte-enable path the RAM controller lacks is
-the worked example.
+What a wrapper must do and the naming table are in
+[`design/README.md`](design/README.md#the-wrapper-is-the-boundary); the emacs guide is
+[`doc/guides/EMACS_AUTO.md`](doc/guides/EMACS_AUTO.md). A wrapper is IP: no `import`,
+no parameter, the IP's configuration fixed at the instance, chip values on `i_cfg_*`
+ports, and a number copied from the contract tagged `// contract: <key>`
+([`design/README.md`, "Shared numbers"](design/README.md#shared-numbers-who-may-use-qnsc_pkg)).
 
 ### 4. Check locally before pushing
 
 ```bash
-python3 flow/lint/naming_check.py   design/<block>  # naming rule
-python3 flow/lint/hardcode_check.py design/<block>  # no shared value typed by hand
-bash    flow/lint/lint_all.sh                       # Verilator, through your filelist
+make doctor                 # once: which tools are missing (install list in README)
+make hooks                  # once per clone: push runs make check; pull refreshes VS Code lint paths
+make check                  # everything CI checks, before every push
+make lint BLOCK=<block>     # one check, one block, while you work
+make new-wrap BLOCK=<block> IP=<ip top .sv>   # scaffold an emacs wrapper, once
+make wrap BLOCK=<block>     # regenerate an emacs wrapper after editing its .src.sv
+make vcs BLOCK=<block>      # compile with VCS, on the server (CI uses Verilator)
+make help                   # the full list
 ```
 
-Both run in CI. Running them first saves a round trip.
+Every CI step calls the same `make` target, so a green `make check` on your
+machine is a green CI. How a wrapper is written with emacs is in
+[`doc/guides/EMACS_AUTO.md`](doc/guides/EMACS_AUTO.md).
 
 ### 5. Open the pull request
 
 - Title follows **Conventional Commits** — `feat(uart): add the APB wrapper`
 - The block `README.md` names the **owner** and links the **spec**. Until the MAS is
-  in `doc/src/`, link wherever it lives. `_TBD_` is not accepted
+  in `doc/specs/`, link wherever it lives. `_TBD_` is not accepted
 - To catch up with `main`, **rebase** your branch (`git fetch && git rebase
   origin/main`); do not merge `main` into it. The repository accepts only squash
   and rebase merges ([`POLICY.md`](.github/POLICY.md)), so a merge commit on the
   branch breaks a rebase merge
 - `main` is protected: no direct pushes, and a code-owner review is required
-- Eight checks must pass:
+- These checks must pass (`make check` runs all but the last three locally):
 
 | Check | Fails when |
 |---|---|
 | `PR title (conventional commits)` | the title is not a conventional commit |
 | `Verilator lint` | your block does not lint through its filelist |
+| `Filelist paths` | a path in a `.f` is absolute, or names a file that does not exist |
+| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` |
 | `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** |
 | `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region |
 | `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract |
@@ -129,23 +136,11 @@ git add util/qsoc_contract.yml design/top/rtl/qnsc_pkg.sv   # commit BOTH
 - **Adding** a number that was missing: include it with the block that needs it.
 - **Changing** a number that exists: send it as its **own** pull request, so the
   effect on other blocks is visible instead of buried in a feature.
-- A number used by **one** block only is not a shared number — make it a parameter
-  in your wrapper.
+- A number used by **one** block only is not a shared number — it is the IP owner's
+  configuration, written as a fixed value in the wrapper.
 
 Numbers not yet agreed are listed under `tbd:` in the contract, each with the owner
 who must supply it.
-
-## Instances are decided in `design/top`
-
-You write **one** wrapper. `design/top` instantiates it as many times as the block
-diagram shows: `uart` twice, `gpio` three times, `timer` twice with different
-parameters, `ram` twice with different depths. What differs between instances is a
-**parameter or a port** — never a forked file.
-
-For the same reason, a shared wrapper never uses a per-instance constant:
-`C_UART_0_SIZE` inside a wrapper that also serves UART1 is wrong, even when the
-two values happen to be equal. Use a chip-wide constant (`C_APB_PADDR_WIDTH`) or a
-parameter that `design/top` sets per instance.
 
 ## Do not
 
@@ -153,11 +148,39 @@ parameter that `design/top` sets per instance.
 |---|---|
 | Edit anything under `vendor/` | It is vendored at a pinned commit so tape-out has a frozen, auditable source. Local fixes go in `vendor/patches/` with a reason. CI fails on it |
 | Copy upstream IP into `design/<block>/rtl/` | `rtl/` is what makes "self-designed or IP?" answerable by reading one directory. List the IP in your filelist instead |
-| Type an address, interrupt index or domain name into a wrapper | That is how ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11` and eleven interrupt sources against twelve all happened. Import it from `qnsc_pkg` — and `No hardcoded shared values` will fail the PR if you do |
+| Type an address, interrupt index or domain name into a wrapper | That is how ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11` and eleven interrupt sources against twelve all happened. A chip value reaches IP on an `i_cfg_*` port that `design/top` ties from `qnsc_pkg`; a structural number is tagged `// contract: <key>`. `No hardcoded shared values` fails the PR otherwise |
+| Import a package or declare a parameter in a wrapper | The IP owner fixes the configuration; `design/top` only connects. verilog-mode does not resolve packages. `IP and integration module rules` fails the PR |
 | Hand-edit `design/top/rtl/qnsc_pkg.sv` | It is generated. CI regenerates and compares |
-| Fork the wrapper per instance | One wrapper, parameters for the difference |
+| Fork the wrapper per instance for a value that differs | One wrapper; the value is an `i_cfg_*` port tied by `design/top`. A difference in structure is pending with Tâm (`design/README.md`, "Pending") |
 | Rename a vendored module's port to satisfy the naming rule | The rule applies to our RTL. `naming_check.py` already skips identifiers after a dot, after `::`, and system functions such as `$clog2`, for exactly this reason |
 | Rewrite correct RTL to dodge a checker false positive | Report the false positive and fix the checker in `flow/`. A `// naming-check: ignore -- <reason>` is the stop-gap, not a rewrite |
+
+## Sign-off stages
+
+Every IP moves through these stages; their status is kept in the teacher's
+assistant's tracker, not in this repository. QSOC is a training project, so every
+stage runs on **open-source tools**. The stage names are the tracker's; "VCS" is the
+simulation stage and runs on Verilator here. A stage that does not apply to a block
+(for example CDC in a block with no clock) is waived in the block's README, with the
+reason.
+
+| Stage | Tool | Files, per block | Command | `done` when |
+|---|---|---|---|---|
+| **RTL integration** | Verilator (elaborate) | `design/<block>/rtl/`, `<block>.f` | `make lint BLOCK=<block>` | The wrapper follows [`design/README.md`](design/README.md), elaborates through `<block>.f`, and is instantiated in `design/top` |
+| **SIM** ("VCS") | Verilator `--binary --timing` | `dv/<block>/tb_<block>.sv`, `dv/<block>/tests/` | `make sim BLOCK=<block>` | Every test in the MAS verification section runs **self-checking** and ends in `PASS`; a failure calls `$fatal` |
+| **LINT** | Verilator `--lint-only -Wall`, `naming_check.py`, `hardcode_check.py` | `design/<block>/waivers.vlt` | `make lint naming hardcode BLOCK=<block>` (CI) | All three are clean in CI. Every waiver line has a reason |
+| **SDC** | OpenSTA syntax | `design/<block>/constraints/<block>.sdc` | read by the SYN and GCA stages | Every clock and every input/output is constrained. Clock names follow the table in [`flow/sta/README.md`](flow/sta/README.md). CDC paths carry the constraint their MAS states |
+| **CDC** | Review against the MAS, plus lint | MAS crossing table | review in the pull request | Every crossing in the RTL is in the MAS crossing table, and every one goes through a shared cell in `design/common` or a handshake the MAS specifies. See [`flow/cdc/README.md`](flow/cdc/README.md) |
+| **RDC** | Review against the MAS | MAS reset table | review in the pull request | Every reset domain is listed in the MAS, and no flop is reset by one domain and sampled by another without the MAS saying why it is safe. See [`flow/rdc/README.md`](flow/rdc/README.md) |
+| **SYN** | Yosys, with the `yosys-slang` front end | none extra | `make syn BLOCK=<block>` | Synthesises with no latch and no multi-driven net. The cell count is stated in the pull request |
+| **GCA** | OpenSTA `check_setup` | the block SDC | `make gca BLOCK=<block>` | `check_setup` reports no unconstrained clock, input, output or loop |
+
+CDC and RDC have no mature open-source checker, so their evidence is the MAS table plus
+the review. That is why every crossing must go through a **named shared cell**: it
+makes a crossing findable with `grep` instead of by reading every line.
+
+Mark a cell `done` only in the pull request that meets its definition, and link the
+evidence (the CI run, the test log, the review comment) in that pull request.
 
 ## Ownership
 
@@ -168,6 +191,6 @@ block. Repository policy, CI and the ruleset are described in
 
 ## Specifications
 
-Markdown under [`doc/src/`](doc/src) is the source of truth; the `.docx` are built
-from it with `cd doc && python3 build_docs.py`. Rebuild before committing if you
+Markdown under [`doc/specs/`](doc/specs) is the source of truth; the `.docx` are built
+from it with `make docs`. Rebuild before committing if you
 changed the markdown — see [`doc/README.md`](doc/README.md).

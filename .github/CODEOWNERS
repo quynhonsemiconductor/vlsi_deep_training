@@ -23,32 +23,17 @@
 # ---- default ---------------------------------------------------------------
 *                           @quynhonsemiconductor/vlsi-maintainers
 
-# ---- every RTL change is seen by a maintainer, plus the block owner below ---
+# ---- blocks ------------------------------------------------------------------
+# Only the maintainers approve: Tam (@Stork1323, the teacher's assistant), the
+# teacher (@quannhqnsc), @Nghia-VanTrong (lead) and @SinhHPT. Block owners are
+# named in each block README and in doc/BLOCKS.md; their approval does not
+# satisfy the code-owner review. Merging is limited to the same team by the
+# main-merge-by-maintainers ruleset (.github/POLICY.md).
 /design/                    @quynhonsemiconductor/vlsi-maintainers
-
-# ---- blocks: owner + maintainer -------------------------------------------
-# Replace the placeholder handles with GitHub usernames before enabling the
-# ruleset. A CODEOWNERS entry naming a user who cannot read the repo silently
-# matches nothing, which makes the required review unsatisfiable.
-/design/ram/                @quynhonsemiconductor/vlsi-maintainers
-/design/rom/                @quynhonsemiconductor/vlsi-maintainers
-/design/sysdbg/             @quynhonsemiconductor/vlsi-maintainers
-/design/intmap/             @quynhonsemiconductor/vlsi-maintainers
-/design/timer/              @quynhonsemiconductor/vlsi-maintainers
-/design/pwm/                @quynhonsemiconductor/vlsi-maintainers
-/design/scrc/               @quynhonsemiconductor/vlsi-maintainers
-/design/dma/                @quynhonsemiconductor/vlsi-maintainers
-/design/bus/                @quynhonsemiconductor/vlsi-maintainers
-/design/spi/                @quynhonsemiconductor/vlsi-maintainers
-/design/uart/               @quynhonsemiconductor/vlsi-maintainers
-/design/i2c/                @quynhonsemiconductor/vlsi-maintainers
-/design/gpio/               @quynhonsemiconductor/vlsi-maintainers
-/design/wdt/                @quynhonsemiconductor/vlsi-maintainers
-/design/iomux/              @quynhonsemiconductor/vlsi-maintainers
-/design/cpu/                @quynhonsemiconductor/vlsi-maintainers
+/dv/                        @quynhonsemiconductor/vlsi-maintainers
 
 # ---- shared surfaces: maintainers only ------------------------------------
-# design/top holds qsoc_top and qsoc_pkg. qsoc_pkg carries the cross-block
+# design/top holds the chip top and qnsc_pkg. qnsc_pkg carries the cross-block
 # contracts, so a change here can silently move another block's address map or
 # interrupt index. It is not a block owner's file.
 /design/top/                @quynhonsemiconductor/vlsi-maintainers
@@ -59,8 +44,8 @@
 # MODE_64. Two reviewers, and the manifest must be updated in the same PR.
 /vendor/                    @quynhonsemiconductor/vlsi-maintainers
 
-# The generator inputs are the source of truth for the APB router and the CSR
-# blocks. Editing the spreadsheet regenerates other people's RTL.
+# util/ holds the contract, the single source of truth for every shared number.
+# Editing it regenerates qnsc_pkg, which every block imports.
 /util/                      @quynhonsemiconductor/vlsi-maintainers
 
 # CI, ownership and the rulesets themselves.
@@ -74,3 +59,5 @@
 # Specifications are reviewed by maintainers because they are the contract the
 # RTL is checked against, not commentary on it.
 /doc/                       @quynhonsemiconductor/vlsi-maintainers
+# The team rules are Tâm's: a change to them needs his review.
+/doc/rules/                 @Stork1323

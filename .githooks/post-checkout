@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Refresh the editor lint search paths (.vscode/verilator.f) after a pull or a
+# branch switch, so VS Code finds any block or IP the new code added.
+# Enabled with the other hooks by `make hooks`. Never blocks git: a failure
+# here only leaves the editor paths as they were.
+cd "$(git rev-parse --show-toplevel)" || exit 0
+python3 flow/ide/gen_verilator_f.py > /dev/null 2>&1 || true
+exit 0

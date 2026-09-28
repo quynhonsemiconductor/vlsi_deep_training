@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="958" height="328" viewBox="-14 -4 958 328" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
+<rect x="-14" y="-4" width="958" height="328" fill="#ffffff"/>
+<rect x="10" y="250" width="110" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="170" y="250" width="110" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="330" y="250" width="110" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="490" y="250" width="110" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="330" y="130" width="430" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="330" y="20" width="110" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="490" y="20" width="110" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="650" y="20" width="110" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="810" y="130" width="110" height="50" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<polyline points="120.0,275.0 170.0,275.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+<polyline points="280.0,275.0 330.0,275.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+<polyline points="440.0,275.0 490.0,275.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+<polyline points="545.0,250.0 545.0,215.0 610.0,215.0 610.0,180.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+<polyline points="385.0,70.0 385.0,130.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)" marker-start="url(#ahs)"/>
+<polyline points="545.0,130.0 545.0,70.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="705.0,130.0 705.0,70.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="760.0,155.0 810.0,155.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<text x="65.0" y="278.3" font-size="10" text-anchor="middle" fill="#000000">PC loader</text>
+<text x="225.0" y="271.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">UART0</text>
+<text x="225.0" y="285.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">APB_M8</text>
+<text x="385.0" y="278.3" font-size="10" text-anchor="middle" fill="#000000">P_BUS</text>
+<text x="545.0" y="278.3" font-size="10" text-anchor="middle" fill="#000000">AXI2APB</text>
+<text x="545.0" y="158.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">S_BUS</text>
+<text x="385.0" y="48.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">Ibex</text>
+<text x="545.0" y="41.8" font-size="10" text-anchor="middle" fill="#000000">ROM</text>
+<text x="545.0" y="54.8" font-size="10" text-anchor="middle" fill="#000000">AXI_M0</text>
+<text x="705.0" y="41.8" font-size="10" text-anchor="middle" fill="#000000">ISRAM</text>
+<text x="705.0" y="54.8" font-size="10" text-anchor="middle" fill="#000000">AXI_M1</text>
+<text x="865.0" y="151.8" font-size="10" text-anchor="middle" fill="#000000">DSRAM</text>
+<text x="865.0" y="164.8" font-size="10" text-anchor="middle" fill="#000000">AXI_M2</text>
+</svg>

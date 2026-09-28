@@ -117,14 +117,11 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/bus
-  - design/sysdbg
   ownership_note: >
-    Listed against both because both instantiate from it, but the protocol
-    adapters are the BUS owner's to write and verify -- QNSC_SYSDBG_MAS section
-    4.1 places axi_lite_to_axi at the crossbar rather than inside the debug block,
-    so that every protocol conversion in the chip has one owner. SYSDBG's own
-    master port is memory-style (req/gnt/rsp_valid); axi_from_mem is what turns
-    that into AXI, and it lives at AXI_S0.
+    The BUS owner's. SYSDBG does not instantiate from it: since QNSC_SYSDBG_MAS
+    V3.0 its own AXI4 manager drives AXI_S0 directly, following the teacher's
+    reference design, and the block is fully self-designed
+    (QNSC_SYSDBG_DECISIONS D21).
   files:
   - src/axi_xbar.sv
   - src/axi_to_axi_lite.sv
@@ -134,8 +131,8 @@ upstreams:
   - src/axi_lite_to_axi.sv
   notes: 'axi_xbar is fully connected -- every slave port reaches every master port through one shared
     address map -- which is what lets SYSDBG''s master read ROM. Each slave port has a private decode-error
-    slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi, used by SYSDBG
-    with MaxRequests = 1.
+    slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi; not used by
+    SYSDBG since its V3.0.
 
     '
 - name: pulp-platform/riscv-dbg
@@ -160,9 +157,9 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/dma
-  notes: 'Backend only. The frontend is in house per QNSC_iDMA V2.0: neither desc64 nor reg is used, because
-    desc64''s CSRs are hardwired to a 64-bit APB and QSOC''s is 32-bit. One dma_irq_o, held by write-1-to-clear
-    flags in DMA_ISR.
+  notes: 'Used unmodified (QNSC_DMA_MAS V3.0): frontend reg32_2d generated with --cpuif apb4-flat, idma_nd_midend,
+    idma_transfer_id_gen, backend rw_axi generated with gen_idma.py. Generated files and their commands go in
+    util/gen/idma. Needs common_cells cc_stream_* modules and apb typedef.svh. No hardware request from peripherals; the wrapper drives o_int_dma = idle.
 
     '
   files:
@@ -174,6 +171,10 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/uart
+  notes: 'Instantiated unmodified by m_qnsc_wrap_uart (QNSC_UART_MAS V3.0). Needs obi_peripherals (obi_uart), apb,
+    obi and common_cells at the versions apb_uart pins; they are still to be vendored. No DMA request lines.
+
+    '
   files:
   - src/**
   - LICENSE*
@@ -183,7 +184,7 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/gpio
-  notes: 'Four instances, one `interrupt` output each, OR''d to one fast line by INTMAP. Per-pin INTSTATUS
+  notes: 'QSOC integration plan: three instances, one `interrupt` output each, OR''d to one fast line by INTMAP. Per-pin INTSTATUS
     at offset 0x24 is READ-TO-CLEAR and set beats clear, so a handler gets exactly one look and must service
     every bit it reads.
 
@@ -227,11 +228,14 @@ upstreams:
   license: MentorProvided-QNSC-Course
   used_by:
   - design/bus
+  - design/scrc
   generator: true
   notes: 'Produces m_vlsi_apb_router from a spreadsheet. Genuinely multi-master with per-slave round-robin
-    arbitration, which is what lets MRV-CPU and AXI2APB share P_BUS. Generated RTL is committed alongside
-    its spreadsheet input in util/gen -- committing only one of the two loses either reproducibility or
-    the source of truth.
+    arbitration. Used twice: P_BUS, and the private 2-master bus inside SCRC (MRV-CPU and the APB_M0 port,
+    one slave: SCRC CSR; QNSC_SCRC_MAS 3). The top and leaf module names are hard-coded, so the two
+    outputs collide and fail Naming Rule 2.1 -- open item in QNSC_SCRC_MAS 11. Generated RTL is committed
+    alongside its spreadsheet input in util/gen -- committing only one of the two loses either
+    reproducibility or the source of truth.
 
     '
   files:
@@ -246,6 +250,11 @@ upstreams:
   used_by:
   - design/scrc
   generator: true
+  notes: 'Generates SCRC CSR and SYSCSR. Module name set by the workbook. Output kept in util/gen with
+    its workbook: the generated port names (i_bus_rstn, i_paddr) fail the Naming Rule, so each block wraps
+    it (m_qnsc_syscsr). A w1c field gives an APB write priority over the hardware set in the same cycle.
+
+    '
   files:
   - RTL/**
   - models/**
@@ -260,8 +269,9 @@ upstreams:
   - design/scrc
   notes: 'Mini RV32I core, single-cycle, 13-instruction subset, used inside SCRC to sequence clock enables
     and reset release instead of a hand-written FSM. It has its own instruction memory port, so its RESET_VECTOR
-    of 0x0000_1000 is in its private space and not in the QSOC memory map. It is an APB master and has
-    an i_interrupt input driven by the APB write strobe on SOFT_RST_CTRL.
+    of 0x0000_1000 is in its private space and not in the QSOC memory map. It is an APB master with no
+    PSTRB, PPROT or PSLVERR port. i_interrupt is tied 0: SCRC polls CLK_EN and SOFT_RST_CTRL instead,
+    because the interrupt is an unmasked edge that can be lost during a BIU stall (QNSC_SCRC_DECISIONS 2).
 
     '
   files:

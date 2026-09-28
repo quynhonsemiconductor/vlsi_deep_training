@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="629" height="718" viewBox="-4 -14 629 718" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
+<rect x="-4" y="-14" width="629" height="718" fill="#ffffff"/>
+<rect x="20" y="10" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="80" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="150" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="220" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="290" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="360" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="430" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="500" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="570" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="20" y="640" width="200" height="40" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="330" y="360" width="200" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="2.8"/>
+<rect x="600" y="90" width="1" height="20" rx="3" fill="none" stroke="none" stroke-width="0"/>
+<polyline points="120.0,50.0 120.0,80.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="120.0,120.0 120.0,150.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="120.0,190.0 120.0,220.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="120.0,260.0 120.0,290.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="120.0,330.0 120.0,360.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="111.0" y="337.0" width="18.0" height="14" fill="#ffffff"/>
+<text x="120.0" y="348.0" font-size="10" fill="#000000" text-anchor="middle">ok</text>
+<polyline points="120.0,400.0 120.0,430.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="120.0,470.0 120.0,500.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="120.0,540.0 120.0,570.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="111.0" y="547.0" width="18.0" height="14" fill="#ffffff"/>
+<text x="120.0" y="558.0" font-size="10" fill="#000000" text-anchor="middle">ok</text>
+<polyline points="120.0,610.0 120.0,640.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="220.0,240.0 370.0,240.0 370.0,360.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="262.0" y="232.0" width="66.0" height="14" fill="#ffffff"/>
+<text x="295.0" y="243.0" font-size="10" fill="#000000" text-anchor="middle">FTMO, FUAR</text>
+<polyline points="220.0,310.0 450.0,310.0 450.0,360.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="302.0" y="302.0" width="66.0" height="14" fill="#ffffff"/>
+<text x="335.0" y="313.0" font-size="10" fill="#000000" text-anchor="middle">FHCR, FHDR</text>
+<polyline points="220.0,450.0 390.0,450.0 390.0,420.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="272.0" y="442.0" width="66.0" height="14" fill="#ffffff"/>
+<text x="305.0" y="453.0" font-size="10" fill="#000000" text-anchor="middle">FTMO, FUAR</text>
+<polyline points="220.0,520.0 490.0,520.0 490.0,420.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="340.0" y="512.0" width="30.0" height="14" fill="#ffffff"/>
+<text x="355.0" y="523.0" font-size="10" fill="#000000" text-anchor="middle">FPCR</text>
+<polyline points="530.0,390.0 570.0,390.0 570.0,100.0 220.0,100.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="552.0" y="237.0" width="36.0" height="14" fill="#ffffff"/>
+<text x="570.0" y="248.0" font-size="10" fill="#000000" text-anchor="middle">retry</text>
+<text x="120.0" y="33.3" font-size="10" text-anchor="middle" fill="#000000">init UART0</text>
+<text x="120.0" y="103.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">QRDY</text>
+<text x="120.0" y="173.3" font-size="10" text-anchor="middle" fill="#000000">find MAGIC</text>
+<text x="120.0" y="243.3" font-size="10" text-anchor="middle" fill="#000000">header</text>
+<text x="120.0" y="313.3" font-size="10" text-anchor="middle" fill="#000000">check header</text>
+<text x="120.0" y="383.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">ACKH</text>
+<text x="120.0" y="453.3" font-size="10" text-anchor="middle" fill="#000000">payload</text>
+<text x="120.0" y="523.3" font-size="10" text-anchor="middle" fill="#000000">check payload</text>
+<text x="120.0" y="593.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">ACKP</text>
+<text x="120.0" y="663.7" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">jump to ENTRY</text>
+<text x="430.0" y="386.8" font-size="10" text-anchor="middle" fill="#000000">send failure token</text>
+<text x="430.0" y="399.8" font-size="10" text-anchor="middle" fill="#000000">drain the line</text>
+<text x="600.5" y="103.3" font-size="10" text-anchor="middle" fill="#000000"></text>
+</svg>
