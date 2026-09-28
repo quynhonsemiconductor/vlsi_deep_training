@@ -1,5 +1,14 @@
+`default_nettype none
 `timescale 1ns/1ps
-
+//==============================================================================
+// Module      : m_qnsc_wrap_cpu
+// Description : CPU block's single outward boundary. ibex_top and
+//               m_qnsc_cpu2axi are connected directly to each other in this
+//               one module -- leader review 2026-09-28: connect the core to
+//               the bridge first, then wrap the pair in one m_qnsc_wrap_cpu,
+//               not two sub-wrapper modules composed by a third. See
+//               doc/specs/QNSC_CPU_DECISIONS.md.
+//==============================================================================
 module m_qnsc_wrap_cpu
 #(
 )
@@ -9,8 +18,8 @@ module m_qnsc_wrap_cpu
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_clk\|^i_rst")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
-input logic		i_clk_cpu,		// To u_m_qnsc_wrap_cpu_ibex of m_qnsc_wrap_cpu_ibex.v, ...
-input logic		i_rst_n_cpu,		// To u_m_qnsc_wrap_cpu_ibex of m_qnsc_wrap_cpu_ibex.v, ...
+input logic		i_clk_cpu,		// To u_ibex_top of ibex_top.v, ...
+input logic		i_rst_n_cpu,		// To u_ibex_top of ibex_top.v, ...
 // End of automatics
 
 //---------------------------------------------------------------
@@ -24,7 +33,7 @@ input logic		i_rst_n_cpu,		// To u_m_qnsc_wrap_cpu_ibex of m_qnsc_wrap_cpu_ibex.
 // downloaded application at ISRAM's program region (0x2000_1000, entry at
 // +0x80 = 0x2000_1080 per HAS Table 6-4 row 18 / ROM MAS V2.1 Section 8),
 // not to the 4 KiB debug/DM window C_ISRAM_DBG_BASE (0x2000_0000) that
-// m_qnsc_wrap_cpu_ibex's DmBaseAddr uses -- those are two different regions.
+// DmBaseAddr below uses -- those are two different regions.
 input  logic [31:0] i_cfg_boot_addr,
 input  logic [31:0] i_cfg_hart_id,   // design/top ties this; 32'h0 while QSOC has one core
 
@@ -49,69 +58,75 @@ input  logic i_dft_test_en,
 //---------------------------------------------------------------
 /*AUTOOUTPUT("^o_pwr")*/
 // Beginning of automatic outputs (from unused autoinst outputs)
-output logic		o_pwr_sleep,		// From u_m_qnsc_wrap_cpu_ibex of m_qnsc_wrap_cpu_ibex.v
+output logic		o_pwr_sleep,		// From u_ibex_top of ibex_top.v
 // End of automatics
 
 //---------------------------------------------------------------
-// AXI4 master bus -- flattened per QNSC naming rule, pass-through
-// from m_qnsc_wrap_cpu_cpu2axi to the subsystem boundary.
+// AXI4 master bus -- flattened per QNSC naming rule (no packed
+// structs on the wrapper boundary). AW/W/AR are driven by the
+// bridge (o_bus_axi_*); B/R are driven by the slave subsystem
+// (i_bus_axi_*). *_ready runs against the channel's own flow
+// direction: i_bus_axi_aw_ready / o_bus_axi_b_ready etc.
 //---------------------------------------------------------------
-/*AUTOINPUT("^i_bus_axi")*/
-// Beginning of automatic inputs (from unused autoinst inputs)
-input logic		i_bus_axi_ar_ready,	// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic		i_bus_axi_aw_ready,	// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic [cpu2axi_pkg::P_MST_ID_W-1:0] i_bus_axi_b_id,// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic [1:0]	i_bus_axi_b_resp,	// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic [cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_b_user,// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic		i_bus_axi_b_valid,	// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic [31:0]	i_bus_axi_r_data,	// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic [cpu2axi_pkg::P_MST_ID_W-1:0] i_bus_axi_r_id,// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic		i_bus_axi_r_last,	// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic [1:0]	i_bus_axi_r_resp,	// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic [cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_r_user,// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic		i_bus_axi_r_valid,	// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-input logic		i_bus_axi_w_ready,	// To u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-// End of automatics
-/*AUTOOUTPUT("^o_bus_axi")*/
-// Beginning of automatic outputs (from unused autoinst outputs)
-output logic [31:0]	o_bus_axi_ar_addr,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [1:0]	o_bus_axi_ar_burst,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [3:0]	o_bus_axi_ar_cache,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [cpu2axi_pkg::P_MST_ID_W-1:0] o_bus_axi_ar_id,// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [7:0]	o_bus_axi_ar_len,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic		o_bus_axi_ar_lock,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [2:0]	o_bus_axi_ar_prot,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [3:0]	o_bus_axi_ar_qos,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [3:0]	o_bus_axi_ar_region,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [2:0]	o_bus_axi_ar_size,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_ar_user,// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic		o_bus_axi_ar_valid,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [31:0]	o_bus_axi_aw_addr,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [5:0]	o_bus_axi_aw_atop,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [1:0]	o_bus_axi_aw_burst,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [3:0]	o_bus_axi_aw_cache,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [cpu2axi_pkg::P_MST_ID_W-1:0] o_bus_axi_aw_id,// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [7:0]	o_bus_axi_aw_len,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic		o_bus_axi_aw_lock,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [2:0]	o_bus_axi_aw_prot,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [3:0]	o_bus_axi_aw_qos,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [3:0]	o_bus_axi_aw_region,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [2:0]	o_bus_axi_aw_size,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_aw_user,// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic		o_bus_axi_aw_valid,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic		o_bus_axi_b_ready,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic		o_bus_axi_r_ready,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [31:0]	o_bus_axi_w_data,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic		o_bus_axi_w_last,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [3:0]	o_bus_axi_w_strb,	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic [cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_w_user,// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-output logic		o_bus_axi_w_valid	// From u_m_qnsc_wrap_cpu_cpu2axi of m_qnsc_wrap_cpu_cpu2axi.v
-// End of automatics
+input  logic                    i_bus_axi_aw_ready,
+output logic [cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_aw_id,
+output logic [31:0]             o_bus_axi_aw_addr,
+output logic [7:0]              o_bus_axi_aw_len,
+output logic [2:0]              o_bus_axi_aw_size,
+output logic [1:0]              o_bus_axi_aw_burst,
+output logic                    o_bus_axi_aw_lock,
+output logic [3:0]              o_bus_axi_aw_cache,
+output logic [2:0]              o_bus_axi_aw_prot,
+output logic [3:0]              o_bus_axi_aw_qos,
+output logic [3:0]              o_bus_axi_aw_region,
+output logic [5:0]              o_bus_axi_aw_atop,
+output logic [cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_aw_user,
+output logic                    o_bus_axi_aw_valid,
+
+input  logic                    i_bus_axi_w_ready,
+output logic [31:0]             o_bus_axi_w_data,
+output logic [3:0]              o_bus_axi_w_strb,
+output logic                    o_bus_axi_w_last,
+output logic [cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_w_user,
+output logic                    o_bus_axi_w_valid,
+
+output logic                    o_bus_axi_b_ready,
+input  logic [cpu2axi_pkg::P_MST_ID_W-1:0]  i_bus_axi_b_id,
+input  logic [1:0]              i_bus_axi_b_resp,
+input  logic [cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_b_user,
+input  logic                    i_bus_axi_b_valid,
+
+input  logic                    i_bus_axi_ar_ready,
+output logic [cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_ar_id,
+output logic [31:0]             o_bus_axi_ar_addr,
+output logic [7:0]              o_bus_axi_ar_len,
+output logic [2:0]              o_bus_axi_ar_size,
+output logic [1:0]              o_bus_axi_ar_burst,
+output logic                    o_bus_axi_ar_lock,
+output logic [3:0]              o_bus_axi_ar_cache,
+output logic [2:0]              o_bus_axi_ar_prot,
+output logic [3:0]              o_bus_axi_ar_qos,
+output logic [3:0]              o_bus_axi_ar_region,
+output logic [cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_ar_user,
+output logic                    o_bus_axi_ar_valid,
+
+output logic                    o_bus_axi_r_ready,
+input  logic [cpu2axi_pkg::P_MST_ID_W-1:0]  i_bus_axi_r_id,
+input  logic [31:0]             i_bus_axi_r_data,
+input  logic [1:0]              i_bus_axi_r_resp,
+input  logic                    i_bus_axi_r_last,
+input  logic [cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_r_user,
+input  logic                    i_bus_axi_r_valid
 );
 
-// Pre-declared with explicit widths: AUTOWIRE cannot reliably infer width
-// for a wire referenced across two separate AUTOINST/AUTO_TEMPLATE blocks
-// (same tool limitation seen on m_qnsc_wrap_cpu_ibex's scramble_key/nonce).
+//---------------------------------------------------------------
+// Point-to-point wires connecting ibex_top directly to
+// m_qnsc_cpu2axi -- "connect cpu to bridge first" (leader review
+// 2026-09-28). Pre-declared with explicit widths: AUTOWIRE cannot
+// reliably infer width for a wire referenced across two separate
+// AUTOINST/AUTO_TEMPLATE blocks (same tool limitation seen below
+// on ibex_top's own scramble_key/nonce).
+//---------------------------------------------------------------
 logic        w_ibex_bridge_instr_req;
 logic        w_ibex_bridge_instr_gnt;
 logic        w_ibex_bridge_instr_rvalid;
@@ -128,231 +143,304 @@ logic [31:0] w_ibex_bridge_data_wdata;
 logic [31:0] w_ibex_bridge_data_rdata;
 logic        w_ibex_bridge_data_err;
 
+cpu2axi_pkg::axi_s_1_req_t  w_bridge_axi_req;
+cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
+
 /*AUTOWIRE*/
+// Beginning of automatic wires (for undeclared instantiated-module outputs)
+// End of automatics
 
-/* m_qnsc_wrap_cpu_ibex AUTO_TEMPLATE(
-    .i_boot_addr             (i_cfg_boot_addr),
-    .i_dbg_req               (i_dbg_req),
-    .i_int_software          (1'b0),
-    .i_int_timer             (1'b0),
-    .i_int_external          (1'b0),
-    .i_int_fast              ({4'b0, i_int_fast}),
-    .i_int_nm                (i_int_nm),
-    .i_dft_scan_rst_n        (1'b1),
-    .i_hart_id               (i_cfg_hart_id),
-    .i_cheriot_enable        (ibex_pkg::IbexMuBiOff),
-    .i_fetch_enable          (ibex_pkg::IbexMuBiOn),
-    .i_mcounteren_writable   (ibex_pkg::IbexMuBiOn),
-    .i_scramble_key_valid    (1'b0),
-    .i_scramble_key          ('0),
-    .i_scramble_nonce        ('0),
-    .i_trvk_heap_base_addr   ('0),
-    .i_trvk_revbm_gnt        (1'b0),
-    .i_trvk_revbm_rvalid     (1'b0),
-    .i_trvk_revbm_rdata      ('0),
-    .i_trvk_revbm_rdata_intg (7'h0),
-    .i_trvk_revbm_err        (1'b0),
-    .o_trvk_revbm_req        (),
-    .o_trvk_revbm_addr       (),
-    .o_scramble_req          (),
-    .o_crash_dump            (),
-    .o_double_fault_seen     (),
-    .o_alert_minor           (),
-    .o_alert_major_internal  (),
-    .o_alert_major_bus       (),
-    .o_lockstep_cmp_en       (),
-    .i_mem_icache_data_cfg   ('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}),
-    .i_mem_icache_tag_cfg    ('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}),
-    .o_mem_icache_data_cfg   (),
-    .o_mem_icache_tag_cfg    (),
-    .i_mem_instr_rdata_intg  (7'h0),
-    .i_mem_data_rdata_intg   (7'h0),
-    .i_mem_data_tag          (1'b0),
-    .o_mem_data_tag          (),
-    .o_mem_data_wdata_intg   (),
-    .o_mem_instr_req_shadow  (),
-    .o_mem_instr_addr_shadow (),
-    .o_mem_data_req_shadow   (),
-    .o_mem_data_we_shadow    (),
-    .o_mem_data_be_shadow    (),
-    .o_mem_data_addr_shadow  (),
-    .o_mem_data_wdata_shadow (),
-    .o_mem_data_wdata_intg_shadow (),
-    .o_mem_instr_req         (w_ibex_bridge_instr_req),
-    .i_mem_instr_gnt         (w_ibex_bridge_instr_gnt),
-    .i_mem_instr_rvalid      (w_ibex_bridge_instr_rvalid),
-    .o_mem_instr_addr        (w_ibex_bridge_instr_addr),
-    .i_mem_instr_rdata       (w_ibex_bridge_instr_rdata),
-    .i_mem_instr_err         (w_ibex_bridge_instr_err),
-    .o_mem_data_req          (w_ibex_bridge_data_req),
-    .i_mem_data_gnt          (w_ibex_bridge_data_gnt),
-    .i_mem_data_rvalid       (w_ibex_bridge_data_rvalid),
-    .o_mem_data_we           (w_ibex_bridge_data_we),
-    .o_mem_data_be           (w_ibex_bridge_data_be),
-    .o_mem_data_addr         (w_ibex_bridge_data_addr),
-    .o_mem_data_wdata        (w_ibex_bridge_data_wdata),
-    .i_mem_data_rdata        (w_ibex_bridge_data_rdata),
-    .i_mem_data_err          (w_ibex_bridge_data_err),
+/*AUTO_LISP(setq verilog-auto-input-ignore-regexp
+  (concat
+  "unuse_input"
+  ))
+*/
+
+/*AUTO_LISP(setq verilog-auto-output-ignore-regexp
+  (concat
+  "unuse_output"
+  ))
+*/
+
+/* ibex_top AUTO_TEMPLATE(
+    .clk_i                    (i_clk_cpu),
+    .rst_ni                   (i_rst_n_cpu),
+    .boot_addr_i              (i_cfg_boot_addr[]),
+    .debug_req_i              (i_dbg_req),
+    .irq_software_i           (1'b0),
+    .irq_timer_i              (1'b0),
+    .irq_external_i           (1'b0),
+    .irq_fast_i               ({4'b0, i_int_fast}),
+    .irq_nm_i                 (i_int_nm),
+    .core_sleep_o             (o_pwr_sleep),
+    .test_en_i                (i_dft_test_en),
+    .scan_rst_ni              (1'b1),
+    .instr_req_o              (w_ibex_bridge_instr_req),
+    .instr_gnt_i              (w_ibex_bridge_instr_gnt),
+    .instr_rvalid_i           (w_ibex_bridge_instr_rvalid),
+    .instr_addr_o             (w_ibex_bridge_instr_addr[]),
+    .instr_rdata_i            (w_ibex_bridge_instr_rdata[]),
+    .instr_rdata_intg_i       (7'h0),
+    .instr_err_i              (w_ibex_bridge_instr_err),
+    .instr_req_shadow_o       (),
+    .instr_addr_shadow_o      (),
+    .data_req_o               (w_ibex_bridge_data_req),
+    .data_gnt_i               (w_ibex_bridge_data_gnt),
+    .data_rvalid_i            (w_ibex_bridge_data_rvalid),
+    .data_we_o                (w_ibex_bridge_data_we),
+    .data_be_o                (w_ibex_bridge_data_be[]),
+    .data_addr_o              (w_ibex_bridge_data_addr[]),
+    .data_wdata_o             (w_ibex_bridge_data_wdata[]),
+    .data_wdata_intg_o        (),
+    .data_tag_o               (),
+    .data_rdata_i             (w_ibex_bridge_data_rdata[]),
+    .data_rdata_intg_i        (7'h0),
+    .data_tag_i               (1'b0),
+    .data_err_i               (w_ibex_bridge_data_err),
+    .data_req_shadow_o        (),
+    .data_we_shadow_o         (),
+    .data_be_shadow_o         (),
+    .data_addr_shadow_o       (),
+    .data_wdata_shadow_o      (),
+    .data_wdata_intg_shadow_o (),
+    .hart_id_i                (i_cfg_hart_id[]),
+    .fetch_enable_i           (ibex_pkg::IbexMuBiOn),
+    .mcounteren_writable_i    (ibex_pkg::IbexMuBiOn),
+    .cheriot_enable_i         (ibex_pkg::IbexMuBiOff),
+    .trvk_heap_base_addr_i    ('0),
+    .trvk_revbm_req_o         (),
+    .trvk_revbm_gnt_i         (1'b0),
+    .trvk_revbm_rvalid_i      (1'b0),
+    .trvk_revbm_addr_o        (),
+    .trvk_revbm_rdata_i       ('0),
+    .trvk_revbm_rdata_intg_i  (7'h0),
+    .trvk_revbm_err_i         (1'b0),
+    .scramble_key_valid_i     (1'b0),
+    .scramble_key_i           ('0),
+    .scramble_nonce_i         ('0),
+    .scramble_req_o           (),
+    .crash_dump_o             (),
+    .double_fault_seen_o      (),
+    .alert_minor_o            (),
+    .alert_major_internal_o   (),
+    .alert_major_bus_o        (),
+    .lockstep_cmp_en_o        (),
+    .ram_cfg_icache_tag_i     ('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}),
+    .ram_cfg_icache_tag_o     (),
+    .ram_cfg_icache_data_i    ('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}),
+    .ram_cfg_icache_data_o    (),
 );
 */
-m_qnsc_wrap_cpu_ibex u_m_qnsc_wrap_cpu_ibex(/*AUTOINST*/
-					    // Interfaces
-					    .i_cheriot_enable	(ibex_pkg::IbexMuBiOff), // Templated
-					    .i_fetch_enable	(ibex_pkg::IbexMuBiOn), // Templated
-					    .i_mcounteren_writable(ibex_pkg::IbexMuBiOn), // Templated
-					    .o_crash_dump	(),		 // Templated
-					    .o_lockstep_cmp_en	(),		 // Templated
-					    // Outputs
-					    .o_pwr_sleep	(o_pwr_sleep),
-					    .o_mem_instr_addr	(w_ibex_bridge_instr_addr), // Templated
-					    .o_mem_instr_addr_shadow(),		 // Templated
-					    .o_mem_instr_req	(w_ibex_bridge_instr_req), // Templated
-					    .o_mem_instr_req_shadow(),		 // Templated
-					    .o_mem_data_addr	(w_ibex_bridge_data_addr), // Templated
-					    .o_mem_data_addr_shadow(),		 // Templated
-					    .o_mem_data_be	(w_ibex_bridge_data_be), // Templated
-					    .o_mem_data_be_shadow(),		 // Templated
-					    .o_mem_data_req	(w_ibex_bridge_data_req), // Templated
-					    .o_mem_data_req_shadow(),		 // Templated
-					    .o_mem_data_tag	(),		 // Templated
-					    .o_mem_data_wdata	(w_ibex_bridge_data_wdata), // Templated
-					    .o_mem_data_wdata_intg(),		 // Templated
-					    .o_mem_data_wdata_intg_shadow(),	 // Templated
-					    .o_mem_data_wdata_shadow(),		 // Templated
-					    .o_mem_data_we	(w_ibex_bridge_data_we), // Templated
-					    .o_mem_data_we_shadow(),		 // Templated
-					    .o_alert_major_bus	(),		 // Templated
-					    .o_alert_major_internal(),		 // Templated
-					    .o_alert_minor	(),		 // Templated
-					    .o_double_fault_seen(),		 // Templated
-					    .o_mem_icache_data_cfg(),		 // Templated
-					    .o_mem_icache_tag_cfg(),		 // Templated
-					    .o_scramble_req	(),		 // Templated
-					    .o_trvk_revbm_addr	(),		 // Templated
-					    .o_trvk_revbm_req	(),		 // Templated
-					    // Inputs
-					    .i_clk_cpu		(i_clk_cpu),
-					    .i_rst_n_cpu	(i_rst_n_cpu),
-					    .i_boot_addr	(i_cfg_boot_addr), // Templated
-					    .i_dbg_req		(i_dbg_req),	 // Templated
-					    .i_int_external	(1'b0),		 // Templated
-					    .i_int_fast		({4'b0, i_int_fast}), // Templated
-					    .i_int_nm		(i_int_nm),	 // Templated
-					    .i_int_software	(1'b0),		 // Templated
-					    .i_int_timer	(1'b0),		 // Templated
-					    .i_dft_scan_rst_n	(1'b1),		 // Templated
-					    .i_dft_test_en	(i_dft_test_en),
-					    .i_mem_instr_err	(w_ibex_bridge_instr_err), // Templated
-					    .i_mem_instr_gnt	(w_ibex_bridge_instr_gnt), // Templated
-					    .i_mem_instr_rdata	(w_ibex_bridge_instr_rdata), // Templated
-					    .i_mem_instr_rdata_intg(7'h0),	 // Templated
-					    .i_mem_instr_rvalid	(w_ibex_bridge_instr_rvalid), // Templated
-					    .i_mem_data_err	(w_ibex_bridge_data_err), // Templated
-					    .i_mem_data_gnt	(w_ibex_bridge_data_gnt), // Templated
-					    .i_mem_data_rdata	(w_ibex_bridge_data_rdata), // Templated
-					    .i_mem_data_rdata_intg(7'h0),	 // Templated
-					    .i_mem_data_rvalid	(w_ibex_bridge_data_rvalid), // Templated
-					    .i_mem_data_tag	(1'b0),		 // Templated
-					    .i_hart_id		(i_cfg_hart_id), // Templated
-					    .i_mem_icache_data_cfg('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}), // Templated
-					    .i_mem_icache_tag_cfg('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}), // Templated
-					    .i_scramble_key	('0),		 // Templated
-					    .i_scramble_key_valid(1'b0),	 // Templated
-					    .i_scramble_nonce	('0),		 // Templated
-					    .i_trvk_heap_base_addr('0),		 // Templated
-					    .i_trvk_revbm_err	(1'b0),		 // Templated
-					    .i_trvk_revbm_gnt	(1'b0),		 // Templated
-					    .i_trvk_revbm_rdata	('0),		 // Templated
-					    .i_trvk_revbm_rdata_intg(7'h0),	 // Templated
-					    .i_trvk_revbm_rvalid(1'b0));		 // Templated
+ibex_top #(
+    .BaseIsa          (ibex_pkg::BaseIsaRV32I),
+    .PMPEnable        (1'b0),
+    .PMPGranularity   (0),
+    .PMPNumRegions    (4),
+    .MHPMCounterNum   (0),
+    .MHPMCounterWidth (40),
+    .RV32E            (1'b0),
+    .RV32M            (ibex_pkg::RV32MFast),
+    .RV32B            (ibex_pkg::RV32BNone),
+    .RV32ZC           (ibex_pkg::RV32Zca),
+    .RegFile          (ibex_pkg::RegFileFF),
+    .BranchTargetALU  (1'b0),
+    .WritebackStage   (1'b0),
+    .ICache           (1'b0),
+    .ICacheECC        (1'b0),
+    .BranchPredictor  (1'b0),
+    .DbgTriggerEn     (1'b1),  // leader review 2026-09-28: enable hw trigger CSRs for HW breakpoints
+    .DbgHwBreakNum    (2),     // leader review 2026-09-28: 2 HW breakpoints for GDB/OpenOCD debugging
+    .SecureIbex       (1'b0),
+    .LockstepOffset   (1),
+    .ICacheScramble   (1'b0),
+    // IP does not use qnsc_pkg (design/README.md) -- the debug/DM window base
+    // is written as a fixed value with a contract tag instead of
+    // qnsc_pkg::C_ISRAM_DBG_BASE; contract_tag.py checks the literal against
+    // util/qsoc_contract.yml so it cannot silently drift from the real value.
+    .DmBaseAddr       (32'h2000_0000),                    // contract: memory_map.isram_dbg.base
+    .DmAddrMask       (32'h0000_0FFF),
+    .DmHaltAddr       (32'h2000_0000 + 32'h0000_0800),     // contract: memory_map.isram_dbg.base
+    .DmExceptionAddr  (32'h2000_0000 + 32'h0000_0810),     // contract: memory_map.isram_dbg.base
+    .CsrMvendorId     (32'h0),
+    .CsrMimpId        (32'h1)  // leader review 2026-09-28: encode implementation/revision
+) u_ibex_top(/*AUTOINST*/
+	     // Interfaces
+	     .cheriot_enable_i		(ibex_pkg::IbexMuBiOff), // Templated
+	     .crash_dump_o		(),			 // Templated
+	     .fetch_enable_i		(ibex_pkg::IbexMuBiOn),	 // Templated
+	     .mcounteren_writable_i	(ibex_pkg::IbexMuBiOn),	 // Templated
+	     .lockstep_cmp_en_o		(),			 // Templated
+	     // Outputs
+	     .ram_cfg_icache_tag_o	(),			 // Templated
+	     .ram_cfg_icache_data_o	(),			 // Templated
+	     .instr_req_o		(w_ibex_bridge_instr_req), // Templated
+	     .instr_addr_o		(w_ibex_bridge_instr_addr[31:0]), // Templated
+	     .data_req_o		(w_ibex_bridge_data_req), // Templated
+	     .data_we_o			(w_ibex_bridge_data_we), // Templated
+	     .data_be_o			(w_ibex_bridge_data_be[3:0]), // Templated
+	     .data_addr_o		(w_ibex_bridge_data_addr[31:0]), // Templated
+	     .data_wdata_o		(w_ibex_bridge_data_wdata[31:0]), // Templated
+	     .data_wdata_intg_o		(),			 // Templated
+	     .data_tag_o		(),			 // Templated
+	     .trvk_revbm_req_o		(),			 // Templated
+	     .trvk_revbm_addr_o		(),			 // Templated
+	     .scramble_req_o		(),			 // Templated
+	     .double_fault_seen_o	(),			 // Templated
+	     .alert_minor_o		(),			 // Templated
+	     .alert_major_internal_o	(),			 // Templated
+	     .alert_major_bus_o		(),			 // Templated
+	     .core_sleep_o		(o_pwr_sleep),		 // Templated
+	     .data_req_shadow_o		(),			 // Templated
+	     .data_we_shadow_o		(),			 // Templated
+	     .data_be_shadow_o		(),			 // Templated
+	     .data_addr_shadow_o	(),			 // Templated
+	     .data_wdata_shadow_o	(),			 // Templated
+	     .data_wdata_intg_shadow_o	(),			 // Templated
+	     .instr_req_shadow_o	(),			 // Templated
+	     .instr_addr_shadow_o	(),			 // Templated
+	     // Inputs
+	     .clk_i			(i_clk_cpu),		 // Templated
+	     .rst_ni			(i_rst_n_cpu),		 // Templated
+	     .test_en_i			(i_dft_test_en),	 // Templated
+	     .ram_cfg_icache_tag_i	('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}), // Templated
+	     .ram_cfg_icache_data_i	('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}), // Templated
+	     .hart_id_i			(i_cfg_hart_id[31:0]),	 // Templated
+	     .boot_addr_i		(i_cfg_boot_addr[31:0]), // Templated
+	     .trvk_heap_base_addr_i	('0),			 // Templated
+	     .instr_gnt_i		(w_ibex_bridge_instr_gnt), // Templated
+	     .instr_rvalid_i		(w_ibex_bridge_instr_rvalid), // Templated
+	     .instr_rdata_i		(w_ibex_bridge_instr_rdata[31:0]), // Templated
+	     .instr_rdata_intg_i	(7'h0),			 // Templated
+	     .instr_err_i		(w_ibex_bridge_instr_err), // Templated
+	     .data_gnt_i		(w_ibex_bridge_data_gnt), // Templated
+	     .data_rvalid_i		(w_ibex_bridge_data_rvalid), // Templated
+	     .data_rdata_i		(w_ibex_bridge_data_rdata[31:0]), // Templated
+	     .data_rdata_intg_i		(7'h0),			 // Templated
+	     .data_tag_i		(1'b0),			 // Templated
+	     .data_err_i		(w_ibex_bridge_data_err), // Templated
+	     .trvk_revbm_gnt_i		(1'b0),			 // Templated
+	     .trvk_revbm_rvalid_i	(1'b0),			 // Templated
+	     .trvk_revbm_rdata_i	('0),			 // Templated
+	     .trvk_revbm_rdata_intg_i	(7'h0),			 // Templated
+	     .trvk_revbm_err_i		(1'b0),			 // Templated
+	     .irq_software_i		(1'b0),			 // Templated
+	     .irq_timer_i		(1'b0),			 // Templated
+	     .irq_external_i		(1'b0),			 // Templated
+	     .irq_fast_i		({4'b0, i_int_fast}),	 // Templated
+	     .irq_nm_i			(i_int_nm),		 // Templated
+	     .scramble_key_valid_i	(1'b0),			 // Templated
+	     .scramble_key_i		('0),			 // Templated
+	     .scramble_nonce_i		('0),			 // Templated
+	     .debug_req_i		(i_dbg_req),		 // Templated
+	     .scan_rst_ni		(1'b1));			 // Templated
 
-/* m_qnsc_wrap_cpu_cpu2axi AUTO_TEMPLATE(
-    .i_mem_instr_req    (w_ibex_bridge_instr_req),
-    .o_mem_instr_gnt    (w_ibex_bridge_instr_gnt),
-    .o_mem_instr_rvalid (w_ibex_bridge_instr_rvalid),
-    .i_mem_instr_addr   (w_ibex_bridge_instr_addr),
-    .o_mem_instr_rdata  (w_ibex_bridge_instr_rdata),
-    .o_mem_instr_err    (w_ibex_bridge_instr_err),
-    .i_mem_data_req     (w_ibex_bridge_data_req),
-    .o_mem_data_gnt     (w_ibex_bridge_data_gnt),
-    .o_mem_data_rvalid  (w_ibex_bridge_data_rvalid),
-    .i_mem_data_we      (w_ibex_bridge_data_we),
-    .i_mem_data_be      (w_ibex_bridge_data_be),
-    .i_mem_data_addr    (w_ibex_bridge_data_addr),
-    .i_mem_data_wdata   (w_ibex_bridge_data_wdata),
-    .o_mem_data_rdata   (w_ibex_bridge_data_rdata),
-    .o_mem_data_err     (w_ibex_bridge_data_err),
+/* m_qnsc_cpu2axi AUTO_TEMPLATE(
+    .i_clk_core    (i_clk_cpu),
+    .i_resetn_core (i_rst_n_cpu),
+    .i_instr_req   (w_ibex_bridge_instr_req),
+    .o_instr_gnt   (w_ibex_bridge_instr_gnt),
+    .o_instr_rvalid (w_ibex_bridge_instr_rvalid),
+    .i_instr_addr  (w_ibex_bridge_instr_addr[]),
+    .o_instr_rdata (w_ibex_bridge_instr_rdata[]),
+    .o_instr_err   (w_ibex_bridge_instr_err),
+    .i_data_req    (w_ibex_bridge_data_req),
+    .o_data_gnt    (w_ibex_bridge_data_gnt),
+    .o_data_rvalid (w_ibex_bridge_data_rvalid),
+    .i_data_we     (w_ibex_bridge_data_we),
+    .i_data_be     (w_ibex_bridge_data_be[]),
+    .i_data_addr   (w_ibex_bridge_data_addr[]),
+    .i_data_wdata  (w_ibex_bridge_data_wdata[]),
+    .o_data_rdata  (w_ibex_bridge_data_rdata[]),
+    .o_data_err    (w_ibex_bridge_data_err),
+    .o_axi_req     (w_bridge_axi_req),
+    .i_axi_resp    (w_bridge_axi_resp),
 );
 */
-m_qnsc_wrap_cpu_cpu2axi u_m_qnsc_wrap_cpu_cpu2axi(/*AUTOINST*/
-						  // Outputs
-						  .o_mem_instr_err	(w_ibex_bridge_instr_err), // Templated
-						  .o_mem_instr_gnt	(w_ibex_bridge_instr_gnt), // Templated
-						  .o_mem_instr_rdata	(w_ibex_bridge_instr_rdata), // Templated
-						  .o_mem_instr_rvalid	(w_ibex_bridge_instr_rvalid), // Templated
-						  .o_mem_data_err	(w_ibex_bridge_data_err), // Templated
-						  .o_mem_data_gnt	(w_ibex_bridge_data_gnt), // Templated
-						  .o_mem_data_rdata	(w_ibex_bridge_data_rdata), // Templated
-						  .o_mem_data_rvalid	(w_ibex_bridge_data_rvalid), // Templated
-						  .o_bus_axi_aw_id	(o_bus_axi_aw_id[cpu2axi_pkg::P_MST_ID_W-1:0]),
-						  .o_bus_axi_aw_addr	(o_bus_axi_aw_addr[31:0]),
-						  .o_bus_axi_aw_len	(o_bus_axi_aw_len[7:0]),
-						  .o_bus_axi_aw_size	(o_bus_axi_aw_size[2:0]),
-						  .o_bus_axi_aw_burst	(o_bus_axi_aw_burst[1:0]),
-						  .o_bus_axi_aw_lock	(o_bus_axi_aw_lock),
-						  .o_bus_axi_aw_cache	(o_bus_axi_aw_cache[3:0]),
-						  .o_bus_axi_aw_prot	(o_bus_axi_aw_prot[2:0]),
-						  .o_bus_axi_aw_qos	(o_bus_axi_aw_qos[3:0]),
-						  .o_bus_axi_aw_region	(o_bus_axi_aw_region[3:0]),
-						  .o_bus_axi_aw_atop	(o_bus_axi_aw_atop[5:0]),
-						  .o_bus_axi_aw_user	(o_bus_axi_aw_user[cpu2axi_pkg::P_AXI_USER_W-1:0]),
-						  .o_bus_axi_aw_valid	(o_bus_axi_aw_valid),
-						  .o_bus_axi_w_data	(o_bus_axi_w_data[31:0]),
-						  .o_bus_axi_w_strb	(o_bus_axi_w_strb[3:0]),
-						  .o_bus_axi_w_last	(o_bus_axi_w_last),
-						  .o_bus_axi_w_user	(o_bus_axi_w_user[cpu2axi_pkg::P_AXI_USER_W-1:0]),
-						  .o_bus_axi_w_valid	(o_bus_axi_w_valid),
-						  .o_bus_axi_b_ready	(o_bus_axi_b_ready),
-						  .o_bus_axi_ar_id	(o_bus_axi_ar_id[cpu2axi_pkg::P_MST_ID_W-1:0]),
-						  .o_bus_axi_ar_addr	(o_bus_axi_ar_addr[31:0]),
-						  .o_bus_axi_ar_len	(o_bus_axi_ar_len[7:0]),
-						  .o_bus_axi_ar_size	(o_bus_axi_ar_size[2:0]),
-						  .o_bus_axi_ar_burst	(o_bus_axi_ar_burst[1:0]),
-						  .o_bus_axi_ar_lock	(o_bus_axi_ar_lock),
-						  .o_bus_axi_ar_cache	(o_bus_axi_ar_cache[3:0]),
-						  .o_bus_axi_ar_prot	(o_bus_axi_ar_prot[2:0]),
-						  .o_bus_axi_ar_qos	(o_bus_axi_ar_qos[3:0]),
-						  .o_bus_axi_ar_region	(o_bus_axi_ar_region[3:0]),
-						  .o_bus_axi_ar_user	(o_bus_axi_ar_user[cpu2axi_pkg::P_AXI_USER_W-1:0]),
-						  .o_bus_axi_ar_valid	(o_bus_axi_ar_valid),
-						  .o_bus_axi_r_ready	(o_bus_axi_r_ready),
-						  // Inputs
-						  .i_clk_cpu		(i_clk_cpu),
-						  .i_rst_n_cpu		(i_rst_n_cpu),
-						  .i_mem_instr_addr	(w_ibex_bridge_instr_addr), // Templated
-						  .i_mem_instr_req	(w_ibex_bridge_instr_req), // Templated
-						  .i_mem_data_addr	(w_ibex_bridge_data_addr), // Templated
-						  .i_mem_data_be	(w_ibex_bridge_data_be), // Templated
-						  .i_mem_data_req	(w_ibex_bridge_data_req), // Templated
-						  .i_mem_data_wdata	(w_ibex_bridge_data_wdata), // Templated
-						  .i_mem_data_we	(w_ibex_bridge_data_we), // Templated
-						  .i_bus_axi_aw_ready	(i_bus_axi_aw_ready),
-						  .i_bus_axi_w_ready	(i_bus_axi_w_ready),
-						  .i_bus_axi_b_id	(i_bus_axi_b_id[cpu2axi_pkg::P_MST_ID_W-1:0]),
-						  .i_bus_axi_b_resp	(i_bus_axi_b_resp[1:0]),
-						  .i_bus_axi_b_user	(i_bus_axi_b_user[cpu2axi_pkg::P_AXI_USER_W-1:0]),
-						  .i_bus_axi_b_valid	(i_bus_axi_b_valid),
-						  .i_bus_axi_ar_ready	(i_bus_axi_ar_ready),
-						  .i_bus_axi_r_id	(i_bus_axi_r_id[cpu2axi_pkg::P_MST_ID_W-1:0]),
-						  .i_bus_axi_r_data	(i_bus_axi_r_data[31:0]),
-						  .i_bus_axi_r_resp	(i_bus_axi_r_resp[1:0]),
-						  .i_bus_axi_r_last	(i_bus_axi_r_last),
-						  .i_bus_axi_r_user	(i_bus_axi_r_user[cpu2axi_pkg::P_AXI_USER_W-1:0]),
-						  .i_bus_axi_r_valid	(i_bus_axi_r_valid));
+m_qnsc_cpu2axi u_m_qnsc_cpu2axi(/*AUTOINST*/
+				// Interfaces
+				.o_axi_req	(w_bridge_axi_req), // Templated
+				.i_axi_resp	(w_bridge_axi_resp), // Templated
+				// Outputs
+				.o_instr_gnt	(w_ibex_bridge_instr_gnt), // Templated
+				.o_instr_rvalid	(w_ibex_bridge_instr_rvalid), // Templated
+				.o_instr_rdata	(w_ibex_bridge_instr_rdata[31:0]), // Templated
+				.o_instr_err	(w_ibex_bridge_instr_err), // Templated
+				.o_data_gnt	(w_ibex_bridge_data_gnt), // Templated
+				.o_data_rvalid	(w_ibex_bridge_data_rvalid), // Templated
+				.o_data_rdata	(w_ibex_bridge_data_rdata[31:0]), // Templated
+				.o_data_err	(w_ibex_bridge_data_err), // Templated
+				// Inputs
+				.i_clk_core	(i_clk_cpu),	 // Templated
+				.i_resetn_core	(i_rst_n_cpu),	 // Templated
+				.i_instr_req	(w_ibex_bridge_instr_req), // Templated
+				.i_instr_addr	(w_ibex_bridge_instr_addr[31:0]), // Templated
+				.i_data_req	(w_ibex_bridge_data_req), // Templated
+				.i_data_we	(w_ibex_bridge_data_we), // Templated
+				.i_data_be	(w_ibex_bridge_data_be[3:0]), // Templated
+				.i_data_addr	(w_ibex_bridge_data_addr[31:0]), // Templated
+				.i_data_wdata	(w_ibex_bridge_data_wdata[31:0])); // Templated
+
+//---------------------------------------------------------------
+// Boundary normalization: pack/unpack the QNSC flattened AXI4
+// master port against the pulp-platform packed-struct port used
+// by the (unmodified, third-party-adjacent) cpu2axi_bridge core.
+// AUTOINST cannot decompose SV packed structs, so this glue is
+// hand-written, not tool-generated.
+//---------------------------------------------------------------
+assign o_bus_axi_aw_id     = w_bridge_axi_req.aw.id;
+assign o_bus_axi_aw_addr   = w_bridge_axi_req.aw.addr;
+assign o_bus_axi_aw_len    = w_bridge_axi_req.aw.len;
+assign o_bus_axi_aw_size   = w_bridge_axi_req.aw.size;
+assign o_bus_axi_aw_burst  = w_bridge_axi_req.aw.burst;
+assign o_bus_axi_aw_lock   = w_bridge_axi_req.aw.lock;
+assign o_bus_axi_aw_cache  = w_bridge_axi_req.aw.cache;
+assign o_bus_axi_aw_prot   = w_bridge_axi_req.aw.prot;
+assign o_bus_axi_aw_qos    = w_bridge_axi_req.aw.qos;
+assign o_bus_axi_aw_region = w_bridge_axi_req.aw.region;
+assign o_bus_axi_aw_atop   = w_bridge_axi_req.aw.atop;
+assign o_bus_axi_aw_user   = w_bridge_axi_req.aw.user;
+assign o_bus_axi_aw_valid  = w_bridge_axi_req.aw_valid;
+assign w_bridge_axi_resp.aw_ready = i_bus_axi_aw_ready;
+
+assign o_bus_axi_w_data  = w_bridge_axi_req.w.data;
+assign o_bus_axi_w_strb  = w_bridge_axi_req.w.strb;
+assign o_bus_axi_w_last  = w_bridge_axi_req.w.last;
+assign o_bus_axi_w_user  = w_bridge_axi_req.w.user;
+assign o_bus_axi_w_valid = w_bridge_axi_req.w_valid;
+assign w_bridge_axi_resp.w_ready = i_bus_axi_w_ready;
+
+assign o_bus_axi_b_ready = w_bridge_axi_req.b_ready;
+assign w_bridge_axi_resp.b.id   = i_bus_axi_b_id;
+assign w_bridge_axi_resp.b.resp = i_bus_axi_b_resp;
+assign w_bridge_axi_resp.b.user = i_bus_axi_b_user;
+assign w_bridge_axi_resp.b_valid = i_bus_axi_b_valid;
+
+assign o_bus_axi_ar_id     = w_bridge_axi_req.ar.id;
+assign o_bus_axi_ar_addr   = w_bridge_axi_req.ar.addr;
+assign o_bus_axi_ar_len    = w_bridge_axi_req.ar.len;
+assign o_bus_axi_ar_size   = w_bridge_axi_req.ar.size;
+assign o_bus_axi_ar_burst  = w_bridge_axi_req.ar.burst;
+assign o_bus_axi_ar_lock   = w_bridge_axi_req.ar.lock;
+assign o_bus_axi_ar_cache  = w_bridge_axi_req.ar.cache;
+assign o_bus_axi_ar_prot   = w_bridge_axi_req.ar.prot;
+assign o_bus_axi_ar_qos    = w_bridge_axi_req.ar.qos;
+assign o_bus_axi_ar_region = w_bridge_axi_req.ar.region;
+assign o_bus_axi_ar_user   = w_bridge_axi_req.ar.user;
+assign o_bus_axi_ar_valid  = w_bridge_axi_req.ar_valid;
+assign w_bridge_axi_resp.ar_ready = i_bus_axi_ar_ready;
+
+assign o_bus_axi_r_ready = w_bridge_axi_req.r_ready;
+assign w_bridge_axi_resp.r.id   = i_bus_axi_r_id;
+assign w_bridge_axi_resp.r.data = i_bus_axi_r_data;
+assign w_bridge_axi_resp.r.resp = i_bus_axi_r_resp;
+assign w_bridge_axi_resp.r.last = i_bus_axi_r_last;
+assign w_bridge_axi_resp.r.user = i_bus_axi_r_user;
+assign w_bridge_axi_resp.r_valid = i_bus_axi_r_valid;
 
 endmodule
+`default_nettype wire
 // Local Variables:
-// verilog-library-flags:("-f filelist_emacs_subsystem.f")
+// verilog-library-flags:("-f filelist_emacs.f" "-f filelist_emacs_bridge.f")
 // verilog-library-extensions:(".v" ".sv")
 // verilog-auto-star-expand: nil
 // verilog-auto-inst-param-value: nil

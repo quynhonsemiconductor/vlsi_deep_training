@@ -1,2 +1,0 @@
-m_qnsc_wrap_cpu_ibex.sv
-m_qnsc_wrap_cpu_cpu2axi.sv
