@@ -100,7 +100,12 @@ output logic		o_bus_axi_w_valid	// From u_m_qnsc_wrap_cpu2axi of m_qnsc_wrap_cpu
 );
 
 localparam logic [31:0] P_BOOT_ADDR_COLD = 32'h0000_0000;
-localparam logic [31:0] P_BOOT_ADDR_DBG  = qnsc_pkg::C_ISRAM_DBG_BASE;
+// C_ISRAM_BASE, not C_ISRAM_DBG_BASE: debug boot jumps straight to the
+// downloaded application at ISRAM's program region (0x2000_1000, entry at
+// +0x80 = 0x2000_1080 per HAS Table 6-4 row 18 / ROM MAS V2.1 Section 8),
+// not to the 4 KiB debug/DM window C_ISRAM_DBG_BASE (0x2000_0000) that
+// DmBaseAddr already uses below -- those are two different regions.
+localparam logic [31:0] P_BOOT_ADDR_DBG  = qnsc_pkg::C_ISRAM_BASE;
 
 logic [31:0] w_boot_addr;
 assign w_boot_addr = i_dbg_en ? P_BOOT_ADDR_DBG : P_BOOT_ADDR_COLD;

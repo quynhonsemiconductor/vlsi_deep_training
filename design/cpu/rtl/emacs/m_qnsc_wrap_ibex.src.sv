@@ -170,8 +170,8 @@ ibex_top #(
     .ICache           (1'b0),
     .ICacheECC        (1'b0),
     .BranchPredictor  (1'b0),
-    .DbgTriggerEn     (1'b0),
-    .DbgHwBreakNum    (1),
+    .DbgTriggerEn     (1'b1),  // leader review 2026-09-28: enable hw trigger CSRs for HW breakpoints
+    .DbgHwBreakNum    (2),     // leader review 2026-09-28: 2 HW breakpoints for GDB/OpenOCD debugging
     .SecureIbex       (1'b0),
     .LockstepOffset   (1),
     .ICacheScramble   (1'b0),
@@ -180,7 +180,7 @@ ibex_top #(
     .DmHaltAddr       (qnsc_pkg::C_ISRAM_DBG_BASE + 32'h0000_0800),
     .DmExceptionAddr  (qnsc_pkg::C_ISRAM_DBG_BASE + 32'h0000_0810),
     .CsrMvendorId     (32'h0),
-    .CsrMimpId        (32'h0)
+    .CsrMimpId        (32'h1)  // leader review 2026-09-28: encode implementation/revision
 ) u_ibex_top(/*AUTOINST*/);
 
 endmodule
