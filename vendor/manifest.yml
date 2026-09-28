@@ -157,9 +157,9 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/dma
-  notes: 'Backend only. The frontend is in house per QNSC_iDMA V2.0: neither desc64 nor reg is used, because
-    desc64''s CSRs are hardwired to a 64-bit APB and QSOC''s is 32-bit. One dma_irq_o, held by write-1-to-clear
-    flags in DMA_ISR.
+  notes: 'Used unmodified (QNSC_DMA_MAS V3.0): frontend reg32_2d generated with --cpuif apb4-flat, idma_nd_midend,
+    idma_transfer_id_gen, backend rw_axi generated with gen_idma.py. Generated files and their commands in
+    util/gen/idma. No hardware request from peripherals; the wrapper drives o_int_dma = idle.
 
     '
   files:

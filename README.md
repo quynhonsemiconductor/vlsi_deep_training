@@ -38,7 +38,7 @@ Honest status, so nobody has to guess:
 | | |
 |---|---|
 | Architecture and memory map | **agreed** — one contract file, checked by CI |
-| Specifications | **8 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM |
+| Specifications | **9 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA |
 | RTL | **started.** Scaffold, naming rules and CI in place; INTMAP RTL generated, CPU/UART/I2C wrappers under review — see [`doc/TRACKER.md`](doc/TRACKER.md) |
 | Verification | not started |
 | Physical design | not started |

@@ -20,7 +20,7 @@ The overall lead checks it against the repository before each review.
 | 4 | SRAM | `design/isram`, `design/dsram` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.2 |
 | 5 | S_BUS | `design/bus` | Truong Sinh | - | - | - | - | - | - | - | - | |
 | 6 | P_BUS | `design/bus` | Truong Sinh | - | - | - | - | - | - | - | - | |
-| 7 | DMA | `design/dma` | Bao Vinh | - | - | - | - | - | - | - | - | |
+| 7 | DMA | `design/dma` | Bao Vinh | - | - | - | - | - | - | - | - | MAS V3.0 (lead's rewrite of V2.0, owner review pending): upstream iDMA unmodified |
 | 8 | PWM | `design/pwm` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.1 |
 | 9 | TIMER | `design/timer` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.1 |
 | 10 | I2C | `design/i2c` | Bao Vinh | PR #11 | - | PR #11 | - | - | - | - | - | |
