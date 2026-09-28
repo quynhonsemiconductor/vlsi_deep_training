@@ -14,9 +14,13 @@
 // Wrapper = core + bridge. The core is the IP; the bridge, only when the IP
 // speaks another protocol than the chip bus, converts it (APB to TL-UL, APB to
 // OBI, ...). One wrapper per IP, owned by the IP owner.
+//
+// A wrapper is IP (design/README.md, "Shared numbers: who may use qnsc_pkg"):
+// no import, no parameter. The IP owner fixes the IP's configuration at the
+// instance below. A value the chip decides arrives on an i_cfg_* port; a number
+// that must equal the contract carries `// contract: <key>`.
 
 module @DESIGN@
-  import qnsc_pkg::*;
 (
 //---------------------------------------------------------------
 // Clock/Reset
@@ -93,8 +97,16 @@ module @DESIGN@
 //   .ch_0_o                               (o_pad_@BLOCK@[3:0]),          a slice; AUTOOUTPUT declares [7:0]
 //   .unused_o                             (),                            left open
 //   .ERR_\(.*\) (@"(if (equal vl-dir \"input\") \"'0\" \"\")"),   inputs to 0, outputs open
-// Instance parameters are substituted into widths (verilog-auto-inst-param-value t):
-//   @IP_MODULE@ #(.APB_ADDR_WIDTH(C_APB_PADDR_WIDTH)) u_@IP_MODULE@ (/*AUTOINST*/);
+// Fix the IP's parameters at the instance; verilog-auto-inst-param-value t
+// substitutes them into the widths. A value copied from the contract is tagged:
+//   @IP_MODULE@ #(
+//     .APB_ADDR_WIDTH (12)                // contract: meta.apb_paddr_width
+//   ) u_@IP_MODULE@ (/*AUTOINST*/);
+// An enum-typed parameter is named with its package, never imported:
+//   .RV32M (ibex_pkg::RV32MFast)
+// A value the chip decides (boot address, hart id) becomes an i_cfg_* port in
+// the AUTO_TEMPLATE, and design/top ties it from qnsc_pkg:
+//   .boot_addr_i                          (i_cfg_boot_addr[]),
 /* @IP_MODULE@ AUTO_TEMPLATE(
     .HCLK                                 (i_clk_peri),
     .HRESETn                              (i_rst_n_peri),

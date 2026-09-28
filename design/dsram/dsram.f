@@ -1,5 +1,5 @@
 # =============================================================================
-# Filelist for the ram block.
+# Filelist for the dsram block.
 #
 # This is the single place that says which files build this block, and in what
 # order. CI lints the block through this file, so a file not listed here is not

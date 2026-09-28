@@ -15,10 +15,10 @@
 # prints the message verbatim and cannot tell that the two have diverged.
 #
 # Source: doc/rules/QNSC_RTL_Design_Naming_Rule.pdf (moved from MCU_guide_ws 3d66c27)
-# Version enforced: V1.0, 15/09/2026, Tam Nguyen
+# Version enforced: V1.1, 28/09/2026 (wrapper name, rule 2.1). V1.0: 15/09/2026, Tam Nguyen
 # =============================================================================
 
-version: "1.0"
+version: "1.1"
 document: QNSC_RTL_Design_Naming_Rule
 
 # What the checker looks at. Vendored IP keeps its upstream conventions and is
@@ -39,7 +39,7 @@ identifiers:
     # QNSC functional module, wrapper around an IP, or a generic module.
     pattern: '^(?:m_qnsc_wrap_[a-z0-9_]+|m_qnsc_[a-z0-9_]+|qnsc_[a-z0-9_]+)$'
     message: >
-      must be m_qnsc_<function>, m_qnsc_wrap_<ip_module> or qnsc_<function>
+      must be m_qnsc_<function>, m_qnsc_wrap_<block> or qnsc_<function>
 
   port:
     rule: "1.2 port prefix"

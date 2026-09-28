@@ -18,18 +18,20 @@ BASE  ?= origin/main
 
 SCOPE = $(if $(BLOCK),design/$(BLOCK))
 
-.PHONY: help check filelists lint naming hardcode pkg pkg-check tables docs \
+.PHONY: help check filelists lint naming hardcode module-rules contract-tags pkg pkg-check tables docs \
         vendor-guard new-wrap wrap wrap-check vcs sim syn gca hooks doctor ide
 
 help:
 	@echo "make doctor         which tools are here, and how to install the rest"
 	@echo "make ide            editor lint search paths (.vscode/verilator.f)"
 	@echo "make hooks          once per clone: run make check before every push"
-	@echo "make check          all CI checks: filelists lint naming hardcode pkg-check tables wrap-check vendor-guard"
+	@echo "make check          all CI checks: filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check vendor-guard"
 	@echo "make filelists      paths in every .f are relative and exist"
 	@echo "make lint           Verilator lint through <block>.f      [BLOCK=]"
 	@echo "make naming         QNSC_RTL_Design_Naming_Rule           [BLOCK=]"
 	@echo "make hardcode       no shared value typed by hand         [BLOCK=]"
+	@echo "make module-rules   IP: no qnsc_pkg; wrapper: no parameter; emacs file: no import [BLOCK=]"
+	@echo "make contract-tags  every // contract: <key> number equals the contract   [BLOCK=]"
 	@echo "make pkg            regenerate qnsc_pkg.sv from the contract"
 	@echo "make pkg-check      qnsc_pkg.sv matches the contract"
 	@echo "make tables         specification tables match the contract"
@@ -52,7 +54,7 @@ hooks:
 	@echo "hooks on: git push runs make check (skip once with --no-verify);"
 	@echo "          git pull and branch switches refresh the editor lint paths"
 
-check: ide filelists lint naming hardcode pkg-check tables wrap-check vendor-guard
+check: ide filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check vendor-guard
 
 filelists:
 	python3 flow/lint/filelist_check.py
@@ -65,6 +67,12 @@ naming:
 
 hardcode:
 	python3 flow/lint/hardcode_check.py $(SCOPE)
+
+module-rules:
+	python3 flow/lint/module_rules.py $(SCOPE)
+
+contract-tags:
+	python3 flow/lint/contract_tag.py $(SCOPE)
 
 pkg:
 	python3 util/gen_qnsc_pkg.py

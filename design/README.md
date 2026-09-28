@@ -9,9 +9,9 @@ any directory and know what to expect.
 ```
 design/<block>/
   rtl/               code written here, and nothing else
-    m_qnsc_wrap_<ip_module>.sv   the wrapper; generated when rtl/emacs/ exists
+    m_qnsc_wrap_<block>.sv       the wrapper; generated when rtl/emacs/ exists
     emacs/                       only for a wrapper generated with emacs
-      m_qnsc_wrap_<ip_module>.src.sv  the source you edit
+      m_qnsc_wrap_<block>.src.sv      the source you edit
       Makefile                     DESIGN = ..., include flow/emacs/wrap.mk
       filelist_emacs.f             the IP file whose ports verilog-mode reads
   <block>.f          filelist: what builds this block, in what order
@@ -46,9 +46,13 @@ differ — APB to TL-UL for SPI and WDT, APB to OBI for UART, none for PWM, whos
 already speaks APB. One wrapper per IP, and the IP owner owns it. `design/top`
 connects every wrapper by the naming rule.
 
-A wrapper has four jobs: map ports to the names in `qnsc_pkg`, tie off what QSOC does
-not use, adapt the protocol (the bridge) if the IP speaks a different one, and add
+A wrapper has four jobs: map ports to the names of the naming rule, tie off what QSOC
+does not use, adapt the protocol (the bridge) if the IP speaks a different one, and add
 what the IP is missing — the byte-enable path the RAM controller lacks is the example.
+
+A wrapper is **IP** in the sense of "Shared numbers" below: it does not use
+`qnsc_pkg` and declares no parameter. The IP owner fixes the IP's configuration inside
+the wrapper; `design/top` only connects.
 
 ## Writing a wrapper with emacs verilog-mode
 
@@ -58,27 +62,46 @@ Wrappers, and any module that mainly instantiates others, are written with emacs
 files, the five parts you write, what emacs writes, the rules and the failure table
 -- is [`doc/guides/EMACS_AUTO.md`](../doc/guides/EMACS_AUTO.md).
 
+Two rules come from verilog-mode itself:
+
+- **A file expanded by emacs has no `import`.** The parser does not resolve package
+  declarations. Name a package item where it is used: `ibex_pkg::RV32MFast` in an
+  instance parameter, `qnsc_pkg::C_ISRAM_BASE` at a connection in `design/top`.
+- **An IP's package-typed ports and parameters are handled by the flow.** For a port
+  such as `prim_ram_1p_pkg::ram_1p_cfg_req_t [N-1:0] x`, or a parameter such as
+  `parameter ibex_pkg::rv32m_e RV32M`, verilog-mode emits a connection that is not
+  valid SystemVerilog. `make wrap` removes those lines after the expansion
+  (`flow/emacs/fix_pkg_ports.py`), so nobody edits the generated file by hand. Set a
+  parameter you need in the instance's `#( ... )`.
+
 ## Instances are decided in `design/top`, not here
 
 A block directory does **not** know how many times it is instantiated. The UART owner
 writes **one** wrapper; `design/top` instantiates it twice. What differs between
-instances is passed as a **parameter** — never a forked file.
+instances:
+
+- **A value** (a boot address, a hart id, an instance number): an `i_cfg_*` input
+  port of the wrapper, which `design/top` ties per instance.
+- **A structure** (a depth, a width, a number of channels) cannot be a port and is
+  not a parameter either, because the wrapper declares none. The two configurations
+  are **two blocks, each with its own wrapper** named after its contract name: the
+  two RAMs are `design/isram` (`m_qnsc_wrap_isram`, depth 16384) and `design/dsram`
+  (`m_qnsc_wrap_dsram`, depth 8192), both around the same IP (Tâm, 2026-09-28).
 
 | Block | Ports on the block diagram | Instances |
 |---|---|---:|
 | `uart` | `APB_M8/9` | 2 |
 | `gpio` | `APB_M3/4/5` | 3 (GPIO3 dropped with the 40-pin package; the ports after it moved up one) |
-| `timer` | `APB_M6/7` | 2 (64-bit vs two 32-bit) |
-| `ram` | `AXI_M1`, `AXI_M2` | 2 (ISRAM, DSRAM — differ only in depth) |
+| `timer` | `APB_M6/7` | 2 (64-bit vs two 32-bit, chosen by firmware) |
+| `isram`, `dsram` | `AXI_M1`, `AXI_M2` | 1 each: one IP, two configurations (depth), so two blocks |
 | `pwm`, `i2c`, `spi`, `dma` | one port each | 1 |
 
 Reading the port name on the diagram tells you the count: `APB_M8/9` is two ports,
 so two instances.
 
-For the same reason, a shared wrapper never uses a per-instance constant:
-`C_UART_0_SIZE` inside a wrapper that also serves UART1 is wrong, even when the two
-values happen to be equal. Use a chip-wide constant (`C_APB_PADDR_WIDTH`) or a
-parameter that `design/top` sets per instance.
+For the same reason, a shared wrapper never holds a per-instance value: the size of
+UART0 inside a wrapper that also serves UART1 is wrong, even when the two values
+happen to be equal.
 
 ## The filelist is not optional
 
@@ -97,15 +120,48 @@ and not checked. `find` is not used, for three reasons that are already true her
 The same convention is used by the reference workspace (`MCU_guide_ws` ships
 `filelist.f` for its CPU and VCS setups) and by the mentor's own IP.
 
-## Never retype a shared number — import it
+## Shared numbers: who may use `qnsc_pkg`
 
-Base addresses, region sizes, interrupt line indices and clock-domain reset bits
-are **shared between blocks**. Import them from `qnsc_pkg` instead of typing the
-number into your wrapper:
+Base addresses, region sizes, interrupt line indices and clock-domain reset bits are
+**shared between blocks**. Each is written **once**, in `util/qsoc_contract.yml`.
+Which module may read it depends on what the module is:
+
+| Kind | Blocks | Rule |
+|---|---|---|
+| **IP** — bought or designed here | every wrapper (`cpu`, `uart`, `i2c`, `spi`, `gpio`, `timer`, `pwm`, `wdt`, `dma`, `rom`, `isram`, `dsram`), `sysdbg`, and `design/common` | **Does not use `qnsc_pkg`.** Its own configuration is written as fixed values. A wrapper declares no parameter |
+| **Integration** — exists only to put this chip together | `top`, `bus`, `intmap`, `iomux`, `scrc` | Uses `qnsc_pkg`: this is where the chip's numbers are consumed |
+
+The list is data, in [`flow/lint/module_rules.yml`](../flow/lint/module_rules.yml);
+`make module-rules` enforces it. The reason: an IP that knows the chip cannot be
+reused in the next chip, and a chip number inside it is a second copy of the
+contract.
+
+When an IP needs a number the chip decides, there are two cases:
+
+| Case | Example | How |
+|---|---|---|
+| **A value** | boot and debug addresses, hart id | An `i_cfg_*` input port. `design/top` ties it from `qnsc_pkg` — the way Ibex itself takes `boot_addr_i` |
+| **A structure** that must equal the contract | the APB address width, a RAM size | Write the number and tag the line with the contract entry it copies |
 
 ```systemverilog
-import qnsc_pkg::*;
+apb_adv_timer #(
+  .APB_ADDR_WIDTH (12),               // contract: meta.apb_paddr_width
+  .EXTSIG_NUM     (32),               // the IP owner's choice: no tag
+  .TIMER_NBITS    (16)
+) u_apb_adv_timer (/*AUTOINST*/);
+```
+
+`make contract-tags` fails every tagged line whose number no longer equals the
+contract (a literal equal to the value, or a range `[value-1:0]`). The key is a path
+into the contract; a list is entered by an item's `name`: `meta.apb_paddr_width`,
+`memory_map.isram.size`. A tagged line is not reported by `make hardcode`.
+
+An integration module takes the constant from the package:
+
+```systemverilog
+import qnsc_pkg::*;                              // hand-written integration module
 // ... C_UART_0_BASE, C_INT_LINE_UART_0, C_SOFT_RST_BIT_D13
+.i_cfg_boot_addr (qnsc_pkg::C_ROM_BASE),         // design/top, generated by emacs: no import
 ```
 
 `design/top/rtl/qnsc_pkg.sv` is **generated** from `util/qsoc_contract.yml`, which is
@@ -118,11 +174,10 @@ make pkg                            # regenerate the package
 ```
 
 CI regenerates and compares, so the committed package cannot drift from the
-contract. That check exists because every cross-block defect this project has paid
-for was one fact written twice: ROM 8 KiB against 2 KiB, `APB_M11` against
-`APB_S11`, eleven interrupt sources against twelve, `apb_adv_timer` against
-`apb_timer_unit`. Generating makes the disagreement impossible rather than merely
-detectable.
+contract, and `make contract-tags` does the same for the numbers IP writes. Those
+checks exist because every cross-block defect this project has paid for was one fact
+written twice: ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11`, eleven interrupt
+sources against twelve, `apb_adv_timer` against `apb_timer_unit`.
 
 Numbers not yet agreed are listed under `tbd:` in the contract, named rather than
 omitted so the gap is visible instead of being filled in by whoever needs it first.
@@ -134,21 +189,21 @@ behaviour across the chip.
 
 | Item | Rule |
 |---|---|
-| `i_bus_apb_paddr` | `C_APB_PADDR_WIDTH` = 12 bits: the low 12 bits of the offset inside the 16 KiB window, after P_BUS subtracts the base. Offsets the IP does not decode alias, and that is accepted |
+| `i_bus_apb_paddr` | 12 bits (`[11:0]`, contract `meta.apb_paddr_width`): the low 12 bits of the offset inside the 16 KiB window, after P_BUS subtracts the base. Set with the IP's parameter, tagged `// contract: meta.apb_paddr_width`. Offsets the IP does not decode alias, and that is accepted |
 | `PSTRB`, `PPROT` | Connect them if the IP has them. If the IP has no `PSTRB`, leave the port unconnected and state in the MAS that a sub-word write writes the whole word |
 | `PREADY`, `PSLVERR` | Pass the IP's through. A wrapper that adds its own decode error states it, and the reason, in its MAS |
 | Clock, reset | `i_clk_peri`, `i_rst_n_peri`: the `peri` cluster, gateable by `SCRC` |
 
 ## Naming
 
-**`QNSC_RTL_Design_Naming_Rule` V1.0 is mandatory.** The full document is
+**`QNSC_RTL_Design_Naming_Rule` V1.1 is mandatory.** The full document is
 [`doc/rules/QNSC_RTL_Design_Naming_Rule.pdf`](../doc/rules/QNSC_RTL_Design_Naming_Rule.pdf). The rules
 that come up most:
 
 | Thing | Form | Example |
 |---|---|---|
 | Module, in house | `m_qnsc_<function>` | `m_qnsc_intmap` |
-| Module, wrapper around IP | `m_qnsc_wrap_<ip_module>` | `m_qnsc_wrap_apb_uart`, `m_qnsc_wrap_apb_adv_timer` |
+| Module, wrapper around IP | `m_qnsc_wrap_<block>`: the block's name in the contract, without an index | `m_qnsc_wrap_pwm`, `m_qnsc_wrap_uart` (for `uart_0`, `uart_1`), `m_qnsc_wrap_timer` |
 | Module, generic and shared | `qnsc_<function>` (no `m_`) | `qnsc_fifo_sync` |
 | Port | `i_` / `o_` / `io_` prefix | `i_clk_sys`, `o_int_timer_0` |
 | Clock, reset | `i_clk_<domain>`, `i_rst_n_<domain>` | `i_rst_n_sys` |
@@ -184,7 +239,8 @@ table changes first.
 |---|---|---|
 | Where does the generated wrapper live? | `make wrap` copies it to `rtl/<wrapper>.sv`, the file `<block>.f` compiles; `rtl/emacs/` keeps the source and the intermediate copy | The I2C demo on `share_review`, made for this repository. The CPU demo keeps it in `EMACS/` only |
 | JTAG and `DBG_EN` pins: `i_pad_*` or their own prefix? | Their own: `i_jtag_tck`, `o_jtag_tdo`, `i_dbg_en`. Every other pad-bound port is `i_pad_*` / `o_pad_*` | The rule has dedicated sections 3.11 (JTAG) and 3.12 (Debug); a dedicated section wins over the general 3.8 (Pad) |
-| Wrapper name: block or IP module? | The IP module: `m_qnsc_wrap_apb_i2c`, `m_qnsc_wrap_apb_adv_timer`. A vendor prefix is dropped: `m_vlsi_axi4_sram` gives `m_qnsc_wrap_axi4_sram` | Rule 2.1 and its example `m_qnsc_wrap_apb_uart`. The I2C demo's `m_qnsc_wrap_i2c` predates this table |
+| Wrapper name: block or IP module? | **The block** (rule 2.1, V1.1), as named in the contract, without an index: `m_qnsc_wrap_pwm` (IP `apb_adv_timer`), `m_qnsc_wrap_uart` (`apb_uart`, used by `uart_0` and `uart_1`), `m_qnsc_wrap_i2c`, `m_qnsc_wrap_timer`, `m_qnsc_wrap_isram` and `m_qnsc_wrap_dsram` (one IP, two configurations, two blocks). The name stays when the IP is replaced | Tâm's review of PR #26 (2026-09-28): a short IP name, `m_qnsc_wrap_pwm` or `m_qnsc_wrap_timer_pwm`, not the IP module's. `pwm` is chosen because it is the contract's name, and `timer_pwm` reads as one of `timer_0`/`timer_1`. His I2C demo is `m_qnsc_wrap_i2c`. Tâm confirmed it on 2026-09-28, with `m_qnsc_wrap_isram`/`m_qnsc_wrap_dsram` for the two RAMs; rule 2.1 is updated in V1.1 |
+| Package and parameters in a wrapper? | None: no `import`, no parameter; the IP's configuration is fixed at the instance. Chip values arrive on `i_cfg_*` ports; a copied contract number is tagged `// contract: <key>` | Tâm's review of PR #26 (2026-09-28) and his I2C demo, `apb_i2c #(.P_APB_ADDR_WIDTH(12))`. Extended to all IP and to every emacs file in "Shared numbers" above |
 
 `flow/lint/naming_check.py` enforces these in CI and reports each violation **inline
 on the pull request diff**. Run it before pushing:

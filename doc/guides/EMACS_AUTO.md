@@ -46,7 +46,7 @@ References:
 **(1) Port groups.** Write comments, not ports. Each comment gathers ports by name:
 
 ```systemverilog
-module m_qnsc_wrap_apb_adv_timer import qnsc_pkg::*; (
+module m_qnsc_wrap_pwm (                               // no import, no parameter
 /*AUTOINPUT("^i_clk\|^i_rst")*/                        // clock and reset
 /*AUTOINPUT("^i_bus_apb")*/ /*AUTOOUTPUT("^o_bus_apb")*/ // APB
 /*AUTOINPUT("^i_pad")*/     /*AUTOOUTPUT("^o_pad")*/     // pads
@@ -92,11 +92,24 @@ The first matching rule wins. `\(...\)` captures a part of the name, and `\1` re
 it. More functions (`vl-dir`, `vl-width`, `vl-cell-name`, arithmetic in `[]`) are in the
 quick guide.
 
-**(5) Instance.** Give the name and parameters only. Take the parameters from `qnsc_pkg`:
+**(5) Instance.** Give the name and parameters only. The IP owner fixes the parameters
+here; a number copied from the contract is tagged with its entry, and `make
+contract-tags` checks it:
 
 ```systemverilog
-apb_adv_timer #(.APB_ADDR_WIDTH(C_APB_PADDR_WIDTH)) u_apb_adv_timer (/*AUTOINST*/);
+apb_adv_timer #(
+  .APB_ADDR_WIDTH (12),               // contract: meta.apb_paddr_width
+  .EXTSIG_NUM     (32),
+  .TIMER_NBITS    (16)
+) u_apb_adv_timer (/*AUTOINST*/);
 ```
+
+No `import`: an enum-typed parameter is written with its package, `.RV32M
+(ibex_pkg::RV32MFast)`. A chip value the IP needs (a boot address) becomes an
+`i_cfg_*` port in the `AUTO_TEMPLATE`, and `design/top` ties it. If the IP has
+package-typed ports or parameters (Ibex does), `make wrap` removes the invalid
+connections verilog-mode writes for them; see `design/README.md`, "Writing a
+wrapper with emacs verilog-mode".
 
 For another instantiated module (for example `qnsc_sync`), add its own
 `AUTO_TEMPLATE` and instance, **and add its file to `filelist_emacs.f`**.

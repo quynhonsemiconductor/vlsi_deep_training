@@ -17,7 +17,7 @@ The overall lead checks it against the repository before each review.
 | 1 | CPU | `design/cpu` | Truong Sinh | PR #1 | - | - | - | - | - | - | - | |
 | 2 | SYSDBG | `design/sysdbg` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V3.0 |
 | 3 | ROM | `design/rom` | Hao Nam | - | - | - | - | - | - | - | - | |
-| 4 | SRAM | `design/ram` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.2 |
+| 4 | SRAM | `design/isram`, `design/dsram` | Trong Nghia | - | - | - | - | - | - | - | - | MAS V2.2 |
 | 5 | S_BUS | `design/bus` | Truong Sinh | - | - | - | - | - | - | - | - | |
 | 6 | P_BUS | `design/bus` | Truong Sinh | - | - | - | - | - | - | - | - | |
 | 7 | DMA | `design/dma` | Bao Vinh | - | - | - | - | - | - | - | - | |
@@ -38,7 +38,7 @@ The overall lead checks it against the repository before each review.
 
 | Tracker | Repository |
 |---|---|
-| SRAM | `design/ram` (ISRAM and DSRAM are two instances) |
+| SRAM | `design/isram` and `design/dsram`: one IP, two configurations, two wrappers |
 | S_BUS, P_BUS | `design/bus` |
 | SYSCSR | the status register file inside `design/scrc` |
 | VCS | the simulation column; QSOC runs it with Verilator, see `CONTRIBUTING.md` |
