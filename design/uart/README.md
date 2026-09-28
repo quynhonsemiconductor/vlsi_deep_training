@@ -25,4 +25,4 @@ what is ours and what is borrowed.
 ## Instances
 
 _How many times `design/top` instantiates this wrapper, and what differs between
-them (parameters only -- do not fork the file)._
+them (a value on an `i_cfg_*` port -- see `design/README.md`, "Instances")._

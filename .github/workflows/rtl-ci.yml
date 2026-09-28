@@ -125,6 +125,44 @@ jobs:
         run: make hardcode
 
   # ---------------------------------------------------------------------------
+  module-rules:
+    name: IP and integration module rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install PyYAML
+        run: pip install --quiet pyyaml
+
+      # IP (every block not listed as integration in flow/lint/module_rules.yml)
+      # does not use qnsc_pkg, a wrapper declares no parameter, and a file
+      # expanded by emacs has no import. design/README.md explains why.
+      - name: Check module rules
+        run: make module-rules
+
+  # ---------------------------------------------------------------------------
+  contract-tags:
+    name: Contract tags
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install PyYAML
+        run: pip install --quiet pyyaml
+
+      # IP writes a number it shares with the chip as a literal tagged
+      # `// contract: <key>`. This fails every tagged line whose number no longer
+      # equals util/qsoc_contract.yml, so the copy cannot drift.
+      - name: Check every contract tag
+        run: make contract-tags
+
+  # ---------------------------------------------------------------------------
   contract:
     name: Inter-block contract
     runs-on: ubuntu-latest

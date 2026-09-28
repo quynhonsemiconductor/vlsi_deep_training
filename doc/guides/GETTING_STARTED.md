@@ -62,8 +62,11 @@ git switch -c feat/<block>-<what>          # e.g. feat/pwm-wrapper
   `i_bus_apb_*`, `i_bus_axi_<ch>_*`, `o_int_*`, `i_pad_*`/`o_pad_*`, `i_mem_*`, `i_dbg_*`.
 - Internal signals: `r_*` for flops, `w_*` for combinational logic. Instances are
   `u_<function>[_<index>]`; parameters and constants are `P_*`, `C_*` and `S_*`.
-- Shared numbers come from `import qnsc_pkg::*;` (`C_PWM_BASE`, `C_INT_LINE_PWM`, …).
-  Never type them.
+- Shared numbers live in `util/qsoc_contract.yml`. Integration modules (`top`, `bus`,
+  `intmap`, `iomux`, `scrc`) take them from `qnsc_pkg`. **IP** (every wrapper, and
+  `sysdbg`) does not: chip values arrive on `i_cfg_*` ports, and a number copied from
+  the contract is tagged `// contract: <key>`. A wrapper has no `import` and no
+  parameter (`design/README.md`, "Shared numbers").
 - A signal from another clock domain goes through `design/common/rtl/qnsc_sync.sv`, or
   through a handshake your MAS specifies.
 - Module names: `m_qnsc_<function>` for in-house modules, `m_qnsc_wrap_<ip_module>`
@@ -102,7 +105,9 @@ make naming BLOCK=<block>
 |---|---|
 | VS Code: `Import package not found: 'qnsc_pkg'` | Open the repository folder, then run `make ide` (or pull, and the hook does it) |
 | `RTL naming rule` fails | Rename on our side: the right-hand side of the `AUTO_TEMPLATE`, or your own RTL. Never rename the IP |
-| `No hardcoded shared values` fails | Use the `C_*` constant from `qnsc_pkg` it names |
+| `No hardcoded shared values` fails | Integration module: use the `C_*` constant it names. IP: an `i_cfg_*` port, or tag the line `// contract: <key>` |
+| `IP and integration module rules` fails | Remove the `import` or the parameter; see the message and `design/README.md`, "Shared numbers" |
+| `Contract tags` fails | The number on the tagged line no longer equals the contract: fix the line, or the contract if the chip changed |
 | `Filelist paths` fails | A path in your `.f` is absolute, or names a missing file |
 | `Generated wrappers` fails | You forgot `make wrap`, or edited a generated block by hand |
 | `Verilator lint` fails | Read the `%Error` line; a missing file usually means a missing filelist entry |
@@ -113,7 +118,9 @@ make naming BLOCK=<block>
 - Edit anything under `vendor/`. A change to an IP is a patch in `vendor/patches/`,
   agreed with a maintainer.
 - Edit a generated file by hand: a generated wrapper block, or `design/top/rtl/qnsc_pkg.sv`.
-- Type an address, an interrupt line or a domain name. Import it.
-- Fork a wrapper per instance. Use one wrapper, and parameters for what differs.
+- Type an address, an interrupt line or a domain name. Integration modules take it
+  from `qnsc_pkg`; IP takes it on an `i_cfg_*` port.
+- Fork a wrapper per instance for a value that differs. Use one wrapper and an
+  `i_cfg_*` port.
 
 Questions: the rules and wrappers → Tâm. The repository, CI and setup → Nghia.
