@@ -9,3 +9,8 @@ doc/present/
 # Editor lint search paths, generated per clone by `make ide`.
 .vscode/verilator.f
 .vscode/verilator_vendor.vlt
+
+# doc/build holds source: build scripts and figure generators (build/ above would hide new ones)
+!doc/build/
+doc/build/template/QNSC_Reference_NoAutoNum.docx
+__pycache__/
