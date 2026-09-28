@@ -103,7 +103,7 @@
 <text x="655.0" y="80.0" font-size="12" text-anchor="middle" fill="#000000" font-weight="bold">Ibex</text>
 <text x="347.0" y="83.0" font-size="11" text-anchor="middle" fill="#000000" font-weight="bold">INTMAP</text>
 <text x="140.0" y="109.0" font-size="9" text-anchor="middle" fill="#000000">DMA</text>
-<text x="140.0" y="121.0" font-size="9" text-anchor="middle" fill="#000000">dma_irq_o · level</text>
+<text x="140.0" y="121.0" font-size="9" text-anchor="middle" fill="#000000">o_int_dma · level</text>
 <text x="347.0" y="109.0" font-size="9" text-anchor="middle" fill="#000000">i_int_dma</text>
 <text x="347.0" y="121.0" font-size="9" text-anchor="middle" fill="#000000">wire</text>
 <text x="655.0" y="115.0" font-size="9" text-anchor="middle" fill="#000000">irq_fast_i[0]   mcause 16</text>
