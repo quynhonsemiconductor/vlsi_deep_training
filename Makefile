@@ -42,7 +42,7 @@ help:
 	@echo "make gen            regenerate a generated IP in util/gen/<ip> IP="
 	@echo "make gen-check      every generated IP matches its recipe (CI; installs the pinned tools)"
 	@echo "make connectivity   ports, pins and tie-offs of a block top, with a diagram  BLOCK="
-	@echo "make wrap-check     every emacs wrapper matches its .src.sv"
+	@echo "make wrap-check     every emacs wrapper matches its AUTO expansion"
 	@echo "make server-setup   once: your repository copy on the server  QSOC_SERVER=<ssh alias>"
 	@echo "make vcs            compile the checked-out copy with VCS, on the server BLOCK="
 	@echo "make vcs-branch     compile a branch in a scratch clone, on the server BLOCK= BRANCH="
