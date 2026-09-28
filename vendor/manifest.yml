@@ -125,16 +125,78 @@ upstreams:
     reference design, and the block is fully self-designed
     (QNSC_SYSDBG_DECISIONS D21).
   files:
+  - src/axi_pkg.sv
   - src/axi_xbar.sv
+  - src/axi_xbar_unmuxed.sv
+  - src/axi_mux.sv
+  - src/axi_demux.sv
+  - src/axi_demux_simple.sv
+  - src/axi_demux_id_counters.sv
+  - src/axi_err_slv.sv
+  - src/axi_multicut.sv
+  - src/axi_cut.sv
+  - src/axi_atop_filter.sv
+  - src/axi_intf.sv
   - src/axi_to_axi_lite.sv
   - src/axi_lite_to_apb.sv
   - src/axi_from_mem.sv
   - src/axi_lite_from_mem.sv
   - src/axi_lite_to_axi.sv
+  - include/axi/typedef.svh
+  - include/axi/assign.svh
   notes: 'axi_xbar is fully connected -- every slave port reaches every master port through one shared
-    address map -- which is what lets SYSDBG''s master read ROM. Each slave port has a private decode-error
-    slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi; not used by
-    SYSDBG since its V3.0.
+    address map -- which is what lets SYSDBG''s master read ROM (AXI_S0) reach every memory (Table 5-1,
+    "every slave port reaches every master port"). Each slave port has a private decode-error slave
+    returning 32''hBADCAB1E for an unmapped address. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi;
+    not used by SYSDBG since its V3.0, not used by this block either -- kept vendored because both
+    design/cpu''s CPU2AXI bridge and design/dma may still need it, and because it was already declared
+    here before this PR.
+
+    axi_xbar.sv itself is a thin two-stage composition (one axi_xbar_unmuxed per the crossbar''s address
+    decode, one axi_mux per master port to widen the ID and arbitrate the slave ports onto it) and pulls
+    in the rest of this list transitively, traced by reading the pinned commit''s actual source rather
+    than assumed from the API docs:
+    axi_xbar_unmuxed -> cc_addr_decode (common_cells, this block''s own address map), axi_demux (one per
+    slave port, splits its traffic toward every master port) and, for every possible slave/master pair,
+    either axi_multicut (a real connection: NoCuts = Cfg.PipelineStages, which axi_multicut treats as
+    zero pipeline stages when 0 rather than being skipped) or axi_err_slv (no connection: the private
+    decode-error responder). axi_demux -> axi_demux_simple -> axi_demux_id_counters (per-ID in-flight
+    counters that decide whether a new AW/AR from an already-outstanding ID may reorder). axi_multicut
+    -> axi_cut. axi_to_axi_lite -> axi_atop_filter (strips ATOPs before the AXI4-Lite side, which has no
+    ATOP field). axi_pkg.sv is needed by every file above (axi_pkg::resp_t, xbar_cfg_t, xbar_rule_32_t,
+    ...) but was missing from the files list and the vendored tree before this PR -- the same
+    pre-existing gap design/cpu''s own PR found and fixed on its branch independently; both PRs add the
+    same file for the same reason and a merge keeps one copy. axi_mux.sv and axi_intf.sv are vendored
+    for the same two reasons given on design/cpu''s manifest entry (its own CPU2AXI bridge needs axi_mux
+    directly, and axi_mux.sv bundles an interface-based axi_mux_intf sibling in the same file that
+    Verilator elaborates as a parentless root without --top-module): this block also needs axi_mux
+    directly, inside axi_xbar itself, so the same file and the same sibling-module reasoning apply here
+    independently of CPU''s branch.
+
+    '
+- name: pulp-platform/common_cells
+  url: https://github.com/pulp-platform/common_cells
+  commit: db42769334b4589b4b3fc671b34513bdb98be565
+  license: SHL-0.51
+  used_by:
+  - design/bus
+  notes: 'Vendored at the exact commit axi''s own Bender.lock pins for this axi commit
+    (70b8e54f), not at a newer common_cells release -- at this commit the axi tree still calls
+    cc_rr_arb_tree/cc_spill_register/cc_addr_decode under the pre-rename cc_ naming, so a newer,
+    unprefixed common_cells tree does not match. Traced by reading axi_xbar''s pinned-commit source,
+    same as the axi entry above: cc_addr_decode (the crossbar''s own address decoder) ->
+    cc_addr_decode_dync (its dynamically-reconfigurable core). cc_rr_arb_tree pulls in cc_lzc
+    (trailing-zero counters for its fair-arbitration mode) and cc_pkg (LZC_TRAILING_ZERO_CNT).
+    cc_spill_register instantiates cc_spill_register_flushable. axi_lite_from_mem and axi_mux both
+    instantiate cc_fifo directly (the old-era name for what a newer common_cells calls fifo_v3).
+    axi_err_slv needs cc_counter (counts down the burst length of the read response it fabricates, so
+    a decode-error read still ends with the right number of R beats) and cc_fifo (queues the pending
+    read requests up to MaxTrans); cc_counter pulls in cc_delta_counter. axi_atop_filter needs
+    cc_stream_register (a one-element queue for the fabricated R-response command an ATOP write also
+    owes, since a filtered ATOP gets both a B and an R response per the AXI standard).
+    include/common_cells/registers.svh unconditionally includes
+    deprecated/registers.svh for legacy macro aliases (FFARN etc.) even though only FFARNC is actually
+    used here -- vendored anyway since the include is unguarded, not because the aliases are needed.
 
     '
 - name: pulp-platform/riscv-dbg
