@@ -186,7 +186,7 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/gpio
-  notes: 'Four instances, one `interrupt` output each, OR''d to one fast line by INTMAP. Per-pin INTSTATUS
+  notes: 'QSOC integration plan: three instances, one `interrupt` output each, OR''d to one fast line by INTMAP. Per-pin INTSTATUS
     at offset 0x24 is READ-TO-CLEAR and set beats clear, so a handler gets exactly one look and must service
     every bit it reads.
 
