@@ -1,29 +1,7 @@
 #!/usr/bin/env python3
-"""Post-process m_qnsc_wrap_cpu.sv after Emacs AUTOINST/AUTOWIRE regeneration.
-
-verilog-mode's AUTOINST cannot parse a few constructs in ibex_top's port list
-correctly. Run this every time the Makefile's `cpu` target regenerates the
-file from m_qnsc_wrap_cpu.src.sv -- these are real, repeatable tool
-limitations, not one-off hand edits, and re-running `make cpu` without this
-step reproduces every one of them:
-
-  1. RVFI ports are excluded from AUTOINPUT/AUTOOUTPUT by the .src.sv's own
-     ignore-regexp (RVFI is not compiled into this build), but AUTOWIRE still
-     declares dangling internal wires for them since they are unlisted
-     instantiation outputs. Stripped entirely.
-  2. AUTOINST emits two bogus lines that mis-parse the icache-cfg ports'
-     packed-array-of-struct type (prim_ram_1p_pkg::ram_1p_cfg_{req,rsp}_t
-     [ibex_pkg::IC_NUM_WAYS-1:0]) as if the type name were itself a port
-     connection -- removed. (The ports themselves need no fix: every
-     ibex_top port here is covered by the AUTO_TEMPLATE, so AUTOINPUT/
-     AUTOOUTPUT never has to auto-declare -- and mis-infer -- a new port for
-     any of them, unlike the three-module version of this file this one
-     replaced.)
-  3. AUTOINST also restates BaseIsa/PMPRstCfg/PMPRstMsecCfg/RV32M/RV32B/
-     RV32ZC/RegFile/RndCnstLfsrSeed/RndCnstLfsrPerm as if they were port
-     connections, duplicating what the legitimate `#()` parameter override
-     block above already sets -- removed.
-"""
+"""Fix 3 real AUTOINST/AUTOWIRE quirks against ibex_top after `make cpu`:
+1) dangling rvfi_ wires (RVFI not built), 2) bogus icache-cfg type lines,
+3) bogus restatement of BaseIsa/PMPRstCfg/.../RegFile as port connections."""
 import sys
 
 PATH = sys.argv[1] if len(sys.argv) > 1 else "m_qnsc_wrap_cpu.sv"
