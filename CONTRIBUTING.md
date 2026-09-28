@@ -38,7 +38,7 @@ Upstream IP is **listed**, never copied into `rtl/`. Order matters: packages and
 `` `define `` files first, then leaf modules, then the IP's top, then your wrapper
 last. Rationale in [`design/README.md`](design/README.md).
 
-### 3. Write the wrapper `design/<block>/rtl/m_qnsc_wrap_<ip_module>.sv`
+### 3. Write the wrapper `design/<block>/rtl/m_qnsc_wrap_<block>.sv`
 
 Wrapper = core (the IP) + bridge (only if the IP speaks another protocol than the
 chip bus). It is generated with emacs verilog-mode from a template:
@@ -51,7 +51,10 @@ make wrap BLOCK=<block>                                       # after every edit
 
 What a wrapper must do and the naming table are in
 [`design/README.md`](design/README.md#the-wrapper-is-the-boundary); the emacs guide is
-[`doc/guides/EMACS_AUTO.md`](doc/guides/EMACS_AUTO.md).
+[`doc/guides/EMACS_AUTO.md`](doc/guides/EMACS_AUTO.md). A wrapper is IP: no `import`,
+no parameter, the IP's configuration fixed at the instance, chip values on `i_cfg_*`
+ports, and a number copied from the contract tagged `// contract: <key>`
+([`design/README.md`, "Shared numbers"](design/README.md#shared-numbers-who-may-use-qnsc_pkg)).
 
 ### 4. Check locally before pushing
 
@@ -133,8 +136,8 @@ git add util/qsoc_contract.yml design/top/rtl/qnsc_pkg.sv   # commit BOTH
 - **Adding** a number that was missing: include it with the block that needs it.
 - **Changing** a number that exists: send it as its **own** pull request, so the
   effect on other blocks is visible instead of buried in a feature.
-- A number used by **one** block only is not a shared number — make it a parameter
-  in your wrapper.
+- A number used by **one** block only is not a shared number — it is the IP owner's
+  configuration, written as a fixed value in the wrapper.
 
 Numbers not yet agreed are listed under `tbd:` in the contract, each with the owner
 who must supply it.
@@ -145,9 +148,10 @@ who must supply it.
 |---|---|
 | Edit anything under `vendor/` | It is vendored at a pinned commit so tape-out has a frozen, auditable source. Local fixes go in `vendor/patches/` with a reason. CI fails on it |
 | Copy upstream IP into `design/<block>/rtl/` | `rtl/` is what makes "self-designed or IP?" answerable by reading one directory. List the IP in your filelist instead |
-| Type an address, interrupt index or domain name into a wrapper | That is how ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11` and eleven interrupt sources against twelve all happened. Import it from `qnsc_pkg` — and `No hardcoded shared values` will fail the PR if you do |
+| Type an address, interrupt index or domain name into a wrapper | That is how ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11` and eleven interrupt sources against twelve all happened. A chip value reaches IP on an `i_cfg_*` port that `design/top` ties from `qnsc_pkg`; a structural number is tagged `// contract: <key>`. `No hardcoded shared values` fails the PR otherwise |
+| Import a package or declare a parameter in a wrapper | The IP owner fixes the configuration; `design/top` only connects. verilog-mode does not resolve packages. `IP and integration module rules` fails the PR |
 | Hand-edit `design/top/rtl/qnsc_pkg.sv` | It is generated. CI regenerates and compares |
-| Fork the wrapper per instance | One wrapper, parameters for the difference |
+| Fork the wrapper per instance for a value that differs | One wrapper; the value is an `i_cfg_*` port tied by `design/top`. A difference in structure is pending with Tâm (`design/README.md`, "Pending") |
 | Rename a vendored module's port to satisfy the naming rule | The rule applies to our RTL. `naming_check.py` already skips identifiers after a dot, after `::`, and system functions such as `$clog2`, for exactly this reason |
 | Rewrite correct RTL to dodge a checker false positive | Report the false positive and fix the checker in `flow/`. A `// naming-check: ignore -- <reason>` is the stop-gap, not a rewrite |
 

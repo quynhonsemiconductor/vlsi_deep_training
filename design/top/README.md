@@ -20,8 +20,10 @@ None directly. Every IP enters through its block's wrapper.
 
 `design/top` is where instance counts live: two UARTs, three GPIOs, two timers,
 two RAMs, one of everything else (table in [`design/README.md`](../README.md)).
-What differs between two instances of one wrapper is a parameter or a port, never
-a forked file.
+What differs between two instances of one wrapper is a value on an `i_cfg_*` port,
+which `design/top` ties from `qnsc_pkg`. A wrapper declares no parameter; a
+difference in structure is pending with Tâm ([`design/README.md`](../README.md),
+"Pending").
 
 ## Ownership
 

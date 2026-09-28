@@ -5,7 +5,7 @@
 #   make new-wrap BLOCK=pwm IP=vendor/pulp-platform/apb_adv_timer/rtl/apb_adv_timer.sv
 #
 # Writes three files and nothing else:
-#   Makefile             DESIGN = m_qnsc_wrap_<ip_module>, includes flow/emacs/wrap.mk
+#   Makefile             DESIGN = m_qnsc_wrap_<block>, includes flow/emacs/wrap.mk
 #   filelist_emacs.f     the IP file, so verilog-mode can read its ports
 #   <design>.src.sv      flow/emacs/template.src.sv.in with the names filled in
 # Then fill the AUTO_TEMPLATE and run `make wrap BLOCK=<block>`.
@@ -22,12 +22,9 @@ dir="$repo/design/$block/rtl/emacs"
 module=$(sed -nE 's/^[[:space:]]*module[[:space:]]+([A-Za-z_][A-Za-z0-9_]*).*/\1/p' "$repo/$ip" | head -1)
 [ -n "$module" ] || { echo "no module found in $ip"; exit 1; }
 
-# Naming Rule 2.1: a wrapper is m_qnsc_wrap_<ip_module>. A vendor prefix on the
-# IP module is dropped (m_vlsi_axi4_sram gives m_qnsc_wrap_axi4_sram); see the
-# decisions table in design/README.md.
-name="$module"
-case "$name" in m_*_*) name="${name#m_*_}";; esac
-design="m_qnsc_wrap_$name"
+# A wrapper is named after the block, not the IP module: m_qnsc_wrap_<block>
+# (design/README.md, decisions table). The name stays when the IP is replaced.
+design="m_qnsc_wrap_$block"
 [ -e "$dir/$design.src.sv" ] && { echo "$dir/$design.src.sv exists -- not overwritten"; exit 1; }
 
 mkdir -p "$dir"

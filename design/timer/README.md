@@ -23,8 +23,8 @@ responsible for the pulse if the spec wants one.
 
 ## The wrapper is the boundary
 
-`rtl/m_qnsc_wrap_apb_timer_unit.sv` instantiates the vendored modules, ties off
-unused ports, and maps the APB signals to the names in `qnsc_pkg`. The IP already
+`rtl/m_qnsc_wrap_timer.sv` instantiates the vendored modules, ties off
+unused ports, and maps the APB signals to the names of the naming rule. The IP already
 speaks APB, so there is no bridge. Generated with emacs from `rtl/emacs/` ([`design/README.md`](../README.md#writing-a-wrapper-with-emacs-verilog-mode)). Anything in
 `rtl/` is ours; anything it instantiates from `vendor/` is not. That split is
 the answer to "self-designed or IP?" — visible without opening a file.

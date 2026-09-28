@@ -39,6 +39,6 @@ variant is about 2.1 KiB and does not fit.
 
 ## Instances
 
-One, at `AXI_M0`. Separate from `design/ram/`, which instantiates the same
-controller twice for ISRAM and DSRAM — the difference is this one is read-only and
+One, at `AXI_M0`. Separate from `design/isram/` and `design/dsram/`, which use the same
+controller for ISRAM and DSRAM — the difference is this one is read-only and
 carries build-time contents.

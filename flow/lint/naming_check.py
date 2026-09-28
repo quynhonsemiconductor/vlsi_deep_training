@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-naming_check.py -- enforce QNSC_RTL_Design_Naming_Rule V1.0 on RTL written here.
+naming_check.py -- enforce QNSC_RTL_Design_Naming_Rule V1.1 on RTL written here.
 
 The rule is mandatory and mechanical, so it is checked by a deterministic script
 rather than by review or by a language model: the same input must always give the
@@ -18,7 +18,7 @@ pulp's `clk_i`) and is not ours to rename. Section 4.3 of the rule applies to
 
 WHAT IS CHECKED (section 4.3, Enforcement Checklist)
 
-    module name       m_qnsc_<function> | m_qnsc_wrap_<ip_module> | qnsc_<function>
+    module name       m_qnsc_<function> | m_qnsc_wrap_<block> | qnsc_<function>
     port direction    i_ | o_ | io_ prefix
     parameter         P_<UPPER>          constant C_<UPPER>   FSM state S_<UPPER>
     instance          u_<function>[_<index>]

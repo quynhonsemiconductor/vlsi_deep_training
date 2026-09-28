@@ -1,0 +1,24 @@
+# =============================================================================
+# Which blocks are IP and which integrate the chip -- read by module_rules.py.
+#
+# The rule (design/README.md, "Shared numbers: who may use qnsc_pkg"):
+#
+#   IP                 knows nothing about the chip. It does not use qnsc_pkg.
+#                      Its own configuration is written as fixed values; a chip
+#                      value it needs arrives on an i_cfg_* port that
+#                      design/top ties, and a structural value that must match
+#                      the contract carries a `// contract: <key>` tag.
+#   Integration        exists only to put this chip together, so it is where
+#                      qnsc_pkg is used.
+#
+# Every block not listed under `integration` is IP, and so is design/common.
+# A new integration block is a design decision: add it here in the same pull
+# request that creates it, with the reason.
+# =============================================================================
+
+integration:
+  - top      # instantiates every block
+  - bus      # the address map of S_BUS and P_BUS
+  - intmap   # the interrupt lines of the chip
+  - iomux    # the pads of the chip
+  - scrc     # the clock enables and reset bits of every block
