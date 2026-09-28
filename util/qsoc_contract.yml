@@ -301,13 +301,38 @@ clock_domains:
   clusters:
     - name: cpu
       port_suffix: cpu
-      blocks: [cpu, bus, sysdbg, syscsr]
+      blocks: [cpu, sysdbg]
       gateable: false
       note: >
-        Gating the core or either bus removes the agent that would have to
-        re-enable it -- nothing is left awake to recover. Gate enables are
-        hardwired active so no software mistake can stop them. SYSCSR runs on
-        the P_BUS clock and must be readable after any reset.
+        Gating the core removes the agent that would have to re-enable it --
+        nothing is left awake to recover. Gate enable is hardwired active so
+        no software mistake can stop it. SYSDBG's clock reuses this same
+        i_clk_cpu signal, but its reset does not -- see the `special` entry
+        below (QNSC_SCRC_MAS V3.0 Table 5-2).
+    - name: sbus
+      port_suffix: sbus
+      blocks: [bus]
+      gateable: false
+      note: >
+        S_BUS's own domain -- a separate CTRL (gate + reset synchroniser)
+        instance from cpu's, not the same physical wire, even though both are
+        hardwired on for the same reason (QNSC_SCRC_MAS V3.0 Table 5-2). Its
+        reset also reaches SYSDBG as i_rst_n_sysbus, a second, independent
+        reset input alongside SYSDBG's own i_rst_n_por.
+    - name: pbus
+      port_suffix: pbus
+      blocks: [bus, syscsr]
+      gateable: false
+      note: >
+        P_BUS's own domain, same reasoning as sbus. Also clocks SYSCSR (which
+        must stay readable through any reset, so it cannot be on a gateable
+        clock) and the eleven per-domain APB guards, since those must keep
+        answering P_BUS while their own target peripheral is gated
+        (QNSC_SCRC_MAS V3.0 Table 5-2). This block's own AXI2APB bridge is
+        clocked from pbus, not sbus: it is P_BUS's ingress logic, immediately
+        upstream of the guards it shares a domain with -- a judgement call
+        recorded in doc/specs/QNSC_BUS_DECISIONS.md pending confirmation from
+        the bus/SCRC owner.
     - name: mem
       port_suffix: mem
       blocks: [rom, isram, dsram]
@@ -345,6 +370,13 @@ clock_domains:
         The TAP runs on i_jtag_tck, so gating i_clk_cpu would leave the host able
         to shift commands in with nothing executing them -- a silent way to disable
         the debugger.
+      reset_note: >
+        SYSDBG's clock reuses the cpu cluster's i_clk_cpu signal, but its
+        reset is i_rst_n_por -- power-on only, not the cpu cluster's own
+        reset -- so the debug block survives a watchdog or software reset
+        while the CPU it is debugging does not (QNSC_SCRC_MAS V3.0 Table
+        5-2). This is the same requirement stated elsewhere as "the debug
+        block must sit outside every reset tree except power-on".
     - block: pwm
       rule: never gate a running block
       why: >

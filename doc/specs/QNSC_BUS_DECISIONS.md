@@ -4,6 +4,46 @@ Reasoning, rejected designs and the history behind numbers in
 [`QNSC_BUS_MAS.md`](QNSC_BUS_MAS.md). The MAS states what is true; this file
 states why.
 
+## sbus/pbus are their own clock domains, not cpu's (found 2026-09-28)
+
+The first draft of this block used a single `i_clk_cpu`/`i_rst_n_cpu` pair
+for everything, following `util/qsoc_contract.yml`'s then-current `cpu`
+cluster, which listed `bus` (and, as of #39's merge, `syscsr` too) alongside
+`cpu` and `sysdbg` as if all four shared one port name -- the `syscsr` entry
+even said so itself ("SYSCSR runs on the P_BUS clock") while still sitting in
+the `cpu`-suffixed cluster. Cross-checking today's freshly-updated
+`QNSC_SCRC_MAS` (V3.0) Table 5-2 directly against this block's own RTL (not
+just against the HAS, which a separate docs-sync task had already checked)
+found the real domain structure: `sbus` and `pbus` are their own CTRL (gate +
+reset synchroniser) instances, distinct from `cpu`; SYSDBG's own peculiarity
+is subtler still -- it reuses `cpu`'s *clock* signal but takes a *different*
+reset, `i_rst_n_por` (power-on only). The lesson from the CPU debug-boot-
+address bug applies again: a contract-consistency check can confirm a
+cluster assignment matches what the contract says, not that the contract
+itself is still current against the freshest spec -- this had to be caught
+by reading `QNSC_SCRC_MAS` directly against this block's own ports, not by
+trusting the contract or the HAS alone.
+
+Fixed by splitting the contract's `cpu` cluster into three (`cpu`: `[cpu,
+sysdbg]`, sharing only the clock; new `sbus`: `[bus]`; new `pbus`: `[bus,
+syscsr]`), moving SYSDBG's reset peculiarity into the existing `special`
+entry as a `reset_note`, and regenerating `qnsc_pkg.sv` (`C_CLK_CLUSTERS` 5
+-> 6, reflecting #36's already-merged `wdt` cluster too). This block's own
+ports became `i_clk_sbus`/`i_rst_n_sbus` plus `i_clk_pbus`/`i_rst_n_pbus`,
+replacing the single pair.
+
+**Where the sbus/pbus boundary falls inside this block is a judgement call,
+not yet confirmed by an owner**: `axi_xbar` is clocked from `sbus` (it *is*
+S_BUS, unambiguous); the `AXI2APB` bridge (`axi_to_axi_lite` +
+`axi_lite_to_apb`) is clocked from `pbus`, on the reasoning that it is P_BUS's
+own ingress logic, sharing a domain with the eleven per-domain guards and
+SYSCSR that SCRC's Table 5-2 says `pbus` also clocks. Both domains are, in
+practice, the same physical toggling clock when ungated (one frequency, no
+PLL, both hardwired always-on), so this is not a real clock-domain-crossing
+hazard even if the boundary is placed one stage later or earlier than
+assumed here -- but the exact placement should still be confirmed with the
+bus/SCRC owner rather than treated as settled by this PR alone.
+
 ## Scope: S_BUS and AXI2APB now, P_BUS later
 
 `design/bus` covers three things by its own README: "S_BUS crossbar, P_BUS

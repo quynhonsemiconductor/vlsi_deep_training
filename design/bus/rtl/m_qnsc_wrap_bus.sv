@@ -18,11 +18,17 @@ module m_qnsc_wrap_bus
 )
 (
 //---------------------------------------------------------------
-// Clock/Reset -- shared with cpu and sysdbg (qnsc_pkg's own "cpu"
-// clock cluster: hardwired on, never gated).
+// Clock/Reset -- S_BUS and P_BUS are each their own hardwired-on
+// domain (qnsc_pkg's "sbus"/"pbus" clusters), separate CTRL
+// instances from cpu's own, per QNSC_SCRC_MAS V3.0 Table 5-2. The
+// AXI2APB bridge is clocked from pbus, not sbus: it is P_BUS's
+// ingress logic, sharing a domain with the guards immediately
+// downstream of it -- see doc/specs/QNSC_BUS_DECISIONS.md.
 //---------------------------------------------------------------
-input  logic i_clk_cpu,
-input  logic i_rst_n_cpu,
+input  logic i_clk_sbus,
+input  logic i_rst_n_sbus,
+input  logic i_clk_pbus,
+input  logic i_rst_n_pbus,
 
 //---------------------------------------------------------------
 // AXI4 slave ports -- masters issuing transactions on S_BUS.
@@ -385,8 +391,8 @@ axi_xbar #(
   .mst_resp_t    (mst_resp_t),
   .rule_t        (rule_t)
 ) u_axi_xbar (
-  .clk_i                 (i_clk_cpu),
-  .rst_ni                (i_rst_n_cpu),
+  .clk_i                 (i_clk_sbus),
+  .rst_ni                (i_rst_n_sbus),
   .slv_ports_req_i       (w_slv_reqs),
   .slv_ports_resp_o      (w_slv_resps),
   .mst_ports_req_o       (w_mst_reqs),
@@ -415,8 +421,8 @@ axi_to_axi_lite #(
   .lite_req_t      (lite_req_t),
   .lite_resp_t     (lite_resp_t)
 ) u_axi_to_axi_lite (
-  .clk_i      (i_clk_cpu),
-  .rst_ni     (i_rst_n_cpu),
+  .clk_i      (i_clk_pbus),
+  .rst_ni     (i_rst_n_pbus),
   .slv_req_i  (w_mst_reqs[3]),
   .slv_resp_o (w_mst_resps[3]),
   .mst_req_o  (w_axi2apb_lite_req),
@@ -436,8 +442,8 @@ axi_lite_to_apb #(
   .apb_resp_t       (apb_resp_t),
   .rule_t           (rule_t)
 ) u_axi_lite_to_apb (
-  .clk_i           (i_clk_cpu),
-  .rst_ni          (i_rst_n_cpu),
+  .clk_i           (i_clk_pbus),
+  .rst_ni          (i_rst_n_pbus),
   .axi_lite_req_i  (w_axi2apb_lite_req),
   .axi_lite_resp_o (w_axi2apb_lite_resp),
   .apb_req_o       (w_apb_req),
