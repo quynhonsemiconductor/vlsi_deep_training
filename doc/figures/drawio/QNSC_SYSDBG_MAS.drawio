@@ -169,10 +169,10 @@
           <mxGeometry x="670" y="220" width="170" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="t3" value="2FF  ·  dly" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="230" y="220" width="170" height="60" as="geometry"/>
+          <mxGeometry x="260" y="220" width="140" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="t4" value="Data register&#10;Response register" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="40" y="220" width="170" height="60" as="geometry"/>
+          <mxGeometry x="40" y="220" width="140" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="t5" value="addr_reg[31:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="40" y="360" width="170" height="60" as="geometry"/>

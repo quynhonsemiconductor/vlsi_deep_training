@@ -5,10 +5,10 @@
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
         <mxCell id="pbus" value="P_BUS&#10;APB_M11" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="10" y="150" width="110" height="60" as="geometry"/>
+          <mxGeometry x="10" y="150" width="90" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="scrc" value="SCRC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="10" y="30" width="110" height="50" as="geometry"/>
+          <mxGeometry x="10" y="30" width="90" height="50" as="geometry"/>
         </mxCell>
         <mxCell id="wrap" value="m_qnsc_wrap_i2c" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=12;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="170" y="20" width="640" height="310" as="geometry"/>
@@ -26,7 +26,7 @@
           <mxGeometry x="370" y="200" width="140" height="80" as="geometry"/>
         </mxCell>
         <mxCell id="irq" value="irq_flag&#10;(sticky)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="550" y="100" width="120" height="50" as="geometry"/>
+          <mxGeometry x="550" y="60" width="120" height="40" as="geometry"/>
         </mxCell>
         <mxCell id="inv" value="oe =&#10;NOT&#10;padoen" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="710" y="200" width="80" height="80" as="geometry"/>
@@ -52,7 +52,7 @@
         <mxCell id="byte_bit_3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="byte" target="bit">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="reg_irq_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.1;entryX=0.0;entryY=0.3;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="reg" target="irq">
+        <mxCell id="reg_irq_4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.1;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="reg" target="irq">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="irq_intm_5" value="o_int_i2c" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="irq" target="intm">
