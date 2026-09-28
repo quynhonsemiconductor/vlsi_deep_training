@@ -194,10 +194,10 @@ interrupts:
   lines:
     - line: 0
       peripheral: dma
-      ports: [dma_irq_o]
+      ports: [o_int_dma]
       sources: 1
       shape: level
-      note: Held by DMA_ISR write-1-to-clear flags -- QNSC_iDMA V2.0.
+      note: 1 while the DMA is idle; iDMA has no interrupt of its own -- QNSC_DMA_MAS 7.4.
     - line: 1
       peripheral: spi_device
       ports: [intr_upload_cmdfifo_not_empty_o, intr_upload_payload_not_empty_o,
@@ -351,12 +351,4 @@ reset_sources: [power_on, watchdog, software]
 # -----------------------------------------------------------------------------
 # Not yet agreed. Named so the gap is visible.
 # -----------------------------------------------------------------------------
-tbd:
-  - item: DMA peripheral channel for each requester
-    owner: DMA owner
-    note: >
-      The DMA front end has eight peripheral channels. The requesters are
-      UART0 and UART1 (TX and RX each), I2C (TX and RX) and SPI (TX and RX), and
-      each wrapper exposes o_dma_tx_req / o_dma_rx_req. Which channel number
-      each request line drives is the DMA owner's to fix; until then no wrapper
-      and no firmware header types a channel number.
+tbd: []

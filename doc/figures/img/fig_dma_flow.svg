@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="698" height="632" viewBox="16 -24 698 632" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
+<rect x="16" y="-24" width="698" height="632" fill="#ffffff"/>
+<rect x="40" y="0" width="330" height="44" rx="22.0" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="70" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="140" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="210" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="290" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="360" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<polygon points="205.0,430 305,465.0 205.0,500 105,465.0" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="540" width="330" height="44" rx="22.0" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="430" y="442" width="260" height="46" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<polyline points="205.0,44.0 205.0,70.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,114.0 205.0,140.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,184.0 205.0,210.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,254.0 205.0,290.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="196.0" y="264.0" width="18.0" height="14" fill="#ffffff"/>
+<text x="205.0" y="275.0" font-size="10" fill="#000000" text-anchor="middle">id</text>
+<polyline points="205.0,334.0 205.0,360.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,404.0 205.0,430.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,500.0 205.0,540.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="193.0" y="512.0" width="24.0" height="14" fill="#ffffff"/>
+<text x="205.0" y="523.0" font-size="10" fill="#000000" text-anchor="middle">yes</text>
+<polyline points="305.0,465.0 430.0,465.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="358.5" y="457.0" width="18.0" height="14" fill="#ffffff"/>
+<text x="367.5" y="468.0" font-size="10" fill="#000000" text-anchor="middle">no</text>
+<text x="205.0" y="25.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">Job to run</text>
+<text x="205.0" y="88.8" font-size="10" text-anchor="middle" fill="#000000">write SRC, DST, LENGTH</text>
+<text x="205.0" y="101.8" font-size="10" text-anchor="middle" fill="#000000">and for 2D: SRC_STRIDE, DST_STRIDE, REPS</text>
+<text x="205.0" y="165.3" font-size="10" text-anchor="middle" fill="#000000">write CONF: enable_nd, protocols AXI</text>
+<text x="205.0" y="235.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">read NEXT_ID  (launches the job)</text>
+<text x="205.0" y="315.3" font-size="10" text-anchor="middle" fill="#000000">set mie[16], then wfi or other work</text>
+<text x="205.0" y="385.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">line 0 taken: DMA idle</text>
+<text x="205.0" y="468.3" font-size="10" text-anchor="middle" fill="#000000">DONE_ID &gt;= id?</text>
+<text x="205.0" y="565.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">clear mie[16]; job complete</text>
+<text x="560.0" y="461.8" font-size="10" text-anchor="middle" fill="#000000">return; the line rises again</text>
+<text x="560.0" y="474.8" font-size="10" text-anchor="middle" fill="#000000">when the job ends</text>
+</svg>

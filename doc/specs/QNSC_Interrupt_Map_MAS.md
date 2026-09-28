@@ -120,7 +120,7 @@ transaction occurs on the interrupt path.
 
 | Line | CPU port | mcause | Vector | INTMAP input | Source port | Width | Shape |
 |---:|---|---:|---|---|---|---:|---|
-| 0 | `irq_fast_i[0]` | 16 | `mtvec + 0x40` | `i_int_dma` | `dma_irq_o` | 1 | level |
+| 0 | `irq_fast_i[0]` | 16 | `mtvec + 0x40` | `i_int_dma` | `o_int_dma` | 1 | level |
 | 1 | `irq_fast_i[1]` | 17 | `mtvec + 0x44` | `i_int_spi_device` | `intr_*_o` ×8 | 8 | level |
 | 2 | `irq_fast_i[2]` | 18 | `mtvec + 0x48` | `i_int_spi_host` | `intr_error_o`, `intr_spi_event_o` | 2 | level |
 | 3 | `irq_fast_i[3]` | 19 | `mtvec + 0x4C` | `i_int_i2c` | `interrupt_o` | 1 | level |

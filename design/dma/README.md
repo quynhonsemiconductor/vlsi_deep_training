@@ -1,20 +1,22 @@
 # `dma` — DMA engine
 
-**Owner:** @Vinh-OngBao   **Spec:** _TBD_   **DV:** [`../../dv/dma`](../../dv/dma)
+**Owner:** @Vinh-OngBao   **Spec:** [`QNSC_DMA_MAS.md`](../../doc/specs/QNSC_DMA_MAS.md)   **DV:** [`../../dv/dma`](../../dv/dma)
 
 ## What this block is
 
-_One or two sentences: what it does in QSOC._
+Copies blocks of data between any two addresses without a CPU load and store per
+word. Configured on `APB_M13`, moves data as an AXI4 master on `AXI_S2`, one
+interrupt (`o_int_dma`, idle) on line 0. Every job is started by software.
 
 ## Uses (IP)
 
 | From | Module | Recorded in |
 |------|--------|-------------|
-| _upstream, or "none -- designed in house"_ | | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
+| `pulp-platform/iDMA` | `idma_reg32_2d` (frontend `reg`), `idma_nd_midend`, `idma_transfer_id_gen`, `idma_backend_rw_axi` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
-_If this block instantiates upstream IP, say which facts the design depends on and
-where they were read from. If it is designed in house, say so -- an empty vendor
-column is itself the answer to "self-designed or IP?"._
+All upstream and unmodified. The frontend and the backend are generated from the
+upstream templates at the pinned commit; the files and the commands that made them
+are in `util/gen/idma/` (MAS 7.6).
 
 ## The wrapper is the boundary
 
@@ -24,5 +26,4 @@ what is ours and what is borrowed.
 
 ## Instances
 
-_How many times `design/top` instantiates this wrapper, and what differs between
-them (a value on an `i_cfg_*` port -- see `design/README.md`, "Instances")._
+One, in `design/top`.

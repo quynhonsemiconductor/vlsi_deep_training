@@ -68,6 +68,7 @@ committed ones.
 | `build_syscsr.py` | `fig_syscsr_block`, `fig_syscsr_regs`, `wave_syscsr_cause` | SYSCSR MAS |
 | `build_rom.py` | `fig_rom_block`, `fig_rom_layout`, `wave_rom_read`, `wave_rom_image`, `wave_rom_write` | ROM MAS |
 | `build_boot.py` | `fig_boot_path`, `fig_boot_frame`, `fig_boot_flow`, `fig_boot_seq` | BOOT SPEC |
+| `build_dma.py` | `fig_dma_block`, `fig_dma_flow`, `fig_dma_regs`, `wave_dma_job` | DMA MAS |
 | `regfig.py` | the register bit-field renderer `build_syscsr.py` uses | any MAS |
 | `wavegen.py` | the timing-diagram renderer `build_scrc.py` uses; monochrome, `.svg` + `.png` | any MAS |
 | `svg_mono.py` | `fig_qsoc_full_mono` from `fig_qsoc_full.svg` | root README |

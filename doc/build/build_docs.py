@@ -39,6 +39,7 @@ DOCS = [
     ("QNSC_SYSCSR_MAS", "SYSCSR"),
     ("QNSC_ROM_MAS", "ROM"),
     ("QNSC_BOOT_SPEC", "BOOT"),
+    ("QNSC_DMA_MAS", "DMA"),
 ]
 HEADINGS = ["Heading%d" % i for i in range(1, 7)]
 
