@@ -46,6 +46,12 @@ differ — APB to TL-UL for SPI and WDT, APB to OBI for UART, none for PWM, whos
 already speaks APB. One wrapper per IP, and the IP owner owns it. `design/top`
 connects every wrapper by the naming rule.
 
+A block built from several IPs has one **boundary** wrapper, `m_qnsc_wrap_<block>`,
+which is what `design/top` instantiates. Inside it, each IP may have its own nested
+wrapper, `m_qnsc_wrap_<block>_<part>`. In `design/cpu`, `m_qnsc_wrap_cpu` contains
+`m_qnsc_wrap_cpu_ibex` (around `ibex_top`) and `m_qnsc_wrap_cpu_cpu2axi` (around the
+bridge). A nested wrapper follows the same rules as the boundary one.
+
 A wrapper has four jobs: map ports to the names of the naming rule, tie off what QSOC
 does not use, adapt the protocol (the bridge) if the IP speaks a different one, and add
 what the IP is missing — the byte-enable path the RAM controller lacks is the example.
