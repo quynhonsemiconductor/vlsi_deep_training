@@ -305,7 +305,7 @@ clock_domains:
         Never gated, even though WDT is an ordinary APB peripheral by address
         (APB_M2): a gateable watchdog could be stopped by the same firmware
         fault it exists to catch. Kept out of the peri cluster below for that
-        reason (QNSC_SCRC_MAS V3.0 section 7.5).
+        reason (QNSC_SCRC_MAS V3.0 section 7.1).
     - name: peri
       port_suffix: peri
       blocks: [timer_0, timer_1, uart_0, uart_1, spi, i2c, gpio, dma, pwm]
