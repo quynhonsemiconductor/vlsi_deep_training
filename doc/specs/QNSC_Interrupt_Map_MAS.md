@@ -1,6 +1,6 @@
 ---
 title: "Interrupt Map"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.4"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -15,6 +15,7 @@ The reasoning behind each change, and the versions before `V2.0`, are in
 | V2.1 | 2026-09-24 | Nghia VT | -- | NMI stated as a wire through the block; source ports, widths and timer shape added; figure redrawn; reasoning moved to `_DECISIONS` |
 | V2.2 | 2026-09-24 | Nghia VT | -- | GPIO3 dropped with the 40-pin package: 26 sources, `i_int_gpio` 3 bits |
 | V2.3 | 2026-09-26 | Nghia VT | -- | Decisions from the RTL generation: line indices from `qnsc_pkg` (7.1); open item 2 closed by a simulation-only X check per input (7.6) |
+| V2.4 | 2026-09-28 | Nghia VT | -- | Watchdog rule added: `WDOG_BARK_THOLD` < `WDOG_BITE_THOLD`, so the NMI runs before the chip reset; 7.5 excludes the WDT, which is never gated |
 
 # 1. Overview
 
@@ -181,9 +182,10 @@ handler) or the `mie` bit is clear, or in Debug Mode, raises no trap.
 
 ## 7.5 A gated peripheral holds its line
 
-All interrupt sources are in the `peri` cluster, whose clocks `SCRC` stops
-through `CLK_EN`. A stopped clock retains flip-flop state, so a peripheral gated
-with its interrupt asserted keeps its line high, and this block passes it on.
+Every interrupt source except the WDT is in the `peri` cluster, whose clocks
+`SCRC` stops through `CLK_EN`; the WDT clock is never stopped. A stopped clock
+retains flip-flop state, so a peripheral gated with its interrupt asserted keeps
+its line high, and this block passes it on.
 Clearing it needs a register write to the gated peripheral, which cannot
 complete, so the core re-enters that handler while the `mie` bit is set.
 **Firmware clears a peripheral's interrupt before gating it** (11).
@@ -235,6 +237,7 @@ One. It is instantiated in `design/top` and has no parameters.
 |---|---|---|
 | Vector table entries at `mtvec + 0x40` to `+0x68` and `+0x7C`; `mtvec` 256-byte aligned, because Ibex ignores `mtvec[7:0]` | firmware owner | every interrupt |
 | Handlers installed before `mstatus.MIE` is set, and the NMI entry at `mtvec + 0x7C` before the watchdog is enabled | firmware owner | every source is live from the first cycle out of reset; the NMI ignores `mstatus.MIE` |
+| `aon_timer` `WDOG_BARK_THOLD` < `WDOG_BITE_THOLD`: the bark (NMI, first timeout) must come before the bite (chip reset, second timeout) | firmware owner | the NMI handler running before the reset |
 | Firmware clears a peripheral's interrupt before closing its `CLK_EN` gate (7.5); written in the programming guide. `SCRC` needs no change | firmware owner | a handler that cannot clear its own source |
 | Align HAS lines 69 and 155 with 7.3: the bark passes through `INTMAP` as a wire, so `INTMAP` takes 26 sources (25 maskable + the NMI). The HAS also still counts four GPIO instances; QSOC has three | HAS owner | consistency between HAS and MAS |
 
