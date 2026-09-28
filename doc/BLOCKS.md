@@ -23,7 +23,7 @@ and work in progress is visible as an open pull request.
 | 11 | SPI | `design/spi` | Bui Hieu | -- |
 | 12 | UART | `design/uart` | Bao Vinh | [`QNSC_UART_MAS`](specs/QNSC_UART_MAS.md) |
 | 13 | GPIO | `design/gpio` | Bui Hieu | -- |
-| 14 | WDT | `design/wdt` | Bui Hieu | -- |
+| 14 | WDT | `design/wdt` | Bui Hieu | [`QNSC_WDT_MAS`](specs/QNSC_WDT_MAS.md) |
 | 15 | SYSCSR | `design/scrc` | Hao Nam | [`QNSC_SYSCSR_MAS`](specs/QNSC_SYSCSR_MAS.md) |
 | 16 | SCRC | `design/scrc` | Hao Nam | [`QNSC_SCRC_MAS`](specs/QNSC_SCRC_MAS.md) |
 | 17 | INTMAP | `design/intmap` | Trong Nghia | [`QNSC_Interrupt_Map_MAS`](specs/QNSC_Interrupt_Map_MAS.md) |

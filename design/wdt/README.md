@@ -1,20 +1,18 @@
 # `wdt` — watchdog timer
 
-**Owner:** @hieu-vubuiminh   **Spec:** _TBD_   **DV:** [`../../dv/wdt`](../../dv/wdt)
+**Owner:** @hieu-vubuiminh   **Spec:** [`QNSC_WDT_MAS.md`](../../doc/specs/QNSC_WDT_MAS.md)   **DV:** [`../../dv/wdt`](../../dv/wdt)
 
 ## What this block is
 
-_One or two sentences: what it does in QSOC._
+The watchdog on `APB_M2`: bark to the NMI, bite to a chip reset through `SCRC`,
+plus a wake-up timer on line 8. Upstream `aon_timer` wrapped unmodified by
+`m_qnsc_wrap_wdt`, with the shared APB-to-TL-UL bridge. Never clock-gated.
 
 ## Uses (IP)
 
 | From | Module | Recorded in |
 |------|--------|-------------|
-| _upstream, or "none -- designed in house"_ | | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
-
-_If this block instantiates upstream IP, say which facts the design depends on and
-where they were read from. If it is designed in house, say so -- an empty vendor
-column is itself the answer to "self-designed or IP?"._
+| `lowRISC/opentitan` | `aon_timer`, `tlul_adapter_host` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
 ## The wrapper is the boundary
 
@@ -24,5 +22,4 @@ what is ours and what is borrowed.
 
 ## Instances
 
-_How many times `design/top` instantiates this wrapper, and what differs between
-them (a value on an `i_cfg_*` port -- see `design/README.md`, "Instances")._
+One.
