@@ -38,7 +38,7 @@ confirmed already correct as configured. Three were changed:
 
 `util/qsoc_contract.yml` is not where these three values live -- they are
 pure `ibex_top` build-time parameters, not numbers shared across blocks, so
-they are set directly in `m_qnsc_wrap_cpu_ibex.src.sv` rather than imported from
+they are set directly in `m_qnsc_wrap_cpu.src.sv` rather than imported from
 `qnsc_pkg`.
 
 ## The debug-boot address bug (found 2026-09-28)
@@ -127,19 +127,22 @@ AUTO_TEMPLATE (every one of its 66 ports, carried over unchanged from
 `m_qnsc_wrap_cpu_ibex.src.sv`) now lives in the same file as
 `m_qnsc_cpu2axi`'s. Because every `ibex_top` port already has an explicit
 template entry, `fixup_ibex_wrap.py` loses three of its six original fixes
-entirely (the icache-cfg malformed-port fix, the `SCRAMBLE_KEY_W`/
-`SCRAMBLE_NONCE_W` width fix, and the `ibex_mubi_t`/`crash_dump_t` port
-insertion) -- all three existed only because the old `m_qnsc_wrap_cpu_ibex`
-had a broad, unfiltered `/*AUTOINPUT*/`/`/*AUTOOUTPUT*/` catch-all category
-for ibex_top's less common ports, which is what actually triggered
-AUTOINPUT/AUTOOUTPUT's mis-parsing on package-typed and parameterized-width
-signals in the first place. A wrapper with a complete template never asks
-AUTOINPUT/AUTOOUTPUT to invent a port for anything, so that whole class of
-bug cannot occur here anymore. The two fixes that remain (stripping the
-phantom `prim_ram_1p_pkg::...` connection lines AUTOINST emits regardless of
-templating, and stripping the bogus `BaseIsa`/`RV32M`/... parameter
-restatement lines) are rooted in verilog-mode's own parsing of `ibex_top.sv`,
-not in anything this wrapper does, so they are unaffected by the
+entirely: the icache-cfg **port-declaration** fix (AUTOINPUT/AUTOOUTPUT used
+to auto-declare `ram_cfg_icache_*` as a bare, mistyped port when nothing
+templated it), the `SCRAMBLE_KEY_W`/`SCRAMBLE_NONCE_W` width fix, and the
+`ibex_mubi_t`/`crash_dump_t` port insertion -- all three existed only because
+the old `m_qnsc_wrap_cpu_ibex` had a broad, unfiltered `/*AUTOINPUT*/`/
+`/*AUTOOUTPUT*/` catch-all category for ibex_top's less common ports, which is
+what actually triggered AUTOINPUT/AUTOOUTPUT's mis-parsing on package-typed
+and parameterized-width signals in the first place. A wrapper with a complete
+template never asks AUTOINPUT/AUTOOUTPUT to invent a port for anything, so
+that whole class of bug cannot occur here anymore. The two fixes that remain:
+stripping the icache-cfg **phantom connection** lines (a *different* bug --
+AUTOINST mis-parsing the same struct type as if it were itself a port
+connection, which happens regardless of templating) and stripping the bogus
+`BaseIsa`/`RV32M`/... parameter restatement lines. Both are rooted in
+verilog-mode's own parsing of `ibex_top.sv`, not in anything this wrapper
+does, so they are unaffected by the
 consolidation and still needed.
 
 `filelist_emacs_subsystem.f` (which fed Emacs the two sub-wrappers' own
