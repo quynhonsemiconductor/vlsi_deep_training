@@ -38,6 +38,17 @@ meta:
   # 0x53 'S', 0x4F 'O', 0x43 'C'. Read by firmware, and by host tools through
   # SYSDBG, to check they run on a QSOC. Mistyped once already ('QCOS').
   chip_id: 0x51534F43
+  # The whole AXI2APB window S_BUS routes to P_BUS as one region (AXI_M3):
+  # 16 slots of 16 KiB each (14 populated peripherals, 2 reserved), matching
+  # apb_paddr_width's own 16 KiB-per-slave unit. Not a memory_map row of its
+  # own: it covers the same addresses as the 14 APB_M* rows below it, and
+  # memory_map's own rule is that every address belongs to exactly one row.
+  # S_BUS's crossbar and P_BUS's own router both need these same two numbers
+  # -- S_BUS to size AXI_M3's address rule, P_BUS to size its own
+  # master-side address decoder -- so they live here rather than being
+  # retyped in each block's own RTL.
+  apb_window_base: 0x80000000  # == scrc's own base: APB_M0 starts the window
+  apb_window_size: 0x40000     # 256 KiB = 16 x 16 KiB
 
 # -----------------------------------------------------------------------------
 # Memory map. Source: QSOC_HAS Table 7-1, cross-checked against QNSC_RAM_MAS
