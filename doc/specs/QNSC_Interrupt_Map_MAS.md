@@ -57,7 +57,7 @@ One combinational layer, no clock, reset or bus port. The tie-offs are in `desig
 
 # 5. Interface
 
-Every port, named per `QNSC_RTL_Design_Naming_Rule` V1.0 section 3.6. The vendor
+Every port, named per `QNSC_RTL_Design_Naming_Rule` V1.1 section 3.6. The vendor
 port behind each input is in the table in 7.2.
 
 : Interrupt map interface
