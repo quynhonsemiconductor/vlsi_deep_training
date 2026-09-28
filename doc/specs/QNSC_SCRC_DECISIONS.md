@@ -127,12 +127,14 @@ GATE:                              ; off = s1 & ~t0, on = t0 & ~s1; stop, start;
 
 `NOT x` is `(-1) - x` because MRV has no `xor`.
 
-# 4. Proposals under review
+# 4. Proposals of 2026-09-28 and their outcome
 
-Raised by the lead on 2026-09-28, not yet accepted. The specification describes
-the V2.3 design until the SCRC owner decides.
+Raised by the lead on 2026-09-28; decided by the SCRC owner (Nguyen Hao Nam) the
+same day, and applied in V3.1.
 
-**Two CSRs instead of one CSR behind a 2-master bus.** Today one `SCRC CSR` has two
+**Two CSRs instead of one CSR behind a 2-master bus. Rejected.** The owner keeps
+the mentor's design: one `SCRC CSR` behind the generated APB BUS, with the two WFs.
+The proposal as raised: Today one `SCRC CSR` has two
 masters, Ibex and `MCPU`, so it needs an arbiter (the generated APB BUS) and a
 write filter per master, because the generator cannot tell the masters apart.
 Splitting it gives each master its own register block, wired directly:
@@ -151,7 +153,7 @@ APB-BUS-Generator. The mentor's `VLSI_SCRC.drawio` draws an APB BUS with "APB
 Decoder Generator", so the mentor may want the generator used; ask before
 adopting.
 
-**No stretch after POR.** The stretch exists because a WDT or SW request is cleared
+**No stretch after POR. Adopted** (MAS V3.1, 7.3). The stretch exists because a WDT or SW request is cleared
 by the reset it causes. After POR nothing needs it: when `w_rst_n_sys` releases,
 only `MCPU` and its registers leave reset, and every domain is still held by
 `RST_REL` = 0 until the power-up program releases it. With every `RRC` flip-flop
