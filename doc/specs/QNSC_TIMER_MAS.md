@@ -1,6 +1,6 @@
 ---
 title: "TIMER"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.4"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.5"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -16,15 +16,16 @@ The reasoning behind each change is in
 | V2.2 | 2026-09-25 | Nghia VT | -- | `SCRC` reset outputs named `o_rst_n_timer_0`, `o_rst_n_timer_1` (was `o_rst_timer0_n`), per `QNSC_RTL_Design_Naming_Rule` 1.3 and 1.4 |
 | V2.3 | 2026-09-25 | Nghia VT | -- | Ports and addresses moved up one slot after GPIO3 was dropped: `TIMER0` on `APB_M6` at `0x8001_8000`, `TIMER1` on `APB_M7` at `0x8001_C000` |
 | V2.4 | 2026-09-28 | Nghia VT | -- | `SCRC` bits from `QNSC_SCRC_MAS` V3.0: `CLK_EN[3]`, `CLK_EN[4]`; the error response is the `SCRC` APB guard; two requirements on `SCRC` closed |
+| V2.5 | 2026-09-28 | Nghia VT | -- | Wrapper `m_qnsc_wrap_timer` (Naming Rule V1.1 rule 2.1; was `m_qnsc_wrap_apb_timer_unit`). No change in behaviour |
 
 # 1. Overview
 
-`TIMER0` and `TIMER1` are two instances of `pulp-platform/apb_timer_unit`, each an APB
+`TIMER0` and `TIMER1` are two instances of `apb_timer_unit` from `pulp-platform/timer_unit`, each an APB
 slave with two 32-bit counters that can be chained into one 64-bit counter. Each
 counter compares on equality and can raise one interrupt. The block has no pad
 connection and no interrupt status register.
 
-Block directory `design/timer`, wrapper module `m_qnsc_wrap_apb_timer_unit`, owner
+Block directory `design/timer`, wrapper module `m_qnsc_wrap_timer`, owner
 Nghia Van Trong.
 
 : Instance assignment
@@ -62,7 +63,7 @@ Both instances are in the `peri` clock cluster. Each has its own clock gate,
 
 # 5. Interface
 
-Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. The IP port each wrapper port drives
+Names follow `QNSC_RTL_Design_Naming_Rule` V1.1. The IP port each wrapper port drives
 is named in the description.
 
 : TIMER interface

@@ -95,7 +95,7 @@ The reasoning behind each change is in
 
 <!-- EVERY port. Name, direction, width, and the protocol or timing rule that
      governs it. This is what DV builds the driver and monitor from.
-     Names follow QNSC_RTL_Design_Naming_Rule V1.0: i_/o_/io_ prefix,
+     Names follow QNSC_RTL_Design_Naming_Rule V1.1: i_/o_/io_ prefix,
      i_clk_<cluster>, i_rst_n_<cluster>, i_bus_apb_<sig>, i_int_<source>.
      If a port is absent by design -- no clock, no bus -- say so explicitly. -->
 

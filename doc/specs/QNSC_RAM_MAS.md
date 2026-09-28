@@ -1,6 +1,6 @@
 ---
 title: "RAM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.4"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,12 +14,13 @@ The reasoning behind each change is in [`QNSC_RAM_DECISIONS.md`](QNSC_RAM_DECISI
 | V2.1 | 2026-09-24 | Nghia VT | -- | `ISRAM` contents survive every reset except power loss. `PARA_ID_WD` = 7, from the HAS |
 | V2.2 | 2026-09-24 | Nghia VT | -- | Wrapper interface, strobe FIFO, timing, reset and tie-offs specified; figure and macro address corrected |
 | V2.3 | 2026-09-25 | Nghia VT | -- | Port names to `QNSC_RTL_Design_Naming_Rule` V1.0: AXI named per channel (`i_bus_axi_aw_valid`, ...), macro port `o_mem_*` / `i_mem_rdata` (was `o_sram_*`, `o_sram_bwe` is `o_mem_be`). No change in behaviour |
+| V2.4 | 2026-09-28 | Nghia VT | -- | Two blocks, two wrappers, per Naming Rule V1.1 rule 2.1: `m_qnsc_wrap_isram` in `design/isram`, `m_qnsc_wrap_dsram` in `design/dsram` (was one `m_qnsc_wrap_axi4_sram` in `design/ram`). No change in behaviour |
 
 # 1. Overview
 
-`ISRAM` and `DSRAM` are the on-chip RAMs of QSOC. Each is one instance of
-`m_qnsc_wrap_axi4_sram`: the upstream `AXI4-SRAM-CONTROLLER`, unmodified, plus a
-write-strobe FIFO, in front of an SMIC 28 nm single-port SRAM macro. The block does
+`ISRAM` and `DSRAM` are the on-chip RAMs of QSOC. They are two blocks with one design:
+`m_qnsc_wrap_isram` and `m_qnsc_wrap_dsram`, each the upstream `AXI4-SRAM-CONTROLLER`,
+unmodified, plus a write-strobe FIFO, in front of an SMIC 28 nm single-port SRAM macro. The block does
 not decode addresses, never returns an error response, and has no registers.
 
 <!-- gen:memory_map ports=AXI_M1,AXI_M2 -->
@@ -34,7 +35,8 @@ not decode addresses, never returns an error response, and has no registers.
 
 `isram_dbg` and `isram` are one macro on one port; the block sees one 64 KiB region.
 
-File `design/ram/rtl/m_qnsc_wrap_axi4_sram.sv`, owner Nghia Van Trong.
+Files `design/isram/rtl/m_qnsc_wrap_isram.sv` and `design/dsram/rtl/m_qnsc_wrap_dsram.sv`,
+owner Nghia Van Trong.
 
 # 2. Features
 
@@ -92,7 +94,7 @@ never gated; the reset is asserted by power-on, watchdog and software reset.
 | `o_mem_oe` | out | 1 | High in the read-issue cycle |
 | `i_mem_rdata` | in | 32 | Read data, sampled in the cycle after `o_mem_oe` |
 
-: RAM parameters
+: IP parameters, fixed inside each wrapper
 
 | Parameter | `ISRAM` | `DSRAM` | Meaning |
 |---|---:|---:|---|
@@ -199,14 +201,15 @@ any assertion of `i_rst_n_mem` while power is applied.
 
 # 8. Instances
 
-: The two instances
+: The two blocks
 
-| Instance | Port | `PARA_SRAM_DEPTH` | `o_mem_addr` |
+| Block | Port | `PARA_SRAM_DEPTH` | `o_mem_addr` |
 |---|---|---:|---|
 | `ISRAM` | `AXI_M1` | 16384 | `[15:2]` |
 | `DSRAM` | `AXI_M2` | 8192 | `[14:2]` |
 
-The instances differ only in `PARA_SRAM_DEPTH`. Each decode window (section 1) equals its macro
+The two wrappers differ only in `PARA_SRAM_DEPTH`; neither has a parameter. One of
+each in `design/top`. Each decode window (section 1) equals its macro
 size, so every routed address selects exactly one word.
 
 # 9. What is not provided here, and who provides it
