@@ -1,7 +1,7 @@
 # `cpu` — CPU and its bus adapter (CPU2AXI)
 
-**Owner:** @SinhHPT   **Spec:** `spec/cpu_cpu2axi_spec.md` (kept by the owner in
-`VLSIT_RTL_Generator_AI_Model`; not yet in `doc/src/`)   **DV:** [`../../dv/cpu`](../../dv/cpu)
+**Owner:** @SinhHPT   **Spec:** [`doc/specs/QNSC_CPU_MAS.md`](../../doc/specs/QNSC_CPU_MAS.md) (build to
+`.docx` via `doc/build/build_docs.py`)   **DV:** [`../../dv/cpu`](../../dv/cpu)
 
 ## What this block is
 
