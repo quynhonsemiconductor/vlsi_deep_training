@@ -22,6 +22,8 @@ package qnsc_pkg;
   localparam int unsigned C_APB_PADDR_WIDTH  = 14;  // P_BUS -> every APB slave: offset in its window
   localparam int unsigned C_PBUS_PADDR_WIDTH = 18;  // AXI2APB -> P_BUS: offset in the AXI2APB window
   localparam logic [31:0]  C_CHIP_ID = 32'h51534F43;  // SYSCSR CHIP_ID_REV, ASCII 'QSOC'
+  localparam logic [C_ADDR_WIDTH-1:0] C_AXI2APB_BASE = 32'h80000000;
+  localparam int unsigned C_AXI2APB_SIZE = 262144;  // 256 KiB, the whole P_BUS window (AXI_M3)
 
   // ---- memory map ----------------------------------------------------------
   // Source: QSOC_HAS Table 7-1. Every address in the 32-bit space belongs to
