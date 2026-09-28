@@ -34,13 +34,16 @@ what is ours and what is borrowed.
 
 The block's outward boundary is `rtl/emacs/m_qnsc_wrap_cpu.sv`, generated via
 Emacs `verilog-mode` AUTOINST/AUTO_TEMPLATE from `m_qnsc_wrap_cpu.src.sv` (see
-`rtl/emacs/Makefile`; `make all` regenerates all three wrapper files and
-applies the same tool-limitation fixups every time, not by hand). It
-instantiates two intermediate wrappers -- `m_qnsc_wrap_cpu_ibex` (boundary around
-`ibex_top`) and `m_qnsc_wrap_cpu_cpu2axi` (boundary around the CPU2AXI bridge,
-flattening its AXI4 master port to `i_bus_axi_*`/`o_bus_axi_*` per the naming
-rule, since neither `ibex_top` nor the pulp-platform AXI IP speak that
-convention natively).
+`rtl/emacs/Makefile`; `make cpu` regenerates it and applies the same
+tool-limitation fixups every time, not by hand). It directly instantiates
+`ibex_top` and `m_qnsc_cpu2axi`, connected to each other in this one file --
+the core's two memory-style ports wire straight to the bridge's own ports
+(leader review 2026-09-28: connect the core to the bridge first, then wrap
+the pair in one module, not two sub-wrapper modules composed by a third; see
+`doc/specs/QNSC_CPU_DECISIONS.md`) -- and flattens the bridge's AXI4 master
+port to `i_bus_axi_*`/`o_bus_axi_*` per the naming rule at this same
+boundary, since neither `ibex_top` nor the pulp-platform AXI IP speak that
+convention natively.
 
 `m_qnsc_wrap_cpu`'s own top-level ports:
 

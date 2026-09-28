@@ -107,3 +107,47 @@ the rule now forbids:
   WRAP-NAME check: a wrapper in `design/cpu` is `m_qnsc_wrap_cpu` or
   `m_qnsc_wrap_cpu_<variant>`, and these are the block's own variant naming
   for its two sub-boundaries, not a separate block.
+
+## One wrapper, not three (leader review 2026-09-28)
+
+The two-sub-wrapper structure above (`m_qnsc_wrap_cpu_ibex` around `ibex_top`,
+`m_qnsc_wrap_cpu_cpu2axi` around `m_qnsc_cpu2axi`, composed by a third,
+`m_qnsc_wrap_cpu`) was corrected on explicit review: connect the core to the
+bridge directly first, then wrap the pair in one module -- not two
+sub-wrapper modules composed by a third. `m_qnsc_wrap_cpu` now directly
+instantiates both `ibex_top` and `m_qnsc_cpu2axi`, wired to each other by
+plain internal wires (`w_ibex_bridge_instr_*`/`w_ibex_bridge_data_*`), the
+same pattern every other single-IP block in this repo already uses (one flat
+`m_qnsc_wrap_<block>` directly around its IP) -- CPU only looked different
+because it composes two things (a vendored core and a self-designed bridge)
+rather than one.
+
+Practical effect on the Emacs regeneration flow: `ibex_top`'s complete
+AUTO_TEMPLATE (every one of its 66 ports, carried over unchanged from
+`m_qnsc_wrap_cpu_ibex.src.sv`) now lives in the same file as
+`m_qnsc_cpu2axi`'s. Because every `ibex_top` port already has an explicit
+template entry, `fixup_ibex_wrap.py` loses three of its six original fixes
+entirely (the icache-cfg malformed-port fix, the `SCRAMBLE_KEY_W`/
+`SCRAMBLE_NONCE_W` width fix, and the `ibex_mubi_t`/`crash_dump_t` port
+insertion) -- all three existed only because the old `m_qnsc_wrap_cpu_ibex`
+had a broad, unfiltered `/*AUTOINPUT*/`/`/*AUTOOUTPUT*/` catch-all category
+for ibex_top's less common ports, which is what actually triggered
+AUTOINPUT/AUTOOUTPUT's mis-parsing on package-typed and parameterized-width
+signals in the first place. A wrapper with a complete template never asks
+AUTOINPUT/AUTOOUTPUT to invent a port for anything, so that whole class of
+bug cannot occur here anymore. The two fixes that remain (stripping the
+phantom `prim_ram_1p_pkg::...` connection lines AUTOINST emits regardless of
+templating, and stripping the bogus `BaseIsa`/`RV32M`/... parameter
+restatement lines) are rooted in verilog-mode's own parsing of `ibex_top.sv`,
+not in anything this wrapper does, so they are unaffected by the
+consolidation and still needed.
+
+`filelist_emacs_subsystem.f` (which fed Emacs the two sub-wrappers' own
+generated `.sv` files so the outer wrapper could resolve their ports) and
+`fixup_strip_bogus_struct_lines.py` (which cleaned up an artifact specific to
+instantiating `m_qnsc_wrap_cpu_ibex` from within `m_qnsc_wrap_cpu`) are both
+deleted: nothing instantiates a sub-wrapper anymore, so neither has a job
+left to do. The single remaining `.src.sv` file's Local Variables footer
+lists both `filelist_emacs.f` and `filelist_emacs_bridge.f`, since Emacs must
+resolve both `ibex_top`'s and `m_qnsc_cpu2axi`'s port lists in the same
+AUTOINST pass now.
