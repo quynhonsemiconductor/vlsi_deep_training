@@ -47,12 +47,13 @@ their interfaces are exposed as top-level ports, described in Section 9.
 
 # 3. Block diagram
 
-No diagram yet. In words: `m_qnsc_wrap_cpu` instantiates `m_qnsc_wrap_cpu_ibex`
-(boundary around `ibex_top`) and `m_qnsc_wrap_cpu_cpu2axi` (boundary around the
-CPU2AXI merge, flattening its AXI4 master port to the naming rule's
-`i_bus_axi_*`/`o_bus_axi_*`). The two memory-style ports run directly between
-`m_qnsc_wrap_cpu_ibex` and `m_qnsc_wrap_cpu_cpu2axi`, point to point, and never leave
-`m_qnsc_wrap_cpu`.
+No diagram yet. In words: `m_qnsc_wrap_cpu` directly instantiates `ibex_top`
+and `m_qnsc_cpu2axi` (the CPU2AXI merge), connected to each other in this one
+module -- the core to the bridge first, then the pair wrapped once (leader
+review 2026-09-28; see `QNSC_CPU_DECISIONS.md`) -- and flattens the bridge's
+AXI4 master port to the naming rule's `i_bus_axi_*`/`o_bus_axi_*` at this same
+boundary. The two memory-style ports run point to point between `ibex_top`
+and `m_qnsc_cpu2axi` as internal wires and never leave `m_qnsc_wrap_cpu`.
 
 # 4. IP used
 
@@ -99,11 +100,11 @@ pre-rename commit rather than a current release.
 | `i_bus_axi_r_id`, `_data`, `_resp`, `_last`, `_user`, `_valid` | in | per-field | AXI4 R channel, from S_BUS |
 
 Every AXI4 signal above is flattened per the naming rule; no packed struct
-crosses the wrapper boundary. Internally, `m_qnsc_wrap_cpu_ibex` and
-`m_qnsc_wrap_cpu_cpu2axi` connect through a memory-style port pair per side
-(instruction: `req`/`gnt`/`rvalid`/`addr`/`rdata`/`err`; data: adds
-`we`/`be`/`wdata`), named identically on both wrappers so the point-to-point
-wiring is name-for-name.
+crosses the wrapper boundary. Internally, `ibex_top` and `m_qnsc_cpu2axi`
+connect through a memory-style port pair per side (instruction:
+`req`/`gnt`/`rvalid`/`addr`/`rdata`/`err`; data: adds `we`/`be`/`wdata`) as
+plain internal wires, wired directly by `m_qnsc_wrap_cpu`'s own AUTO_TEMPLATE
+blocks -- no intermediate wrapper module in between.
 
 # 6. Register map
 
@@ -167,7 +168,7 @@ same port, so a debug boot's trap-vector table lives in ISRAM as well, not
 ROM. `DmBaseAddr`/`DmAddrMask`/`DmHaltAddr`/`DmExceptionAddr` are a separate,
 unrelated set of `ibex_top` parameters (Section 10): they configure the RISC-V
 Debug Module's own halt/exception entry points inside the 4 KiB debug window,
-not the boot-address mux. Being IP, `m_qnsc_wrap_cpu_ibex` writes `DmBaseAddr`
+not the boot-address mux. Being IP, `m_qnsc_wrap_cpu` writes `DmBaseAddr`
 as the fixed value `32'h2000_0000` tagged `// contract: memory_map.isram_dbg.base`
 rather than importing `qnsc_pkg::C_ISRAM_DBG_BASE`; `contract_tag.py` still
 checks the literal against `util/qsoc_contract.yml` so it cannot drift.
@@ -250,11 +251,11 @@ Accepted limits, stated rather than hidden:
 
 1. `ibex_config_tb`-equivalent: a hand-assembled RV32IM program (`addi`,
    `add`, `mul`, `sw`, `lw`, `csrrs`, `jal`) executes correctly against
-   `m_qnsc_wrap_cpu_ibex` directly, confirming the parameter set boots and runs.
+   `ibex_top` directly, confirming the parameter set boots and runs.
 2. Full-hierarchy TB: the same program, driven through `m_qnsc_wrap_cpu`'s
-   complete path (`m_qnsc_wrap_cpu_ibex` -> `m_qnsc_wrap_cpu_cpu2axi` -> flattened
-   AXI4 -> a behavioural AXI4 memory responder), confirming the CPU2AXI merge
-   preserves data correctness end to end.
+   complete path (`ibex_top` -> `m_qnsc_cpu2axi` -> flattened AXI4 -> a
+   behavioural AXI4 memory responder), confirming the CPU2AXI merge preserves
+   data correctness end to end.
 3. Bridge-only TB: `m_qnsc_cpu2axi` driven directly on both memory-style
    ports, checking round-robin arbitration under simultaneous instruction and
    data requests, byte-enable correctness on partial writes, AXI error

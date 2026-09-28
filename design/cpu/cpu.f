@@ -227,8 +227,8 @@
 rtl/cpu2axi_pkg.sv
 rtl/m_qnsc_cpu2axi.sv
 
-# ---- ours: QNSC-naming-rule wrappers, generated via Emacs verilog-mode ------
-# ---- AUTOINST/AUTO_TEMPLATE from rtl/emacs/*.src.sv -- see rtl/emacs/Makefile
-rtl/emacs/m_qnsc_wrap_cpu_ibex.sv
-rtl/emacs/m_qnsc_wrap_cpu_cpu2axi.sv
+# ---- ours: QNSC-naming-rule wrapper, generated via Emacs verilog-mode ------
+# ---- AUTOINST/AUTO_TEMPLATE from rtl/emacs/m_qnsc_wrap_cpu.src.sv -- see
+# ---- rtl/emacs/Makefile. Instantiates ibex_top and m_qnsc_cpu2axi directly,
+# ---- connected to each other in this one file (leader review 2026-09-28).
 rtl/emacs/m_qnsc_wrap_cpu.sv
