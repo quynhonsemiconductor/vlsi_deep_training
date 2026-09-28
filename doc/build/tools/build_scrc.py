@@ -214,7 +214,7 @@ rt = [
     N("p3", 880, 45, 180, 40, "CTRL sysdbg", "box", 10),
     N("wdt", 150, 195, 150, 30, "i_wdt_rst_req", "port", 10),
     N("sw", 150, 225, 150, 30, "SW_RST", "port", 10),
-    N("rrc", 420, 160, 120, 100, "RRC\nstretch 16", "box", 11, True),
+    N("rrc", 420, 160, 120, 100, "RRC\nstretch 16\n(WDT, SW)", "box", 11, True),
     N("mcpu", 660, 185, 150, 50, "MCPU, SCRC CSR", "box", 10),
     N("c17", 960, 150, 170, 50, "CTRL x 17", "box", 10, True),
     N("and", 960, 260, 60, 40, "AND", "box", 10),
