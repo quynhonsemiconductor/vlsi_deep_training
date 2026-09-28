@@ -67,7 +67,7 @@ The block is in the `peri` clock cluster.
 
 | From | Module | Commit | Licence |
 |---|---|---|---|
-| `pulp-platform/apb_i2c` | `apb_i2c`, `i2c_master_byte_ctrl`, `i2c_master_bit_ctrl` | `84855413` | SHL-0.51 (OpenCores core: BSD-style) |
+| `pulp-platform/apb_i2c` | `apb_i2c`, `i2c_master_byte_ctrl`, `i2c_master_bit_ctrl` | `84855413` | OpenCores notice in the controller files; no LICENSE file upstream |
 
 Facts this specification relies on, read in the vendored source:
 

@@ -79,7 +79,10 @@ The block is in the `peri` clock cluster: `i_clk_peri` is gated by `SCRC`.
 |---|---|---|---|
 | `pulp-platform/apb_uart` | `apb_uart`, `apb_uart_wrap` | `8182a85d` | SHL-0.51 |
 | `pulp-platform/obi_peripherals` | `obi_uart` and its sub-modules | `079894a6` (v0.1.1) | SHL-0.51 |
-| `pulp-platform/apb`, `obi`, `common_cells` | `apb_to_obi`, `fifo_v3`, `sync`, `counter` | as pinned by `apb_uart` | SHL-0.51 |
+| `pulp-platform/obi` | `apb_to_obi`, `obi_pkg` | `v0.1.7`, as `apb_uart` pins | SHL-0.51 |
+| `pulp-platform/apb` | `apb/typedef.svh` | `6ae8bf8d` (v0.2.4+6), as iDMA pins; `apb_uart` asks for 0.2.4 | SHL-0.51 |
+| `pulp-platform/common_cells` | `fifo_v3`, `counter`, `delta_counter`, `sync`, `cf_math_pkg` (the `src/deprecated` shims onto `cc_*`) | `db427693` (v2.0.0-beta.3+3), the copy `design/bus` uses | SHL-0.51 |
+| `pulp-platform/tech_cells_generic` | `tc_sync`, called by the `sync` shim | `v0.2.14`, as `common_cells` pins | SHL-0.51 |
 
 Facts this specification relies on, read at those commits:
 
@@ -256,8 +259,12 @@ their connections in `design/top`.
 
 Open items, UART owner:
 
-- Vendor `obi_peripherals` and the `apb_uart` dependencies (`apb`, `obi`,
-  `common_cells`) at the pinned commits, without the DMA-request patch.
+- Vendor `obi_peripherals`, `obi`, `apb` and `tech_cells_generic` at the commits of
+  section 4, without the DMA-request patch, and add the `src/deprecated` shims to the
+  one `common_cells` copy. `obi_peripherals` asks for `common_cells` 1.37; the shims
+  keep the old ports, and this set was linted together with Verilator 5.
+- Lint waiver: Verilator reports a latch on `character_length` (`obi_uart_rx.sv`
+  line 200). It is a temporary, read only in the branch that assigns it.
 - Wrapper RTL, lint, and the tests of section 12.
 
 Accepted limits:

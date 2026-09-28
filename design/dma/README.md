@@ -16,7 +16,7 @@ interrupt (`o_int_dma`, idle) on line 0. Every job is started by software.
 
 All upstream and unmodified. The frontend and the backend are generated from the
 upstream templates at the pinned commit; the files and the commands that made them
-are in `util/gen/idma/` (MAS 7.6).
+go in `util/gen/idma/` (MAS 7.6).
 
 ## The wrapper is the boundary
 
