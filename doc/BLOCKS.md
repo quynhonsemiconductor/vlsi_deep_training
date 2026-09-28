@@ -19,9 +19,9 @@ and work in progress is visible as an open pull request.
 | 7 | DMA | `design/dma` | Bao Vinh | [`QNSC_DMA_MAS`](specs/QNSC_DMA_MAS.md) |
 | 8 | PWM | `design/pwm` | Trong Nghia | [`QNSC_PWM_MAS`](specs/QNSC_PWM_MAS.md) |
 | 9 | TIMER | `design/timer` | Trong Nghia | [`QNSC_TIMER_MAS`](specs/QNSC_TIMER_MAS.md) |
-| 10 | I2C | `design/i2c` | Bao Vinh | -- |
+| 10 | I2C | `design/i2c` | Bao Vinh | [`QNSC_I2C_MAS`](specs/QNSC_I2C_MAS.md) |
 | 11 | SPI | `design/spi` | Bui Hieu | -- |
-| 12 | UART | `design/uart` | Bao Vinh | -- |
+| 12 | UART | `design/uart` | Bao Vinh | [`QNSC_UART_MAS`](specs/QNSC_UART_MAS.md) |
 | 13 | GPIO | `design/gpio` | Bui Hieu | -- |
 | 14 | WDT | `design/wdt` | Bui Hieu | -- |
 | 15 | SYSCSR | `design/scrc` | Hao Nam | [`QNSC_SYSCSR_MAS`](specs/QNSC_SYSCSR_MAS.md) |

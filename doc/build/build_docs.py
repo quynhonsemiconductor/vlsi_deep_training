@@ -40,6 +40,8 @@ DOCS = [
     ("QNSC_ROM_MAS", "ROM"),
     ("QNSC_BOOT_SPEC", "BOOT"),
     ("QNSC_DMA_MAS", "DMA"),
+    ("QNSC_UART_MAS", "UART"),
+    ("QNSC_I2C_MAS", "I2C"),
 ]
 HEADINGS = ["Heading%d" % i for i in range(1, 7)]
 

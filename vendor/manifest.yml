@@ -171,6 +171,10 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/uart
+  notes: 'Instantiated unmodified by m_qnsc_wrap_uart (QNSC_UART_MAS V3.0). Needs obi_peripherals (obi_uart), apb,
+    obi and common_cells at the versions apb_uart pins; they are still to be vendored. No DMA request lines.
+
+    '
   files:
   - src/**
   - LICENSE*

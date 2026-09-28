@@ -1,20 +1,17 @@
 # `uart` — serial ports
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/uart`](../../dv/uart)
+**Owner:** @Vinh-OngBao   **Spec:** [`QNSC_UART_MAS.md`](../../doc/specs/QNSC_UART_MAS.md)   **DV:** [`../../dv/uart`](../../dv/uart)
 
 ## What this block is
 
-_One or two sentences: what it does in QSOC._
+Two 16550A-compatible serial ports on `APB_M8` and `APB_M9`. `UART0` carries the
+boot download. Upstream `apb_uart` wrapped unmodified by `m_qnsc_wrap_uart`.
 
 ## Uses (IP)
 
 | From | Module | Recorded in |
 |------|--------|-------------|
-| _upstream, or "none -- designed in house"_ | | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
-
-_If this block instantiates upstream IP, say which facts the design depends on and
-where they were read from. If it is designed in house, say so -- an empty vendor
-column is itself the answer to "self-designed or IP?"._
+| `pulp-platform/apb_uart`, `pulp-platform/obi_peripherals` | `apb_uart` around `obi_uart` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
 ## The wrapper is the boundary
 
@@ -24,5 +21,4 @@ what is ours and what is borrowed.
 
 ## Instances
 
-_How many times `design/top` instantiates this wrapper, and what differs between
-them (a value on an `i_cfg_*` port -- see `design/README.md`, "Instances")._
+Two, `UART0` and `UART1`, identical; they differ only in their connections.

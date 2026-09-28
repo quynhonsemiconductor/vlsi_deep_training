@@ -1,20 +1,17 @@
 # `i2c` — I2C controller
 
-**Owner:** _TBD_   **Spec:** _TBD_   **DV:** [`../../dv/i2c`](../../dv/i2c)
+**Owner:** @Vinh-OngBao   **Spec:** [`QNSC_I2C_MAS.md`](../../doc/specs/QNSC_I2C_MAS.md)   **DV:** [`../../dv/i2c`](../../dv/i2c)
 
 ## What this block is
 
-_One or two sentences: what it does in QSOC._
+An I2C master on `APB_M11`, one command per byte. Upstream `apb_i2c` wrapped
+unmodified by `m_qnsc_wrap_i2c`; open drain as output enables to the IO MUX.
 
 ## Uses (IP)
 
 | From | Module | Recorded in |
 |------|--------|-------------|
-| _upstream, or "none -- designed in house"_ | | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
-
-_If this block instantiates upstream IP, say which facts the design depends on and
-where they were read from. If it is designed in house, say so -- an empty vendor
-column is itself the answer to "self-designed or IP?"._
+| `pulp-platform/apb_i2c` | `apb_i2c`, `i2c_master_byte_ctrl`, `i2c_master_bit_ctrl` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
 ## The wrapper is the boundary
 
@@ -24,5 +21,4 @@ what is ours and what is borrowed.
 
 ## Instances
 
-_How many times `design/top` instantiates this wrapper, and what differs between
-them (a value on an `i_cfg_*` port -- see `design/README.md`, "Instances")._
+One.
