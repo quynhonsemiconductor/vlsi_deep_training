@@ -225,7 +225,8 @@ def model(tree, top):
             for x in n:
                 refs(x)
     refs([s for s in stmts if s["type"] == "ALWAYS" and s.get("keyword") != "cont_assign"])
-    procs = (reads, writes) if reads or writes else None
+    # a block that writes nothing is a check (assertion, $display): not connectivity
+    procs = (reads, writes) if writes else None
     return ports, cells, assigns, procs
 
 
@@ -266,7 +267,7 @@ def report(block, top, ports, cells, assigns, procs):
     if assigns:
         out.append("\nContinuous assigns\n")
         out += [f"- `{lhs} = {rhs}`" for lhs, rhs, _, _ in assigns]
-    out.append("\n" + mermaid(ports, cells, assigns, loads, drivers, procs))
+    out.append("\n" + mermaid(top, ports, cells, assigns, loads, drivers, procs))
     if notes:
         out.append("\nAllowed, check against the MAS tie-off table:\n")
         out += [f"- {n}" for n in notes]
@@ -276,56 +277,109 @@ def report(block, top, ports, cells, assigns, procs):
     return "\n".join(out) + "\n", fails
 
 
-def mermaid(ports, cells, assigns, loads, drivers, procs):
-    nid = lambda s: "n_" + re.sub(r"[^A-Za-z0-9]", "_", s)
-    lines = ["```mermaid", "flowchart LR"]
-    for n, d, w in ports:
-        lines.append(f'  {nid("p " + n)}(["{n}{f" [{w - 1}:0]" if w > 1 else ""}"])')
-    for cn, mod, _ in cells:
-        lines.append(f'  {nid("c " + cn)}["{cn}<br/>{mod}"]')
-    for lhs, _, _, _ in assigns:
-        lines.append(f'  {nid("a " + lhs)}{{"assign {lhs}"}}')
-    if procs:
-        lines.append('  n_logic["always blocks"]')
+def mermaid(top, ports, cells, assigns, loads, drivers, procs):
+    """A schematic-like block diagram, the same for every block.
 
-    def node(ep):
+    Left to right: the top's inputs, its instances, assigns, constants and procedural
+    logic, then its outputs; the top module is the title. Wires are orthogonal. No box
+    is drawn around the top: Mermaid's layout routes every wire that crosses a box
+    through one point of its border, which makes a large block unreadable. To keep a
+    wide interface readable:
+      - bus ports, named `<i|o>_bus_<protocol>[_<channel>]_<signal>` by the Naming
+        Rule, are one node per direction and prefix (`i_bus_apb_*`, `o_bus_axi_aw_*`)
+        that lists its members, when there are three or more;
+      - assigns to slices of one signal (`o_int_fast[0]`..`[10]`) are one node, and
+        so are assigns to the members of one bus group;
+      - constants are one node per value (`0`, `1`, ...), as tie cells in a schematic.
+    The tables above stay complete; the diagram groups, it never drops a connection.
+    """
+    nid = lambda s: "n_" + re.sub(r"[^A-Za-z0-9]", "_", s)
+    abase = lambda lhs: re.sub(r"\[[^\]]*\]$", "", lhs)
+
+    groups = {}
+    for n, d, _ in ports:
+        if re.match(r"[io]_bus_", n):
+            groups.setdefault((n.rsplit("_", 1)[0], d), []).append(n)
+    pnode, plabel, gname = {}, {}, {}
+    for (prefix, d), members in groups.items():
+        if len(members) >= 3:
+            key = nid("g " + prefix + " " + d)
+            for m in members:
+                gname[m] = prefix + "_*"
+            short = " ".join(m[len(prefix) + 1:] for m in members)
+            plabel[key] = f"{prefix}_*<br/>{short}"
+            for m in members:
+                pnode[m] = key
+    width_of = {n: w for n, _, w in ports}
+    for n, d, w in ports:
+        if n not in pnode:
+            pnode[n] = nid("p " + n)
+            plabel[pnode[n]] = n + (f" [{w - 1}:0]" if w > 1 else "")
+
+    def endpoint(ep):
         if ep == "always blocks":
             return "n_logic"
         if ep.startswith("assign "):
-            return nid("a " + ep[len("assign "):])
+            b = abase(ep[len("assign "):])
+            return nid("a " + gname.get(b, b))
         return nid("c " + ep.split(".")[0])
+
     edges = {}
-    # top inputs to their loads, drivers to top outputs, internal nets
+
+    def add(a, b, lab):
+        if a != b:
+            edges.setdefault((a, b), set()).add(lab)
     for n, d, _ in ports:
         if d == "input":
             for ld in loads.get(n, []):
-                edges.setdefault((nid("p " + n), node(ld)), set()).add(
-                    ld.split(".")[-1] if "." in ld else n)
+                add(pnode[n], endpoint(ld), ld.split(".")[-1] if "." in ld else n)
         else:
             for dr in drivers.get(n, []):
-                edges.setdefault((node(dr), nid("p " + n)), set()).add(
-                    dr.split(".")[-1] if "." in dr else n)
-    top_names = {n for n, _, _ in ports}
+                add(endpoint(dr), pnode[n], dr.split(".")[-1] if "." in dr else n)
     for net, drs in drivers.items():
-        if net in top_names:
+        if net in width_of:
             continue
         for dr in drs:
             for ld in loads.get(net, []):
-                edges.setdefault((node(dr), node(ld)), set()).add(net)
-    consts = set()
+                if endpoint(dr) != endpoint(ld):
+                    add(endpoint(dr), endpoint(ld), net)
+    consts = {}
     for cn, _, pins in cells:
         for pn, d, _, text, refs in pins:
             if text and not refs and d == "input":
-                c = nid("k " + text)
-                if c not in consts:
-                    consts.add(c)
-                    lines.append(f'  {c}["{text}"]')
-                edges.setdefault((c, nid("c " + cn)), set()).add(pn)
+                v = const_int(text)
+                label = str(v) if v is not None else text
+                k = nid("k " + label)
+                consts[k] = label
+                add(k, nid("c " + cn), pn)
+
+    ins = [k for k in dict.fromkeys(pnode[n] for n, d, _ in ports if d == "input")]
+    outs = [k for k in dict.fromkeys(pnode[n] for n, d, _ in ports if d != "input")]
+    L = ["```mermaid", "---", f"title: {top}", "---",
+         '%%{init: {"flowchart": {"curve": "stepAfter"}}}%%', "flowchart LR"]
+    L += [f'  {k}>"{plabel[k]}"]' for k in ins]
+    L += [f'  {nid("c " + cn)}["<b>{cn}</b><br/>{mod}"]' for cn, mod, _ in cells]
+    abases = {}
+    for lhs, _, _, _ in assigns:
+        b = abase(lhs)
+        abases.setdefault(gname.get(b, b), []).append(lhs)
+    for b, lhss in abases.items():
+        tag = f"assign {b}" if (len(lhss) == 1 and lhss[0] == b) or b.endswith("_*") \
+            else f"assign {b}[...] x{len(lhss)}"
+        L.append(f'  {nid("a " + b)}{{{{"{tag}"}}}}')
+    if procs:
+        L.append('  n_logic{{"always blocks"}}')
+    L += [f'  {k}(["{v}"])' for k, v in consts.items()]
+    L += [f'  {k}>"{plabel[k]}"]' for k in outs]
     for (a, b), labels in sorted(edges.items()):
-        lab = ", ".join(sorted(labels))
-        lines.append(f"  {a} -->{f'|{lab}|' if len(lab) < 60 else ''} {b}")
-    lines.append("```")
-    return "\n".join(lines)
+        labs = sorted(labels)
+        lab = ", ".join(labs) if len(", ".join(labs)) <= 40 else f"{labs[0]} ... ({len(labs)})"
+        L.append(f'  {a} -->|"{lab}"| {b}')
+    L.append("```")
+    L.append("*Flag: a port of the top; box: an instance; hexagon: an assign or procedural "
+             "logic; circle: a constant. Labels are the instance pins; `...` shortens a list, "
+             "which the tables give in full.*")
+    return "\n".join(L)
 
 
 def main():
