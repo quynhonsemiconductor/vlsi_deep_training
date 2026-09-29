@@ -100,6 +100,60 @@ jobs:
         run: make wrap-check
 
   # ---------------------------------------------------------------------------
+  connectivity:
+    name: Connectivity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write   # the report is posted as one PR comment, updated in place
+    env:
+      # --json-only needs Verilator >= 5.022; the runner's apt package is older.
+      VERILATOR_IMAGE: verilator/verilator:v5.052@sha256:a5b73e2fce0b2c483396f3800940f33b6faa802331a061c21694dd27b7352120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # For every block whose design/<block>/ changed: the top's ports, each
+      # instance's pins and tie-offs, and a Mermaid diagram, from Verilator's
+      # elaborated design. An open-source cross-check of the wrapper; the VCS
+      # compile and the Verdi schematic on the training server stay the reference.
+      # Fails on a floating instance input or an undriven top output.
+      - name: Report the connectivity of each changed block
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          docker pull -q "$VERILATOR_IMAGE" > /dev/null
+          set +e
+          bash flow/conn/ci_report.sh "${BASE_SHA:-HEAD~1}"
+          echo "rc=$?" >> "$GITHUB_ENV"
+          set -e
+          cat build/conn/report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Post the report on the pull request
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          title="**Connectivity, Verilator** (open-source cross-check; VCS and Verdi on the server are the reference)"
+          if grep -q '^no block with RTL changed' build/conn/report.md; then exit 0; fi
+          body=$(printf '%s\n\n%s\n' "$title" "$(head -c 60000 build/conn/report.md)")
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"**Connectivity, Verilator**\"))) | .id" | tail -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null
+          else
+            gh api "repos/$REPO/issues/$PR/comments" -f body="$body" > /dev/null
+          fi
+
+      - name: Fail on a floating input or an undriven output
+        run: test "$rc" = 0
+
+  # ---------------------------------------------------------------------------
   generated-ip:
     name: Generated IP
     runs-on: ubuntu-latest
