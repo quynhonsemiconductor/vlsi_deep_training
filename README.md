@@ -69,7 +69,8 @@ Install these once. `make doctor` then says what is still missing.
 | emacs | emacs wrappers | `brew install emacs` | `apt install emacs-nox` |
 | pandoc | `make docs` | `brew install pandoc` | `apt install pandoc` |
 | rsvg-convert | doc diagrams (optional) | `brew install librsvg` | `apt install librsvg2-bin` |
-| Yosys, OpenSTA, VCS | later stages | `make doctor` shows how | `make doctor` shows how |
+| Yosys, OpenSTA | later stages | `make doctor` shows how | `make doctor` shows how |
+| VCS, Verdi | compile check and schematic, on the training server | not installable: Synopsys licence, Linux server only | same |
 
 **Editor:** in VS Code, accept the recommended extensions (Verible, Verilog-HDL). `.vscode/settings.json` points their Verilator lint at the search paths that `make hooks` keeps current after every pull and branch switch, and turns format-on-save off for RTL.
 

@@ -28,3 +28,5 @@ vcs -sverilog +vcs+lic+wait \
     +lint=all \
     -Mdir="$out/csrc" -o "$out/simv" \
     -l "$out/comp.log"
+
+echo "compiled: $out/comp.log. Schematic: make verdi BLOCK=$block"
