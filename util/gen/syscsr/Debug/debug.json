@@ -1,0 +1,414 @@
+    {
+    "Project": "APB-CSR-Generator",
+    "Module": "JSON debug file",
+    "Function": "Used to check the configuration after generation",
+    "Author": "Trthinh (Ethan)",
+    "Generator": "benn2",
+    "Page": "VLSI Technology", 
+    "Table - Configuration": [
+    {
+        "Module Name": "m_qnsc_syscsr_csr",
+        "Address Width": "16",
+        "Data Width": "32",
+        "Protocol": "APB",
+        "Asynchornous": "0"
+    }
+    ],
+    "Table - Register Definition": [
+        {
+        "Register Name": "resetcause",
+        "Offset": "0x0000",
+        "Reset Value": "0x1",
+        "Descriprtion": "None",
+        "Bits": [
+            {
+                "Bit Name": "cause_por",
+                "Bit Type": "w1c",
+                "Bit Field": "[0]",
+                "Reset Value": "0x1",
+                "Description": "1 after power-on (reset value; SYSCSR is reset by o_rst_n_por only). HW set tied 0. W1C."
+            },
+            {
+                "Bit Name": "cause_wdt",
+                "Bit Type": "w1c",
+                "Bit Field": "[1]",
+                "Reset Value": "0x0",
+                "Description": "Set by SCRC o_cause_we_wdt, held for the whole 16-cycle WDT chip reset. W1C."
+            },
+            {
+                "Bit Name": "cause_soft",
+                "Bit Type": "w1c",
+                "Bit Field": "[2]",
+                "Reset Value": "0x0",
+                "Description": "Set by SCRC o_cause_we_sw, held for the whole 16-cycle SW chip reset. W1C."
+            },
+            {
+                "Bit Name": "reserved",
+                "Bit Type": "ro",
+                "Bit Field": "[31:3]",
+                "Reset Value": "0x0",
+                "Description": "Reserved. Read-as-zero, write ignore."
+            }
+          ]
+        },
+        {
+        "Register Name": "domainrststatus",
+        "Offset": "0x0004",
+        "Reset Value": "0x0",
+        "Descriprtion": "None",
+        "Bits": [
+            {
+                "Bit Name": "cause_por",
+                "Bit Type": "w1c",
+                "Bit Field": "[0]",
+                "Reset Value": "0x1",
+                "Description": "1 after power-on (reset value; SYSCSR is reset by o_rst_n_por only). HW set tied 0. W1C."
+            },
+            {
+                "Bit Name": "cause_wdt",
+                "Bit Type": "w1c",
+                "Bit Field": "[1]",
+                "Reset Value": "0x0",
+                "Description": "Set by SCRC o_cause_we_wdt, held for the whole 16-cycle WDT chip reset. W1C."
+            },
+            {
+                "Bit Name": "cause_soft",
+                "Bit Type": "w1c",
+                "Bit Field": "[2]",
+                "Reset Value": "0x0",
+                "Description": "Set by SCRC o_cause_we_sw, held for the whole 16-cycle SW chip reset. W1C."
+            },
+            {
+                "Bit Name": "reserved",
+                "Bit Type": "ro",
+                "Bit Field": "[31:3]",
+                "Reset Value": "0x0",
+                "Description": "Reserved. Read-as-zero, write ignore."
+            },
+            {
+                "Bit Name": "stat_sbus",
+                "Bit Type": "ro",
+                "Bit Field": "[0]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain sbus in reset. Wired in design/top as ~o_rst_n_sbus."
+            },
+            {
+                "Bit Name": "stat_pbus",
+                "Bit Type": "ro",
+                "Bit Field": "[1]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain pbus in reset. Wired in design/top as ~o_rst_n_pbus."
+            },
+            {
+                "Bit Name": "stat_wdt",
+                "Bit Type": "ro",
+                "Bit Field": "[2]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain wdt in reset. Wired in design/top as ~o_rst_n_wdt."
+            },
+            {
+                "Bit Name": "stat_timer_0",
+                "Bit Type": "ro",
+                "Bit Field": "[3]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain timer_0 in reset. Wired in design/top as ~o_rst_n_timer_0."
+            },
+            {
+                "Bit Name": "stat_timer_1",
+                "Bit Type": "ro",
+                "Bit Field": "[4]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain timer_1 in reset. Wired in design/top as ~o_rst_n_timer_1."
+            },
+            {
+                "Bit Name": "stat_uart_0",
+                "Bit Type": "ro",
+                "Bit Field": "[5]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain uart_0 in reset. Wired in design/top as ~o_rst_n_uart_0."
+            },
+            {
+                "Bit Name": "stat_uart_1",
+                "Bit Type": "ro",
+                "Bit Field": "[6]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain uart_1 in reset. Wired in design/top as ~o_rst_n_uart_1."
+            },
+            {
+                "Bit Name": "stat_spi",
+                "Bit Type": "ro",
+                "Bit Field": "[7]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain spi in reset. Wired in design/top as ~o_rst_n_spi."
+            },
+            {
+                "Bit Name": "stat_i2c",
+                "Bit Type": "ro",
+                "Bit Field": "[8]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain i2c in reset. Wired in design/top as ~o_rst_n_i2c."
+            },
+            {
+                "Bit Name": "stat_gpio_0",
+                "Bit Type": "ro",
+                "Bit Field": "[9]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain gpio_0 in reset. Wired in design/top as ~o_rst_n_gpio_0."
+            },
+            {
+                "Bit Name": "stat_dma",
+                "Bit Type": "ro",
+                "Bit Field": "[10]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain dma in reset. Wired in design/top as ~o_rst_n_dma."
+            },
+            {
+                "Bit Name": "stat_rom",
+                "Bit Type": "ro",
+                "Bit Field": "[11]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain rom in reset. Wired in design/top as ~o_rst_n_rom."
+            },
+            {
+                "Bit Name": "stat_ram",
+                "Bit Type": "ro",
+                "Bit Field": "[12]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain ram in reset. Wired in design/top as ~o_rst_n_ram."
+            },
+            {
+                "Bit Name": "reserved",
+                "Bit Type": "ro",
+                "Bit Field": "[13]",
+                "Reset Value": "0x0",
+                "Description": "Reserved. Read-as-zero, write ignore."
+            },
+            {
+                "Bit Name": "stat_sysdbg",
+                "Bit Type": "ro",
+                "Bit Field": "[14]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain sysdbg in reset. Wired in design/top as ~o_rst_n_sysdbg."
+            },
+            {
+                "Bit Name": "stat_pwm",
+                "Bit Type": "ro",
+                "Bit Field": "[15]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain pwm in reset. Wired in design/top as ~o_rst_n_pwm."
+            },
+            {
+                "Bit Name": "stat_gpio_1",
+                "Bit Type": "ro",
+                "Bit Field": "[16]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain gpio_1 in reset. Wired in design/top as ~o_rst_n_gpio_1."
+            },
+            {
+                "Bit Name": "stat_gpio_2",
+                "Bit Type": "ro",
+                "Bit Field": "[17]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain gpio_2 in reset. Wired in design/top as ~o_rst_n_gpio_2."
+            },
+            {
+                "Bit Name": "reserved",
+                "Bit Type": "ro",
+                "Bit Field": "[30:18]",
+                "Reset Value": "0x0",
+                "Description": "Reserved. Read-as-zero, write ignore."
+            },
+            {
+                "Bit Name": "stat_cpu",
+                "Bit Type": "ro",
+                "Bit Field": "[31]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain cpu in reset. Wired in design/top as ~o_rst_n_cpu."
+            }
+          ]
+        },
+        {
+        "Register Name": "chipidrev",
+        "Offset": "0x0008",
+        "Reset Value": "0x51534F43",
+        "Descriprtion": "None",
+        "Bits": [
+            {
+                "Bit Name": "cause_por",
+                "Bit Type": "w1c",
+                "Bit Field": "[0]",
+                "Reset Value": "0x1",
+                "Description": "1 after power-on (reset value; SYSCSR is reset by o_rst_n_por only). HW set tied 0. W1C."
+            },
+            {
+                "Bit Name": "cause_wdt",
+                "Bit Type": "w1c",
+                "Bit Field": "[1]",
+                "Reset Value": "0x0",
+                "Description": "Set by SCRC o_cause_we_wdt, held for the whole 16-cycle WDT chip reset. W1C."
+            },
+            {
+                "Bit Name": "cause_soft",
+                "Bit Type": "w1c",
+                "Bit Field": "[2]",
+                "Reset Value": "0x0",
+                "Description": "Set by SCRC o_cause_we_sw, held for the whole 16-cycle SW chip reset. W1C."
+            },
+            {
+                "Bit Name": "reserved",
+                "Bit Type": "ro",
+                "Bit Field": "[31:3]",
+                "Reset Value": "0x0",
+                "Description": "Reserved. Read-as-zero, write ignore."
+            },
+            {
+                "Bit Name": "stat_sbus",
+                "Bit Type": "ro",
+                "Bit Field": "[0]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain sbus in reset. Wired in design/top as ~o_rst_n_sbus."
+            },
+            {
+                "Bit Name": "stat_pbus",
+                "Bit Type": "ro",
+                "Bit Field": "[1]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain pbus in reset. Wired in design/top as ~o_rst_n_pbus."
+            },
+            {
+                "Bit Name": "stat_wdt",
+                "Bit Type": "ro",
+                "Bit Field": "[2]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain wdt in reset. Wired in design/top as ~o_rst_n_wdt."
+            },
+            {
+                "Bit Name": "stat_timer_0",
+                "Bit Type": "ro",
+                "Bit Field": "[3]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain timer_0 in reset. Wired in design/top as ~o_rst_n_timer_0."
+            },
+            {
+                "Bit Name": "stat_timer_1",
+                "Bit Type": "ro",
+                "Bit Field": "[4]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain timer_1 in reset. Wired in design/top as ~o_rst_n_timer_1."
+            },
+            {
+                "Bit Name": "stat_uart_0",
+                "Bit Type": "ro",
+                "Bit Field": "[5]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain uart_0 in reset. Wired in design/top as ~o_rst_n_uart_0."
+            },
+            {
+                "Bit Name": "stat_uart_1",
+                "Bit Type": "ro",
+                "Bit Field": "[6]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain uart_1 in reset. Wired in design/top as ~o_rst_n_uart_1."
+            },
+            {
+                "Bit Name": "stat_spi",
+                "Bit Type": "ro",
+                "Bit Field": "[7]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain spi in reset. Wired in design/top as ~o_rst_n_spi."
+            },
+            {
+                "Bit Name": "stat_i2c",
+                "Bit Type": "ro",
+                "Bit Field": "[8]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain i2c in reset. Wired in design/top as ~o_rst_n_i2c."
+            },
+            {
+                "Bit Name": "stat_gpio_0",
+                "Bit Type": "ro",
+                "Bit Field": "[9]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain gpio_0 in reset. Wired in design/top as ~o_rst_n_gpio_0."
+            },
+            {
+                "Bit Name": "stat_dma",
+                "Bit Type": "ro",
+                "Bit Field": "[10]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain dma in reset. Wired in design/top as ~o_rst_n_dma."
+            },
+            {
+                "Bit Name": "stat_rom",
+                "Bit Type": "ro",
+                "Bit Field": "[11]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain rom in reset. Wired in design/top as ~o_rst_n_rom."
+            },
+            {
+                "Bit Name": "stat_ram",
+                "Bit Type": "ro",
+                "Bit Field": "[12]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain ram in reset. Wired in design/top as ~o_rst_n_ram."
+            },
+            {
+                "Bit Name": "reserved",
+                "Bit Type": "ro",
+                "Bit Field": "[13]",
+                "Reset Value": "0x0",
+                "Description": "Reserved. Read-as-zero, write ignore."
+            },
+            {
+                "Bit Name": "stat_sysdbg",
+                "Bit Type": "ro",
+                "Bit Field": "[14]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain sysdbg in reset. Wired in design/top as ~o_rst_n_sysdbg."
+            },
+            {
+                "Bit Name": "stat_pwm",
+                "Bit Type": "ro",
+                "Bit Field": "[15]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain pwm in reset. Wired in design/top as ~o_rst_n_pwm."
+            },
+            {
+                "Bit Name": "stat_gpio_1",
+                "Bit Type": "ro",
+                "Bit Field": "[16]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain gpio_1 in reset. Wired in design/top as ~o_rst_n_gpio_1."
+            },
+            {
+                "Bit Name": "stat_gpio_2",
+                "Bit Type": "ro",
+                "Bit Field": "[17]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain gpio_2 in reset. Wired in design/top as ~o_rst_n_gpio_2."
+            },
+            {
+                "Bit Name": "reserved",
+                "Bit Type": "ro",
+                "Bit Field": "[30:18]",
+                "Reset Value": "0x0",
+                "Description": "Reserved. Read-as-zero, write ignore."
+            },
+            {
+                "Bit Name": "stat_cpu",
+                "Bit Type": "ro",
+                "Bit Field": "[31]",
+                "Reset Value": "0x0",
+                "Description": "1 = domain cpu in reset. Wired in design/top as ~o_rst_n_cpu."
+            },
+            {
+                "Bit Name": "chip_id_rev",
+                "Bit Type": "ro",
+                "Bit Field": "[31:0]",
+                "Reset Value": "0x51534F43",
+                "Description": "qnsc_pkg::C_CHIP_ID, ASCII QSOC (MSB = Q). From i_cfg_chip_id of m_qnsc_wrap_syscsr, tied by design/top."
+            }
+          ]
+        }
+    ]
+}

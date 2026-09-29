@@ -8,6 +8,14 @@ figure, in colour, and is replaced by the three figures of the specification.
 
 ---
 
+# 0. V3.0 to V3.1
+
+| Change | Why |
+|---|---|
+| Block directory `design/scrc` to `design/syscsr`; wrapper `m_qnsc_syscsr` to `m_qnsc_wrap_syscsr` | SYSCSR has its own APB slave (`APB_M1`), its own clock cluster (`cpu`) and its own name in the contract, so it is a block: one wrapper, one directory. Under `design/scrc` its filelist also dragged a second top module into the SCRC lint |
+| Wrapper generated with emacs verilog-mode | It only instantiates and renames, which is what `CONTRIBUTING.md` step 3 generates |
+| `CHIP_ID_REV` from the port `i_cfg_chip_id` instead of `qnsc_pkg::C_CHIP_ID` | Outside `design/scrc` the block is IP (`flow/lint/module_rules.yml`) and may not use `qnsc_pkg`; a chip value reaches IP on an `i_cfg_*` port that `design/top` ties (`design/README.md`, "Shared numbers"). Still one source |
+
 # 1. V2.2 to V3.0
 
 V3.0 is a move onto the MAS template by the lead, aligned with `QNSC_SCRC_MAS`

@@ -1,6 +1,6 @@
 ---
 title: "SYSCSR"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -12,6 +12,7 @@ The reasoning behind each change, the V1.0--V2.2 history and the V2.2 text are i
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Nguyen Hao Nam | -- | V2.2 moved onto the MAS template and aligned with `QNSC_SCRC_MAS` V3.0: `APB_M1`, Naming Rule wrapper, bit 13 reserved, `CHIP_ID` from the contract, reset-cause write race closed, access timing and post-boot values stated |
+| V3.1 | 2026-09-29 | Nguyen Hao Nam | -- | Own block directory `design/syscsr`, wrapper `m_qnsc_wrap_syscsr` generated with emacs verilog-mode; `CHIP_ID_REV` on the new port `i_cfg_chip_id`, tied by `design/top` (sections 2, 3, 4, 5, 8, 10) |
 
 # 1. Overview
 
@@ -25,7 +26,9 @@ software reset leaves `RESET_CAUSE` for the code that runs after it.
 
 `SYSCSR` controls nothing; every control bit is in `SCRC` (`QNSC_SCRC_MAS`).
 
-Block directory `design/scrc`, wrapper `m_qnsc_syscsr`, owner Nguyen Hao Nam.
+Block directory `design/syscsr`, wrapper `m_qnsc_wrap_syscsr`, owner Nguyen Hao Nam.
+It is a block of its own, not part of `SCRC`: its own APB slave, its own clock
+cluster, one wrapper in one directory.
 
 # 2. Features
 
@@ -41,7 +44,8 @@ Block directory `design/scrc`, wrapper `m_qnsc_syscsr`, owner Nguyen Hao Nam.
 
 ![SYSCSR in the system: who writes and who reads each register](../figures/img/fig_syscsr_block.png){width=6.5in}
 
-`m_qnsc_syscsr` wraps the generated `m_qnsc_syscsr_csr`. It renames the ports to
+`m_qnsc_wrap_syscsr` wraps the generated `m_qnsc_syscsr_csr`, and is itself
+generated with emacs verilog-mode (`doc/guides/EMACS_AUTO.md`). It renames the ports to
 the Naming Rule and drives the generator's option and constant inputs (section
 10); it adds no logic.
 
@@ -71,7 +75,7 @@ that commit, with `i_slverr_en` = 1, `i_protect_en` = 0 and the synchronous opti
 Workbook register names are `resetcause`, `domainrststatus`, `chipidrev`; field
 names are those of Tables 6-3 to 6-5. The workbook and the generated file are kept
 in `util/gen/syscsr/`, because the generated port names (`i_bus_rstn`, `i_paddr`)
-do not follow the Naming Rule and `design/scrc/rtl/` holds only code written here.
+do not follow the Naming Rule and `design/syscsr/rtl/` holds only code written here.
 
 # 5. Interface
 
@@ -89,6 +93,7 @@ do not follow the Naming Rule and `design/scrc/rtl/` holds only code written her
 | `o_bus_apb_prdata`, `o_bus_apb_pready`, `o_bus_apb_pslverr` | out | 32, 1, 1 | `P_BUS` `APB_M1` | APB response -- 7.4 |
 | `i_cause_we_wdt`, `i_cause_we_sw` | in | 1 | `SCRC` `o_cause_we_wdt`, `o_cause_we_sw` | 1 for the whole WDT / SW chip reset -- 7.2 |
 | `i_domain_rst_stat` | in | 32 | bit *n* = `~o_rst_n_<d>` of `SCRC` domain *n*; bits 13, 30:18 tied 0 | 1 = domain *n* in reset. Reserved bits are not read |
+| `i_cfg_chip_id` | in | 32 | `qnsc_pkg::C_CHIP_ID` | Value of `CHIP_ID_REV`. A port, because the wrapper is IP and does not use `qnsc_pkg` |
 
 # 6. Register map
 
@@ -219,7 +224,7 @@ A byte or halfword store to `SYSCSR` is therefore an access fault in Ibex.
 
 # 8. Instances
 
-One `m_qnsc_syscsr` in `design/top`, containing one `m_qnsc_syscsr_csr`.
+One `m_qnsc_wrap_syscsr` in `design/top`, containing one `m_qnsc_syscsr_csr`.
 
 # 9. What is not provided here, and who provides it
 
@@ -233,7 +238,7 @@ One `m_qnsc_syscsr` in `design/top`, containing one `m_qnsc_syscsr_csr`.
 
 # 10. Tie-offs
 
-: Tie-offs inside `m_qnsc_syscsr`
+: Tie-offs inside `m_qnsc_wrap_syscsr`
 
 | Generated port | Tied to | Why |
 |---|---|---|
@@ -241,7 +246,7 @@ One `m_qnsc_syscsr` in `design/top`, containing one `m_qnsc_syscsr_csr`.
 | `i_slverr_en` | 1 | Misaligned and partial-strobe accesses answered with `PSLVERR` |
 | `i_hw_we_resetcause_cause_por` | 0 | `cause_por` is set by its reset value |
 | `i_hw_wdata_resetcause_cause_*` | 1 | An enable always sets the bit |
-| `i_chipidrev_chip_id_rev` | `qnsc_pkg::C_CHIP_ID` | One source; `hardcode_check` rejects the literal |
+| `i_chipidrev_chip_id_rev` | the port `i_cfg_chip_id`, tied by `design/top` to `qnsc_pkg::C_CHIP_ID` | One source; `hardcode_check` rejects the literal |
 | `i_paddr[15:12]` | 0 | `P_BUS` carries 12 address bits |
 | `o_resetcause_cause_*` | unconnected | Generated for `w1c` fields; not needed |
 
