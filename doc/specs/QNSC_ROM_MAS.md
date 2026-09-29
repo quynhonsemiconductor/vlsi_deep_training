@@ -1,6 +1,6 @@
 ---
 title: "ROM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.2"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,6 +13,7 @@ The reasoning behind each change, the V1.0--V2.1 history and the V2.1 text are i
 |---|---|---|---|---|
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Nguyen Hao Nam | -- | V2.1 moved onto the MAS template: generated constant image instead of `$readmemh`, ports as `QNSC_RAM_MAS`, controller behaviour referenced, timing diagrams, monochrome figures |
 | V3.1 | 2026-09-28 | Nghia VT | -- | Section 9: bootloader debugging is `QNSC_SYSDBG_MAS` 7.2 (was 7.1) |
+| V3.2 | 2026-09-29 | Nguyen Hao Nam | -- | Sections 3, 5, 7.3: the write-error responder is the module `m_qnsc_rom_wr_resp`, instantiated in the wrapper, so the wrapper is generated with emacs verilog-mode |
 
 # 1. Overview
 
@@ -47,7 +48,10 @@ Block directory `design/rom`, wrapper `m_qnsc_wrap_rom`, owner Nguyen Hao Nam.
 |---|---|---|
 | AXI controller | `m_vlsi_axi4_sram`, vendored, not modified | AR/R handshake, burst addresses, read issue. Its write channel is tied idle |
 | Image | `m_qnsc_rom_image`, generated | 512 x 32 constants, one-cycle read |
-| Write-error responder | in `m_qnsc_wrap_rom` | Accepts AW and W, answers B with `SLVERR` |
+| Write-error responder | `m_qnsc_rom_wr_resp`, in `m_qnsc_wrap_rom` | Accepts AW and W, answers B with `SLVERR` |
+
+`m_qnsc_wrap_rom` only instantiates the three and is generated with emacs
+verilog-mode (`doc/guides/EMACS_AUTO.md`); the responder is hand-written logic.
 
 The controller is the one `ISRAM` and `DSRAM` use, with the same parameters, so
 `QNSC_RAM_MAS` 7.1, 7.2, 7.4 and 7.6 apply to the read path unchanged. The block
@@ -73,7 +77,7 @@ there is no `AxSIZE`, every beat is a full word.
 |---|---|---:|---|
 | `i_clk_mem`, `i_rst_n_mem` | in | 1 | `SCRC` `o_clk_rom`, `o_rst_n_rom` |
 | `i_bus_axi_ar_*`, `o_bus_axi_r_*` | -- | as `QNSC_RAM_MAS` Table 5-1 | To the controller |
-| `i_bus_axi_aw_*`, `i_bus_axi_w_*`, `o_bus_axi_b_*` | -- | as `QNSC_RAM_MAS` Table 5-1 | To the responder. `w_strb` and `w_data` not used; `b_resp` always `2'b10` |
+| `i_bus_axi_aw_*`, `i_bus_axi_w_*`, `o_bus_axi_b_*` | -- | as `QNSC_RAM_MAS` Table 5-1 | To the responder `m_qnsc_rom_wr_resp`, whose ports carry the same names. `aw_addr`, `aw_burst`, `aw_len`, `w_strb` and `w_data` not used; `b_resp` always `2'b10` |
 
 The RAM's macro ports `o_mem_*`, `i_mem_rdata` are internal here, to the image.
 
@@ -146,6 +150,7 @@ enters `rom_trap`, a loop left only by a reset.
 
 The controller's write inputs are tied idle, so no write reaches the image. A
 write to the ROM must still be answered, or its master waits forever.
+`m_qnsc_rom_wr_resp` does it:
 
 1. **IDLE**: `AWREADY` = 1. On the AW handshake, store `AWID`.
 2. **DATA**: `WREADY` = 1. Discard beats up to the one with `WLAST`.
