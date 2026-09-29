@@ -98,6 +98,7 @@ machine is a green CI. How a wrapper is written with emacs is in
 | `Verilator lint` | your block does not lint through its filelist |
 | `Filelist paths` | a path in a `.f` is absolute, or names a file that does not exist |
 | `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` |
+| `Generated IP` | a file in `util/gen/<ip>/` differs from what its `gen.sh` produces with the pinned tools |
 | `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** |
 | `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region |
 | `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract |
@@ -127,6 +128,7 @@ Commit the vendored files, the manifest and `vendor/vendor.lock.yml` together.
 | The IP needs **another upstream** (a Bender dependency, a `common_cells` cell) | Vendor it as its **own manifest entry**, at the exact version the parent pins, with `files:` limited to what is compiled and `used_by:` naming the block. List only the compiled files in `<block>.f` |
 | You vendor a repo only to **read** it, not compile it | Say "reference only, not compiled" in its manifest `notes:` and in the block README, and keep it out of `<block>.f` |
 | The IP lacks a **feature** QSOC needs | Add it in the **wrapper** if it can be built from the IP's ports. Use a **patch** only when it needs the IP's internal state (the UART and I2C DMA request lines are the examples). Name it `vendor/patches/<vendor>_<repo>/NNNN-<what>.patch` and describe it in the manifest `notes:`, the block README and the MAS. Commit the patch and the patched vendor files in the same PR |
+| The IP ships **templates and a generator**, not RTL (iDMA: Mako, SystemRDL, `gen_idma.py`) | Vendor the generator with the IP: add its files (for iDMA `util/gen_idma.py`, `util/mario/**`) to the entry's `files:`, same commit. In `util/gen/<ip>/` write `gen.sh` (the commands; reads `vendor/`, writes only into the directory it is given) and `requirements.txt` (the generator's Python tools, every version `==`, taken from the upstream lock file). Run `make gen IP=<ip>` and commit the generated files with the recipe; never edit them. List them in `<block>.f`. `make gen-check` (CI) regenerates and must match |
 | Your wrapper **starts from an upstream file** (a sample wrapper) | Allowed as a starting point that you then own. Keep the upstream licence header, which the licence requires, and add one line `QNSC: derived from <path> @ <commit>`. State it in the README |
 
 ## Changing a shared number

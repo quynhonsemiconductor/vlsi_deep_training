@@ -100,6 +100,23 @@ jobs:
         run: make wrap-check
 
   # ---------------------------------------------------------------------------
+  generated-ip:
+    name: Generated IP
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      # IP that ships templates and a generator (iDMA) has its output committed in
+      # util/gen/<ip>/ with the recipe that made it: gen.sh and pinned tools. Run
+      # every recipe on the vendored sources and fail if the committed files differ,
+      # so the RTL that is reviewed is the RTL the upstream generator produces.
+      - name: Regenerate every generated IP and compare
+        run: make gen-check
+
+  # ---------------------------------------------------------------------------
   hardcode:
     name: No hardcoded shared values
     runs-on: ubuntu-latest

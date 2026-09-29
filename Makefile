@@ -19,13 +19,13 @@ BASE  ?= origin/main
 SCOPE = $(if $(BLOCK),design/$(BLOCK))
 
 .PHONY: help check filelists lint naming hardcode module-rules contract-tags pkg pkg-check tables docs \
-        vendor-guard new-wrap wrap wrap-check vcs vcs-branch vcs-post verdi sim syn gca hooks doctor ide
+        vendor-guard new-wrap wrap wrap-check gen gen-check vcs vcs-branch vcs-post verdi sim syn gca hooks doctor ide
 
 help:
 	@echo "make doctor         which tools are here, and how to install the rest"
 	@echo "make ide            editor lint search paths (.vscode/verilator.f)"
 	@echo "make hooks          once per clone: run make check before every push"
-	@echo "make check          all CI checks: filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check vendor-guard"
+	@echo "make check          all CI checks: filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check gen-check vendor-guard"
 	@echo "make filelists      paths in every .f are relative and exist"
 	@echo "make lint           Verilator lint through <block>.f      [BLOCK=]"
 	@echo "make naming         QNSC_RTL_Design_Naming_Rule           [BLOCK=]"
@@ -39,6 +39,8 @@ help:
 	@echo "make vendor-guard   vendor/ unedited since BASE             [BASE=origin/main]"
 	@echo "make new-wrap       scaffold rtl/emacs for a new wrapper   BLOCK= IP=<ip top .sv>"
 	@echo "make wrap           regenerate one emacs wrapper           BLOCK="
+	@echo "make gen            regenerate a generated IP in util/gen/<ip> IP="
+	@echo "make gen-check      every generated IP matches its recipe (CI; installs the pinned tools)"
 	@echo "make wrap-check     every emacs wrapper matches its .src.sv"
 	@echo "make vcs            compile with VCS, on the server        BLOCK="
 	@echo "make vcs-branch     compile a branch in a scratch clone, on the server BLOCK= BRANCH="
@@ -57,7 +59,7 @@ hooks:
 	@echo "hooks on: git push runs make check (skip once with --no-verify);"
 	@echo "          git pull and branch switches refresh the editor lint paths"
 
-check: ide filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check vendor-guard
+check: ide filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check gen-check vendor-guard
 
 filelists:
 	python3 flow/lint/filelist_check.py
@@ -99,6 +101,13 @@ new-wrap:
 wrap:
 	@test -n "$(BLOCK)" || { echo "usage: make wrap BLOCK=<block>"; exit 1; }
 	$(MAKE) -C design/$(BLOCK)/rtl/emacs
+
+gen:
+	@test -n "$(IP)" || { echo "usage: make gen IP=<ip>"; exit 1; }
+	bash flow/gen/gen_ip.sh gen $(IP)
+
+gen-check:
+	bash flow/gen/gen_ip.sh check
 
 wrap-check:
 	bash flow/emacs/check_wrappers.sh
