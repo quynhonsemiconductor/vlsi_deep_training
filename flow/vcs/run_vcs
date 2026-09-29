@@ -6,8 +6,10 @@
 #   make vcs BLOCK=<block>
 #
 # The design comes from design/<block>/<block>.f, read with -F so its relative
-# paths resolve from the filelist -- the same list lint, SIM and SYN use. The
-# top defaults to the wrapper, the last rtl/*.sv line of the filelist.
+# paths resolve from the filelist -- the same list lint, SIM and SYN use, so it
+# holds only +incdir+, +define+ and file paths: a tool option such as Verilator's
+# --top-module fails here. The top defaults to m_qnsc_wrap_<block> when the
+# filelist names that file, else to the last rtl/*.sv line.
 # CI does not run this: VCS is licensed, so CI lints with Verilator instead.
 set -euo pipefail
 
@@ -15,9 +17,23 @@ block=${1:?usage: run_vcs <block> [top]}
 flist="design/${block}/${block}.f"
 [ -f "$flist" ] || { echo "no $flist"; exit 1; }
 command -v vcs >/dev/null 2>&1 || { echo "vcs not found: run on a compute node of the server, after loading the VCS environment (server guide)"; exit 1; }
-top=${2:-$(grep -oE 'rtl/[A-Za-z0-9_]+\.sv' "$flist" | tail -1 | xargs -n1 basename | sed 's/\.sv$//')}
 out="build/vcs/${block}"
 mkdir -p "$out"
+
+# A filelist is shared by every tool: an option of one tool breaks the others.
+bad=$(grep -nE '^[[:space:]]*(--|-W|-j[[:space:]])' "$flist" || true)
+if [ -n "$bad" ]; then
+  { echo "VCS - | block $block | commit $(git rev-parse --short HEAD 2>/dev/null || echo ?)"
+    echo "Error-: filelist"
+    echo "FAIL: $flist holds tool options; keep only +incdir+, +define+ and paths:"
+    echo "$bad"; } | tee "$out/summary.txt"
+  exit 1
+fi
+if [ -z "${2:-}" ] && grep -qE "(^|/)m_qnsc_wrap_${block}\.sv[[:space:]]*$" "$flist"; then
+  top="m_qnsc_wrap_${block}"
+else
+  top=${2:-$(grep -oE 'rtl/[A-Za-z0-9_]+\.sv' "$flist" | tail -1 | xargs -n1 basename | sed 's/\.sv$//')}
+fi
 
 rc=0
 vcs -sverilog +vcs+lic+wait \

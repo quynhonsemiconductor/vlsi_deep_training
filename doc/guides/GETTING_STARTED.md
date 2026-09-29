@@ -104,7 +104,12 @@ make vcs BLOCK=<block>       # compile; prints the summary to paste into the PR
 make verdi BLOCK=<block>     # Verdi on build/vcs/<block>/simv.daidir: nSchema shows the wrapper
 ```
 
-`make vcs` fails on any `Error-`. It counts `Lint-` warnings on `design/` (ours, to
+`make vcs-branch BLOCK=<block> BRANCH=<branch>` does the same for any branch, in a
+fresh clone on the node's local disk, without checking it out in your copy; use it
+for reviews, or when a checkout on the server's network home fails.
+
+`make vcs` fails on any `Error-`, and on a tool option (such as `--top-module`) in
+the filelist. It counts `Lint-` warnings on `design/` (ours, to
 read and fix or waive) separately from `vendor/` (upstream, never edited). In the schematic every wrapper port reaches one IP port or a tie-off,
 as the MAS interface and tie-off tables say. Output stays in `build/`, which Git
 ignores; do not commit `simv`, `csrc` or logs.
