@@ -19,7 +19,7 @@ BASE  ?= origin/main
 SCOPE = $(if $(BLOCK),design/$(BLOCK))
 
 .PHONY: help check filelists lint naming hardcode module-rules contract-tags pkg pkg-check tables docs \
-        vendor-guard new-wrap wrap wrap-check vcs verdi sim syn gca hooks doctor ide
+        vendor-guard new-wrap wrap wrap-check vcs vcs-post verdi sim syn gca hooks doctor ide
 
 help:
 	@echo "make doctor         which tools are here, and how to install the rest"
@@ -41,6 +41,7 @@ help:
 	@echo "make wrap           regenerate one emacs wrapper           BLOCK="
 	@echo "make wrap-check     every emacs wrapper matches its .src.sv"
 	@echo "make vcs            compile with VCS, on the server        BLOCK="
+	@echo "make vcs-post       post that summary on a PR, from your machine BLOCK= PR="
 	@echo "make verdi          open the VCS compile in Verdi (schematic) BLOCK="
 	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=]"
 
@@ -105,10 +106,14 @@ vcs:
 	@test -n "$(BLOCK)" || { echo "usage: make vcs BLOCK=<block>"; exit 1; }
 	bash flow/vcs/run_vcs $(BLOCK)
 
+vcs-post:
+	@test -n "$(BLOCK)" -a -n "$(PR)" || { echo "usage: make vcs-post BLOCK=<block> PR=<number> [DRY=1]"; exit 1; }
+	DRY=$(DRY) bash flow/vcs/post_summary.sh $(BLOCK) $(PR)
+
 verdi:
 	@test -n "$(BLOCK)" || { echo "usage: make verdi BLOCK=<block>"; exit 1; }
 	@test -d build/vcs/$(BLOCK)/simv.daidir || { echo "run make vcs BLOCK=$(BLOCK) first"; exit 1; }
-	verdi -dbdir build/vcs/$(BLOCK)/simv.daidir &
+	cd build/vcs/$(BLOCK) && verdi -dbdir simv.daidir &   # Verdi writes verdiLog/ and novas.* in its working directory
 
 sim:
 	bash flow/sim/run_sim.sh $(BLOCK) $(TEST)

@@ -90,17 +90,22 @@ make naming BLOCK=<block>
 ### On the training server: compile with VCS, look at the schematic
 
 Everything above runs on your own machine. VCS and Verdi are licensed and run only
-on the server, from the same clone and the same `design/<block>/<block>.f`:
+on a compute node of the training server. The server cannot reach GitHub: you push
+your branch from your machine to a copy of the repository in your server home, and
+edit only on your machine. How to log in, reach a compute node, load the tools and
+set up that copy is in the **server guide**, which the lead shares privately: it
+names the vendor's machines, so it is not kept in this public repository.
+
+On the compute node, in your server copy:
 
 ```bash
-git clone git@github.com:quynhonsemiconductor/vlsi_deep_training.git   # once
-cd vlsi_deep_training && git checkout <your branch>
-make vcs BLOCK=<block>       # syntax and elaboration; log in build/vcs/<block>/comp.log
+git pull && git checkout <your branch>
+make vcs BLOCK=<block>       # compile; prints the summary to paste into the PR
 make verdi BLOCK=<block>     # Verdi on build/vcs/<block>/simv.daidir: nSchema shows the wrapper
 ```
 
-Fix every `Error-` in `comp.log`, and read the `Lint-` warnings on the wrapper's
-own ports. In the schematic every wrapper port reaches one IP port or a tie-off,
+`make vcs` fails on any `Error-`. It counts `Lint-` warnings on `design/` (ours, to
+read and fix or waive) separately from `vendor/` (upstream, never edited). In the schematic every wrapper port reaches one IP port or a tie-off,
 as the MAS interface and tie-off tables say. Output stays in `build/`, which Git
 ignores; do not commit `simv`, `csrc` or logs.
 

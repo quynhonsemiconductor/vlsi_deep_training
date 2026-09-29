@@ -14,11 +14,12 @@ set -euo pipefail
 block=${1:?usage: run_vcs <block> [top]}
 flist="design/${block}/${block}.f"
 [ -f "$flist" ] || { echo "no $flist"; exit 1; }
-command -v vcs >/dev/null 2>&1 || { echo "vcs not found -- run this on the server"; exit 1; }
+command -v vcs >/dev/null 2>&1 || { echo "vcs not found: run on a compute node of the server, after loading the VCS environment (server guide)"; exit 1; }
 top=${2:-$(grep -oE 'rtl/[A-Za-z0-9_]+\.sv' "$flist" | tail -1 | xargs -n1 basename | sed 's/\.sv$//')}
 out="build/vcs/${block}"
 mkdir -p "$out"
 
+rc=0
 vcs -sverilog +vcs+lic+wait \
     -timescale=1ns/1ps \
     -F "$flist" \
@@ -27,6 +28,27 @@ vcs -sverilog +vcs+lic+wait \
     +error+100 \
     +lint=all \
     -Mdir="$out/csrc" -o "$out/simv" \
-    -l "$out/comp.log"
+    -l "$out/comp.log" > "$out/comp.out" 2>&1 || rc=$?
 
-echo "compiled: $out/comp.log. Schematic: make verdi BLOCK=$block"
+# Summary, the lines a wrapper PR carries (CONTRIBUTING.md 5): printed, and kept in
+# $out/summary.txt for flow/vcs/post_summary.sh. +lint=all reports upstream IP as
+# well, so lint is grouped by origin: only design/ files are ours.
+log="$out/comp.log"
+ver=$(grep -m1 -oE 'Version [^ ]+' "$log" | cut -d' ' -f2 || true)
+nerr=$(grep -cE '^Error-' "$log" || true)
+{
+  echo "VCS ${ver:-?} | block $block | top $top | commit $(git rev-parse --short HEAD 2>/dev/null || echo ?)"
+  echo "Error-: $nerr"
+  # each message is "Lint-[TAG] text" followed by "path, line"
+  awk '/^Lint-\[/ { tag=$1; getline f; sub(/, [0-9]+$/, "", f)
+                     org = (f ~ /(^|\/)vendor\//) ? "vendor" : "ours"
+                     n[org]++; k[org" "tag" "f]++ }
+       END { printf "Lint-: %d on our files, %d on vendor/ (upstream, not edited)\n", n["ours"]+0, n["vendor"]+0
+             for (x in k) if (x ~ /^ours /) printf "  %3d  %s\n", k[x], substr(x, 6) }' "$log"
+  grep -q 'Verdi KDB elaboration done' "$log" && echo "Verdi KDB: generated"
+  if [ "$rc" -ne 0 ] || [ "$nerr" -gt 0 ]; then
+    echo "FAIL: first errors (full log: $log)"; grep -A4 -E '^Error-' "$log" | sed -n 1,40p
+  fi
+} | tee "$out/summary.txt"
+[ "$rc" -eq 0 ] && [ "$nerr" -eq 0 ] || exit 1
+echo "Schematic: make verdi BLOCK=$block. PR comment, from your machine: make vcs-post BLOCK=$block PR=<number>"
