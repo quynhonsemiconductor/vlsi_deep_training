@@ -287,15 +287,16 @@ upstreams:
   commit: 5661aecf96f8349987e600fe4e8a124c35e3d836
   license: MentorProvided-QNSC-Course
   used_by:
-  - design/bus
   - design/scrc
   generator: true
   notes: 'Produces m_vlsi_apb_router from a spreadsheet. Genuinely multi-master with per-slave round-robin
-    arbitration. Used twice: P_BUS, and the private 2-master bus inside SCRC (MRV-CPU and the APB_M0 port,
-    one slave: SCRC CSR; QNSC_SCRC_MAS 3). The top and leaf module names are hard-coded, so the two
-    outputs collide and fail Naming Rule 2.1 -- open item in QNSC_SCRC_MAS 11. Generated RTL is committed
-    alongside its spreadsheet input in util/gen -- committing only one of the two loses either
-    reproducibility or the source of truth.
+    arbitration -- used for the private 2-master bus inside SCRC (MRV-CPU and the APB_M0 port, one slave:
+    SCRC CSR; QNSC_SCRC_MAS 3). No longer used for P_BUS (see nguyenquanicd/APB-DEC-Generator below):
+    P_BUS has exactly one master today, so the arbitration this tool exists for is dead weight there, and
+    keeping both instances on this one tool would have meant two m_vlsi_apb_router modules (its own
+    top/leaf names are hard-coded) colliding under Naming Rule 2.1 -- open item in QNSC_SCRC_MAS 11.
+    Generated RTL is committed alongside its spreadsheet input in util/gen -- committing only one of the
+    two loses either reproducibility or the source of truth.
 
     '
   files:
@@ -303,6 +304,28 @@ upstreams:
   - '*.py'
   - '*.xlsx'
   - README.md
+- name: nguyenquanicd/APB-DEC-Generator
+  url: https://github.com/nguyenquanicd/APB-DEC-Generator
+  commit: 90bd54d8860eff2fe65a17b93b425a6ca79600d7
+  license: MentorProvided-QNSC-Course
+  used_by:
+  - design/bus
+  generator: true
+  notes: 'Produces a single-master, N-slave APB4 address decoder (m_qnsc_p_bus_dec here, named by the
+    workbook) from a spreadsheet -- no arbitration, unlike APB-BUS-Generator above. P_BUS''s AXI2APB
+    bridge is the block''s only APB master today, so decode-only is enough; see
+    doc/specs/QNSC_BUS_DECISIONS.md, "P_BUS router: decoder only, not APB-BUS-Generator". Has no PPROT
+    port at all (master or slave side): m_qnsc_wrap_bus''s own pprot field is dropped at the connection,
+    an accepted limitation, not a bug, since no peripheral MAS specifies PPROT-dependent behaviour.
+    Generated RTL is committed alongside its spreadsheet input in util/gen, same convention as
+    APB-BUS-Generator above.
+
+    '
+  files:
+  - '*.py'
+  - '*.xlsx'
+  - Makefile
+  - source_me.sh
 - name: nguyenquanicd/APB-CSR-Generator
   url: https://github.com/nguyenquanicd/APB-CSR-Generator
   commit: ee80ff5415edc409743f58b99f28881c04a44ee1

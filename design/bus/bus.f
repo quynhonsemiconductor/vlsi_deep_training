@@ -69,4 +69,9 @@
 
 # ---- ours -------------------------------------------------------------------
 rtl/s_bus_pkg.sv
+# P_BUS's router: generated (nguyenquanicd/APB-DEC-Generator), committed
+# alongside its spreadsheet input in util/gen/p_bus_apb_dec/ -- see
+# vendor/manifest.yml. Plain module, no package/import, so it has no
+# ordering requirement beyond "before the wrapper that instantiates it".
+../../util/gen/p_bus_apb_dec/m_qnsc_p_bus_dec.sv
 rtl/m_qnsc_wrap_bus.sv

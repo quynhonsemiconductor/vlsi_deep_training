@@ -3,12 +3,14 @@
 //==============================================================================
 // Module      : m_qnsc_wrap_bus
 // Description : S_BUS -- the AXI4 crossbar (axi_xbar) plus the AXI2APB bridge
-//               (axi_to_axi_lite + axi_lite_to_apb) toward P_BUS. Three
-//               masters issue transactions here (SYSDBG on AXI_S0, CPU on
-//               AXI_S1, DMA on AXI_S2); four destinations answer them (ROM
-//               AXI_M0, ISRAM AXI_M1, DSRAM AXI_M2, AXI2APB AXI_M3 toward
-//               P_BUS's 14 peripherals). No packed structs cross this
-//               module's own boundary, per the naming rule.
+//               (axi_to_axi_lite + axi_lite_to_apb) toward P_BUS, plus P_BUS's
+//               own router (m_qnsc_p_bus_dec, generated). Three masters issue
+//               transactions here (SYSDBG on AXI_S0, CPU on AXI_S1, DMA on
+//               AXI_S2); four destinations answer them (ROM AXI_M0, ISRAM
+//               AXI_M1, DSRAM AXI_M2, AXI2APB AXI_M3), and AXI_M3's single
+//               APB4 master port fans out to 14 peripheral-facing ports. No
+//               packed structs cross this module's own boundary, per the
+//               naming rule.
 // Spec ref    : doc/specs/QNSC_BUS_MAS.md
 //==============================================================================
 module m_qnsc_wrap_bus
@@ -317,19 +319,150 @@ output logic  o_axi_m_2_r_ready,
 
 
 //---------------------------------------------------------------
-// APB4 master port -- the AXI2APB bridge's output, P_BUS's single
-// master-input port (APB_S0 in P_BUS's own naming).
+// APB4 slave ports -- P_BUS's 14 peripheral-facing ports, fanned out by
+// the generated m_qnsc_p_bus_dec (util/gen/p_bus_apb_dec/, see
+// vendor/manifest.yml).
 //---------------------------------------------------------------
-output logic [31:0] o_apb_paddr,
-output logic [2:0]  o_apb_pprot,
-output logic         o_apb_psel,
-output logic         o_apb_penable,
-output logic         o_apb_pwrite,
-output logic [31:0] o_apb_pwdata,
-output logic [3:0]  o_apb_pstrb,
-input  logic         i_apb_pready,
-input  logic [31:0] i_apb_prdata,
-input  logic         i_apb_pslverr
+// ==== P_BUS peripheral 0: scrc (APB_M0) ====
+output logic [11:0] o_apb_scrc_paddr,
+output logic [31:0] o_apb_scrc_pwdata,
+output logic [3:0]  o_apb_scrc_pstrb,
+output logic        o_apb_scrc_psel,
+output logic        o_apb_scrc_penable,
+output logic        o_apb_scrc_pwrite,
+input  logic        i_apb_scrc_pready,
+input  logic        i_apb_scrc_pslverr,
+input  logic [31:0] i_apb_scrc_prdata,
+// ==== P_BUS peripheral 1: syscsr (APB_M1) ====
+output logic [11:0] o_apb_syscsr_paddr,
+output logic [31:0] o_apb_syscsr_pwdata,
+output logic [3:0]  o_apb_syscsr_pstrb,
+output logic        o_apb_syscsr_psel,
+output logic        o_apb_syscsr_penable,
+output logic        o_apb_syscsr_pwrite,
+input  logic        i_apb_syscsr_pready,
+input  logic        i_apb_syscsr_pslverr,
+input  logic [31:0] i_apb_syscsr_prdata,
+// ==== P_BUS peripheral 2: wdt (APB_M2) ====
+output logic [11:0] o_apb_wdt_paddr,
+output logic [31:0] o_apb_wdt_pwdata,
+output logic [3:0]  o_apb_wdt_pstrb,
+output logic        o_apb_wdt_psel,
+output logic        o_apb_wdt_penable,
+output logic        o_apb_wdt_pwrite,
+input  logic        i_apb_wdt_pready,
+input  logic        i_apb_wdt_pslverr,
+input  logic [31:0] i_apb_wdt_prdata,
+// ==== P_BUS peripheral 3: gpio_0 (APB_M3) ====
+output logic [11:0] o_apb_gpio_0_paddr,
+output logic [31:0] o_apb_gpio_0_pwdata,
+output logic [3:0]  o_apb_gpio_0_pstrb,
+output logic        o_apb_gpio_0_psel,
+output logic        o_apb_gpio_0_penable,
+output logic        o_apb_gpio_0_pwrite,
+input  logic        i_apb_gpio_0_pready,
+input  logic        i_apb_gpio_0_pslverr,
+input  logic [31:0] i_apb_gpio_0_prdata,
+// ==== P_BUS peripheral 4: gpio_1 (APB_M4) ====
+output logic [11:0] o_apb_gpio_1_paddr,
+output logic [31:0] o_apb_gpio_1_pwdata,
+output logic [3:0]  o_apb_gpio_1_pstrb,
+output logic        o_apb_gpio_1_psel,
+output logic        o_apb_gpio_1_penable,
+output logic        o_apb_gpio_1_pwrite,
+input  logic        i_apb_gpio_1_pready,
+input  logic        i_apb_gpio_1_pslverr,
+input  logic [31:0] i_apb_gpio_1_prdata,
+// ==== P_BUS peripheral 5: gpio_2 (APB_M5) ====
+output logic [11:0] o_apb_gpio_2_paddr,
+output logic [31:0] o_apb_gpio_2_pwdata,
+output logic [3:0]  o_apb_gpio_2_pstrb,
+output logic        o_apb_gpio_2_psel,
+output logic        o_apb_gpio_2_penable,
+output logic        o_apb_gpio_2_pwrite,
+input  logic        i_apb_gpio_2_pready,
+input  logic        i_apb_gpio_2_pslverr,
+input  logic [31:0] i_apb_gpio_2_prdata,
+// ==== P_BUS peripheral 6: timer_0 (APB_M6) ====
+output logic [11:0] o_apb_timer_0_paddr,
+output logic [31:0] o_apb_timer_0_pwdata,
+output logic [3:0]  o_apb_timer_0_pstrb,
+output logic        o_apb_timer_0_psel,
+output logic        o_apb_timer_0_penable,
+output logic        o_apb_timer_0_pwrite,
+input  logic        i_apb_timer_0_pready,
+input  logic        i_apb_timer_0_pslverr,
+input  logic [31:0] i_apb_timer_0_prdata,
+// ==== P_BUS peripheral 7: timer_1 (APB_M7) ====
+output logic [11:0] o_apb_timer_1_paddr,
+output logic [31:0] o_apb_timer_1_pwdata,
+output logic [3:0]  o_apb_timer_1_pstrb,
+output logic        o_apb_timer_1_psel,
+output logic        o_apb_timer_1_penable,
+output logic        o_apb_timer_1_pwrite,
+input  logic        i_apb_timer_1_pready,
+input  logic        i_apb_timer_1_pslverr,
+input  logic [31:0] i_apb_timer_1_prdata,
+// ==== P_BUS peripheral 8: uart_0 (APB_M8) ====
+output logic [11:0] o_apb_uart_0_paddr,
+output logic [31:0] o_apb_uart_0_pwdata,
+output logic [3:0]  o_apb_uart_0_pstrb,
+output logic        o_apb_uart_0_psel,
+output logic        o_apb_uart_0_penable,
+output logic        o_apb_uart_0_pwrite,
+input  logic        i_apb_uart_0_pready,
+input  logic        i_apb_uart_0_pslverr,
+input  logic [31:0] i_apb_uart_0_prdata,
+// ==== P_BUS peripheral 9: uart_1 (APB_M9) ====
+output logic [11:0] o_apb_uart_1_paddr,
+output logic [31:0] o_apb_uart_1_pwdata,
+output logic [3:0]  o_apb_uart_1_pstrb,
+output logic        o_apb_uart_1_psel,
+output logic        o_apb_uart_1_penable,
+output logic        o_apb_uart_1_pwrite,
+input  logic        i_apb_uart_1_pready,
+input  logic        i_apb_uart_1_pslverr,
+input  logic [31:0] i_apb_uart_1_prdata,
+// ==== P_BUS peripheral 10: spi (APB_M10) ====
+output logic [11:0] o_apb_spi_paddr,
+output logic [31:0] o_apb_spi_pwdata,
+output logic [3:0]  o_apb_spi_pstrb,
+output logic        o_apb_spi_psel,
+output logic        o_apb_spi_penable,
+output logic        o_apb_spi_pwrite,
+input  logic        i_apb_spi_pready,
+input  logic        i_apb_spi_pslverr,
+input  logic [31:0] i_apb_spi_prdata,
+// ==== P_BUS peripheral 11: i2c (APB_M11) ====
+output logic [11:0] o_apb_i2c_paddr,
+output logic [31:0] o_apb_i2c_pwdata,
+output logic [3:0]  o_apb_i2c_pstrb,
+output logic        o_apb_i2c_psel,
+output logic        o_apb_i2c_penable,
+output logic        o_apb_i2c_pwrite,
+input  logic        i_apb_i2c_pready,
+input  logic        i_apb_i2c_pslverr,
+input  logic [31:0] i_apb_i2c_prdata,
+// ==== P_BUS peripheral 12: pwm (APB_M12) ====
+output logic [11:0] o_apb_pwm_paddr,
+output logic [31:0] o_apb_pwm_pwdata,
+output logic [3:0]  o_apb_pwm_pstrb,
+output logic        o_apb_pwm_psel,
+output logic        o_apb_pwm_penable,
+output logic        o_apb_pwm_pwrite,
+input  logic        i_apb_pwm_pready,
+input  logic        i_apb_pwm_pslverr,
+input  logic [31:0] i_apb_pwm_prdata,
+// ==== P_BUS peripheral 13: dma_cfg (APB_M13) ====
+output logic [11:0] o_apb_dma_cfg_paddr,
+output logic [31:0] o_apb_dma_cfg_pwdata,
+output logic [3:0]  o_apb_dma_cfg_pstrb,
+output logic        o_apb_dma_cfg_psel,
+output logic        o_apb_dma_cfg_penable,
+output logic        o_apb_dma_cfg_pwrite,
+input  logic        i_apb_dma_cfg_pready,
+input  logic        i_apb_dma_cfg_pslverr,
+input  logic [31:0] i_apb_dma_cfg_prdata
 );
 
 // ==================================================================
@@ -451,16 +584,148 @@ axi_lite_to_apb #(
   .addr_map_i      (P_APB_ADDR_MAP)
 );
 
-assign o_apb_paddr   = w_apb_req[0].paddr;
-assign o_apb_pprot   = w_apb_req[0].pprot;
-assign o_apb_psel    = w_apb_req[0].psel;
-assign o_apb_penable = w_apb_req[0].penable;
-assign o_apb_pwrite  = w_apb_req[0].pwrite;
-assign o_apb_pwdata  = w_apb_req[0].pwdata;
-assign o_apb_pstrb   = w_apb_req[0].pstrb;
-assign w_apb_resp[0].pready  = i_apb_pready;
-assign w_apb_resp[0].prdata  = i_apb_prdata;
-assign w_apb_resp[0].pslverr = i_apb_pslverr;
+// P_BUS's own router: fans w_apb_req[0]/w_apb_resp[0] (the AXI2APB bridge's
+// single master-side port) out to one flat port per peripheral. pprot is not
+// carried through -- m_qnsc_p_bus_dec has no such port at all (see
+// vendor/manifest.yml, nguyenquanicd/APB-DEC-Generator); w_apb_req[0].pprot
+// is intentionally left unconnected here.
+m_qnsc_p_bus_dec u_m_qnsc_p_bus_dec (
+  .i_paddr    (w_apb_req[0].paddr),
+  .i_pwdata   (w_apb_req[0].pwdata),
+  .i_pstrb    (w_apb_req[0].pstrb),
+  .i_pwrite   (w_apb_req[0].pwrite),
+  .i_psel     (w_apb_req[0].psel),
+  .i_penable  (w_apb_req[0].penable),
+  .o_pready   (w_apb_resp[0].pready),
+  .o_pslverr  (w_apb_resp[0].pslverr),
+  .o_prdata   (w_apb_resp[0].prdata),
+  .o_paddr_scrc    (o_apb_scrc_paddr),
+  .o_pwdata_scrc   (o_apb_scrc_pwdata),
+  .o_pstrb_scrc    (o_apb_scrc_pstrb),
+  .o_psel_scrc     (o_apb_scrc_psel),
+  .o_penable_scrc  (o_apb_scrc_penable),
+  .o_pwrite_scrc   (o_apb_scrc_pwrite),
+  .i_pready_scrc   (i_apb_scrc_pready),
+  .i_pslverr_scrc  (i_apb_scrc_pslverr),
+  .i_prdata_scrc   (i_apb_scrc_prdata),
+  .o_paddr_syscsr    (o_apb_syscsr_paddr),
+  .o_pwdata_syscsr   (o_apb_syscsr_pwdata),
+  .o_pstrb_syscsr    (o_apb_syscsr_pstrb),
+  .o_psel_syscsr     (o_apb_syscsr_psel),
+  .o_penable_syscsr  (o_apb_syscsr_penable),
+  .o_pwrite_syscsr   (o_apb_syscsr_pwrite),
+  .i_pready_syscsr   (i_apb_syscsr_pready),
+  .i_pslverr_syscsr  (i_apb_syscsr_pslverr),
+  .i_prdata_syscsr   (i_apb_syscsr_prdata),
+  .o_paddr_wdt    (o_apb_wdt_paddr),
+  .o_pwdata_wdt   (o_apb_wdt_pwdata),
+  .o_pstrb_wdt    (o_apb_wdt_pstrb),
+  .o_psel_wdt     (o_apb_wdt_psel),
+  .o_penable_wdt  (o_apb_wdt_penable),
+  .o_pwrite_wdt   (o_apb_wdt_pwrite),
+  .i_pready_wdt   (i_apb_wdt_pready),
+  .i_pslverr_wdt  (i_apb_wdt_pslverr),
+  .i_prdata_wdt   (i_apb_wdt_prdata),
+  .o_paddr_gpio_0    (o_apb_gpio_0_paddr),
+  .o_pwdata_gpio_0   (o_apb_gpio_0_pwdata),
+  .o_pstrb_gpio_0    (o_apb_gpio_0_pstrb),
+  .o_psel_gpio_0     (o_apb_gpio_0_psel),
+  .o_penable_gpio_0  (o_apb_gpio_0_penable),
+  .o_pwrite_gpio_0   (o_apb_gpio_0_pwrite),
+  .i_pready_gpio_0   (i_apb_gpio_0_pready),
+  .i_pslverr_gpio_0  (i_apb_gpio_0_pslverr),
+  .i_prdata_gpio_0   (i_apb_gpio_0_prdata),
+  .o_paddr_gpio_1    (o_apb_gpio_1_paddr),
+  .o_pwdata_gpio_1   (o_apb_gpio_1_pwdata),
+  .o_pstrb_gpio_1    (o_apb_gpio_1_pstrb),
+  .o_psel_gpio_1     (o_apb_gpio_1_psel),
+  .o_penable_gpio_1  (o_apb_gpio_1_penable),
+  .o_pwrite_gpio_1   (o_apb_gpio_1_pwrite),
+  .i_pready_gpio_1   (i_apb_gpio_1_pready),
+  .i_pslverr_gpio_1  (i_apb_gpio_1_pslverr),
+  .i_prdata_gpio_1   (i_apb_gpio_1_prdata),
+  .o_paddr_gpio_2    (o_apb_gpio_2_paddr),
+  .o_pwdata_gpio_2   (o_apb_gpio_2_pwdata),
+  .o_pstrb_gpio_2    (o_apb_gpio_2_pstrb),
+  .o_psel_gpio_2     (o_apb_gpio_2_psel),
+  .o_penable_gpio_2  (o_apb_gpio_2_penable),
+  .o_pwrite_gpio_2   (o_apb_gpio_2_pwrite),
+  .i_pready_gpio_2   (i_apb_gpio_2_pready),
+  .i_pslverr_gpio_2  (i_apb_gpio_2_pslverr),
+  .i_prdata_gpio_2   (i_apb_gpio_2_prdata),
+  .o_paddr_timer_0    (o_apb_timer_0_paddr),
+  .o_pwdata_timer_0   (o_apb_timer_0_pwdata),
+  .o_pstrb_timer_0    (o_apb_timer_0_pstrb),
+  .o_psel_timer_0     (o_apb_timer_0_psel),
+  .o_penable_timer_0  (o_apb_timer_0_penable),
+  .o_pwrite_timer_0   (o_apb_timer_0_pwrite),
+  .i_pready_timer_0   (i_apb_timer_0_pready),
+  .i_pslverr_timer_0  (i_apb_timer_0_pslverr),
+  .i_prdata_timer_0   (i_apb_timer_0_prdata),
+  .o_paddr_timer_1    (o_apb_timer_1_paddr),
+  .o_pwdata_timer_1   (o_apb_timer_1_pwdata),
+  .o_pstrb_timer_1    (o_apb_timer_1_pstrb),
+  .o_psel_timer_1     (o_apb_timer_1_psel),
+  .o_penable_timer_1  (o_apb_timer_1_penable),
+  .o_pwrite_timer_1   (o_apb_timer_1_pwrite),
+  .i_pready_timer_1   (i_apb_timer_1_pready),
+  .i_pslverr_timer_1  (i_apb_timer_1_pslverr),
+  .i_prdata_timer_1   (i_apb_timer_1_prdata),
+  .o_paddr_uart_0    (o_apb_uart_0_paddr),
+  .o_pwdata_uart_0   (o_apb_uart_0_pwdata),
+  .o_pstrb_uart_0    (o_apb_uart_0_pstrb),
+  .o_psel_uart_0     (o_apb_uart_0_psel),
+  .o_penable_uart_0  (o_apb_uart_0_penable),
+  .o_pwrite_uart_0   (o_apb_uart_0_pwrite),
+  .i_pready_uart_0   (i_apb_uart_0_pready),
+  .i_pslverr_uart_0  (i_apb_uart_0_pslverr),
+  .i_prdata_uart_0   (i_apb_uart_0_prdata),
+  .o_paddr_uart_1    (o_apb_uart_1_paddr),
+  .o_pwdata_uart_1   (o_apb_uart_1_pwdata),
+  .o_pstrb_uart_1    (o_apb_uart_1_pstrb),
+  .o_psel_uart_1     (o_apb_uart_1_psel),
+  .o_penable_uart_1  (o_apb_uart_1_penable),
+  .o_pwrite_uart_1   (o_apb_uart_1_pwrite),
+  .i_pready_uart_1   (i_apb_uart_1_pready),
+  .i_pslverr_uart_1  (i_apb_uart_1_pslverr),
+  .i_prdata_uart_1   (i_apb_uart_1_prdata),
+  .o_paddr_spi    (o_apb_spi_paddr),
+  .o_pwdata_spi   (o_apb_spi_pwdata),
+  .o_pstrb_spi    (o_apb_spi_pstrb),
+  .o_psel_spi     (o_apb_spi_psel),
+  .o_penable_spi  (o_apb_spi_penable),
+  .o_pwrite_spi   (o_apb_spi_pwrite),
+  .i_pready_spi   (i_apb_spi_pready),
+  .i_pslverr_spi  (i_apb_spi_pslverr),
+  .i_prdata_spi   (i_apb_spi_prdata),
+  .o_paddr_i2c    (o_apb_i2c_paddr),
+  .o_pwdata_i2c   (o_apb_i2c_pwdata),
+  .o_pstrb_i2c    (o_apb_i2c_pstrb),
+  .o_psel_i2c     (o_apb_i2c_psel),
+  .o_penable_i2c  (o_apb_i2c_penable),
+  .o_pwrite_i2c   (o_apb_i2c_pwrite),
+  .i_pready_i2c   (i_apb_i2c_pready),
+  .i_pslverr_i2c  (i_apb_i2c_pslverr),
+  .i_prdata_i2c   (i_apb_i2c_prdata),
+  .o_paddr_pwm    (o_apb_pwm_paddr),
+  .o_pwdata_pwm   (o_apb_pwm_pwdata),
+  .o_pstrb_pwm    (o_apb_pwm_pstrb),
+  .o_psel_pwm     (o_apb_pwm_psel),
+  .o_penable_pwm  (o_apb_pwm_penable),
+  .o_pwrite_pwm   (o_apb_pwm_pwrite),
+  .i_pready_pwm   (i_apb_pwm_pready),
+  .i_pslverr_pwm  (i_apb_pwm_pslverr),
+  .i_prdata_pwm   (i_apb_pwm_prdata),
+  .o_paddr_dma_cfg    (o_apb_dma_cfg_paddr),
+  .o_pwdata_dma_cfg   (o_apb_dma_cfg_pwdata),
+  .o_pstrb_dma_cfg    (o_apb_dma_cfg_pstrb),
+  .o_psel_dma_cfg     (o_apb_dma_cfg_psel),
+  .o_penable_dma_cfg  (o_apb_dma_cfg_penable),
+  .o_pwrite_dma_cfg   (o_apb_dma_cfg_pwrite),
+  .i_pready_dma_cfg   (i_apb_dma_cfg_pready),
+  .i_pslverr_dma_cfg  (i_apb_dma_cfg_pslverr),
+  .i_prdata_dma_cfg   (i_apb_dma_cfg_prdata)
+);
 
 // ==================================================================
 // Boundary normalization: pack/unpack the flattened per-channel AXI4
