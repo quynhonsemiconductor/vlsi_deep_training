@@ -44,18 +44,18 @@ hazard even if the boundary is placed one stage later or earlier than
 assumed here -- but the exact placement should still be confirmed with the
 bus/SCRC owner rather than treated as settled by this PR alone.
 
-## Scope: S_BUS and AXI2APB now, P_BUS later
+## Scope: S_BUS and AXI2APB first, P_BUS's router as a follow-on
 
 `design/bus` covers three things by its own README: "S_BUS crossbar, P_BUS
-router, AXI2APB". This PR delivers the first and third. P_BUS's own router
-is generator-driven RTL from a completely different tool
-(`nguyenquanicd/APB-BUS-Generator`, an Excel-config-in RTL-out generator) with
-its own separate config/regenerate workflow, unlike S_BUS's hand-written
-crossbar instantiation -- different enough in provenance and process that
-finishing S_BUS/AXI2APB to a fully verified state first, rather than rushing
-both halves through in one pass, was judged the safer order. The block's own
-README and this PR's description both say so plainly rather than silently
-shipping a half-connected bus.
+router, AXI2APB". This PR's first commits delivered only the first and third:
+P_BUS's own router is generator-driven RTL, with its own separate
+config/regenerate workflow, unlike S_BUS's hand-written crossbar
+instantiation -- different enough in provenance and process that finishing
+S_BUS/AXI2APB to a fully verified state first, rather than rushing both
+halves through in one pass, was judged the safer order. P_BUS's router was
+added in the same PR once S_BUS/AXI2APB were verified clean -- see "P_BUS
+router: decoder only, not APB-BUS-Generator" below for which tool actually
+produced it, which is not the tool this section originally named.
 
 ## Reference material found, and why it was not used as-is
 
@@ -202,9 +202,46 @@ fourteen-way fan-out, a separate step (MAS section 9). Setting `NoApbSlaves`
 to 14 here and skipping P_BUS's own router entirely was considered and
 rejected: it would duplicate the peripheral address decode P_BUS's generator
 already owns and is the authoritative source for (driven from
-`QSOC_PBUS_Config.xlsx`, not retyped here), and would leave two places
-disagreeing about the peripheral map exactly the way `util/qsoc_contract.yml`
-exists to prevent for every other shared number in this project.
+`util/gen/p_bus_apb_dec/PBUS_APB_DEC.xlsx`, not retyped here), and would leave
+two places disagreeing about the peripheral map exactly the way
+`util/qsoc_contract.yml` exists to prevent for every other shared number in
+this project.
+
+## P_BUS router: decoder only, not APB-BUS-Generator
+
+The scope note above named `nguyenquanicd/APB-BUS-Generator` as P_BUS's
+future router generator. Building it revealed a better fit:
+`APB-BUS-Generator` produces a *genuinely multi-master* router -- a decoder
+per master plus a per-slave round-robin arbiter -- because it is shared with
+SCRC's own internal 2-master bus, which really does need arbitration
+(`vendor/manifest.yml`). P_BUS has exactly one master today (`AXI_M3`'s single
+APB4 port, via `NoApbSlaves = 1` above): the arbitration `APB-BUS-Generator`
+exists for is dead weight here, and worse, its top/leaf module names are
+hard-coded, so a second instance for P_BUS would collide with SCRC's own under
+Naming Rule 2.1 -- the exact open item `QNSC_SCRC_MAS` section 11 already
+flags for SCRC's single existing instance, just moved to a second occurrence.
+
+Switched to `nguyenquanicd/APB-DEC-Generator` instead: same Excel-in,
+RTL-out shape, but single-master decode only, and its module name is a free
+workbook field rather than hard-coded, so the output is named
+`m_qnsc_p_bus_dec` -- compliant with Naming Rule 2.1 directly (`m_qnsc_<function>`),
+needing no `// naming-check: ignore` exception, and collision-free with
+whatever SCRC eventually generates from `APB-BUS-Generator`.
+
+Accepted limitation: this generator has no PPROT port at all, master or
+slave side. `m_qnsc_wrap_bus`'s own `w_apb_req[0].pprot` (from
+`axi_lite_to_apb`) is therefore dropped, unconnected, at the boundary to
+`m_qnsc_p_bus_dec`. No peripheral MAS reviewed so far specifies
+PPROT-dependent behaviour, so this is recorded as an accepted limitation of
+the chosen tool, not silently patched around by hand-adding a port the
+generator doesn't produce.
+
+RTL and its spreadsheet are committed together in
+`util/gen/p_bus_apb_dec/` (`PBUS_APB_DEC.xlsx` regenerates
+`m_qnsc_p_bus_dec.sv`/`.json`), the same convention `vendor/manifest.yml`
+already establishes for `APB-BUS-Generator`'s and `APB-CSR-Generator`'s own
+outputs -- committing only one of the two would lose either reproducibility
+or the source of truth.
 
 ## A new shared contract value: the AXI2APB window
 
