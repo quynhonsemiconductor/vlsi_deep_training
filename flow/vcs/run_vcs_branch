@@ -20,9 +20,10 @@ dir="${QSOC_SCRATCH:-${TMPDIR:-/tmp}}/qsoc_vcs_${USER:-me}/$block"
 rm -rf "$dir"
 git clone -q --depth 1 --branch "$branch" "$url" "$dir"
 rc=0
-(cd "$dir" && bash "$here/flow/vcs/run_vcs" "$block") || rc=$?
+(cd "$dir" && QSOC_VCS_BRANCH=1 bash "$here/flow/vcs/run_vcs" "$block") || rc=$?
 mkdir -p "$here/build/vcs/$block"
 cp "$dir/build/vcs/$block/summary.txt" "$here/build/vcs/$block/" 2>/dev/null || true
 cp "$dir/build/vcs/$block/comp.log" "$here/build/vcs/$block/" 2>/dev/null || true
-echo "Schematic, on this node: cd $dir/build/vcs/$block && verdi -dbdir simv.daidir &"
+[ "$rc" -eq 0 ] && echo "Schematic, on this node: cd $dir/build/vcs/$block && verdi -dbdir simv.daidir &"
+echo "PR comment, from your machine: make vcs-post BLOCK=$block PR=<number>"
 exit $rc

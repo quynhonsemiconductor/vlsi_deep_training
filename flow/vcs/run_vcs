@@ -67,4 +67,4 @@ nerr=$(grep -cE '^Error-' "$log" || true)
   fi
 } | tee "$out/summary.txt"
 [ "$rc" -eq 0 ] && [ "$nerr" -eq 0 ] || exit 1
-echo "Schematic: make verdi BLOCK=$block. PR comment, from your machine: make vcs-post BLOCK=$block PR=<number>"
+[ -n "${QSOC_VCS_BRANCH:-}" ] || echo "Schematic: make verdi BLOCK=$block. PR comment, from your machine: make vcs-post BLOCK=$block PR=<number>"
