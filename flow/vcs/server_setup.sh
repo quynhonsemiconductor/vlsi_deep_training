@@ -12,7 +12,9 @@
 set -euo pipefail
 server=${QSOC_SERVER:?set QSOC_SERVER to the ssh alias of the training server}
 remote=${QSOC_SERVER_REMOTE:-server}
-name=$(git config user.name); email=$(git config user.email)
+name=$(git config user.name || true); email=$(git config user.email || true)
+[ -n "$name" ] && [ -n "$email" ] || { echo "set git user.name and user.email first (git config --global ...)"; exit 1; }
+command -v ssh >/dev/null || { echo "ssh not found: on Windows, run this in WSL (README, Getting started)"; exit 1; }
 
 echo "== server: bare repository and working copy"
 ssh "$server" bash -s -- "$name" "$email" <<'REMOTE'

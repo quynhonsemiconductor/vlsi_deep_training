@@ -96,6 +96,12 @@ your machine. Logging in, reaching a compute node, loading the tools and creatin
 that copy are in the **server guide**, shared privately by the lead (it names the
 vendor's machines, so it is not in this public repository).
 
+Your machine needs `bash`, `git`, `ssh` and `make`, plus `gh` for step 5 (or paste
+the summary by hand). macOS and Linux have them; on **Windows, use WSL2** as for the
+rest of this repository: PowerShell has no `bash`, and Windows' own OpenSSH cannot
+share one login between commands (`ControlMaster`), so it asks for the password
+every time. The server side is the same for everyone.
+
 Once, from your machine, with your own server account: `QSOC_SERVER=<ssh alias>
 make server-setup`. It creates `~/qsoc.git` and `~/vlsi_deep_training` in your server
 home and the remote `server` here, with the same names for everyone.
