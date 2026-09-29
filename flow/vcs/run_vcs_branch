@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Compile a branch with VCS in a fresh clone on the compute node's local disk.
+#
+#   make vcs-branch BLOCK=<block> BRANCH=<branch>
+#
+# Run it from your repository copy on the server. It clones BRANCH from that copy's
+# origin into a scratch directory (QSOC_SCRATCH, default ${TMPDIR:-/tmp}), compiles
+# there with this checkout's run_vcs, and copies summary.txt and comp.log back to
+# build/vcs/<block>/, where make vcs-post finds them. Checking out branches in a home
+# directory on a network file system can fail with "cannot create directory ... Is a
+# directory"; a local clone avoids it and leaves your copy untouched.
+set -euo pipefail
+block=${1:?usage: run_vcs_branch <block> <branch>}
+branch=${2:?usage: run_vcs_branch <block> <branch>}
+here=$(git rev-parse --show-toplevel)
+url=$(git -C "$here" remote get-url origin)
+case "$url" in /*) url="file://$url";; esac
+dir="${QSOC_SCRATCH:-${TMPDIR:-/tmp}}/qsoc_vcs_${USER:-me}/$block"
+
+rm -rf "$dir"
+git clone -q --depth 1 --branch "$branch" "$url" "$dir"
+rc=0
+(cd "$dir" && QSOC_VCS_BRANCH=1 bash "$here/flow/vcs/run_vcs" "$block") || rc=$?
+mkdir -p "$here/build/vcs/$block"
+cp "$dir/build/vcs/$block/summary.txt" "$here/build/vcs/$block/" 2>/dev/null || true
+cp "$dir/build/vcs/$block/comp.log" "$here/build/vcs/$block/" 2>/dev/null || true
+[ "$rc" -eq 0 ] && echo "Schematic, on this node: cd $dir/build/vcs/$block && verdi -dbdir simv.daidir &"
+echo "PR comment, from your machine: make vcs-post BLOCK=$block PR=<number>"
+exit $rc
