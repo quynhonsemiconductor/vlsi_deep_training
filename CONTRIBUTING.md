@@ -84,8 +84,8 @@ machine is a green CI. How a wrapper is written with emacs is in
   and rebase merges ([`POLICY.md`](.github/POLICY.md)), so a merge commit on the
   branch breaks a rebase merge
 - A **wrapper** PR also states that it compiles with VCS on the training server: run
-  `make vcs BLOCK=<block>` there and paste the last lines of
-  `build/vcs/<block>/comp.log` (no `Error-`) into the PR. CI cannot run VCS: it is
+  `make vcs BLOCK=<block>` there and paste the summary it prints (`Error-: 0`, the
+  `Lint-` count on our files) into the PR. CI cannot run VCS: it is
   licensed and exists only on the server
 - `main` is protected: no direct pushes, and a code-owner review is required
 - These checks must pass (`make check` runs all but the last three locally):

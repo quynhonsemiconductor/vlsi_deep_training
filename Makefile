@@ -108,7 +108,7 @@ vcs:
 verdi:
 	@test -n "$(BLOCK)" || { echo "usage: make verdi BLOCK=<block>"; exit 1; }
 	@test -d build/vcs/$(BLOCK)/simv.daidir || { echo "run make vcs BLOCK=$(BLOCK) first"; exit 1; }
-	verdi -dbdir build/vcs/$(BLOCK)/simv.daidir &
+	cd build/vcs/$(BLOCK) && verdi -dbdir simv.daidir &   # Verdi writes verdiLog/ and novas.* in its working directory
 
 sim:
 	bash flow/sim/run_sim.sh $(BLOCK) $(TEST)

@@ -14,3 +14,13 @@ doc/present/
 !doc/build/
 doc/build/template/QNSC_Reference_NoAutoNum.docx
 __pycache__/
+
+# EDA tool droppings, if a tool is ever run from the repository root
+verdiLog/
+novas*.rc
+novas*.conf
+novas_dump.log
+ucli.key
+*.fsdb
+*.vpd
+DVEfiles/
