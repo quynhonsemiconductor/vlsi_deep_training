@@ -90,29 +90,44 @@ make naming BLOCK=<block>
 ### On the training server: compile with VCS, look at the schematic
 
 Everything above runs on your own machine. VCS and Verdi are licensed and run only
-on a compute node of the training server. The server cannot reach GitHub: you push
-your branch from your machine to a copy of the repository in your server home, and
-edit only on your machine. How to log in, reach a compute node, load the tools and
-set up that copy is in the **server guide**, which the lead shares privately: it
-names the vendor's machines, so it is not kept in this public repository.
+on a compute node of the training server, which cannot reach GitHub. So code goes
+one way, **your machine → your repository copy on the server**, and you edit only on
+your machine. Logging in, reaching a compute node, loading the tools and creating
+that copy are in the **server guide**, shared privately by the lead (it names the
+vendor's machines, so it is not in this public repository).
 
-On the compute node, in your server copy:
+Your machine needs `bash`, `git`, `ssh` and `make`, plus `gh` for step 5 (or paste
+the summary by hand). macOS and Linux have them; on **Windows, use WSL2** as for the
+rest of this repository: PowerShell has no `bash`, and Windows' own OpenSSH cannot
+share one login between commands (`ControlMaster`), so it asks for the password
+every time. The server side is the same for everyone.
 
-```bash
-git pull && git checkout <your branch>
-make vcs BLOCK=<block>       # compile; prints the summary to paste into the PR
-make verdi BLOCK=<block>     # Verdi on build/vcs/<block>/simv.daidir: nSchema shows the wrapper
-```
+Once, from your machine, with your own server account: `QSOC_SERVER=<ssh alias>
+make server-setup`. It creates `~/qsoc.git` and `~/vlsi_deep_training` in your server
+home and the remote `server` here, with the same names for everyone.
 
-`make vcs-branch BLOCK=<block> BRANCH=<branch>` does the same for any branch, in a
-fresh clone on the node's local disk, without checking it out in your copy; use it
-for reviews, or when a checkout on the server's network home fails.
+For every wrapper PR, and again after every new commit on it:
 
-`make vcs` fails on any `Error-`, and on a tool option (such as `--top-module`) in
-the filelist. It counts `Lint-` warnings on `design/` (ours, to
-read and fix or waive) separately from `vendor/` (upstream, never edited). In the schematic every wrapper port reaches one IP port or a tie-off,
-as the MAS interface and tie-off tables say. Output stays in `build/`, which Git
-ignores; do not commit `simv`, `csrc` or logs.
+| # | Where | Command |
+|---|---|---|
+| 1 | your machine | `git push server <branch>` |
+| 2 | compute node, in your server copy | `git pull` (updates `flow/`, the scripts) |
+| 3 | compute node | `make vcs-branch BLOCK=<block> BRANCH=<branch>` |
+| 4 | compute node, in the desktop session | open the schematic with the `verdi` line step 3 prints |
+| 5 | your machine | `QSOC_SERVER=<ssh alias> make vcs-post BLOCK=<block> PR=<number>` |
+
+- Step 3 clones the branch to the node's local disk and compiles it there, so your
+  copy stays on `main` and a network-home checkout never gets in the way.
+  `make vcs BLOCK=<block>` compiles whatever your copy has checked out.
+- It fails on any `Error-`, and on a tool option (such as `--top-module`) in the
+  filelist. It counts `Lint-` on our files apart from `vendor/` (upstream, never
+  edited): read ours, and fix or waive each.
+- In the schematic every wrapper port reaches one IP port or a tie-off, as the MAS
+  interface and tie-off tables say.
+- Step 5 refuses a summary of another commit than the PR head, and updates its own
+  earlier comment instead of adding one.
+- Nothing from the server is committed: `build/` is ignored, and `simv`, `csrc`, logs
+  and anything under the vendor's tool or library paths stay there.
 
 ## 5. Pull request
 
