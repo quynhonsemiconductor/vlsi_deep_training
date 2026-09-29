@@ -171,7 +171,7 @@ handler) or the `mie` bit is clear, or in Debug Mode, raises no trap.
 
 | Source | Shape | Cleared by | A missed pulse |
 |---|---|---|---|
-| DMA | level | W1C `DMA_ISR` | -- |
+| DMA | level, idle | nothing: the line is 1 while the DMA is idle; the handler checks `DONE_ID` (`QNSC_DMA_MAS` 7.4) | -- |
 | SPI device, SPI host | level | W1C `INTR_STATE` | -- |
 | I2C | level | `IACK`, bit 0 of `CMD` | -- |
 | UART0, UART1 | level | the 16550 register read that `IIR` names | -- |
@@ -292,7 +292,7 @@ Eleven checks, none needing a bus model:
 | Item | Reviewer | Response |
 |---|---|---|
 | GPIO: one line for the three instances, or three lines? | Day005, 2026-09-18 | One line. Which pin fired is in the instance's `INTSTATUS` (7.4) |
-| Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by W1C `DMA_ISR` (7.4) |
+| Is the DMA interrupt a pulse or a level? | DMA owner | Level: 1 while the DMA is idle, `QNSC_DMA_MAS` 7.4 |
 | Does this block need to latch pending? | -- | No. Every level source holds its line; a missed pulse is recorded or repeats (7.4) |
 | Is the non-maskable interrupt in the totals and the core-input table? | Teacher, 2026-09-23 | Yes: it is counted in the 26 (7.2) and listed in section 10 |
 | What happens to a line whose peripheral is clock-gated? | -- | It stays asserted (7.5). Firmware clears the source before gating it; `SCRC` needs no change (11) |
