@@ -42,6 +42,12 @@ if [ ! -d "$w/.git" ]; then
 fi
 git -C "$w" fetch -q origin
 git -C "$w" checkout -q main 2>/dev/null || git -C "$w" checkout -q -B main origin/main
+# bring main up to date; never touch local work
+if git -C "$w" diff --quiet && git -C "$w" diff --cached --quiet; then
+  git -C "$w" merge -q --ff-only origin/main 2>/dev/null || echo "note: ~/vlsi_deep_training main has local commits; left as is"
+else
+  echo "note: ~/vlsi_deep_training has uncommitted changes; main not updated"
+fi
 git -C "$w" config user.name "$1"; git -C "$w" config user.email "$2"
 echo "~/vlsi_deep_training ready at $(git -C "$w" log -1 --format=%h)"
 REMOTE
