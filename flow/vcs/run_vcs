@@ -30,19 +30,25 @@ vcs -sverilog +vcs+lic+wait \
     -Mdir="$out/csrc" -o "$out/simv" \
     -l "$out/comp.log" > "$out/comp.out" 2>&1 || rc=$?
 
-# Summary, the lines a wrapper PR pastes (CONTRIBUTING.md 5). +lint=all reports
-# upstream IP as well, so lint is grouped by origin: only design/ files are ours.
+# Summary, the lines a wrapper PR carries (CONTRIBUTING.md 5): printed, and kept in
+# $out/summary.txt for flow/vcs/post_summary.sh. +lint=all reports upstream IP as
+# well, so lint is grouped by origin: only design/ files are ours.
 log="$out/comp.log"
 ver=$(grep -m1 -oE 'Version [^ ]+' "$log" | cut -d' ' -f2 || true)
-echo "VCS ${ver:-?} | block $block | top $top | commit $(git rev-parse --short HEAD 2>/dev/null || echo ?)"
-echo "Error-: $(grep -cE '^Error-' "$log" || true)"
-# each message is "Lint-[TAG] text" followed by "path, line"
-awk '/^Lint-\[/ { tag=$1; getline f; sub(/, [0-9]+$/, "", f)
-                   org = (f ~ /(^|\/)vendor\//) ? "vendor" : "ours"
-                   n[org]++; k[org" "tag" "f]++ }
-     END { printf "Lint-: %d on our files, %d on vendor/ (upstream, not edited)\n", n["ours"]+0, n["vendor"]+0
-           for (x in k) if (x ~ /^ours /) printf "  %3d  %s\n", k[x], substr(x, 6) }' "$log"
-grep -q 'Verdi KDB elaboration done' "$log" && echo "Verdi KDB: generated (make verdi BLOCK=$block)"
-if [ "$rc" -ne 0 ] || grep -qE '^Error-' "$log"; then
-  echo "FAIL: first errors (full log: $log)"; grep -A4 -E '^Error-' "$log" | sed -n 1,40p; exit 1
-fi
+nerr=$(grep -cE '^Error-' "$log" || true)
+{
+  echo "VCS ${ver:-?} | block $block | top $top | commit $(git rev-parse --short HEAD 2>/dev/null || echo ?)"
+  echo "Error-: $nerr"
+  # each message is "Lint-[TAG] text" followed by "path, line"
+  awk '/^Lint-\[/ { tag=$1; getline f; sub(/, [0-9]+$/, "", f)
+                     org = (f ~ /(^|\/)vendor\//) ? "vendor" : "ours"
+                     n[org]++; k[org" "tag" "f]++ }
+       END { printf "Lint-: %d on our files, %d on vendor/ (upstream, not edited)\n", n["ours"]+0, n["vendor"]+0
+             for (x in k) if (x ~ /^ours /) printf "  %3d  %s\n", k[x], substr(x, 6) }' "$log"
+  grep -q 'Verdi KDB elaboration done' "$log" && echo "Verdi KDB: generated"
+  if [ "$rc" -ne 0 ] || [ "$nerr" -gt 0 ]; then
+    echo "FAIL: first errors (full log: $log)"; grep -A4 -E '^Error-' "$log" | sed -n 1,40p
+  fi
+} | tee "$out/summary.txt"
+[ "$rc" -eq 0 ] && [ "$nerr" -eq 0 ] || exit 1
+echo "Schematic: make verdi BLOCK=$block. PR comment, from your machine: make vcs-post BLOCK=$block PR=<number>"
