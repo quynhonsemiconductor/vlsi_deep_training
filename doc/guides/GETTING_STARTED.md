@@ -96,11 +96,15 @@ your machine. Logging in, reaching a compute node, loading the tools and creatin
 that copy are in the **server guide**, shared privately by the lead (it names the
 vendor's machines, so it is not in this public repository).
 
+Once, from your machine, with your own server account: `QSOC_SERVER=<ssh alias>
+make server-setup`. It creates `~/qsoc.git` and `~/vlsi_deep_training` in your server
+home and the remote `server` here, with the same names for everyone.
+
 For every wrapper PR, and again after every new commit on it:
 
 | # | Where | Command |
 |---|---|---|
-| 1 | your machine | `git push <server remote> <branch>` |
+| 1 | your machine | `git push server <branch>` |
 | 2 | compute node, in your server copy | `git pull` (updates `flow/`, the scripts) |
 | 3 | compute node | `make vcs-branch BLOCK=<block> BRANCH=<branch>` |
 | 4 | compute node, in the desktop session | open the schematic with the `verdi` line step 3 prints |
