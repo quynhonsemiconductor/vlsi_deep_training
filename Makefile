@@ -42,7 +42,7 @@ help:
 	@echo "make gen            regenerate a generated IP in util/gen/<ip> IP="
 	@echo "make gen-check      every generated IP matches its recipe (CI; installs the pinned tools)"
 	@echo "make wrap-check     every emacs wrapper matches its .src.sv"
-	@echo "make vcs            compile with VCS, on the server        BLOCK="
+	@echo "make vcs            compile the checked-out copy with VCS, on the server BLOCK="
 	@echo "make vcs-branch     compile a branch in a scratch clone, on the server BLOCK= BRANCH="
 	@echo "make vcs-post       post that summary on a PR, from your machine BLOCK= PR="
 	@echo "make verdi          open the VCS compile in Verdi (schematic) BLOCK="
