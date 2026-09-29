@@ -23,5 +23,21 @@ case "$head" in "$there"*) ;; *)
   echo "the server compiled $there, but PR #$pr is at ${head:0:7}: push that commit to the server, compile, then post"
   exit 1;; esac
 
-body=$(printf '**VCS compile on the training server**\n\n```\n%s\n```\n' "$summary")
-if [ -n "${DRY:-}" ]; then printf '%s\n' "$body"; else gh pr comment "$pr" --body "$body"; fi
+result=PASS
+grep -qE '^FAIL|^Error-: [1-9]' <<< "$summary" && result=FAIL
+title="**VCS compile on the training server**"
+body=$(printf '%s: %s\n\nReproduce on the server: `make vcs BLOCK=%s`\n\n```\n%s\n```\n' \
+       "$title" "$result" "$block" "$summary")
+[ -n "${DRY:-}" ] && { printf '%s\n' "$body"; exit 0; }
+
+# One summary comment per PR: update yours if it exists, so the PR shows the latest
+# compile only (GitHub keeps the edit history).
+repo_slug=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+me=$(gh api user --jq .login)
+id=$(gh api "repos/$repo_slug/issues/$pr/comments" --paginate \
+       --jq ".[] | select(.user.login == \"$me\" and (.body | startswith(\"$title\"))) | .id" | tail -1)
+if [ -n "$id" ]; then
+  gh api -X PATCH "repos/$repo_slug/issues/comments/$id" -f body="$body" --jq .html_url
+else
+  gh pr comment "$pr" --body "$body"
+fi
