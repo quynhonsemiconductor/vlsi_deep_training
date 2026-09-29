@@ -123,7 +123,9 @@ For every wrapper PR, and again after every new commit on it:
   filelist. It counts `Lint-` on our files apart from `vendor/` (upstream, never
   edited): read ours, and fix or waive each.
 - In the schematic every wrapper port reaches one IP port or a tie-off, as the MAS
-  interface and tie-off tables say.
+  interface and tie-off tables say. The same connections, from Verilator, are in the
+  **Connectivity** comment CI posts on the PR (`make connectivity BLOCK=<block>` on
+  your machine, Verilator >= 5.022): compare the two, and the MAS.
 - Step 5 refuses a summary of another commit than the PR head, and updates its own
   earlier comment instead of adding one.
 - Nothing from the server is committed: `build/` is ignored, and `simv`, `csrc`, logs

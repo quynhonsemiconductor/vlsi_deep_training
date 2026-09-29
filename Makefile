@@ -19,7 +19,7 @@ BASE  ?= origin/main
 SCOPE = $(if $(BLOCK),design/$(BLOCK))
 
 .PHONY: help check filelists lint naming hardcode module-rules contract-tags pkg pkg-check tables docs \
-        vendor-guard new-wrap wrap wrap-check gen gen-check server-setup vcs vcs-branch vcs-post verdi sim syn gca hooks doctor ide
+        vendor-guard new-wrap wrap wrap-check gen gen-check connectivity server-setup vcs vcs-branch vcs-post verdi sim syn gca hooks doctor ide
 
 help:
 	@echo "make doctor         which tools are here, and how to install the rest"
@@ -41,6 +41,7 @@ help:
 	@echo "make wrap           regenerate one emacs wrapper           BLOCK="
 	@echo "make gen            regenerate a generated IP in util/gen/<ip> IP="
 	@echo "make gen-check      every generated IP matches its recipe (CI; installs the pinned tools)"
+	@echo "make connectivity   ports, pins and tie-offs of a block top, with a diagram  BLOCK="
 	@echo "make wrap-check     every emacs wrapper matches its .src.sv"
 	@echo "make server-setup   once: your repository copy on the server  QSOC_SERVER=<ssh alias>"
 	@echo "make vcs            compile the checked-out copy with VCS, on the server BLOCK="
@@ -106,6 +107,10 @@ wrap:
 gen:
 	@test -n "$(IP)" || { echo "usage: make gen IP=<ip>"; exit 1; }
 	bash flow/gen/gen_ip.sh gen $(IP)
+
+connectivity:
+	@test -n "$(BLOCK)" || { echo "usage: make connectivity BLOCK=<block>"; exit 1; }
+	python3 flow/conn/connectivity.py $(BLOCK) --out build/conn/$(BLOCK)
 
 gen-check:
 	bash flow/gen/gen_ip.sh check

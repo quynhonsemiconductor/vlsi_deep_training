@@ -88,6 +88,17 @@ machine is a green CI. How a wrapper is written with emacs is in
   `make vcs-post` from your machine. Five steps in
   [`GETTING_STARTED.md`](doc/guides/GETTING_STARTED.md), "On the training server".
   CI cannot run VCS: it is licensed and exists only on the server
+- A wrapper PR is checked three ways, each on its own:
+
+  | Check | Who | Where it shows | Look for |
+  |---|---|---|---|
+  | **Connectivity** (Verilator, open source) | CI, automatic | a PR comment, updated on every push; `make connectivity BLOCK=<block>` locally | every row matches the MAS interface table (5) and tie-off table (10); nothing under "Allowed" that the MAS does not list |
+  | **VCS compile** | owner, on the server | the `make vcs-post` comment | `Result: PASS`, and every `Lint-` on our files read |
+  | **Verdi schematic** | owner, then reviewer, by hand | Remote Desktop on the server | the wrapper as drawn in the MAS block figure |
+
+  The first two are evidence in the PR; the third is how the owner and the reviewer
+  see the design. Connectivity is a cross-check from another tool, not a replacement:
+  VCS and Verdi are the reference
 - `main` is protected: no direct pushes, and a code-owner review is required
 - These checks must pass (`make check` runs all but the last three locally):
 
@@ -98,6 +109,7 @@ machine is a green CI. How a wrapper is written with emacs is in
 | `Filelist paths` | a path in a `.f` is absolute, or names a file that does not exist |
 | `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` |
 | `Generated IP` | a file in `util/gen/<ip>/` differs from what its `gen.sh` produces with the pinned tools |
+| `Connectivity` | a changed block's top leaves an instance input open, or drives a top output from nothing |
 | `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** |
 | `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region |
 | `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract |
