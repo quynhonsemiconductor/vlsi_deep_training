@@ -1,0 +1,15 @@
+`verilator_config
+// =============================================================================
+// Lint waivers owned by the syscsr block (QNSC_SYSCSR_MAS V3.1). Checked with
+// the Ubuntu 24.04 package 5.020, the version CI installs.
+// =============================================================================
+
+// Reserved DOMAIN_RST_STATUS bits 13 and 30:18 have no field (MAS Table 6-4);
+// the generator's per-field RESET_CAUSE outputs are not needed (Table 10-1).
+lint_off -rule UNUSEDSIGNAL    -file "*design/syscsr/rtl/m_qnsc_wrap_syscsr.sv" -match "*i_domain_rst_stat*"
+lint_off -rule PINCONNECTEMPTY -file "*design/syscsr/rtl/m_qnsc_wrap_syscsr.sv"
+
+// ---- generated RTL (util/gen/syscsr): not edited by hand, regenerated from its
+// workbook. Offset localparams the generator emits, and no newline at the end.
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/syscsr/RTL/m_qnsc_syscsr_csr.sv" -match "*"
+lint_off -rule EOFNEWLINE   -file "*util/gen/syscsr/RTL/m_qnsc_syscsr_csr.sv"

@@ -247,10 +247,11 @@ upstreams:
   license: MentorProvided-QNSC-Course
   used_by:
   - design/scrc
+  - design/syscsr
   generator: true
   notes: 'Generates SCRC CSR and SYSCSR. Module name set by the workbook. Output kept in util/gen with
     its workbook: the generated port names (i_bus_rstn, i_paddr) fail the Naming Rule, so each block wraps
-    it (m_qnsc_syscsr). A w1c field gives an APB write priority over the hardware set in the same cycle.
+    it (m_qnsc_wrap_syscsr). A w1c field gives an APB write priority over the hardware set in the same cycle.
 
     '
   files:
