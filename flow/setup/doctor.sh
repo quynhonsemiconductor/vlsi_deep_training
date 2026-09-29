@@ -21,6 +21,7 @@ tools=(
   "yosys|command -v yosys|make syn (later)|no|yosys|yosys"
   "sta|command -v sta|make gca (later)|no|build OpenSTA: github.com/parallaxsw/OpenSTA|build OpenSTA: github.com/parallaxsw/OpenSTA"
   "vcs|command -v vcs|make vcs (server only)|no|licensed, on the server|licensed, on the server"
+  "verdi|command -v verdi|make verdi (server only)|no|licensed, on the server|licensed, on the server"
 )
 
 printf '%-13s %-6s %-26s %s\n' "tool" "" "needed for" "install"

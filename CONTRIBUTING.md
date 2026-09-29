@@ -66,6 +66,7 @@ make lint BLOCK=<block>     # one check, one block, while you work
 make new-wrap BLOCK=<block> IP=<ip top .sv>   # scaffold an emacs wrapper, once
 make wrap BLOCK=<block>     # regenerate an emacs wrapper after editing its .src.sv
 make vcs BLOCK=<block>      # compile with VCS, on the server (CI uses Verilator)
+make verdi BLOCK=<block>    # open that compile's schematic in Verdi, on the server
 make help                   # the full list
 ```
 
@@ -82,6 +83,10 @@ machine is a green CI. How a wrapper is written with emacs is in
   origin/main`); do not merge `main` into it. The repository accepts only squash
   and rebase merges ([`POLICY.md`](.github/POLICY.md)), so a merge commit on the
   branch breaks a rebase merge
+- A **wrapper** PR also states that it compiles with VCS on the training server: run
+  `make vcs BLOCK=<block>` there and paste the last lines of
+  `build/vcs/<block>/comp.log` (no `Error-`) into the PR. CI cannot run VCS: it is
+  licensed and exists only on the server
 - `main` is protected: no direct pushes, and a code-owner review is required
 - These checks must pass (`make check` runs all but the last three locally):
 
@@ -159,14 +164,15 @@ who must supply it.
 
 Every IP moves through these stages; their status is kept in the teacher's
 assistant's tracker, not in this repository. QSOC is a training project, so every
-stage runs on **open-source tools**. The stage names are the tracker's; "VCS" is the
-simulation stage and runs on Verilator here. A stage that does not apply to a block
+stage runs on **open-source tools**, in CI. The one licensed step is the VCS compile
+of a wrapper on the training server (RTL integration). The stage names are the
+tracker's; "VCS" is the simulation stage and runs on Verilator here. A stage that does not apply to a block
 (for example CDC in a block with no clock) is waived in the block's README, with the
 reason.
 
 | Stage | Tool | Files, per block | Command | `done` when |
 |---|---|---|---|---|
-| **RTL integration** | Verilator (elaborate) | `design/<block>/rtl/`, `<block>.f` | `make lint BLOCK=<block>` | The wrapper follows [`design/README.md`](design/README.md), elaborates through `<block>.f`, and is instantiated in `design/top` |
+| **RTL integration** | Verilator (elaborate); VCS on the server | `design/<block>/rtl/`, `<block>.f` | `make lint BLOCK=<block>`; `make vcs BLOCK=<block>` | The wrapper follows [`design/README.md`](design/README.md), elaborates through `<block>.f` in both tools (VCS log in the PR), and is instantiated in `design/top` |
 | **SIM** ("VCS") | Verilator `--binary --timing` | `dv/<block>/tb_<block>.sv`, `dv/<block>/tests/` | `make sim BLOCK=<block>` | Every test in the MAS verification section runs **self-checking** and ends in `PASS`; a failure calls `$fatal` |
 | **LINT** | Verilator `--lint-only -Wall`, `naming_check.py`, `hardcode_check.py` | `design/<block>/waivers.vlt` | `make lint naming hardcode BLOCK=<block>` (CI) | All three are clean in CI. Every waiver line has a reason |
 | **SDC** | OpenSTA syntax | `design/<block>/constraints/<block>.sdc` | read by the SYN and GCA stages | Every clock and every input/output is constrained. Clock names follow the table in [`flow/sta/README.md`](flow/sta/README.md). CDC paths carry the constraint their MAS states |
