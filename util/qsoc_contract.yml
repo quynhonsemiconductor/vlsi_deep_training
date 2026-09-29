@@ -197,7 +197,7 @@ interrupts:
       ports: [o_int_dma]
       sources: 1
       shape: level
-      note: 1 while the DMA is idle; iDMA has no interrupt of its own -- QNSC_DMA_MAS 7.4.
+      note: 1 while the DMA is idle; iDMA has no interrupt of its own. Idle is not done -- QNSC_DMA_MAS 7.4.
     - line: 1
       peripheral: spi_device
       ports: [intr_upload_cmdfifo_not_empty_o, intr_upload_payload_not_empty_o,

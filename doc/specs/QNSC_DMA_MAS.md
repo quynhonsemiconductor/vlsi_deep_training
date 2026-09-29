@@ -1,6 +1,6 @@
 ---
 title: "DMA"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.2"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,6 +14,7 @@ research report it was based on are in
 |---|---|---|---|---|
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Ong Bao Vinh | -- | Upstream iDMA used unmodified (frontend `reg`, 32-bit, 2D, APB), per the mentor: open-source 32-bit DMA, IP not redesigned. In-house frontend, descriptor engine and peripheral channels of V2.0 removed; `APB_M13`; idle interrupt |
 | V3.1 | 2026-09-28 | Nghia VT (lead) | -- | Section 4: the libraries iDMA needs (`common_cells`, `axi`, `apb`) |
+| V3.2 | 2026-09-29 | Nghia VT (lead) | Ong Bao Vinh | From Vinh's review: `DST_STRIDE`/`SRC_STRIDE`/`REPS`/`COMPUTE_CFG` at `0xE0`--`0xEC`, `0xDC` empty (6); `NEXT_ID` = 2 and `DONE_ID` = 1 after reset; job IDs retired by the midend, not the backend (3); idle before the last write response (7.4); `LENGTH` = 0 and `REPS` = 0 (7.5); files and libraries (4, 7.6); `BufferDepth` 3; error-handler tie-off (10); tests 010--013 |
 
 # 1. Overview
 
@@ -54,11 +55,11 @@ FIFO needs one interrupt every 1.4 ms.
 | Block | Module | Source | Function |
 |---|---|---|---|
 | Frontend | `idma_reg32_2d` | upstream, generated (7.6) | APB register file; builds a 2D job; launches it on a read of `NEXT_ID` |
-| Transfer IDs | `idma_transfer_id_gen` | upstream | Issues the job ID returned by `NEXT_ID`; counts completed jobs into `DONE_ID` |
-| Midend | `idma_nd_midend` | upstream | Splits a 2D job into `REPS` 1D transfers |
+| Transfer IDs | `idma_transfer_id_gen` | upstream | Issues the job ID returned by `NEXT_ID` (first ID 2); `issue` = frontend request handshake, `retire` = midend `nd_rsp_valid`, once per job |
+| Midend | `idma_nd_midend` | upstream | Splits a 2D job into `REPS` 1D transfers; one response per job |
 | Backend | `idma_backend_rw_axi` | upstream, generated (7.6) | Executes a 1D transfer as AXI4 read and write bursts |
 | Port join | in `m_qnsc_wrap_dma` | wires | Read port AR/R and write port AW/W/B onto one AXI port, `AXI_S2` |
-| Idle | in `m_qnsc_wrap_dma` | one NOR | `o_int_dma` = no unit busy |
+| Idle | in `m_qnsc_wrap_dma` | one NOR | `o_int_dma` = neither the midend nor a backend unit busy |
 
 The block is in the `peri` clock cluster, `SCRC` `CLK_EN[10]`.
 
@@ -68,10 +69,12 @@ The block is in the `peri` clock cluster, `SCRC` `CLK_EN[10]`.
 
 | From | Module | Commit | Licence |
 |---|---|---|---|
-| `pulp-platform/iDMA` | `idma_reg.sv.tpl`, `idma_reg.rdl` (frontend), `idma_nd_midend`, `idma_transfer_id_gen`, backend templates, `idma_pkg` | `2e0b0fe5` | SHL-0.51 |
-| `pulp-platform/common_cells` | `cc_stream_fifo_optimal_wrap`, `cc_passthrough_stream_fifo`, `cc_fall_through_register`, `cc_stream_fork`, `cc_stream_join`, `cc_popcount`, `cc_rr_arb_tree`; `registers.svh` | `db427693` (v2.0.0-beta.3+3), the copy `design/bus` uses; iDMA asks for 2.0.0-beta.3 | SHL-0.51 |
-| `pulp-platform/axi` | `axi/typedef.svh` | `70b8e54f`, vendored | SHL-0.51 |
-| `pulp-platform/apb` | `apb/typedef.svh` | `6ae8bf8d`, as iDMA pins | SHL-0.51 |
+| `pulp-platform/iDMA` | `idma_pkg`, `include/idma/typedef.svh`, `guard.svh`; `idma_nd_midend` (with `idma_nd_counter`), `idma_transfer_id_gen`; backend leaves `idma_axi_read`, `idma_axi_write`, `idma_dataflow_element`, `idma_channel_coupler`, `idma_legalizer_page_splitter`; the generated files of 7.6 | `2e0b0fe5` | SHL-0.51 |
+| `pulp-platform/common_cells` | `cc_pkg`; `cc_stream_fifo_optimal_wrap` (with `cc_stream_fifo`, `cc_fifo`, `cc_spill_register_flushable`), `cc_passthrough_stream_fifo`, `cc_fall_through_register`, `cc_rr_arb_tree` (with `cc_lzc`), `cc_popcount`, `cc_stream_fork`, `cc_stream_join`; `registers.svh`, `assertions.svh` | `db427693` (v2.0.0-beta.3+3), the copy `design/bus` uses; iDMA asks for 2.0.0-beta.3 | SHL-0.51 |
+| `pulp-platform/axi` | `axi_pkg`, `axi/typedef.svh` | `70b8e54f`, vendored | SHL-0.51 |
+| `pulp-platform/apb` | `apb_pkg`, `apb/typedef.svh` | `6ae8bf8d`, as iDMA pins | SHL-0.51 |
+
+The filelist is checked by `make lint` and `make vcs` once the wrapper exists: a module a tool reports missing is added, and nothing else. `idma_error_handler` and the on-the-fly compute modules sit only in generate branches this configuration does not elaborate.
 
 Facts this specification relies on, read at that commit:
 
@@ -82,6 +85,12 @@ Facts this specification relies on, read at that commit:
   request input.
 - A read of `NEXT_ID` launches the job and returns the next transfer ID; one launch
   is held until the midend accepts it (`idma_reg.sv.tpl`, `launch_pending_q`).
+- `NEXT_ID` and `DONE_ID` are not stored: they read the ID generator, which resets
+  to 2 and 1 (`idma_transfer_id_gen.sv`).
+- The midend answers once per job (`nd_rsp_valid` = response valid AND `last`); the
+  upstream reference frontend retires IDs on it (`idma_inst64_top.sv`).
+- A write of `COMPUTE_CFG.compute_enable` = 1 reaches the legalizer and forces
+  decoupled reads and writes even with `EnableCompute` = 0 (`idma_legalizer.sv.tpl`).
 - The frontend drives `burst = INCR` for source and destination (`idma_reg.sv.tpl`).
 - `idma_rt_midend` launches on a time counter, not on a peripheral event; it is not used.
 
@@ -108,10 +117,11 @@ Facts this specification relies on, read at that commit:
 | `DataWidth`, `AddrWidth` | 32, 32 | QSOC bus widths |
 | `AxiIdWidth` | 5 | `AXI_S2` ID width assumed by `S_BUS` (`QNSC_BUS_MAS` 11) |
 | `TFLenWidth` | 32 | `LENGTH` is a 32-bit register |
-| `NumAxInFlight`, `BufferDepth` | 2, 2 | Backend template defaults |
-| `ErrorCap` | `NO_ERROR_HANDLING` | No error-handler port -- 7.5 |
+| `NumAxInFlight`, `BufferDepth` | 3, 3 | `BufferDepth` 3 is the upstream recommendation for misaligned transfers (byte copies to and from a peripheral); 2 is the minimum. Cost: 4 bytes of buffer and one FIFO slot |
+| `RAWCouplingAvail`, `MaskInvalidData` | 1, 1 | `rw_axi` defaults: `AW` waits for the first `W` data; strobes outside valid bytes are 0 |
+| `ErrorCap` | `NO_ERROR_HANDLING` | No error handler; its request port is tied off (10) -- 7.5 |
 | `HardwareLegalizer`, `RejectZeroTransfers` | 1, 1 | Bursts split at 4 KiB and to legal lengths; a zero-length job is dropped |
-| `EnableCompute` | 0 | No on-the-fly compute; `COMPUTE_CFG` has no effect |
+| `EnableCompute` | 0 | No on-the-fly compute. Firmware keeps `COMPUTE_CFG` = 0 (4) |
 
 # 6. Register map
 
@@ -124,7 +134,8 @@ Facts this specification relies on, read at that commit:
 <!-- /gen -->
 
 The frontend decodes offset bits 7:0, so the map repeats every 256 bytes in the
-window. All registers are 32-bit; an offset with no register reads 0.
+window. The register block is `0xF0` bytes. All registers are 32-bit; an offset
+with no register (`0xDC`, `0xF0`--`0xFF`) reads 0 and ignores writes.
 
 : Register map, `idma_reg32_2d`
 
@@ -133,17 +144,18 @@ window. All registers are 32-bit; an offset with no register reads 0.
 | `0x00` | `CONF` | RW | 0 | Job options, Figure 6-1 |
 | `0x04` | `STATUS` | RO | 0 | `busy`: bit 8 midend, bits 7:0 the eight backend units of `idma_busy_t`; bit 9 reads 0 |
 | `0x08`--`0x40` | `STATUS` of streams 1--15 | RO | 0 | Not present; read 0 |
-| `0x44` | `NEXT_ID` | RO, read has effect | 0 | **Read launches the job** and returns its ID |
+| `0x44` | `NEXT_ID` | RO, read has effect | 2 | **Read launches the job** and returns its ID |
 | `0x48`--`0x80` | `NEXT_ID` of streams 1--15 | RO | 0 | Not present; read 0, launch nothing |
-| `0x84` | `DONE_ID` | RO | 0 | ID of the last completed job |
+| `0x84` | `DONE_ID` | RO | 1 | ID of the last completed job |
 | `0x88`--`0xC0` | `DONE_ID` of streams 1--15 | RO | 0 | Not present |
 | `0xD0` | `DST_ADDR` | RW | 0 | Destination byte address |
 | `0xD4` | `SRC_ADDR` | RW | 0 | Source byte address |
-| `0xD8` | `LENGTH` | RW | 0 | Bytes per 1D transfer |
-| `0xDC` | `DST_STRIDE` | RW | 0 | Destination address step between repetitions |
-| `0xE0` | `SRC_STRIDE` | RW | 0 | Source address step between repetitions |
-| `0xE4` | `REPS` | RW | 0 | Number of repetitions (2D) |
-| `0xE8` | `COMPUTE_CFG` | RW | 0 | No effect (`EnableCompute` = 0) |
+| `0xD8` | `LENGTH` | RW | 0 | Bytes per 1D transfer; not 0 (7.5) |
+| `0xDC` | -- | -- | -- | No register: the 2D group is aligned to 16 bytes |
+| `0xE0` | `DST_STRIDE` | RW | 0 | Destination address step between repetitions |
+| `0xE4` | `SRC_STRIDE` | RW | 0 | Source address step between repetitions |
+| `0xE8` | `REPS` | RW | 0 | Number of repetitions (2D); not 0 when `enable_nd` = 1 (7.5) |
+| `0xEC` | `COMPUTE_CFG` | RW | 0 | Kept 0 by firmware (`EnableCompute` = 0; section 4) |
 
 ![CONF and STATUS fields](../figures/img/fig_dma_regs.png){width=6.5in}
 
@@ -171,11 +183,14 @@ window. All registers are 32-bit; an offset with no register reads 0.
   at `SRC_ADDR` + *k* x `SRC_STRIDE` and `DST_ADDR` + *k* x `DST_STRIDE`.
 - Reading `NEXT_ID` samples the registers and launches the job; the registers may be
   rewritten at once.
-- The frontend holds one launch until the midend accepts it; a second read of
-  `NEXT_ID` before that is lost. Firmware runs one job at a time: it launches the next
+- The frontend holds one launch until the midend accepts it. Firmware runs one job at a time: it launches the next
   job after `DONE_ID` has reached the previous ID.
 - `DONE_ID` is the ID of the last job completed. A job with ID *i* is complete when
   `DONE_ID` >= *i*, modulo 2^32.
+- After reset the first `NEXT_ID` read returns 2 and `DONE_ID` reads 1; each launch
+  adds 1. ID 0 is never issued. A read while a launch is still held returns that
+  launch's ID again and launches nothing: firmware does not take it as a new job.
+- A 1D job (`enable_nd` = 0) ignores `REPS`; the frontend uses 1.
 
 ## 7.2 Bus traffic
 
@@ -209,38 +224,67 @@ the peripheral.
 
 - `o_int_dma` = 1 while neither the midend nor any backend unit is busy (`STATUS` =
   0). It is a level, 1 out of reset.
+- **Idle is not done.** The line is 1 while a job is unfinished in two windows: about
+  one cycle after the `NEXT_ID` read, before the midend takes the launch; and from the
+  last `W` beat until the last `B` response returns, since no busy flag waits for `B`
+  (`w_dp_busy` = request pending OR last beat; RTL reading, `DMA_010` confirms it).
 - Firmware enables `mie` bit 16 after launching, and the handler compares `DONE_ID`
   with the launched ID: equal or later, the job is done and the handler clears
-  `mie[16]`; earlier, the line was sampled before the job became busy and the handler
-  returns.
+  `mie[16]`; earlier, it returns. In the second window the handler may run several
+  times in a row until `DONE_ID` advances; this is expected.
 - Line 0 is the highest-priority fast line (`QNSC_Interrupt_Map_MAS` 7.2).
 
 ## 7.5 Errors
 
-- `LENGTH` = 0 is not a job: firmware does not launch one.
+- **`LENGTH` = 0 is not launched.** The backend makes no access but answers each 1D
+  transfer with an error response marked last. A 1D job then advances `DONE_ID` once;
+  a 2D job advances it `REPS` times, and job IDs no longer match.
+- **`REPS` = 0 with `enable_nd` = 1 is not launched.** The midend makes no transfer and
+  answers with an error; `DONE_ID` advances as for a completed job.
 - With `ErrorCap` = `NO_ERROR_HANDLING`, an AXI error response on `AXI_S2` (decode
   error, `SLVERR` from the ROM or a blocked peripheral) is not reported: the job
-  completes and `DONE_ID` advances.
+  completes and `DONE_ID` advances. The data of the failed beat is written, undefined.
+- No error response reaches `STATUS` or the interrupt: the frontend has no error field.
 
 ## 7.6 Generated files
 
-The frontend and the backend are generated once, at the pinned commit, and committed
-with the command that made them in `util/gen/idma/`:
+The frontend, the backend and one header are generated once, at the pinned commit,
+and committed with the commands that made them in `util/gen/idma/`. From the iDMA
+root:
 
-- `idma_reg32_2d_reg_top.sv`, `idma_reg32_2d_reg_pkg.sv`: PeakRDL `regblock` on
-  `idma_reg.rdl`, `SysAddrWidth=32 NumDims=2 Log2NumDims=1`, `--cpuif apb4-flat`.
-- `idma_reg32_2d_top.sv`: `gen_idma.py` on `idma_reg.sv.tpl`.
-- `idma_backend_rw_axi.sv`, `idma_legalizer_rw_axi.sv`, `idma_transport_layer_rw_axi.sv`:
-  `gen_idma.py` on the backend templates, `--ids rw_axi`.
+```
+python -m peakrdl regblock src/frontend/reg/idma_reg.rdl -o <out> \
+    --default-reset arst_n --cpuif apb4-flat \
+    --module-name idma_reg32_2d_reg_top --package idma_reg32_2d_reg_pkg \
+    -P SysAddrWidth=32 -P NumDims=2 -P Log2NumDims=1
+python -m peakrdl raw-header src/frontend/reg/idma_reg.rdl \
+    --template src/frontend/reg/tpl/compute.svh.tpl -o <out>/include/idma/compute.svh
+python util/gen_idma.py --entity reg_top   --tpl src/frontend/reg/tpl/idma_reg.sv.tpl --fids reg32_2d --cpuif apb4-flat > <out>/idma_reg32_2d_top.sv
+python util/gen_idma.py --entity legalizer --tpl src/backend/tpl/idma_legalizer.sv.tpl       --db src/db/*.yml --ids rw_axi > <out>/idma_legalizer_rw_axi.sv
+python util/gen_idma.py --entity transport --tpl src/backend/tpl/idma_transport_layer.sv.tpl --db src/db/*.yml --ids rw_axi > <out>/idma_transport_layer_rw_axi.sv
+python util/gen_idma.py --entity backend   --tpl src/backend/tpl/idma_backend.sv.tpl         --db src/db/*.yml --ids rw_axi > <out>/idma_backend_rw_axi.sv
+```
 
-None is edited by hand. `design/dma/rtl/` holds the wrapper only.
+: Generated files
+
+| File | Module | Note |
+|---|---|---|
+| `idma_reg32_2d_reg_pkg.sv`, `idma_reg32_2d_reg_top.sv` | `idma_reg32_2d_reg_top` | APB4, `paddr[7:0]`, no wait state, `pslverr` = 0 |
+| `idma_reg32_2d_top.sv` | `idma_reg32_2d` | Frontend |
+| `include/idma/compute.svh` | `compute_op_e` | Included by `idma_pkg`; without it nothing compiles |
+| `idma_legalizer_rw_axi.sv`, `idma_transport_layer_rw_axi.sv`, `idma_backend_rw_axi.sv` | backend | |
+
+`gen_idma.py` is run through `python`: its shebang is wrong. `reg32_2d` is not in the
+`idma.mk` default frontend list; that flow needs `IDMA_ADD_FE_IDS=reg32_2d`. None is
+edited by hand. `design/dma/rtl/` holds the wrapper only.
 
 ## 7.7 Clock and reset
 
 - Clock `o_clk_dma`, gateable by `CLK_EN[10]`; reset `o_rst_n_dma`, released with the
   other domains (`QNSC_SCRC_MAS` 7.5).
 - The `SCRC` APB guard covers `APB_M13` only. Before gating the DMA, firmware waits
-  until `STATUS` = 0, so no burst is cut on `S_BUS` (`QNSC_SCRC_MAS` 7.10).
+  until `DONE_ID` reaches the last launched ID; `STATUS` = 0 is not enough, since the
+  last `B` response may still be on `S_BUS` (7.4).
 
 # 8. Instances
 
@@ -264,8 +308,13 @@ One `m_qnsc_wrap_dma` in `design/top`.
 
 | Port | Tied to | Why |
 |---|---|---|
-| Frontend `midend_busy_i` | midend `busy_o` | Reported in `STATUS[8]` |
-| Backend error-handler request | none (`NO_ERROR_HANDLING` has no port) | 7.5 |
+| Frontend `busy_i`, `midend_busy_i` | backend `busy_o`, midend `busy_o` | `STATUS[7:0]`, `STATUS[8]`, and the idle NOR |
+| Frontend `stream_idx_o` | open | One stream |
+| ID generator `retire_i` | midend `nd_rsp_valid_o` | Once per job (3) |
+| Midend `nd_rsp_ready_i` | 1 | Responses always taken |
+| Midend `nd_rsp_o` | open | No error path (7.5) |
+| Backend `idma_eh_req_i`, `eh_req_valid_i` | 0 | `NO_ERROR_HANDLING`; the ports exist |
+| Backend `eh_req_ready_o` | open | Always 0 |
 | AXI `user` on every channel | 0 | Not used on `S_BUS` |
 | AXI `ar_prot`, `aw_prot` | as driven by the backend | Not checked by any QSOC slave |
 
@@ -290,9 +339,10 @@ One `m_qnsc_wrap_dma` in `design/top`.
 
 Open items, DMA owner:
 
-- Generate the files of 7.6 and commit them with the commands.
+- Generate the files of 7.6, `compute.svh` included, and commit them with the commands.
 - Add the `cc_*` modules of section 4 to the `common_cells` copy, and vendor `apb`.
-- Run the upstream `rw_axi` backend jobs and a wrapper test in simulation.
+- Run the upstream `rw_axi` backend jobs and a wrapper test in simulation; confirm the
+  idle window of 7.4 (`DMA_010`) and the waveform of 7.2.
 
 Accepted limits:
 
@@ -302,18 +352,27 @@ Accepted limits:
 
 # 12. Verification
 
-1. `DMA_001` Register reset values, access and the 256-byte alias of section 6.
+1. `DMA_001` Reset values, access and the 256-byte alias of section 6: `DONE_ID` = 1
+   read first, `0xDC` and `0xF0`--`0xFF` read 0, `NEXT_ID` = 2 read last (the read
+   launches a job; program a valid one first).
 2. `DMA_002` A 1D job copies `LENGTH` bytes for unaligned addresses and lengths 1, 3,
    4, 5, 4096 and across a 4 KiB boundary.
 3. `DMA_003` A 2D job with `DST_STRIDE` = 0 writes one address `REPS` times, in order.
 4. `DMA_004` Two jobs, each launched after `DONE_ID` reached the previous ID, complete
    in order and `DONE_ID` reaches each ID.
-5. `DMA_005` A read of `NEXT_ID` while a launch is still held changes nothing (documents
-   the limit of 7.1).
+5. `DMA_005` A read of `NEXT_ID` while a launch is still held launches nothing and
+   returns the held job's ID; one job runs.
 6. `DMA_006` `o_int_dma` is 1 exactly while `STATUS` = 0.
 7. `DMA_007` A job to `UART0` at `0x8002_0000` through `S_BUS` and `P_BUS` (SoC test).
 8. `DMA_008` Ibex and the DMA both reach `ISRAM` during a job; both complete (SoC test).
 9. `DMA_009` The generated files match a regeneration from the pinned commit (CI).
+10. `DMA_010` `o_int_dma` may rise after the last `W` beat and before `BVALID`; the
+    handler of 7.4 never reports a job done early.
+11. `DMA_011` Testbench assertions: no launch with `LENGTH` = 0, none with `REPS` = 0 and
+    `enable_nd` = 1; the `DONE_ID` behaviour of 7.5 when violated.
+12. `DMA_012` A 2D job with `REPS` > 1 advances `DONE_ID` exactly once.
+13. `DMA_013` Distinct values in `DST_STRIDE`, `SRC_STRIDE`, `REPS` at `0xE0`, `0xE4`,
+    `0xE8` give the expected burst addresses on `AXI_S2`.
 
 # Appendix A. Acronyms
 
@@ -337,3 +396,9 @@ Accepted limits:
 | Is an APB backend needed to reach the peripherals? | Vinh | No: peripherals are addresses behind `S_BUS`, 1 |
 | What is the DMA for if the CPU starts every job? | Vinh | Block copies and fast SPI without a CPU load/store per word; one interrupt per job, 2, 7.2 |
 | `APB_M14` against contract `APB_M13` | lead, V3.0 | 6 |
+| Stride and `REPS` offsets; `NEXT_ID`/`DONE_ID` reset | Vinh, V3.1 review | 6, 7.1 |
+| ID retire from the backend counts every 1D transfer | Vinh, V3.1 review | 3, 10 |
+| Idle before the last `B` response | Vinh, V3.1 review | 7.4, 7.7 |
+| Zero `LENGTH`/`REPS`; missing `compute.svh`; error-handler ports | Vinh, V3.1 review | 7.5, 7.6, 10 |
+| `APB` offset of 12 bits in a 16 KiB window | Vinh, V3.1 review | contract convention for every APB block (bus owner); the DMA decodes `paddr[7:0]` |
+| A `done_pend` flag instead of the idle level | Vinh, V3.1 review | Not in V3.x: it adds a register to the wrapper |

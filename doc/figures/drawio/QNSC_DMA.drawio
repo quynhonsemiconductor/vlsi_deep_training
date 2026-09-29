@@ -85,13 +85,19 @@
         <mxCell id="be_idle_11" value="busy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.5;exitY=1.0;entryX=0.5;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="be" target="idle">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="be_id_12" value="done" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.3;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="be" target="id">
+        <mxCell id="be_mid_12" value="1D responses" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.6;entryX=0.8;entryY=0.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="be" target="mid">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="idle_p_int_13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="idle" target="p_int">
+        <mxCell id="mid_id_13" value="done (per job)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.2;exitY=0.0;entryX=1.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="mid" target="id">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="p_clk_wrap_14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=1.0;entryY=0.1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="p_clk" target="wrap">
+        <mxCell id="mid_idle_14" value="busy" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.6;entryX=0.0;entryY=0.72;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="mid" target="idle">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="idle_p_int_15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="idle" target="p_int">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="p_clk_wrap_16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=1.0;entryY=0.1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="p_clk" target="wrap">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
       </root>
