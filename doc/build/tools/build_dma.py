@@ -44,7 +44,9 @@ blk_e = [
     E("be", "t", "join", "r", "read, write ports"),
     E("join", "l", "sbus", "r@0.24", "AXI_S2", bidir=True),
     E("be", "b", "idle", "t", "busy"),
-    E("be", "l@0.3", "id", "r", "done"),
+    E("be", "l@0.6", "mid", "t@0.8", "1D responses"),
+    E("mid", "t@0.2", "id", "r", "done (per job)"),
+    E("mid", "r@0.6", "idle", "l@0.72", "busy"),
     E("idle", "r", "p_int", "l"),
     E("p_clk", "l", "wrap", "r@0.1"),
 ]
@@ -82,14 +84,14 @@ regfig("fig_dma_regs", [
 # ---------- Timing: one job ----------
 wave("wave_dma_job", [
     ("i_clk_peri", "clk"),
-    ("APB read NEXT_ID", "bit", "0110000000000000000"),
-    ("ARVALID (AXI_S2)", "bit", "0000110000000000000"),
-    ("RVALID", "bit", "0000000001010101000"),
-    ("AWVALID", "bit", "0000000001100000000"),
-    ("WVALID", "bit", "0000000000101010100"),
-    ("BVALID", "bit", "0000000000000000110"),
-    ("busy", "bit", "0001111111111111110"),
-    ("o_int_dma", "bit", "1110000000000000001"),
-    ("DONE_ID", "bus", ["n-1", None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, "n"]),
-], steps=19, gaps=(), img_dir=IMG,
-    marks=[(1, "launch"), (4, "read burst"), (9, "write burst"), (18, "done")])
+    ("APB read NEXT_ID", "bit", "011000000000000000000"),
+    ("ARVALID (AXI_S2)", "bit", "000011000000000000000"),
+    ("RVALID", "bit", "000000000101010100000"),
+    ("AWVALID", "bit", "000000000110000000000"),
+    ("WVALID", "bit", "000000000010101010000"),
+    ("BVALID", "bit", "000000000000000000110"),
+    ("busy", "bit", "000111111111111110000"),
+    ("o_int_dma", "bit", "111000000000000001111"),
+    ("DONE_ID", "bus", ["n-1"] + [None] * 19 + ["n"]),
+], steps=21, gaps=(), img_dir=IMG,
+    marks=[(1, "launch"), (4, "read burst"), (9, "write burst"), (17, "idle, not done"), (20, "done")])

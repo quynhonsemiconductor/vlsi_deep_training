@@ -1,6 +1,6 @@
 ---
 title: "SCRC"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.2"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,6 +13,7 @@ The reasoning behind each change, the V1.0--V2.3 history and the V2.3 text are i
 |---|---|---|---|---|
 | V3.0 | 2026-09-27 | Nghia VT (lead), for Nguyen Hao Nam | -- | V2.3 moved onto the MAS template; Naming Rule ports; `APB_M0`/`APB_M1`; one SPI domain (bit 13 reserved); per-peripheral soft reset removed; WDT never gated; monochrome figures after the mentor's `VLSI_SCRC.drawio`; timing diagrams; deviations from the HAS listed |
 | V3.1 | 2026-09-28 | Nghia VT (lead), for Nguyen Hao Nam | -- | Owner decisions on the two proposals: no stretch after POR, adopted (7.3, `SCRC_RST_001`); two CSRs, rejected, the mentor's APB BUS and WFs stay. Open item on the APB BUS name narrowed to renaming the generated module |
+| V3.2 | 2026-09-29 | Nghia VT (lead) | -- | 7.10: before gating `dma`, wait for `DONE_ID`, not idle (`QNSC_DMA_MAS` V3.2) |
 
 # 1. Overview
 
@@ -407,7 +408,8 @@ What `SYSDBG` does with the hold: `QNSC_SYSDBG_MAS` 7.1.
 | Recover from a hung peripheral | `SW_RST` = 1, or let the watchdog bite | -- | restart |
 
 Before stopping `pwm`, write PWM `CMD` = STOP | RST (`QNSC_PWM_MAS` 7.7). Before
-stopping `dma`, wait until the DMA is idle.
+stopping `dma`, wait until `DONE_ID` reaches the last launched job: the DMA reports
+idle before its last write response (`QNSC_DMA_MAS` 7.4).
 
 # 8. Instances
 

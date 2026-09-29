@@ -36,6 +36,252 @@ request level. The level-sensitive request and the UART request lines of the res
 
 ---
 
+# 2. Review of V3.1 by Ong Bao Vinh, 2026-09-29
+
+Vinh checked V3.1 against the iDMA RTL, compiled `idma_reg.rdl` and ran the generators.
+Each finding was re-checked in the vendored source before V3.2:
+
+| Finding | Re-checked in | V3.2 |
+|---|---|---|
+| Stride, `REPS`, `COMPUTE_CFG` at `0xE0`--`0xEC`; `0xDC` empty; block `0xF0` | `systemrdl-compiler` 1.32.2 on the vendored `idma_reg.rdl` | Adopted, 6 |
+| `NEXT_ID` = 2, `DONE_ID` = 1 after reset | `idma_transfer_id_gen.sv` reset values | Adopted, 6, 7.1 |
+| IDs retired by the midend, once per job | `idma_nd_midend.sv` (`nd_rsp_valid` = valid AND last); upstream `idma_inst64_top.sv` | Adopted, 3, 10 |
+| Idle before the last `B` | `idma_transport_layer.sv.tpl` (`w_dp_busy`), `idma_axi_write.sv` | Adopted, 7.4, 7.7; simulation `DMA_010` |
+| `LENGTH` = 0 in 2D advances `DONE_ID` `REPS` times; `REPS` = 0 | backend zero-length response (`last` = 1), midend zero check | Adopted, 7.5 |
+| `compute.svh` must be generated | `idma_pkg.sv` includes it | Adopted, 7.6 |
+| Error-handler ports exist | backend port list | Adopted, 10 |
+| `BufferDepth` 3 | backend template: "recommended" for misaligned transfers | Adopted, 5 |
+| `COMPUTE_CFG` must stay 0 | frontend copies it; legalizer forces decoupling | Adopted, 4, 6 |
+| Add unelaborated modules to the filelist | -- | Not adopted: the tools decide when the wrapper exists, 4 |
+| 12-bit `paddr` for a 16 KiB window | -- | Contract convention for every APB block, not DMA-specific |
+| `done_pend` flag in the wrapper | -- | Not in V3.x |
+
+Figures 3-1 and 7-2 are redrawn by `build_dma.py`; the review's drawio pages are not
+used. Paths in the review below are Vinh's own working copy.
+
+---
+
+# Review as issued
+
+## Đề xuất sửa QNSC_DMA_MAS_VI (V3.1 → V3.2)
+
+> **Căn cứ:** RTL iDMA trong `chosen_repos/11_DMA_idma`; bản đồ thanh ghi biên dịch từ `src/frontend/reg/idma_reg.rdl` (systemrdl-compiler 1.32.2, `SysAddrWidth=32 NumDims=2 Log2NumDims=1`); RTL do PeakRDL-regblock 1.3.1 và `util/gen_idma.py` sinh ra (đã chạy thử toàn bộ lệnh của Mục 7.6); common_cells bản `chosen_repos/02_System_BUS_axi/deps/common_cells`.
+> **Cách dùng:** mỗi mục dưới đây ghi rõ *vị trí trong MAS*, *nội dung thay thế* (chép thẳng vào Word) và *lý do*. Hình vẽ sửa nằm ở `idma_report_claude_1_t_diagrams.drawio`, trang **16** (thay Hình 3-1) và trang **17** (thay Hình 7-2).
+> Mức ưu tiên: **[P1]** sai chức năng, phải sửa trước khi viết firmware/RTL; **[P2]** thiếu/sai thông tin tích hợp; **[P3]** làm rõ.
+
+---
+
+### 0. Dòng Revision history (thêm)
+
+| Version | Ngày | Tác giả | Reviewer | Mô tả thay đổi |
+|---|---|---|---|---|
+| V3.2 | 2026-09-29 | Nghia VT (lead) | Ong Bao Vinh | Sửa offset DST_STRIDE/SRC_STRIDE/REPS/COMPUTE_CFG (6-2); giá trị NEXT_ID/DONE_ID sau reset; nguồn retire của transfer ID (Hình 3-1); khoảng idle trước khi job hoàn tất (7.4, Hình 7-2); các trường hợp cấm LENGTH=0 / REPS=0 (7.5); danh sách file và thư viện (4, 7.6); tie-off error-handler port (10-1); bổ sung test (12). |
+
+---
+
+### 1. [P1] Bảng 6-2 – Register map `idma_reg32_2d` (thay toàn bộ bảng)
+
+**Lý do:** khối `dim` gồm 3 thanh ghi (12 B); SystemRDL căn nó theo 16 B nên **0xDC là lỗ trống**. MAS V3.1 đặt `DST_STRIDE` ở 0xDC → firmware ghi sai toàn bộ tham số 2D. Kích thước khối thanh ghi là 0xF0. `NEXT_ID`/`DONE_ID` không có thanh ghi lưu trữ: giá trị đọc được lấy trực tiếp từ `idma_transfer_id_gen` (trong `idma_reg32_2d_reg_top.sv`: `readback_data = hwif_in.next_id[i].next_id.next`), nên sau reset đọc ra 2 và 1, không phải 0.
+
+| Offset | Register | Access | Giá trị sau reset | Mô tả |
+|---|---|---|---|---|
+| 0x00 | CONF | RW | 0x0000_0000 | Các tùy chọn của job, Figure 6-1 |
+| 0x04 | STATUS | RO | 0x0000_0000 | busy: bit 8 = midend, bits 7:0 = tám backend unit của `idma_busy_t` (7 buffer, 6 r_dp, 5 w_dp, 4 r_leg, 3 w_leg, 2 eh_fsm, 1 eh_cnt, 0 raw_coupler); bit 9 đọc về 0 |
+| 0x08–0x40 | STATUS of streams 1–15 | RO | 0 | Không dùng (NumStreams = 1); đọc về 0 |
+| 0x44 | NEXT_ID | RO, read has effect | **0x0000_0002** | Read sẽ launch job và trả về ID của job đó (giá trị hiện tại của transfer-ID generator) |
+| 0x48–0x80 | NEXT_ID of streams 1–15 | RO | 0 | Không dùng; đọc về 0, không launch |
+| 0x84 | DONE_ID | RO | **0x0000_0001** | ID của job hoàn tất gần nhất |
+| 0x88–0xC0 | DONE_ID of streams 1–15 | RO | 0 | Không dùng |
+| 0xD0 | DST_ADDR | RW | 0 | Destination byte address |
+| 0xD4 | SRC_ADDR | RW | 0 | Source byte address |
+| 0xD8 | LENGTH | RW | 0 | Số byte trên mỗi 1D transfer (phải khác 0 – 7.5) |
+| **0xDC** | – | – | – | **Lỗ trống**: không có thanh ghi, đọc về 0, ghi bị bỏ qua |
+| **0xE0** | DST_STRIDE | RW | 0 | Bước nhảy destination address giữa các lần lặp |
+| **0xE4** | SRC_STRIDE | RW | 0 | Bước nhảy source address giữa các lần lặp |
+| **0xE8** | REPS | RW | 0 | Số lần lặp (2D); phải khác 0 khi `enable_nd = 1` – 7.5 |
+| **0xEC** | COMPUTE_CFG | RW | 0 | Không dùng (EnableCompute = 0). **Firmware phải giữ bằng 0** (xem 5-2) |
+| 0xF0–0xFF | – | – | – | Không có thanh ghi; đọc về 0 |
+
+Đoạn văn dưới Bảng 6-1 giữ nguyên, bổ sung: *"Kích thước register block là 0xF0 byte; offset 0xDC và 0xF0–0xFF không có thanh ghi."*
+
+**Figure 6-1:** giữ nguyên (bitfield CONF/STATUS đúng).
+
+---
+
+### 2. [P1] Hình 3-1 và Bảng 3-1 – nguồn "done" của transfer ID
+
+**Lý do:** Hình 3-1 vẽ mũi tên "done" từ `idma_backend_rw_axi` vào `idma_transfer_id_gen`. Backend trả **một response cho mỗi 1D transfer**; một job 2D gồm REPS transfer → nếu retire từ backend thì DONE_ID tăng REPS lần cho một job. Retire phải lấy từ `idma_nd_midend` (`nd_rsp_valid_o`, một lần cho mỗi job – `nd_rsp_valid = burst_rsp_valid & burst_rsp.last`).
+
+**Thay Hình 3-1** bằng trang 16 của file drawio (đã vẽ lại theo đúng kiến trúc V3.1, APB_M13). Các kết nối phải có trong hình:
+
+| Từ | Đến | Tín hiệu |
+|---|---|---|
+| `idma_reg32_2d.dma_req_o / req_valid_o` | `idma_nd_midend.nd_req_i / nd_req_valid_i` | nd job |
+| `idma_nd_midend.nd_req_ready_o` | `idma_reg32_2d.req_ready_i` | |
+| `idma_nd_midend.burst_req_o / valid_o` ↔ `burst_req_ready_i` | `idma_backend_rw_axi.idma_req_i / req_valid_i` ↔ `req_ready_o` | 1D bursts |
+| `idma_backend_rw_axi.idma_rsp_o / rsp_valid_o` ↔ `rsp_ready_i` | `idma_nd_midend.burst_rsp_i / burst_rsp_valid_i` ↔ `burst_rsp_ready_o` | 1D responses |
+| `idma_nd_midend.nd_rsp_valid_o` (với `nd_rsp_ready_i = 1`) | `idma_transfer_id_gen.retire_i` | **done** |
+| `req_valid_o & req_ready_i` của frontend | `idma_transfer_id_gen.issue_i` | launch |
+| `idma_transfer_id_gen.next_o / completed_o` | `idma_reg32_2d.next_id_i / done_id_i` | |
+| `idma_backend_rw_axi.busy_o` | `idma_reg32_2d.busy_i` và cổng NOR | busy |
+| `idma_nd_midend.busy_o` | `idma_reg32_2d.midend_busy_i` và cổng NOR | busy |
+
+**Bảng 3-1**, dòng "Transfer IDs", cột Chức năng: *"Cấp job ID được NEXT_ID trả về (ID đầu tiên sau reset = 2); `issue` = frontend `req_valid & req_ready`, `retire` = `nd_rsp_valid` của midend; DONE_ID = ID job hoàn tất gần nhất (= 1 sau reset)."*
+
+---
+
+### 3. [P1] Mục 7.1 Job – bổ sung
+
+Thêm vào cuối danh sách:
+
+* Sau reset, NEXT_ID trả về **2** cho job đầu tiên và DONE_ID đọc ra **1**; mỗi job được launch làm ID tăng 1. ID 0 không bao giờ được cấp.
+* Nếu đọc NEXT_ID khi một launch trước đó vẫn đang được giữ (midend chưa nhận), lần đọc thứ hai **không** launch job mới và trả về **cùng giá trị ID** với job đang chờ. Firmware không được dùng giá trị này làm ID job mới.
+* Job 1D: `enable_nd = 0`, frontend tự đặt REPS = 1 (giá trị trong thanh ghi REPS bị bỏ qua).
+
+---
+
+### 4. [P1] Mục 7.4 Interrupt – thay đoạn đầu
+
+**Lý do:** `o_int_dma` được tạo từ cờ busy. Theo RTL backend, sau beat W cuối của burst cuối: FIFO `w_dp_req` đã pop (`w_dp_busy = 0`), buffer rỗng, legalizer và R-AW coupler rỗi → **mọi cờ busy về 0 trong khi B response chưa về**. DONE_ID chỉ tăng sau khi B về (backend → `nd_midend` → `retire`). Vì vậy `o_int_dma = 1` sớm hơn thời điểm job hoàn tất vài chu kỳ (bằng độ trễ B qua S_BUS). Hình 7-2 của V3.1 vẽ busy cao tới lúc B về là **không đúng** (suy ra từ RTL, cần xác nhận bằng mô phỏng – DMA_010).
+
+Nội dung thay thế:
+
+* `o_int_dma = ~(|STATUS.busy)` = 1 khi midend và tám backend unit đều không busy. Đây là level signal, bằng 1 sau reset và bằng 1 mỗi khi DMA rỗi.
+* **Idle không đồng nghĩa với hoàn tất.** Có hai khoảng `o_int_dma = 1` trong khi job chưa hoàn tất: (a) khoảng 1 chu kỳ ngay sau APB read NEXT_ID, trước khi midend nhận launch; (b) khoảng từ beat W cuối cùng đến khi B response của burst cuối về và DONE_ID tăng.
+* Firmware enable `mie[16]` sau khi launch; handler so sánh DONE_ID với ID đã launch (modulo 2³²): nếu `DONE_ID ≥ ID` thì job đã hoàn tất và handler clear `mie[16]`; nếu nhỏ hơn thì handler return. Do line là level, trong khoảng (b) handler có thể được gọi lại nhiều lần liên tiếp cho đến khi DONE_ID tăng; đây là hành vi dự kiến.
+* *(Tùy chọn cho version sau, không thuộc V3.x)*: thay idle level bằng cờ `done_pend` set tại `nd_rsp_valid`, clear bằng write-1 → cần thêm một thanh ghi trong wrapper.
+
+**Thay Hình 7-2** bằng trang 17 của file drawio (busy về 0 sau WLAST, `o_int_dma` lên 1 trước BVALID, DONE_ID tăng sau B).
+
+---
+
+### 5. [P1] Mục 7.5 Errors – thay toàn bộ
+
+* **LENGTH = 0 bị cấm.** Backend (RejectZeroTransfers = 1) không phát bus access nhưng vẫn trả một response `last = 1`, `error = 1`, `err_type = BACKEND` cho mỗi 1D transfer. Với job 1D, DONE_ID tăng 1 như job bình thường. Với **job 2D**, mỗi trong REPS transfer đều trả response `last = 1`, midend coi mỗi response là kết thúc job → **DONE_ID tăng REPS lần** và thứ tự ID bị lệch. Firmware không launch LENGTH = 0.
+* **REPS = 0 với `enable_nd = 1` bị cấm.** Midend không phát transfer nào, trả response lỗi `err_type = ND_MIDEND`; DONE_ID vẫn tăng như job đã hoàn tất.
+* Với ErrorCap = NO_ERROR_HANDLING, AXI error response trên AXI_S2 (DECERR, SLVERR từ ROM hoặc peripheral) không được report: job vẫn complete và DONE_ID vẫn tăng. Dữ liệu của beat lỗi vẫn được ghi (giá trị không xác định).
+* Các response lỗi trên không được đưa lên STATUS hay interrupt (frontend không có trường lỗi).
+
+---
+
+### 6. [P2] Bảng 4-1 – Upstream IP và file được sử dụng (thay bảng)
+
+**Lý do:** V3.1 thiếu `compute.svh` (idma_pkg `include` file này – thiếu là không compile được), các file backend lá, `cc_pkg`, `axi_pkg`, `apb_pkg`, `assertions.svh`, và các module common_cells mà `cc_stream_fifo_optimal_wrap` / `cc_rr_arb_tree` dùng bên trong. Danh sách common_cells dưới đây là **bao đóng phụ thuộc** tính trên bản `02_System_BUS_axi/deps/common_cells`.
+
+| Nguồn | File (compile) | Ghi chú |
+|---|---|---|
+| pulp-platform/iDMA @2e0b0fe5 | `src/idma_pkg.sv`, `src/include/idma/typedef.svh`, `src/include/idma/guard.svh` | package + macro |
+| | `src/midend/idma_nd_midend.sv` (chứa cả `idma_nd_counter`) | |
+| | `src/frontend/idma_transfer_id_gen.sv` | |
+| | `src/backend/idma_axi_read.sv`, `idma_axi_write.sv`, `idma_dataflow_element.sv`, `idma_channel_coupler.sv`, `idma_legalizer_page_splitter.sv` | các module lá mà backend `rw_axi` instantiate (`idma_channel_coupler` vì RAWCouplingAvail = 1) |
+| | `src/backend/idma_error_handler.sv`, `idma_otf_compute.sv`, `idma_otf_transpose.sv`, `idma_otf_mxquant.sv`, `idma_otf_mxdequant.sv`, `src/idma_float_pkg.sv` | chỉ nằm trong nhánh generate không được elaborate (ErrorCap = NO, EnableCompute = 0). Khuyến nghị vẫn đưa vào filelist để tránh lỗi "unresolved module" ở một số tool; không sinh ra logic |
+| | Generated (7.6): `idma_reg32_2d_reg_pkg.sv`, `idma_reg32_2d_reg_top.sv`, `idma_reg32_2d_top.sv`, `idma_legalizer_rw_axi.sv`, `idma_transport_layer_rw_axi.sv`, `idma_backend_rw_axi.sv`, `include/idma/compute.svh` | |
+| pulp-platform/common_cells (bản design/bus dùng) | `src/cc_pkg.sv` | `cc_pkg::idx_width` (frontend), `cc_pkg::cnt_width` (channel coupler) |
+| | `src/cc_stream_fifo_optimal_wrap.sv` → `cc_stream_fifo.sv` → `cc_fifo.sv`; `cc_spill_register_flushable.sv` | FIFO của backend/coupler |
+| | `src/cc_passthrough_stream_fifo.sv` | dataflow element |
+| | `src/cc_fall_through_register.sv` | AR/AW register, coupler |
+| | `src/cc_rr_arb_tree.sv` → `cc_lzc.sv` | arbiter của frontend |
+| | `src/cc_popcount.sv` | nd_midend |
+| | `src/cc_stream_fork.sv`, `cc_stream_join.sv` → `cc_stream_join_dynamic.sv` | chỉ ở nhánh generate không dùng (no-HW-legalizer / nhiều cổng ghi); đưa vào filelist |
+| | `include/common_cells/registers.svh`, `include/common_cells/assertions.svh` | macro `FF/FFL`, `ASSERT_*` |
+| pulp-platform/axi @70b8e54f | `src/axi_pkg.sv`, `include/axi/typedef.svh` | `axi_pkg` dùng trong `idma_pkg` (burst/cache/prot/resp) |
+| pulp-platform/apb @6ae8bf8d | `src/apb_pkg.sv`, `include/apb/typedef.svh` | `apb_pkg::prot_t` trong `APB_TYPEDEF_REQ_T` |
+
+Dòng "Các thông tin mà specification này dựa vào" giữ nguyên, bổ sung: *"`gen_idma.py` có shebang sai (`/usr/env python3`), luôn gọi qua `python util/gen_idma.py`."*
+
+---
+
+### 7. [P2] Mục 7.6 Generated files – thay toàn bộ
+
+Frontend, backend và header compute được generate một lần tại pinned commit, commit cùng lệnh tạo trong `util/gen/idma/` (các lệnh dưới đây đã chạy thử, chạy tại thư mục gốc iDMA):
+
+```
+python -m peakrdl regblock src/frontend/reg/idma_reg.rdl -o <out> \
+    --default-reset arst_n --cpuif apb4-flat \
+    --module-name idma_reg32_2d_reg_top --package idma_reg32_2d_reg_pkg \
+    -P SysAddrWidth=32 -P NumDims=2 -P Log2NumDims=1
+python -m peakrdl raw-header src/frontend/reg/idma_reg.rdl \
+    --template src/frontend/reg/tpl/compute.svh.tpl -o <out>/include/idma/compute.svh
+python util/gen_idma.py --entity reg_top   --tpl src/frontend/reg/tpl/idma_reg.sv.tpl --fids reg32_2d --cpuif apb4-flat > <out>/idma_reg32_2d_top.sv
+python util/gen_idma.py --entity legalizer --tpl src/backend/tpl/idma_legalizer.sv.tpl       --db src/db/*.yml --ids rw_axi > <out>/idma_legalizer_rw_axi.sv
+python util/gen_idma.py --entity transport --tpl src/backend/tpl/idma_transport_layer.sv.tpl --db src/db/*.yml --ids rw_axi > <out>/idma_transport_layer_rw_axi.sv
+python util/gen_idma.py --entity backend   --tpl src/backend/tpl/idma_backend.sv.tpl         --db src/db/*.yml --ids rw_axi > <out>/idma_backend_rw_axi.sv
+```
+
+| File | Module | Ghi chú |
+|---|---|---|
+| `idma_reg32_2d_reg_pkg.sv` | package `idma_reg32_2d_reg_pkg` | `IDMA_REG32_2D_REG_TOP_MIN_ADDR_WIDTH = 8` |
+| `idma_reg32_2d_reg_top.sv` | `idma_reg32_2d_reg_top` | APB4 flat, `s_apb_paddr[7:0]`, 0 wait state, `pslverr` luôn 0 |
+| `idma_reg32_2d_top.sv` | `idma_reg32_2d` | frontend |
+| `include/idma/compute.svh` | enum `compute_op_e` | bắt buộc cho `idma_pkg` |
+| `idma_legalizer_rw_axi.sv` | `idma_legalizer_rw_axi` | PageSize = min(256·StrbWidth, 4096) |
+| `idma_transport_layer_rw_axi.sv` | `idma_transport_layer_rw_axi` | |
+| `idma_backend_rw_axi.sv` | `idma_backend_rw_axi` | |
+
+`reg32_2d` không nằm trong danh sách frontend mặc định của `idma.mk` (`reg32_3d reg64_2d reg64_1d`); nếu dùng luồng make phải thêm `IDMA_ADD_FE_IDS=reg32_2d`. Không file nào được chỉnh sửa thủ công. `design/dma/rtl/` chỉ chứa wrapper.
+
+---
+
+### 8. [P2] Bảng 5-2 – Configuration (bổ sung/sửa các dòng)
+
+| Parameter | Giá trị | Lý do |
+|---|---|---|
+| NumAxInFlight, BufferDepth | 2, 2 (tối thiểu) **– đề xuất 3, 3** | 2 là giá trị mặc định của template và là mức tối thiểu cho phép (assertion > 1). Code khuyến nghị BufferDepth = 3 để xử lý hiệu quả địa chỉ lệch căn (copy byte tới/từ UART); 3 cũng là mặc định của synth wrapper. Chi phí: thêm 4 B buffer và 1 slot FIFO |
+| RAWCouplingAvail | 1 (mặc định của `rw_axi`) | AW chỉ được phát khi dữ liệu W đầu tiên đã sẵn sàng; giảm chiếm tài nguyên slave ghi |
+| MaskInvalidData | 1 | WDATA/WSTRB ép 0 ngoài các byte hợp lệ |
+| CombinedShifter | 0 | Mặc định |
+| MemSysDepth | 0 | |
+| UserWidth | 1 (AXI user = 0) | |
+| EnableCompute | 0 | Frontend vẫn chép COMPUTE_CFG vào `opt.compute`: nếu firmware ghi `compute_enable = 1`, legalizer ép decouple R/W và assertion `ComputeOpUnsupported` báo lỗi khi mô phỏng. **COMPUTE_CFG phải giữ bằng 0** |
+
+---
+
+### 9. [P2] Bảng 10-1 – Tie-offs (thay bảng)
+
+**Lý do:** V3.1 ghi "NO_ERROR_HANDLING không có port" – sai; `idma_backend_rw_axi` luôn có `idma_eh_req_i`, `eh_req_valid_i`, `eh_req_ready_o` (đã kiểm tra trong file sinh).
+
+| Port | Tie tới | Lý do |
+|---|---|---|
+| Backend `idma_eh_req_i`, `eh_req_valid_i` | `'0`, `1'b0` | NO_ERROR_HANDLING; port vẫn tồn tại |
+| Backend `eh_req_ready_o` | để hở | luôn 0 |
+| Frontend `busy_i` | backend `busy_o` | STATUS[7:0] |
+| Frontend `midend_busy_i` | midend `busy_o` | STATUS[8] |
+| Frontend `stream_idx_o` | để hở | 1 stream |
+| Midend `nd_rsp_ready_i` | `1'b1` | response luôn được nhận (retire) |
+| Midend `nd_rsp_o` | để hở | không có đường báo lỗi (7.5) |
+| AXI user trên mọi channel | 0 | backend drive 0; không dùng trên S_BUS |
+| AXI ar_prot, aw_prot | theo giá trị backend drive (0) | không được QSOC slave nào kiểm tra |
+| AXI aw_atop | 0 (backend drive) | |
+
+---
+
+### 10. [P3] Bảng 5-1 / 6-1 – độ rộng địa chỉ APB
+
+`i_bus_apb_paddr` 12 bit nhưng window 16 KiB (cần 14 bit). Frontend chỉ dùng `paddr[7:0]`, nên chức năng không đổi; đề nghị thống nhất lại với contract `meta.apb_paddr_width` (hoặc ghi rõ "12 bit offset; bit 13:12 của window không được decode").
+
+---
+
+### 11. [P2] Mục 12 Verification – sửa và bổ sung
+
+* **DMA_001** (sửa): kiểm tra reset value và access của Mục 6: CONF/STATUS/địa chỉ/stride = 0, **NEXT_ID = 2, DONE_ID = 1** (đọc DONE_ID trước; đọc NEXT_ID sẽ launch), lỗ 0xDC và 0xF0–0xFF đọc về 0, alias 256 byte. Lưu ý: đọc NEXT_ID ngay sau reset sẽ **launch một job LENGTH = 0** (vi phạm 7.5, DONE_ID lên 2) – test phải đọc NEXT_ID cuối cùng hoặc lập trình một job hợp lệ trước.
+* **DMA_005** (sửa): đọc NEXT_ID khi một launch vẫn đang được giữ: không có job mới, giá trị trả về bằng ID của job đang chờ; chỉ một job được thực thi.
+* **DMA_010** (mới): kiểm tra khoảng idle trước hoàn tất: `o_int_dma` có thể lên 1 sau WLAST và trước BVALID; handler theo 7.4 không kết luận hoàn tất sai.
+* **DMA_011** (mới): kiểm tra các điều kiện cấm của 7.5 bằng assertion trong testbench (không launch LENGTH = 0; không launch REPS = 0 với `enable_nd = 1`); ghi nhận hành vi DONE_ID khi vi phạm.
+* **DMA_012** (mới): job 2D với REPS > 1: DONE_ID tăng đúng 1 lần mỗi job (kiểm tra kết nối retire từ midend – mục 2).
+* **DMA_013** (mới): các offset DST_STRIDE/SRC_STRIDE/REPS = 0xE0/0xE4/0xE8 được sample đúng vào `d_req[0]` (ghi giá trị khác nhau vào từng thanh ghi rồi kiểm tra địa chỉ burst trên AXI_S2).
+
+---
+
+### 12. [P2] Mục 11 – Open items (bổ sung)
+
+* Generate thêm `include/idma/compute.svh` (7.6).
+* Filelist theo Bảng 4-1 mới (bao gồm các module common_cells gián tiếp).
+* Xác nhận bằng mô phỏng khoảng idle trước hoàn tất (DMA_010) và cập nhật Hình 7-2 nếu khác.
+* Chốt APB_M13 @0x8003_4000 trong `QNSC_SoC.drawio.xml` (sơ đồ SoC hiện vẫn ghi DMA ở APB_M14).
+
+
+---
+
 # V2.0 as issued
 
 ## Reversion and History
