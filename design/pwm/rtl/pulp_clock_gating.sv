@@ -3,7 +3,7 @@
 // Clock gate for apb_adv_timer, which instantiates pulp_clock_gating once per
 // timer module (enable CH_EN[i], test enable dft_cg_enable_i) but does not ship
 // it. Mapped onto OpenTitan prim_clock_gating, the cell Ibex already uses, which
-// has the same ports. Spec: doc/src/QNSC_PWM_MAS.md, section 4.
+// has the same ports. Spec: doc/specs/QNSC_PWM_MAS.md, section 4.
 //
 // The module and port names are fixed by the vendored instantiation, so they keep
 // the upstream convention instead of the QNSC naming rule.
