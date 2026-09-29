@@ -87,6 +87,23 @@ make lint BLOCK=<block>     # one check, one block, while you work
 make naming BLOCK=<block>
 ```
 
+### On the training server: compile with VCS, look at the schematic
+
+Everything above runs on your own machine. VCS and Verdi are licensed and run only
+on the server, from the same clone and the same `design/<block>/<block>.f`:
+
+```bash
+git clone git@github.com:quynhonsemiconductor/vlsi_deep_training.git   # once
+cd vlsi_deep_training && git checkout <your branch>
+make vcs BLOCK=<block>       # syntax and elaboration; log in build/vcs/<block>/comp.log
+make verdi BLOCK=<block>     # Verdi on build/vcs/<block>/simv.daidir: nSchema shows the wrapper
+```
+
+Fix every `Error-` in `comp.log`, and read the `Lint-` warnings on the wrapper's
+own ports. In the schematic every wrapper port reaches one IP port or a tie-off,
+as the MAS interface and tie-off tables say. Output stays in `build/`, which Git
+ignores; do not commit `simv`, `csrc` or logs.
+
 ## 5. Pull request
 
 1. Update `design/<block>/README.md` (Owner, Spec, IP, files, instances). Stage status is
