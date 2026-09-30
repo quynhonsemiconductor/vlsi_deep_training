@@ -329,6 +329,26 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
             return nid("a " + gname.get(b, b))
         return nid("c " + ep.split(".")[0])
 
+    rhs_of = {lhs: rhs for lhs, rhs, _, _ in assigns}
+    opname = {"|": "OR", "&": "AND", "^": "XOR", "~": "NOT", "!": "NOT"}
+
+    def into(ep, net):
+        """Label of a wire entering endpoint ep from net: the pin, or for an assign
+        the slice it drives and the operator it passes, as `[1] (OR)`."""
+        if "." in ep:
+            return ep.split(".")[-1]
+        if ep.startswith("assign "):
+            lhs = ep[len("assign "):]
+            suffix = lhs[len(abase(lhs)):]
+            # a slice of a top port (o_int_fast[3]) is meaningful; a bit range of a
+            # packed struct (w_bridge_axi_resp[44:43]) is not: then name the net
+            lab = suffix if suffix and suffix != "[...]" and abase(lhs) in width_of else net
+            rhs = rhs_of.get(lhs, "")
+            if rhs[:1] in opname and rhs[1:] == net:
+                lab += f" ({opname[rhs[0]]})"
+            return lab
+        return net
+
     edges = {}
 
     def add(a, b, lab):
@@ -343,7 +363,7 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
             continue
         if d == "input":
             for ld in loads.get(n, []):
-                add(pnode[n], endpoint(ld), ld.split(".")[-1] if "." in ld else n)
+                add(pnode[n], endpoint(ld), into(ld, n))
         else:
             for dr in drivers.get(n, []):
                 add(endpoint(dr), pnode[n], dr.split(".")[-1] if "." in dr else n)
@@ -353,13 +373,12 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
         for dr in drs:
             for ld in loads.get(net, []):
                 if endpoint(dr) != endpoint(ld):
-                    add(endpoint(dr), endpoint(ld), net)
+                    add(endpoint(dr), endpoint(ld), into(ld, net) if ld.startswith("assign ") else net)
     consts = {}
     for cn, _, pins in cells:
         for pn, d, _, text, refs in pins:
             if text and not refs and d == "input":
-                v = const_int(text)
-                label = str(v) if v is not None else text
+                label = "0" if const_int(text) == 0 else text   # 4'h5 keeps its meaning
                 k = nid("k " + label)
                 consts[k] = label
                 add(k, nid("c " + cn), pn)
