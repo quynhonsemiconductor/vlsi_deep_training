@@ -1,6 +1,6 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.5"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.6"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -17,6 +17,7 @@ The reasoning behind each change is in
 | V2.3 | 2026-09-25 | Nghia VT | -- | 7.2: an unconfigured channel goes to 1 at `CMD.START` (reset `MODE` 0 is SET, reset `TH` 0 matches at once), seen in simulation of the wrapper. `TIM_EXT` synchronised by the shared `qnsc_sync` cell. Moved to `APB_M12` at `0x8003_0000` with the peripherals after the dropped GPIO3 |
 | V2.4 | 2026-09-28 | Nghia VT | Tâm | Module `m_qnsc_wrap_pwm` (Naming Rule V1.1). `APB_ADDR_WIDTH` fixed at 12 in the wrapper (no package, no parameter). Review answers: one clock domain and why `low_speed_clk_i` is 0 (section 3); `TIM_EXT` bits independent, minimum pulse (7.4); four event lines on one `INTMAP` line (7.5) |
 | V2.5 | 2026-09-28 | Nghia VT | -- | `SCRC` bit from `QNSC_SCRC_MAS` V3.0: `CLK_EN[15]`; requirement on `SCRC` closed |
+| V2.6 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`PWM_NNN`), for traceability to tests. No change in behaviour |
 
 # 1. Overview
 
@@ -308,24 +309,24 @@ One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 
 The IP has no testbench.
 
-1. `ch_i_o[n]` is channel `n` of module `i`; `o_pad_pwm[3:0]` = `ch_0_o`, `o_pad_pwm[7:4]` =
+1. `PWM_001` `ch_i_o[n]` is channel `n` of module `i`; `o_pad_pwm[3:0]` = `ch_0_o`, `o_pad_pwm[7:4]` =
    `ch_1_o`.
-2. Every register field resets to the value in section 6; reserved bits and `CMD`
+2. `PWM_002` Every register field resets to the value in section 6; reserved bits and `CMD`
    read 0.
-3. Out of reset, `CMD.START` has no effect until `CH_EN[i]` = 1.
-4. `SAW` = 1 period is (END - START + 1) x (PRESC + 1); `SAW` = 0 period is
+3. `PWM_003` Out of reset, `CMD.START` has no effect until `CH_EN[i]` = 1.
+4. `PWM_004` `SAW` = 1 period is (END - START + 1) x (PRESC + 1); `SAW` = 0 period is
    2 x (END - START) x (PRESC + 1).
-5. Each `CHn_TH.MODE` value 0-7 gives the action of the MODE table, in both `SAW`
+5. `PWM_005` Each `CHn_TH.MODE` value 0-7 gives the action of the MODE table, in both `SAW`
    settings; MODE 2 with `SAW` = 0 is centre-aligned.
-6. Changing one `CHn_TH` changes no other channel and not `TH`; `CHn_LUT` writes
+6. `PWM_006` Changing one `CHn_TH` changes no other channel and not `TH`; `CHn_LUT` writes
    read back and change no output.
-7. `CMD.STOP` holds all four outputs; `CMD` = STOP | RST drives them to 0.
-8. An event fires on a rising edge of the selected channel only, is one
+7. `PWM_007` `CMD.STOP` holds all four outputs; `CMD` = STOP | RST drives them to 0.
+8. `PWM_008` An event fires on a rising edge of the selected channel only, is one
    `i_clk_peri` cycle wide, and never fires while `EN[k]` = 0.
-9. Each `IN_MODE` 0-7 with `ext_sig_i[3:0]` and with a channel feedback source;
+9. `PWM_009` Each `IN_MODE` 0-7 with `ext_sig_i[3:0]` and with a channel feedback source;
     `IN_SEL` 4-31 and 48-255 never count except in `IN_MODE` 0 and 1.
-10. Holes read 0 and ignore writes; offset `+0x400` aliases offset 0; `PSLVERR` = 0.
-11. Confirm in simulation: when a new `TH` takes effect (at `CMD.START`, at
+10. `PWM_010` Holes read 0 and ignore writes; offset `+0x400` aliases offset 0; `PSLVERR` = 0.
+11. `PWM_011` Confirm in simulation: when a new `TH` takes effect (at `CMD.START`, at
     `CMD.UPDATE` while stopped, at the period end after `CMD.UPDATE` while running),
     and when new `CHn_TH`, `IN_SEL`, `IN_MODE` and `PRESC` values take effect while
     running.
