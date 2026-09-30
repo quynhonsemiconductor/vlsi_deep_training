@@ -1,6 +1,6 @@
 ---
 title: "SYSDBG"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.2"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,6 +13,7 @@ The reasoning behind each change, and every version before V3.0, is in
 |---|---|---|---|---|
 | V3.0 | 2026-09-23 | Nghia VT | -- | Rewritten after the teacher's reference design: JTAG data registers, native AXI4 manager, 4-phase handshake. Adds the `DBG_EN` pin and CPU hold |
 | V3.1 | 2026-09-25 | Nghia VT | -- | Port names to `QNSC_RTL_Design_Naming_Rule` V1.0: `o_dbg_req`, `o_dbg_cpu_hold`, AXI named per channel (`o_bus_axi_ar_valid`, ...). No change in behaviour |
+| V3.2 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`<BLOCK>_NNN`), for traceability to tests. No change in behaviour |
 
 # 1. Overview
 
@@ -340,27 +341,27 @@ One, in `design/top`, with the default parameters.
 
 # 12. Verification
 
-1. TAP: all 16 states from every state; `IDCODE` after reset; `BYPASS` and unused
+1. `SYSDBG_001` TAP: all 16 states from every state; `IDCODE` after reset; `BYPASS` and unused
    IR codes are 1 bit; IR changes only at Update-IR; Capture-IR loads `0001`.
-2. Each data register of section 6: length, capture value, update effect, reset value.
-3. Read and write sequences of 7.4 against an AXI slave model with random
+2. `SYSDBG_002` Each data register of section 6: length, capture value, update effect, reset value.
+3. `SYSDBG_003` Read and write sequences of 7.4 against an AXI slave model with random
    `ready`/`valid` delays. Every transaction issued exactly once, with the fixed
    fields of section 10.
-4. Update-DR of `ADDR` or `DATA` while busy changes nothing.
-5. `SLVERR` and `DECERR` reach `STATUS.resp`.
-6. AXI protocol checker on the manager port for every test.
-7. CDC: `TCK` from 10x slower to 10x faster than `i_clk_cpu`, and `TCK` stopped
+4. `SYSDBG_004` Update-DR of `ADDR` or `DATA` while busy changes nothing.
+5. `SYSDBG_005` `SLVERR` and `DECERR` reach `STATUS.resp`.
+6. `SYSDBG_006` AXI protocol checker on the manager port for every test.
+7. `SYSDBG_007` CDC: `TCK` from 10x slower to 10x faster than `i_clk_cpu`, and `TCK` stopped
    mid-handshake for 10,000 cycles. CDC lint: only the signals of the crossing
    table cross.
-8. `i_rst_n_sysbus` asserted during a transaction: the transaction is issued
+8. `SYSDBG_008` `i_rst_n_sysbus` asserted during a transaction: the transaction is issued
    again after release, and completes.
-9. `DBG_EN`: `o_dbg_cpu_hold` = 1 until the capture, then 0 for `DBG_EN = 0`, or
+9. `SYSDBG_009` `DBG_EN`: `o_dbg_cpu_hold` = 1 until the capture, then 0 for `DBG_EN = 0`, or
    `CPUHOLD` for `DBG_EN = 1`. Toggling the pad afterwards changes nothing.
    `o_dbg_cpu_hold` never glitches (it is a flip-flop output).
-10. With Ibex, debug boot: load the window and image, `CPUDBG = 1`, `CPUHOLD = 0`.
+10. `SYSDBG_010` With Ibex, debug boot: load the window and image, `CPUDBG = 1`, `CPUHOLD = 0`.
     `HALTED` = 1 and `dpc = 0x2000_1080`. `CPUDBG = 0`, `RESUME` = 1: `HALTED` = 0
     and the core runs without halting again.
-11. With Ibex, normal boot: attach while running, halt, resume.
+11. `SYSDBG_011` With Ibex, normal boot: attach while running, halt, resume.
 
 **Acceptance:** in debug boot, load an image that toggles a GPIO, release the CPU,
 halt it, read `dpc`, resume it, and see the GPIO toggle again.

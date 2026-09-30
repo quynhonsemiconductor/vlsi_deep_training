@@ -107,8 +107,11 @@ The reasoning behind each change is in
 # 6. Register map
 
 <!-- Offset, field, bits, access type, reset value, description. The access type
-     is mandatory and must be one of RW, RO, WO, W1C, RSVD: DV generates the
-     reset-value and access-type tests from this column.
+     is mandatory and must be one of RW, RO, WO, W1C, RW0C, RSVD: DV generates
+     the reset-value and access-type tests from this column.
+       W1C   write 1 to a bit clears it; write 0 leaves it
+       RW0C  readable; write 0 to a bit clears it; write 1 leaves it
+     Use these names even when the IP's documentation says rw1c / rw0c.
      If the block has no registers, say that and say where configuration lives
      instead. -->
 

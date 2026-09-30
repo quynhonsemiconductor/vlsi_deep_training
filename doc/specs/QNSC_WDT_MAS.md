@@ -1,6 +1,6 @@
 ---
 title: "WDT"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V1.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V1.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -12,6 +12,7 @@ built on, are in [`QNSC_WDT_DECISIONS.md`](QNSC_WDT_DECISIONS.md).
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V1.0 | 2026-09-28 | Nghia VT (lead), for Vu Bui Minh Hieu | -- | Specification written from Quach Huynh Huu Tai's research draft V0.1: upstream `aon_timer` unmodified, one 20 MHz clock, bark to the NMI and bite to `SCRC`, APB bridge on the upstream `tlul_adapter_host`, tie-offs, missing OpenTitan packages |
+| V1.1 | 2026-09-30 | Nghia VT | -- | `INTR_STATE` access written W1C, the template name (OpenTitan calls it rw1c) |
 
 # 1. Overview
 
@@ -124,7 +125,7 @@ window. Offsets `0x38` and `0x3C` answer `PSLVERR`.
 | `0x20` | `WDOG_BARK_THOLD` | RW | 0 | Bark threshold, in cycles of 50 ns |
 | `0x24` | `WDOG_BITE_THOLD` | RW | 0 | Bite threshold, in cycles of 50 ns |
 | `0x28` | `WDOG_COUNT` | RW | 0 | Watchdog counter; write 0 to pet |
-| `0x2C` | `INTR_STATE` | RW1C | 0 | Interrupt state, Figure 6-1 |
+| `0x2C` | `INTR_STATE` | W1C | 0 | Interrupt state, Figure 6-1 |
 | `0x30` | `INTR_TEST` | WO | 0 | Write 1 to set the matching `INTR_STATE` bit |
 | `0x34` | `WKUP_CAUSE` | RW0C | 0 | Set by a wake-up or bark event; drives `wkup_req_o`, unused |
 

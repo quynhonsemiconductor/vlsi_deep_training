@@ -1,6 +1,6 @@
 ---
 title: "UART"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -12,6 +12,7 @@ built on, are in [`QNSC_UART_DECISIONS.md`](QNSC_UART_DECISIONS.md).
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Ong Bao Vinh | -- | Specification written from the research report (V2.x): addresses and interrupt lines from the contract, wrapper `m_qnsc_wrap_uart` around upstream `apb_uart` unmodified, no DMA request ports, no parameter |
+| V3.1 | 2026-09-30 | Nghia VT | -- | Interrupt source named `INT`, the port of `apb_uart` the wrapper instantiates, as the contract and `INTMAP` name it; `irq_o` is its source inside `obi_uart` |
 
 # 1. Overview
 
@@ -90,7 +91,8 @@ Facts this specification relies on, read at those commits:
   and `PPROT` to 0. Its ports have no DMA request.
 - The reset value of `DLL` is 1 and of `DLM` 0; the baud generator counts only when
   `{DLM, DLL}` - 1 is not 0 (`obi_uart_baudgen.sv`), so it is stopped out of reset.
-- `irq_o` = 1 while any enabled source is pending (`obi_uart_interrupts.sv`).
+- `obi_uart` `irq_o` = 1 while any enabled source is pending (`obi_uart_interrupts.sv`);
+  `apb_uart` brings it out as its port `INT`.
 - In non-FIFO mode the receiver reports `LSR.BI` = 1 for every character
   (`obi_uart_rx.sv` line 462, which overrides the computed value).
 
@@ -106,7 +108,7 @@ Facts this specification relies on, read at those commits:
 | `i_bus_apb_pwdata` | in | 32 | Bits 7:0 used |
 | `i_bus_apb_pstrb`, `i_bus_apb_pprot` | in | 4, 3 | Not used |
 | `o_bus_apb_prdata`, `o_bus_apb_pready`, `o_bus_apb_pslverr` | out | 32, 1, 1 | Bits 31:8 read 0 |
-| `o_int_uart` | out | 1 | `irq_o`, level -- 7.4. To `INTMAP` `i_int_uart_<n>` |
+| `o_int_uart` | out | 1 | `apb_uart` `INT` (`obi_uart` `irq_o`), level -- 7.4. To `INTMAP` `i_int_uart_<n>` |
 | `i_pad_uart_rx` | in | 1 | Serial input through IO MUX. Idle 1 |
 | `o_pad_uart_tx` | out | 1 | Serial output through IO MUX. Idle 1 |
 

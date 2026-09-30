@@ -1,6 +1,6 @@
 ---
 title: "TIMER"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.5"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.6"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -17,6 +17,7 @@ The reasoning behind each change is in
 | V2.3 | 2026-09-25 | Nghia VT | -- | Ports and addresses moved up one slot after GPIO3 was dropped: `TIMER0` on `APB_M6` at `0x8001_8000`, `TIMER1` on `APB_M7` at `0x8001_C000` |
 | V2.4 | 2026-09-28 | Nghia VT | -- | `SCRC` bits from `QNSC_SCRC_MAS` V3.0: `CLK_EN[3]`, `CLK_EN[4]`; the error response is the `SCRC` APB guard; two requirements on `SCRC` closed |
 | V2.5 | 2026-09-28 | Nghia VT | -- | Wrapper `m_qnsc_wrap_timer` (Naming Rule V1.1 rule 2.1; was `m_qnsc_wrap_apb_timer_unit`). No change in behaviour |
+| V2.6 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`<BLOCK>_NNN`), for traceability to tests. No change in behaviour |
 
 # 1. Overview
 
@@ -269,24 +270,24 @@ Open: gate count, from synthesis.
 
 The IP has no testbench. Each check below is added by QSOC.
 
-1. Register reset values and access types match section 6, including reads of 0 from
+1. `TIMER_001` Register reset values and access types match section 6, including reads of 0 from
    `0x18`-`0x3C` and read-back of `CFG` bits 30:16.
-2. `base + 0x40` accesses `CFG_REG_LO`; every access in the 16 KiB region completes
+2. `TIMER_002` `base + 0x40` accesses `CFG_REG_LO`; every access in the 16 KiB region completes
    with zero wait states and `PSLVERR` = 0; a byte store writes all 32 bits.
-3. Tick rate for each row of 7.1, including `PRESC` = 0 and 255.
-4. 64-bit mode: `TIMER_VAL_HI` advances exactly once per `lo` wrap, with and without
+3. `TIMER_003` Tick rate for each row of 7.1, including `PRESC` = 0 and 255.
+4. `TIMER_004` 64-bit mode: `TIMER_VAL_HI` advances exactly once per `lo` wrap, with and without
    the prescaler; `irq_hi_o` stays 0; one pulse at the programmed 64-bit value.
-5. Every row of the interrupt shape table in 7.3, in 32-bit and 64-bit mode. **Confirm
+5. `TIMER_005` Every row of the interrupt shape table in 7.3, in 32-bit and 64-bit mode. **Confirm
    in simulation** the one-shot rows: 1-cycle pulse and stop at `CMP`+1 when the
    counter advances every cycle; held level and stop at `CMP` when prescaled.
-6. Periodic period equals the 7.3 formula, with and without the prescaler; **confirm
+6. `TIMER_006` Periodic period equals the 7.3 formula, with and without the prescaler; **confirm
    in simulation**.
-7. Each clearing action of 7.5 drops a held level; `TIMER_START_x` alone does not
+7. `TIMER_007` Each clearing action of 7.5 drops a held level; `TIMER_START_x` alone does not
    restart it -- **confirm in simulation**.
-8. A compare value written one tick behind the count is missed until the wrap.
-9. `CFG_REG_HI[31]` = 1 in 32-bit mode changes counter `hi` one-shot behaviour -- 7.3.
-10. Tie-offs of section 10 present; `IEM` = 1 and `REF_CLK_EN` = 1 act as stated there.
-11. Integration: `TIMER0` `irq_lo_o` reaches `irq_fast_i[10]`, both `TIMER1` outputs
+8. `TIMER_008` A compare value written one tick behind the count is missed until the wrap.
+9. `TIMER_009` `CFG_REG_HI[31]` = 1 in 32-bit mode changes counter `hi` one-shot behaviour -- 7.3.
+10. `TIMER_010` Tie-offs of section 10 present; `IEM` = 1 and `REF_CLK_EN` = 1 act as stated there.
+11. `TIMER_011` Integration: `TIMER0` `irq_lo_o` reaches `irq_fast_i[10]`, both `TIMER1` outputs
     reach `irq_fast_i[6]`, and the gate reset values match section 1.
 
 Acceptance: `TIMER0` in 64-bit mode raises exactly one interrupt at a programmed

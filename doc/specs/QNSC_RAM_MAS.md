@@ -1,6 +1,6 @@
 ---
 title: "RAM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.4"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.5"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -15,6 +15,7 @@ The reasoning behind each change is in [`QNSC_RAM_DECISIONS.md`](QNSC_RAM_DECISI
 | V2.2 | 2026-09-24 | Nghia VT | -- | Wrapper interface, strobe FIFO, timing, reset and tie-offs specified; figure and macro address corrected |
 | V2.3 | 2026-09-25 | Nghia VT | -- | Port names to `QNSC_RTL_Design_Naming_Rule` V1.0: AXI named per channel (`i_bus_axi_aw_valid`, ...), macro port `o_mem_*` / `i_mem_rdata` (was `o_sram_*`, `o_sram_bwe` is `o_mem_be`). No change in behaviour |
 | V2.4 | 2026-09-28 | Nghia VT | -- | Two blocks, two wrappers, per Naming Rule V1.1 rule 2.1: `m_qnsc_wrap_isram` in `design/isram`, `m_qnsc_wrap_dsram` in `design/dsram` (was one `m_qnsc_wrap_axi4_sram` in `design/ram`). No change in behaviour |
+| V2.5 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`<BLOCK>_NNN`), for traceability to tests. No change in behaviour |
 
 # 1. Overview
 
@@ -266,17 +267,17 @@ enables and no reset.
 
 Checks QSOC adds:
 
-1. Each of the 15 non-zero `wstrb` patterns writes only its bytes; `0000` none -- 7.3.
-2. Assertion: `STRBFIFO` and `WFIFO` occupancy are equal in every cycle -- 7.3.
-3. A C program writing `uint8_t` and `uint16_t` data leaves neighbours intact -- 7.3.
-4. Every value of the timing table of 7.1, measured at the block ports.
-5. `B` and `R` return in acceptance order, each with its request's ID -- 7.1.
-6. Against an independent address model, aligned WRAP gives INCR addresses -- 7.4.
-7. `o_mem_addr` is `[15:2]` / `[14:2]`; an unaligned single beat hits its word -- 7.2.
-8. `BRESP` and `RRESP` are `00` for every access -- 7.5.
-9. Reset values of 7.6; a pattern survives an `i_rst_n_mem` pulse -- 7.6.
-10. Macro pin tie-offs match the databook -- section 10.
-11. The vendored `rtl/` files match commit `503d7cd` -- section 4.
+1. `RAM_001` Each of the 15 non-zero `wstrb` patterns writes only its bytes; `0000` none -- 7.3.
+2. `RAM_002` Assertion: `STRBFIFO` and `WFIFO` occupancy are equal in every cycle -- 7.3.
+3. `RAM_003` A C program writing `uint8_t` and `uint16_t` data leaves neighbours intact -- 7.3.
+4. `RAM_004` Every value of the timing table of 7.1, measured at the block ports.
+5. `RAM_005` `B` and `R` return in acceptance order, each with its request's ID -- 7.1.
+6. `RAM_006` Against an independent address model, aligned WRAP gives INCR addresses -- 7.4.
+7. `RAM_007` `o_mem_addr` is `[15:2]` / `[14:2]`; an unaligned single beat hits its word -- 7.2.
+8. `RAM_008` `BRESP` and `RRESP` are `00` for every access -- 7.5.
+9. `RAM_009` Reset values of 7.6; a pattern survives an `i_rst_n_mem` pulse -- 7.6.
+10. `RAM_010` Macro pin tie-offs match the databook -- section 10.
+11. `RAM_011` The vendored `rtl/` files match commit `503d7cd` -- section 4.
 
 # Appendix A. Acronyms
 
