@@ -1,6 +1,6 @@
 ---
 title: "Interrupt Map"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.4"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.5"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -16,6 +16,7 @@ The reasoning behind each change, and the versions before `V2.0`, are in
 | V2.2 | 2026-09-24 | Nghia VT | -- | GPIO3 dropped with the 40-pin package: 26 sources, `i_int_gpio` 3 bits |
 | V2.3 | 2026-09-26 | Nghia VT | -- | Decisions from the RTL generation: line indices from `qnsc_pkg` (7.1); open item 2 closed by a simulation-only X check per input (7.6) |
 | V2.4 | 2026-09-28 | Nghia VT | -- | Watchdog rule added: `WDOG_BARK_THOLD` < `WDOG_BITE_THOLD`, so the NMI runs before the chip reset; 7.5 excludes the WDT, which is never gated |
+| V2.5 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`INTMAP_NNN`), for traceability to tests. No change in behaviour |
 
 # 1. Overview
 
@@ -251,20 +252,20 @@ One. It is instantiated in `design/top` and has no parameters.
 
 Eleven checks, none needing a bus model:
 
-1. Each single-source input raises exactly its own line.
-2. Each OR group raises its line for every member, individually.
-3. No input raises a line other than its own.
-4. `irq_fast_i[14:11]`, `irq_external_i`, `irq_timer_i`, `irq_software_i` are
+1. `INTMAP_001` Each single-source input raises exactly its own line.
+2. `INTMAP_002` Each OR group raises its line for every member, individually.
+3. `INTMAP_003` No input raises a line other than its own.
+4. `INTMAP_004` `irq_fast_i[14:11]`, `irq_external_i`, `irq_timer_i`, `irq_software_i` are
    always 0 at the core boundary.
-5. `i_int_wdt_bark` reaches `o_int_nm` and no fast line; no other input reaches
+5. `INTMAP_005` `i_int_wdt_bark` reaches `o_int_nm` and no fast line; no other input reaches
    `o_int_nm`.
-6. Simultaneous inputs raise each affected line once.
-7. Output follows input combinationally, with no cycle of delay.
-8. `mcause` and vector mapping match the table in 7.2 against `qnsc_pkg`.
-9. A held input keeps its line asserted for as long as it is held (7.5).
-10. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
+6. `INTMAP_006` Simultaneous inputs raise each affected line once.
+7. `INTMAP_007` Output follows input combinationally, with no cycle of delay.
+8. `INTMAP_008` `mcause` and vector mapping match the table in 7.2 against `qnsc_pkg`.
+9. `INTMAP_009` A held input keeps its line asserted for as long as it is held (7.5).
+10. `INTMAP_010` **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
     `always_ff`.
-11. An X on any input raises that input's 7.6 assertion (4-state simulator).
+11. `INTMAP_011` An X on any input raises that input's 7.6 assertion (4-state simulator).
 
 # Appendix A. Acronyms
 
