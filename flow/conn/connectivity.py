@@ -291,7 +291,11 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
       - assigns to slices of one signal (`o_int_fast[0]`..`[10]`) are one node, and
         so are assigns to the members of one bus group;
       - constants are one node per value (`0`, `1`, ...), as tie cells in a schematic.
+      - clocks and resets (`i_clk_*`, `i_rst_n_*` by the Naming Rule) are global nets,
+        as in a schematic: written in each instance that uses them, not drawn as wires;
     The tables above stay complete; the diagram groups, it never drops a connection.
+    Wires are straight: Mermaid does not route orthogonal wires around each other, so
+    several of them share one segment and read as one net.
     """
     nid = lambda s: "n_" + re.sub(r"[^A-Za-z0-9]", "_", s)
     abase = lambda lhs: re.sub(r"\[[^\]]*\]$", "", lhs)
@@ -300,6 +304,7 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
     for n, d, _ in ports:
         if re.match(r"[io]_bus_", n):
             groups.setdefault((n.rsplit("_", 1)[0], d), []).append(n)
+    is_global = lambda n: bool(re.match(r"i_(clk|rst_n)_", n))
     pnode, plabel, gname = {}, {}, {}
     for (prefix, d), members in groups.items():
         if len(members) >= 3:
@@ -329,7 +334,13 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
     def add(a, b, lab):
         if a != b:
             edges.setdefault((a, b), set()).add(lab)
+    glob = {}                                   # instance -> ["pin: net", ...]
     for n, d, _ in ports:
+        if d == "input" and is_global(n):
+            for ld in loads.get(n, []):
+                if "." in ld:
+                    glob.setdefault(ld.split(".")[0], []).append(f"{ld.split('.')[-1]}: {n}")
+            continue
         if d == "input":
             for ld in loads.get(n, []):
                 add(pnode[n], endpoint(ld), ld.split(".")[-1] if "." in ld else n)
@@ -353,12 +364,15 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
                 consts[k] = label
                 add(k, nid("c " + cn), pn)
 
-    ins = [k for k in dict.fromkeys(pnode[n] for n, d, _ in ports if d == "input")]
+    ins = [k for k in dict.fromkeys(pnode[n] for n, d, _ in ports
+                                     if d == "input" and not is_global(n))]
     outs = [k for k in dict.fromkeys(pnode[n] for n, d, _ in ports if d != "input")]
     L = ["```mermaid", "---", f"title: {top}", "---",
-         '%%{init: {"flowchart": {"curve": "stepAfter"}}}%%', "flowchart LR"]
+         '%%{init: {"flowchart": {"curve": "linear"}}}%%', "flowchart LR"]
     L += [f'  {k}>"{plabel[k]}"]' for k in ins]
-    L += [f'  {nid("c " + cn)}["<b>{cn}</b><br/>{mod}"]' for cn, mod, _ in cells]
+    for cn, mod, _ in cells:
+        g = "".join(f"<br/><i>{x}</i>" for x in glob.get(cn, []))
+        L.append(f'  {nid("c " + cn)}["<b>{cn}</b><br/>{mod}{g}"]')
     abases = {}
     for lhs, _, _, _ in assigns:
         b = abase(lhs)
@@ -376,8 +390,9 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
         lab = ", ".join(labs) if len(", ".join(labs)) <= 40 else f"{labs[0]} ... ({len(labs)})"
         L.append(f'  {a} -->|"{lab}"| {b}')
     L.append("```")
-    L.append("*Flag: a port of the top; box: an instance; hexagon: an assign or procedural "
-             "logic; circle: a constant. Labels are the instance pins; `...` shortens a list, "
+    L.append("*Flag: a port of the top; box: an instance, with its clock and reset pins in "
+             "italics (global nets, not drawn); hexagon: an assign or procedural logic; circle: "
+             "a constant. A wire label is the pin it enters or leaves; `...` shortens a list, "
              "which the tables give in full.*")
     return "\n".join(L)
 
