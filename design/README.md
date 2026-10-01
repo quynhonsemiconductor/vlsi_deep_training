@@ -216,7 +216,7 @@ that come up most:
 | Package (2.1) | `qnsc_<function>_pkg` | `qnsc_pkg`, `qnsc_cpu2axi_pkg` |
 | Type (2.6) | `<function>_t`; enum members `S_` / `C_` | `state_t` = `{S_IDLE, S_BUSY}` |
 | File (2.7) | one module, package or interface, named after it; emacs source `<module>.src.sv` | `m_qnsc_wrap_uart.sv` |
-| Technology cell (2.8) | RTL instantiates `qnsc_<function>` only; the library cell, under its own name, only inside it, instance `u_size_only_<function>` | `qnsc_clock_gate` |
+| Technology cell (2.8) | RTL instantiates `qnsc_<function>` only; the library cell, under its own name, only inside it, instance `u_size_only_<function>` | `qnsc_clk_gate` |
 | Port | `i_` / `o_` / `io_` prefix | `i_clk_sys`, `o_int_timer_0` |
 | Clock, reset | `i_clk_<domain>`, `i_rst_n_<domain>`; in a `qnsc_` cell the domain is the role | `i_rst_n_sys`, `i_clk_src`, `o_clk_gated` |
 | APB, AXI | `i_bus_apb_<sig>`, `i_bus_axi_<ch>_<sig>` | `i_bus_apb_paddr` |
