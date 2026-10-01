@@ -10,7 +10,7 @@
         <mxCell id="intmap" value="INTMAP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#000000;fontSize=11;dashed=1;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
           <mxGeometry x="258" y="66" width="178" height="550" as="geometry"/>
         </mxCell>
-        <mxCell id="s0" value="DMA&#10;dma_irq_o · level" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="s0" value="DMA&#10;o_int_dma · level" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="40" y="96" width="200" height="32" as="geometry"/>
         </mxCell>
         <mxCell id="g0" value="i_int_dma&#10;wire" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">

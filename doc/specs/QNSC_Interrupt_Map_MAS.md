@@ -1,6 +1,6 @@
 ---
 title: "Interrupt Map"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.5"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,6 +14,9 @@ The reasoning behind each change, and the versions before `V2.0`, are in
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only. History and reasoning moved to `_DECISIONS`; tables in 7.2 and 10 generated from `util/qsoc_contract.yml` |
 | V2.1 | 2026-09-24 | Nghia VT | -- | NMI stated as a wire through the block; source ports, widths and timer shape added; figure redrawn; reasoning moved to `_DECISIONS` |
 | V2.2 | 2026-09-24 | Nghia VT | -- | GPIO3 dropped with the 40-pin package: 26 sources, `i_int_gpio` 3 bits |
+| V2.3 | 2026-09-26 | Nghia VT | -- | Decisions from the RTL generation: line indices from `qnsc_pkg` (7.1); open item 2 closed by a simulation-only X check per input (7.6) |
+| V2.4 | 2026-09-28 | Nghia VT | -- | Watchdog rule added: `WDOG_BARK_THOLD` < `WDOG_BITE_THOLD`, so the NMI runs before the chip reset; 7.5 excludes the WDT, which is never gated |
+| V2.5 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`INTMAP_NNN`), for traceability to tests. No change in behaviour |
 
 # 1. Overview
 
@@ -55,7 +58,7 @@ One combinational layer, no clock, reset or bus port. The tie-offs are in `desig
 
 # 5. Interface
 
-Every port, named per `QNSC_RTL_Design_Naming_Rule` V1.0 section 3.6. The vendor
+Every port, named per `QNSC_RTL_Design_Naming_Rule` V1.1 section 3.6. The vendor
 port behind each input is in the table in 7.2.
 
 : Interrupt map interface
@@ -89,22 +92,24 @@ None. The block has no address and is not a bus slave. Enabling is in the core
 ## 7.1 One OR gate per multi-source group
 
 ```systemverilog
-assign o_int_fast[0]  =  i_int_dma;
-assign o_int_fast[1]  = |i_int_spi_device;
-assign o_int_fast[2]  = |i_int_spi_host;
-assign o_int_fast[3]  =  i_int_i2c;
-assign o_int_fast[4]  =  i_int_uart_0;
-assign o_int_fast[5]  =  i_int_uart_1;
-assign o_int_fast[6]  = |i_int_timer_1;
-assign o_int_fast[7]  = |i_int_pwm;
-assign o_int_fast[8]  =  i_int_wdt_wakeup;
-assign o_int_fast[9]  = |i_int_gpio;
-assign o_int_fast[10] =  i_int_timer_0;
-assign o_int_nm       =  i_int_wdt_bark;
+assign o_int_fast[C_INT_LINE_DMA]        =  i_int_dma;          // line 0
+assign o_int_fast[C_INT_LINE_SPI_DEVICE] = |i_int_spi_device;   // line 1
+assign o_int_fast[C_INT_LINE_SPI_HOST]   = |i_int_spi_host;     // line 2
+assign o_int_fast[C_INT_LINE_I2C]        =  i_int_i2c;          // line 3
+assign o_int_fast[C_INT_LINE_UART_0]     =  i_int_uart_0;       // line 4
+assign o_int_fast[C_INT_LINE_UART_1]     =  i_int_uart_1;       // line 5
+assign o_int_fast[C_INT_LINE_TIMER_1]    = |i_int_timer_1;      // line 6
+assign o_int_fast[C_INT_LINE_PWM]        = |i_int_pwm;          // line 7
+assign o_int_fast[C_INT_LINE_WDT_WAKEUP] =  i_int_wdt_wakeup;   // line 8
+assign o_int_fast[C_INT_LINE_GPIO]       = |i_int_gpio;         // line 9
+assign o_int_fast[C_INT_LINE_TIMER_0]    =  i_int_timer_0;      // line 10
+assign o_int_nm                          =  i_int_wdt_bark;
 ```
 
 Five outputs are OR reductions and seven are wires. **Zero flip-flops**: every
-output follows its inputs combinationally, with no cycle of delay.
+output follows its inputs combinationally, with no cycle of delay. The line
+indices and the width of `o_int_fast` (`C_INT_FAST_LINES_USED`) come from
+`qnsc_pkg`, so the line order has one source, the contract.
 
 ## 7.2 Line assignment
 
@@ -167,7 +172,7 @@ handler) or the `mie` bit is clear, or in Debug Mode, raises no trap.
 
 | Source | Shape | Cleared by | A missed pulse |
 |---|---|---|---|
-| DMA | level | W1C `DMA_ISR` | -- |
+| DMA | level, idle | nothing: the line is 1 while the DMA is idle; the handler checks `DONE_ID` (`QNSC_DMA_MAS` 7.4) | -- |
 | SPI device, SPI host | level | W1C `INTR_STATE` | -- |
 | I2C | level | `IACK`, bit 0 of `CMD` | -- |
 | UART0, UART1 | level | the 16550 register read that `IIR` names | -- |
@@ -178,12 +183,20 @@ handler) or the `mie` bit is clear, or in Debug Mode, raises no trap.
 
 ## 7.5 A gated peripheral holds its line
 
-All interrupt sources are in the `peri` cluster, whose clocks `SCRC` stops
-through `CLK_EN`. A stopped clock retains flip-flop state, so a peripheral gated
-with its interrupt asserted keeps its line high, and this block passes it on.
+Every interrupt source except the WDT is in the `peri` cluster, whose clocks
+`SCRC` stops through `CLK_EN`; the WDT clock is never stopped. A stopped clock
+retains flip-flop state, so a peripheral gated with its interrupt asserted keeps
+its line high, and this block passes it on.
 Clearing it needs a register write to the gated peripheral, which cannot
 complete, so the core re-enters that handler while the `mie` bit is set.
 **Firmware clears a peripheral's interrupt before gating it** (11).
+
+## 7.6 An unknown input is reported in simulation
+
+Inside `` `ifndef SYNTHESIS ``, one deferred assertion per input (`assert final`)
+checks that the input is 0 or 1 and names it when it is X or Z. It adds no hardware.
+An X would otherwise pass an OR gate silently, and Ibex checks only the whole bundle
+(`IbexIrqX`). A 4-state simulator is needed to see it; Verilator is 2-state.
 
 # 8. Instances
 
@@ -225,6 +238,7 @@ One. It is instantiated in `design/top` and has no parameters.
 |---|---|---|
 | Vector table entries at `mtvec + 0x40` to `+0x68` and `+0x7C`; `mtvec` 256-byte aligned, because Ibex ignores `mtvec[7:0]` | firmware owner | every interrupt |
 | Handlers installed before `mstatus.MIE` is set, and the NMI entry at `mtvec + 0x7C` before the watchdog is enabled | firmware owner | every source is live from the first cycle out of reset; the NMI ignores `mstatus.MIE` |
+| `aon_timer` `WDOG_BARK_THOLD` < `WDOG_BITE_THOLD`: the bark (NMI, first timeout) must come before the bite (chip reset, second timeout) | firmware owner | the NMI handler running before the reset |
 | Firmware clears a peripheral's interrupt before closing its `CLK_EN` gate (7.5); written in the programming guide. `SCRC` needs no change | firmware owner | a handler that cannot clear its own source |
 | Align HAS lines 69 and 155 with 7.3: the bark passes through `INTMAP` as a wire, so `INTMAP` takes 26 sources (25 maskable + the NMI). The HAS also still counts four GPIO instances; QSOC has three | HAS owner | consistency between HAS and MAS |
 
@@ -232,26 +246,26 @@ One. It is instantiated in `design/top` and has no parameters.
 
 1. **Timing and area.** Deepest path: the 8-input OR on `spi_device`. The numbers
    come from the first synthesis run.
-2. **X on an input.** An X passes the OR; `ibex_top.sv` `IbexIrqX` checks only the
-   bundle. Open: whether this block asserts each `i_int_*` known.
+2. ~~**X on an input.**~~ Closed in V2.3: a simulation-only check per input (7.6).
 
 # 12. Verification
 
-Ten checks, none needing a bus model:
+Eleven checks, none needing a bus model:
 
-1. Each single-source input raises exactly its own line.
-2. Each OR group raises its line for every member, individually.
-3. No input raises a line other than its own.
-4. `irq_fast_i[14:11]`, `irq_external_i`, `irq_timer_i`, `irq_software_i` are
+1. `INTMAP_001` Each single-source input raises exactly its own line.
+2. `INTMAP_002` Each OR group raises its line for every member, individually.
+3. `INTMAP_003` No input raises a line other than its own.
+4. `INTMAP_004` `irq_fast_i[14:11]`, `irq_external_i`, `irq_timer_i`, `irq_software_i` are
    always 0 at the core boundary.
-5. `i_int_wdt_bark` reaches `o_int_nm` and no fast line; no other input reaches
+5. `INTMAP_005` `i_int_wdt_bark` reaches `o_int_nm` and no fast line; no other input reaches
    `o_int_nm`.
-6. Simultaneous inputs raise each affected line once.
-7. Output follows input combinationally, with no cycle of delay.
-8. `mcause` and vector mapping match the table in 7.2 against `qnsc_pkg`.
-9. A held input keeps its line asserted for as long as it is held (7.5).
-10. **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
+6. `INTMAP_006` Simultaneous inputs raise each affected line once.
+7. `INTMAP_007` Output follows input combinationally, with no cycle of delay.
+8. `INTMAP_008` `mcause` and vector mapping match the table in 7.2 against `qnsc_pkg`.
+9. `INTMAP_009` A held input keeps its line asserted for as long as it is held (7.5).
+10. `INTMAP_010` **Lint check**: the module contains no `i_clk_`, no `i_rst_n_`, and no
     `always_ff`.
+11. `INTMAP_011` An X on any input raises that input's 7.6 assertion (4-state simulator).
 
 # Appendix A. Acronyms
 
@@ -279,7 +293,7 @@ Ten checks, none needing a bus model:
 | Item | Reviewer | Response |
 |---|---|---|
 | GPIO: one line for the three instances, or three lines? | Day005, 2026-09-18 | One line. Which pin fired is in the instance's `INTSTATUS` (7.4) |
-| Is the DMA interrupt a pulse or a level? | DMA owner | Level, held by W1C `DMA_ISR` (7.4) |
+| Is the DMA interrupt a pulse or a level? | DMA owner | Level: 1 while the DMA is idle, `QNSC_DMA_MAS` 7.4 |
 | Does this block need to latch pending? | -- | No. Every level source holds its line; a missed pulse is recorded or repeats (7.4) |
 | Is the non-maskable interrupt in the totals and the core-input table? | Teacher, 2026-09-23 | Yes: it is counted in the 26 (7.2) and listed in section 10 |
 | What happens to a line whose peripheral is clock-gated? | -- | It stays asserted (7.5). Firmware clears the source before gating it; `SCRC` needs no change (11) |
