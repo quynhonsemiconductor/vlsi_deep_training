@@ -1,6 +1,6 @@
 # `scrc` — system clock and reset control
 
-**Owner:** @Nam-HaoNguyen   **Spec:** [`QNSC_SCRC_MAS.md`](../../doc/specs/QNSC_SCRC_MAS.md), [`QNSC_SYSCSR_MAS.md`](../../doc/specs/QNSC_SYSCSR_MAS.md)   **DV:** [`../../dv/scrc`](../../dv/scrc)
+**Owner:** @Nam-HaoNguyen   **Spec:** [`QNSC_SCRC_MAS.md`](../../doc/specs/QNSC_SCRC_MAS.md)   **DV:** [`../../dv/scrc`](../../dv/scrc)
 
 ## What this block is
 
@@ -10,15 +10,17 @@ Sequencing is software: `MRV-CPU` runs a program from its own ROM and is the onl
 agent that opens a clock gate, releases a reset or opens an APB guard; Ibex only
 writes requests.
 
-This directory also holds `SYSCSR`, the status registers on `APB_M1`, and the APB
-guard that `design/top` instantiates once per gateable slave.
+This directory also holds the APB guard that `design/top` instantiates once per
+gateable slave. `SYSCSR`, the status registers on `APB_M1`, is a block of its
+own in [`design/syscsr`](../syscsr); `SCRC` feeds it the reset-cause set enables
+and the domain reset states.
 
 ## Uses (IP)
 
 | From | Module | Recorded in |
 |------|--------|-------------|
 | `nguyenquanicd/MRV-CPU` | `m_vlsit_mrv_cpu` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
-| `nguyenquanicd/APB-CSR-Generator` | generates `m_qnsc_scrc_csr`, `m_qnsc_syscsr_csr` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
+| `nguyenquanicd/APB-CSR-Generator` | generates `m_qnsc_scrc_csr` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 | `nguyenquanicd/APB-BUS-Generator` | the internal 2-master bus -- name clash with `P_BUS`, MAS section 11 | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
 The reset filter, synchronisers and clock gates are library cells, instantiated
