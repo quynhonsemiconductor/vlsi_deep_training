@@ -141,7 +141,8 @@ jobs:
         run: |
           title="**Connectivity, Verilator** (open-source cross-check; VCS and Verdi on the server are the reference)"
           if grep -q '^no block with RTL changed' build/conn/report.md; then exit 0; fi
-          body=$(printf '%s\n\n%s\n' "$title" "$(head -c 60000 build/conn/report.md)")
+          run="$GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID"
+          body=$(python3 flow/conn/ci_comment.py build/conn/report.md "$title" "$run")
           id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
                  --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"**Connectivity, Verilator**\"))) | .id" | tail -1)
           if [ -n "$id" ]; then
