@@ -21,6 +21,8 @@ package qnsc_pkg;
   localparam int unsigned C_CLK_MHZ    = 20;
   localparam int unsigned C_APB_PADDR_WIDTH = 12;  // P_BUS -> every APB slave
   localparam logic [31:0]  C_CHIP_ID = 32'h51534F43;  // SYSCSR CHIP_ID_REV, ASCII 'QSOC'
+  localparam logic [C_ADDR_WIDTH-1:0] C_AXI2APB_BASE = 32'h80000000;
+  localparam int unsigned C_AXI2APB_SIZE = 262144;  // 256 KiB, the whole P_BUS window (AXI_M3)
 
   // ---- memory map ----------------------------------------------------------
   // Source: QSOC_HAS Table 7-1. Every address in the 32-bit space belongs to
@@ -98,14 +100,18 @@ package qnsc_pkg;
   // The cluster name is what goes into the port name the naming rule requires:
   //   i_clk_<domain> / i_rst_n_<domain>
   //   i_clk_cpu   hardwired on, not writable
-  //     cpu, bus, sysdbg, syscsr
+  //     cpu, sysdbg
+  //   i_clk_sbus  hardwired on, not writable
+  //     bus
+  //   i_clk_pbus  hardwired on, not writable
+  //     bus, syscsr
   //   i_clk_mem   hardwired on, not writable
   //     rom, isram, dsram
   //   i_clk_wdt   hardwired on, not writable
   //     wdt
   //   i_clk_peri  gateable via CLK_EN in SCRC
   //     timer_0, timer_1, uart_0, uart_1, spi, i2c, gpio, dma, pwm
-  localparam int unsigned C_CLK_CLUSTERS = 4;
+  localparam int unsigned C_CLK_CLUSTERS = 6;
 
   localparam int unsigned C_RST_SOURCES = 3;   // power_on, watchdog, software
 

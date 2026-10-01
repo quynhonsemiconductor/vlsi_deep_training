@@ -30,6 +30,7 @@ DOCS = [
     # everybody copies, so if it stops rendering the whole team is blocked, and
     # CI should be what notices.
     ("QNSC_TEMPLATE_MAS", "TEMPLATE"),
+    ("QNSC_BUS_MAS", "BUS"),
     ("QNSC_RAM_MAS", "RAM"),
     ("QNSC_SYSDBG_MAS", "SYSDBG -- Debugger"),
     ("QNSC_Interrupt_Map_MAS", "Interrupt Map"),
