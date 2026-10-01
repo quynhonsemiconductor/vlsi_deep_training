@@ -8,7 +8,7 @@
 #ifndef QSOC_BOOT_H
 #define QSOC_BOOT_H
 
-/* ---- Memory map (util/qsoc_contract.yml, QNSC_BOOT_SPEC V3.0 Table 3-1) -
+/* ---- Memory map (util/qsoc_contract.yml, QNSC_BOOT_SPEC V3.1 Table 3-1) -
  * TODO(lead): take these from the qnsc_map.h generated from the contract
  * (BOOT_SPEC Table 10-1), so the C side cannot drift from the RTL side.
  */
@@ -38,22 +38,29 @@
 #define LCR_DLAB        0x80u
 #define LCR_8N1         0x03u
 #define FCR_EN_CLR      0x07u         /* enable FIFOs, clear RX and TX       */
+#define FCR_EN_CLR_RX   0x03u         /* enable FIFOs, clear RX only: a drain */
+                                      /* must not drop a token still in TX   */
 #define LSR_DR          0x01u         /* data ready                          */
 #define LSR_ERR         0x0Eu         /* overrun | parity | framing          */
 #define LSR_THRE        0x20u         /* THR empty: can queue the next byte  */
 #define LSR_TEMT        0x40u         /* transmitter fully empty             */
 
-/* 20 MHz / (16 x 115200) = 10.85 -> 11 -> 113 636 baud, -1.36 % (8N1 ok). */
-#define UART_DIVISOR    11u
+/* 20 MHz / (16 x 65) = 19 231 baud, +0.16 % from 19 200 (QNSC_BOOT_SPEC 5):
+ * the fastest standard rate within 0.5 % at 20 MHz (28 800 is +0.94 %,
+ * 38 400 and up -1.36 %), inside the mentor's 10 000-20 000 range.        */
+#define UART_DIVISOR    65u
 
-/* ---- Timeouts (loop counts, not time) ---------------------------------
- * One poll of LSR is an APB read through CPU2AXI, S_BUS and AXI2APB: at
- * least ~10 clk. 200 000 polls >= 2 M clk = 100 ms at 20 MHz. These are
- * MINIMUM times: a slower poll only makes them longer, and the PC loader
- * margins (QNSC_BOOT_SPEC V3.0, 7.3) cover that, so no retune is needed.
+/* ---- Timeouts (loop counts, not time; QNSC_BOOT_SPEC V3.1 7.3) ---------
+ * A poll is at least one APB read and an APB transfer takes at least 2 clk,
+ * so these are MINIMUM times at 20 MHz: RX_TIMEOUT >= 100 ms (192 bytes at
+ * 19 231 baud), DRAIN_IDLE >= 50 ms (96 bytes). The margins cover gaps the
+ * PC's operating system and USB-serial adapter put in the stream. A slower
+ * poll only lengthens them, but RX_TIMEOUT must stay below the loader's 2 s
+ * token wait, so a poll must take fewer than 40 clk. The real time per poll
+ * is measured in simulation (QNSC_BOOT_SPEC 10).
  */
-#define RX_TIMEOUT      200000u       /* between two bytes of one frame      */
-#define DRAIN_IDLE      20000u        /* line quiet this long = drained      */
+#define RX_TIMEOUT      1000000u      /* between two bytes of one frame      */
+#define DRAIN_IDLE      500000u       /* line quiet this long = drained      */
 
 /* ---- Frame format ------------------------------------------------------
  *  off  size  field      rule checked by ROM
@@ -73,7 +80,8 @@
 #define MAGIC_QSOC      TOK('Q', 'S', 'O', 'C')   /* 0x434F5351 */
 
 /* ---- Handshake tokens, ROM -> PC, always 4 ASCII bytes ----------------- */
-#define TOK_QRDY        TOK('Q', 'R', 'D', 'Y')   /* ready: send a frame      */
+#define TOK_QRDY        TOK('Q', 'R', 'D', 'Y')   /* drained after a failure: */
+                                                  /* resend the whole frame   */
 #define TOK_ACKH        TOK('A', 'C', 'K', 'H')   /* header accepted          */
 #define TOK_ACKP        TOK('A', 'C', 'K', 'P')   /* payload ok, jumping      */
 #define TOK_FHCR        TOK('F', 'H', 'C', 'R')   /* header CRC mismatch      */
