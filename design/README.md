@@ -202,7 +202,7 @@ behaviour across the chip.
 
 ## Naming
 
-**`QNSC_RTL_Design_Naming_Rule` V1.1 is mandatory.** The full document is
+**`QNSC_RTL_Design_Naming_Rule` V1.2 is mandatory.** The full document is
 [`doc/rules/QNSC_RTL_Design_Naming_Rule.pdf`](../doc/rules/QNSC_RTL_Design_Naming_Rule.pdf). The rules
 that come up most:
 
@@ -211,9 +211,16 @@ that come up most:
 | Module, in house | `m_qnsc_<function>` | `m_qnsc_intmap` |
 | Module, wrapper around IP | `m_qnsc_wrap_<block>`: the block's name in the contract, without an index | `m_qnsc_wrap_pwm`, `m_qnsc_wrap_uart` (for `uart_0`, `uart_1`), `m_qnsc_wrap_timer` |
 | Module, generic and shared | `qnsc_<function>` (no `m_`) | `qnsc_fifo_sync` |
+| Chip top (2.1) | `m_qnsc_top` (every wrapper), `m_qnsc_chip` (pads + `m_qnsc_top`), in `design/top/rtl/` only. A block's top is its wrapper: no `_top` | `m_qnsc_top` |
+| Nested wrapper (2.1) | `m_qnsc_wrap_<ip>_<part>` | `m_qnsc_wrap_cpu_ibex` |
+| Package (2.1) | `qnsc_<function>_pkg` | `qnsc_pkg`, `qnsc_cpu2axi_pkg` |
+| Type (2.6) | `<function>_t`; enum members `S_` / `C_` | `state_t` = `{S_IDLE, S_BUSY}` |
+| File (2.7) | one module, package or interface, named after it; emacs source `<module>.src.sv` | `m_qnsc_wrap_uart.sv` |
+| Technology cell (2.8) | RTL instantiates `qnsc_<function>` only; the library cell, under its own name, only inside it, instance `u_size_only_<function>` | `qnsc_clock_gate` |
 | Port | `i_` / `o_` / `io_` prefix | `i_clk_sys`, `o_int_timer_0` |
-| Clock, reset | `i_clk_<domain>`, `i_rst_n_<domain>` | `i_rst_n_sys` |
+| Clock, reset | `i_clk_<domain>`, `i_rst_n_<domain>`; in a `qnsc_` cell the domain is the role | `i_rst_n_sys`, `i_clk_src`, `o_clk_gated` |
 | APB, AXI | `i_bus_apb_<sig>`, `i_bus_axi_<ch>_<sig>` | `i_bus_apb_paddr` |
+| Several bus ports (3.3, 3.4) | the port after the protocol, as the contract names it; inside a block a struct `_req` / `_rsp` | `i_bus_axi_s_0_aw_addr`, `o_bus_apb_m_8_psel`, `o_bus_axi_req` |
 | Registered signal | `r_<function>` | `r_timer_count` |
 | Combinational signal | `w_<function>` | `w_timer_done` |
 | Parameter, constant, state | `P_` / `C_` / `S_` uppercase | `P_DATA_WIDTH`, `S_IDLE` |

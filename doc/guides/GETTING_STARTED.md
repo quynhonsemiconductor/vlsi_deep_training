@@ -38,7 +38,7 @@ A block **designed in house** (SYSDBG, INTMAP) has no IP: its RTL is written her
 |---|---|
 | [`CONTRIBUTING.md`](../../CONTRIBUTING.md) | Order of work, the checks, what not to do |
 | [`design/README.md`](../../design/README.md) | Block layout, naming table, the decisions the rule leaves open |
-| [`doc/rules/`](../rules) | **Mandatory** Naming Rule V1.1, and Tâm's EMACS quick guide |
+| [`doc/rules/`](../rules) | **Mandatory** Naming Rule V1.2, and Tâm's EMACS quick guide |
 | Your block's MAS in [`doc/specs/`](../specs) | The ports QSoC needs (Interface), tie-offs, instances |
 | [`util/qsoc_contract.yml`](../../util/qsoc_contract.yml) | Addresses, interrupt lines, clock domains. Never typed by hand |
 
