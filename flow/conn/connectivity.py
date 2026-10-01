@@ -249,7 +249,6 @@ def report(block, top, ports, cells, assigns, procs):
         for w in procs[1]:
             drivers.setdefault(w, []).append("always blocks")
     fails, notes, out = [], [], []
-    out.append(f"#### `{block}`: top `{top}`\n")
     out.append("| Port | Dir | Width | Connects to |\n|---|---|---:|---|")
     for n, d, w in ports:
         to = (loads if d == "input" else drivers).get(n, [])
@@ -267,14 +266,24 @@ def report(block, top, ports, cells, assigns, procs):
     if assigns:
         out.append("\nContinuous assigns\n")
         out += [f"- `{lhs} = {rhs}`" for lhs, rhs, _, _ in assigns]
-    out.append("\n" + mermaid(top, ports, cells, assigns, loads, drivers, procs))
-    if notes:
-        out.append("\nAllowed, check against the MAS tie-off table:\n")
-        out += [f"- {n}" for n in notes]
+    # verdict and diagram first; the tables, the long part, folded below them, between
+    # markers so that a PR comment too long for GitHub can drop them (ci_comment.py)
+    head = [f"#### `{block}`: top `{top}`\n"]
     if fails:
-        out.append("\n**FAIL**\n")
-        out += [f"- {f}" for f in fails]
-    return "\n".join(out) + "\n", fails
+        head.append("**FAIL**\n")
+        head += [f"- {f}" for f in fails]
+        head.append("")
+    head.append(mermaid(top, ports, cells, assigns, loads, drivers, procs))
+    if notes:
+        head.append("\nAllowed, check against the MAS tie-off table:\n")
+        head += [f"- {n}" for n in notes]
+    head += ["", TABLES_BEGIN, "<details><summary>Ports, pins and assigns</summary>\n"]
+    return "\n".join(head + out + ["\n</details>", TABLES_END]) + "\n", fails
+
+
+TABLES_BEGIN, TABLES_END = "<!-- conn-tables -->", "<!-- /conn-tables -->"
+# GitHub renders no Mermaid diagram above these (mermaid's maxTextSize and maxEdges)
+MERMAID_MAX_TEXT, MERMAID_MAX_EDGES = 50000, 500
 
 
 def mermaid(top, ports, cells, assigns, loads, drivers, procs):
@@ -285,9 +294,10 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
     is drawn around the top: Mermaid's layout routes every wire that crosses a box
     through one point of its border, which makes a large block unreadable. To keep a
     wide interface readable:
-      - bus ports, named `<i|o>_bus_<protocol>[_<channel>]_<signal>` by the Naming
-        Rule, are one node per direction and prefix (`i_bus_apb_*`, `o_bus_axi_aw_*`)
-        that lists its members, when there are three or more;
+      - ports that share a direction and a prefix of two words or more up to their
+        last `_` are one node that lists its members, when there are three or more: a
+        bus channel (`i_bus_apb_*`, `o_bus_axi_aw_*`, `i_axi_s_0_aw_*`, `o_apb_spi_*`).
+        A one-word prefix (`i_int_*`) is not a bus, its ports stay one node each;
       - assigns to slices of one signal (`o_int_fast[0]`..`[10]`) are one node, and
         so are assigns to the members of one bus group;
       - constants are one node per value (`0`, `1`, ...), as tie cells in a schematic.
@@ -300,11 +310,12 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
     nid = lambda s: "n_" + re.sub(r"[^A-Za-z0-9]", "_", s)
     abase = lambda lhs: re.sub(r"\[[^\]]*\]$", "", lhs)
 
+    is_global = lambda n: bool(re.match(r"i_(clk|rst_n)_", n))
     groups = {}
     for n, d, _ in ports:
-        if re.match(r"[io]_bus_", n):
-            groups.setdefault((n.rsplit("_", 1)[0], d), []).append(n)
-    is_global = lambda n: bool(re.match(r"i_(clk|rst_n)_", n))
+        prefix = n.rsplit("_", 1)[0]
+        if prefix.count("_") >= 2 and not is_global(n):     # <i|o>_<word>_<word>...
+            groups.setdefault((prefix, d), []).append(n)
     pnode, plabel, gname = {}, {}, {}
     for (prefix, d), members in groups.items():
         if len(members) >= 3:
@@ -409,6 +420,13 @@ def mermaid(top, ports, cells, assigns, loads, drivers, procs):
         lab = ", ".join(labs) if len(", ".join(labs)) <= 40 else f"{labs[0]} ... ({len(labs)})"
         L.append(f'  {a} -->|"{lab}"| {b}')
     L.append("```")
+    text = "\n".join(L)
+    if len(text) > MERMAID_MAX_TEXT or len(edges) > MERMAID_MAX_EDGES:
+        # GitHub would show a broken diagram: say so instead, the tables stay complete
+        return (f"*No diagram: {len(edges)} wires, {len(text)} characters, above what "
+                f"GitHub's Mermaid draws ({MERMAID_MAX_EDGES} wires, {MERMAID_MAX_TEXT} "
+                "characters). The tables give every connection.*")
+    L = [text]
     L.append("*Flag: a port of the top; box: an instance, with its clock and reset pins in "
              "italics (global nets, not drawn); hexagon: an assign or procedural logic; circle: "
              "a constant. A wire label is the pin it enters or leaves; `...` shortens a list, "
