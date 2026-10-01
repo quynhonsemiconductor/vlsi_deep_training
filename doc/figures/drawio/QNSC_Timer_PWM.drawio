@@ -255,10 +255,10 @@
           <mxGeometry x="10" y="760" width="120" height="44" as="geometry"/>
         </mxCell>
         <mxCell id="iomux_in" value="IO MUX" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=11;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="170" y="760" width="130" height="44" as="geometry"/>
+          <mxGeometry x="160" y="760" width="110" height="44" as="geometry"/>
         </mxCell>
         <mxCell id="sync2ff" value="2FF sync&#10;i_clk_peri" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="330" y="760" width="120" height="44" as="geometry"/>
+          <mxGeometry x="380" y="760" width="110" height="44" as="geometry"/>
         </mxCell>
         <mxCell id="intmap2" value="INTMAP&#10;fast line 7  (mcause 23)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="1020" y="150" width="170" height="60" as="geometry"/>
@@ -350,7 +350,7 @@
         <mxCell id="iomux_in_sync2ff_27" value="i_pad_tim_ext" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="iomux_in" target="sync2ff">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="sync2ff_pool_28" value="ext_sig_i[3:0]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.4815;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sync2ff" target="pool">
+        <mxCell id="sync2ff_pool_28" value="ext_sig_i[3:0]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.9258999999999997;entryY=1.0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sync2ff" target="pool">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
       </root>

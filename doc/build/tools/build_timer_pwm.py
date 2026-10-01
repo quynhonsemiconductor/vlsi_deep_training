@@ -147,8 +147,8 @@ p = [
     N("text", 10, 657, 120, 36, "ext_sig_i[31:4] = 0", "box", 10),
 
     N("tpads", 10, 760, 120, 44, "TIM_EXT0 .. 3\npads", "grey", 10),
-    N("iomux_in", 170, 760, 130, 44, "IO MUX", "grey", 11, True),
-    N("sync2ff", 330, 760, 120, 44, "2FF sync\ni_clk_peri", "box", 10),
+    N("iomux_in", 160, 760, 110, 44, "IO MUX", "grey", 11, True),
+    N("sync2ff", 380, 760, 110, 44, "2FF sync\ni_clk_peri", "box", 10),
 
     N("intmap2", 1020, 150, 170, 60, "INTMAP\nfast line 7  (mcause 23)", "grey", 10, True),
     N("iomux_out", 1020, 240, 170, 160,
@@ -192,7 +192,7 @@ q = [
     E("text", "r", "pool", "l"),
     E("tpads", "r", "iomux_in", "l"),
     E("iomux_in", "r", "sync2ff", "l", "i_pad_tim_ext"),
-    E("sync2ff", "r", "pool", "b@0.4815", "ext_sig_i[3:0]"),
+    E("sync2ff", "r", "pool", "b@0.9259", "ext_sig_i[3:0]"),
 ]
 
 emit([("fig_timer_block", "TIMER0 and TIMER1 in QSOC", t, e),
