@@ -1,10 +1,11 @@
-# QSOC boot ROM (QNSC_BOOT_SPEC V3.0 section 8, QNSC_ROM_MAS V3.1 7.2):
+# QSOC boot ROM (QNSC_BOOT_SPEC V3.1 section 8, QNSC_ROM_MAS V3.1 7.2):
 #   C/asm -> boot.elf -> boot.bin -> rom_image.hex -> m_qnsc_rom_image.sv
 #
 #   make                       build + size check
 #   make rtl                   copy the hex to util/gen/rom/ and regenerate m_qnsc_rom_image.sv
 #   make CROSS=riscv-none-elf- (xPack toolchain on Windows)
 #   make test                  protocol test on the Python ROM model (no HW)
+#   make test-serial           the loader CLI through pyserial (socket://) against the model
 #   make clean
 
 CROSS   ?= riscv64-unknown-elf-
@@ -25,7 +26,7 @@ LDFLAGS := -T link.ld -nostartfiles -nostdlib -Wl,--gc-sections -Wl,-Map,boot.ma
 
 SRCS := crt0.S boot.c
 
-.PHONY: all size test rtl clean
+.PHONY: all size test test-serial rtl clean
 REPO    := ../../..
 ROM_GEN := $(REPO)/util/gen/rom
 all: rom_image.hex boot.dis size
@@ -53,6 +54,9 @@ rtl: rom_image.hex
 
 test:
 	$(PYTHON) tools/test_protocol.py
+
+test-serial:
+	$(PYTHON) tools/test_serial_link.py
 
 clean:
 	rm -f boot.elf boot.bin boot.map boot.dis rom_image.hex
