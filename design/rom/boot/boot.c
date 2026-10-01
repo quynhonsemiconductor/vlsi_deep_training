@@ -2,15 +2,18 @@
  * QSOC boot ROM -- serial bootloader.
  *
  * Receives one frame over UART0 (polling, no interrupt), writes the payload
- * into ISRAM word by word, checks both CRCs and jumps to ENTRY. Every step
- * answers the PC loader with a 4-byte token (boot.h); on any failure the ROM
- * drains the line, sends QRDY again and waits for the PC to resend.
+ * into ISRAM word by word, checks both CRCs and jumps to ENTRY
+ * (QNSC_BOOT_SPEC V3.1, 7). Nothing is sent after reset: the ROM listens for
+ * the magic at once. Every step after the magic answers the PC loader with a
+ * 4-byte token (boot.h); on any failure the ROM sends the token, drains the
+ * line, sends QRDY and waits for the PC to resend the whole frame.
  *
  * Constraints that shape the code:
  *  - ROM budget 1 KiB of code (Day005). Bitwise CRC32, no lookup table.
  *  - No .data / .bss (link.ld asserts it): state lives in registers + stack.
  *  - No .rodata: tokens are 32-bit immediates, not strings.
- *  - Word writes only: AXI4-SRAM-CONTROLLER has no byte strobe.
+ *  - One 32-bit write per 4 received bytes keeps the payload loop simple
+ *    (QNSC_BOOT_SPEC 7.4); ISRAM itself also takes byte writes.
  */
 #include <stdint.h>
 #include "boot.h"
@@ -35,6 +38,12 @@ static void uart_putc(uint32_t c)
 {
     while ((UART(UART_LSR) & LSR_THRE) == 0) { }
     UART(UART_THR) = c & 0xFFu;
+}
+
+/* Wait until the last byte has left the shift register. */
+static void uart_tx_flush(void)
+{
+    while ((UART(UART_LSR) & LSR_TEMT) == 0) { }
 }
 
 /* Send a token: 4 bytes, least significant first. */
@@ -84,10 +93,11 @@ static uint32_t crc32_word(uint32_t crc, uint32_t w)
     return crc;
 }
 
-/* Throw away whatever the PC was still sending, until the line is quiet. */
+/* Throw away whatever the PC was still sending, until the line is quiet.
+ * Clears the RX FIFO only: the TX side may still hold the failure token. */
 static void uart_drain(void)
 {
-    UART(UART_FCR) = FCR_EN_CLR;
+    UART(UART_FCR) = FCR_EN_CLR_RX;
     while (uart_getc(DRAIN_IDLE) != RX_TMO) { }
 }
 
@@ -96,14 +106,17 @@ static uint32_t boot_once(void)
 {
     uint32_t w, len, load, entry, crc, rc;
 
-    put_tok(TOK_QRDY);
-
-    /* Hunt the magic through a 4-byte sliding window: noise on the line
-     * (cable plugged in, terminal opened) is skipped without a reply.   */
+    /* Hunt the magic through a 4-byte sliding window, with no time limit.
+     * Noise on the line (cable plugged in, terminal opened) is skipped
+     * without a reply, and so is a byte with a UART error: reading LSR
+     * cleared the error, reading RBR drops the byte (QNSC_BOOT_SPEC 7.1). */
     w = 0;
     do {
         int c = uart_getc(0);
-        if (c == RX_ERR) return TOK_FUAR;
+        if (c == RX_ERR) {
+            (void)UART(UART_RBR);
+            continue;
+        }
         w = (w >> 8) | ((uint32_t)c << 24);
     } while (w != MAGIC_QSOC);
 
@@ -140,7 +153,7 @@ static uint32_t boot_once(void)
     /* ---- Jump: ACK must be fully on the wire before the app may
      *      reprogram UART0.                                              */
     put_tok(TOK_ACKP);
-    while ((UART(UART_LSR) & LSR_TEMT) == 0) { }
+    uart_tx_flush();
     /* fence.i (Zifencei, in -march; QNSC_BOOT_SPEC 7.5, 8). Ibex flushes
      * its prefetch buffer on it, so no stale ROM-era fetch survives the
      * jump.                                                              */
@@ -153,7 +166,9 @@ void boot_main(void)
 {
     uart_init();
     for (;;) {
-        put_tok(boot_once());
+        put_tok(boot_once());          /* the failure token, sent in full */
+        uart_tx_flush();
         uart_drain();
+        put_tok(TOK_QRDY);             /* the PC may resend the frame     */
     }
 }
