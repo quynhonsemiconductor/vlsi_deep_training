@@ -27,6 +27,10 @@ command -v verilator >/dev/null 2>&1 || {
 # An optional argument lints one block: bash flow/lint/lint_all.sh pwm
 if [ $# -gt 0 ]; then dirs="design/$1/"; else dirs="design/*/"; fi
 
+# Technology cells (design/common/tech/$TECH.f) as library files: compiled only
+# where a block instantiates them.
+tech=$(bash flow/tech/libs.sh) || exit 1
+
 fail=0
 for dir in $dirs; do
   block=$(basename "$dir")
@@ -56,7 +60,7 @@ for dir in $dirs; do
   # The log is written first and grepped second: with pipefail, piping verilator
   # into grep took verilator's non-zero exit as the result and reported "ok".
   log="/tmp/lint-${block}.log"
-  verilator --lint-only -Wall -Wno-fatal $waiver -F "$flist" > "$log" 2>&1
+  verilator --lint-only -Wall -Wno-fatal $waiver -F "$flist" $tech > "$log" 2>&1
   # A filelist that holds only packages (design/top today: qnsc_pkg.sv) has no
   # module to elaborate. Verilator 5.020, the Ubuntu package CI installs, stops
   # with "No top level module found"; newer releases accept it. Not a defect.
@@ -72,4 +76,16 @@ for dir in $dirs; do
     printf '  %-10s ok\n' "$block"
   fi
 done
+
+# The cells themselves, each its own top, on a whole-tree lint
+if [ $# -eq 0 ]; then
+  for lib in $(echo "$tech" | grep -oE '[^ ]+\.sv'); do
+    cell=$(basename "$lib" .sv); log="/tmp/lint-tech-${cell}.log"
+    verilator --lint-only -Wall -Wno-fatal --top-module "$cell" "$lib" > "$log" 2>&1
+    if grep -qE '%(Error|Warning)' "$log"; then
+      printf '  %-10s FAIL (%s)\n' tech "$cell"; sed 's/^/      /' "$log"; fail=1
+    fi
+  done
+  printf '  %-10s ok (%s)\n' tech "${TECH:-generic}"
+fi
 exit $fail

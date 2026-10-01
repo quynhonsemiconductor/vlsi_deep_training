@@ -27,6 +27,8 @@ VENDOR_VLT = REPO / ".vscode" / "verilator_vendor.vlt"
 def main() -> None:
     dirs: set[Path] = set()
     incdirs: set[Path] = set()
+    # the generic technology cells, which flows add to every block (Naming Rule 2.8)
+    dirs.add((REPO / "design" / "common" / "tech" / "generic").resolve())
     for flist in sorted((REPO / "design").glob("*/*.f")):
         for raw in flist.read_text(errors="ignore").splitlines():
             line = raw.split("//")[0].strip()

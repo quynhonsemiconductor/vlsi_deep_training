@@ -11,3 +11,7 @@ so it is not a block owner's file.
 
 Put something here only when a second block actually needs it. One user is not
 shared code.
+
+Technology cells (clock gate, clock mux, and later pads and macros) are in
+[`tech/`](tech/README.md): one generic implementation, one per ASIC library, chosen
+with `TECH`.
