@@ -15,10 +15,12 @@
 # prints the message verbatim and cannot tell that the two have diverged.
 #
 # Source: doc/rules/QNSC_RTL_Design_Naming_Rule.pdf (moved from MCU_guide_ws 3d66c27)
-# Version enforced: V1.1, 28/09/2026 (wrapper name, rule 2.1). V1.0: 15/09/2026, Tam Nguyen
+# Version enforced: V1.2, 01/10/2026 (chip top, types, files, technology cells,
+# buses with several ports). V1.1: 28/09/2026 (wrapper name, rule 2.1).
+# V1.0: 15/09/2026, Tam Nguyen
 # =============================================================================
 
-version: "1.1"
+version: "1.2"
 document: QNSC_RTL_Design_Naming_Rule
 
 # What the checker looks at. Vendored IP keeps its upstream conventions and is
@@ -46,6 +48,59 @@ identifiers:
     pattern: '^(?:i_|o_|io_)[a-z0-9_]+$'
     message: must start with i_, o_ or io_
 
+  # The prefix states the direction the port is declared with.
+  port_direction:
+    rule: "1.2 port prefix"
+    prefix: {input: "i_", output: "o_", inout: "io_"}
+    message: "the prefix must match the direction"
+
+  # A port whose name starts like a clock or a reset must be a complete one:
+  # i_clk alone, i_rstn, i_rst_sys (active high) are not. In a generic module
+  # (qnsc_*), which belongs to no domain, <domain> names the role: src, dst, gated.
+  clock:
+    rule: "3.1 clock"
+    applies_to: '^(?:i|o)_clk(?:_|$)'
+    pattern: '^(?:i|o)_clk_[a-z0-9]+(?:_[a-z0-9]+)*$'
+    message: "must be i_clk_<domain> / o_clk_<domain>"
+  reset:
+    rule: "3.2 reset"
+    applies_to: '^(?:i|o)_(?:rst|reset)'
+    pattern: '^(?:i|o)_rst_n_[a-z0-9]+(?:_[a-z0-9]+)*$'
+    message: "must be i_rst_n_<domain> / o_rst_n_<domain>, active low"
+
+  # 3.3 / 3.4. A port of a bus carries bus_<protocol>, then the port when the
+  # module has several (s_0, m_8: the port as util/qsoc_contract.yml names it),
+  # then the channel (AXI) and the signal. A module inside a block may take a
+  # bus as one packed struct, _req and _rsp; the wrapper's ports stay flat.
+  bus:
+    rule: "3.3/3.4 bus"
+    # a protocol word in the name, or an APB signal name at its end (i_paddr)
+    applies_to: '^(?:i|o)_(?:.*_)?(?:apb|axi)(?:_|$)|_p(?:addr|sel|enable|write|wdata|rdata|ready|slverr|strb|prot)$'
+    pattern: >-
+      ^(?:i|o)_bus_(?:apb_(?:[sm]_[0-9]+_)?(?:p[a-z]+|req|rsp)|axi_(?:[sm]_[0-9]+_)?(?:(?:aw|w|b|ar|r)_[a-z]+|req|rsp))$
+    message: >
+      must be <i|o>_bus_apb[_<port>]_<signal> or
+      <i|o>_bus_axi[_<port>]_<channel>_<signal> (<port> = s_<n> / m_<n> as in the
+      contract; a struct is ..._req / ..._rsp)
+
+  # 2.6. A type written here ends in _t; a member of an enum is a constant or an
+  # FSM state.
+  type:
+    rule: "2.6 type"
+    pattern: '^[a-z][a-z0-9_]*_t$'
+    message: "must be <function>_t, lowercase"
+  enum_member:
+    rule: "2.6 type"
+    pattern: '^(?:C_|S_)[A-Z0-9_]+$'
+    message: "an enum member must be S_<STATE> (FSM state) or C_<FUNCTION>"
+
+  # 2.1. Packages share one global namespace with every vendored package
+  # (axi_pkg, tlul_pkg); the prefix keeps ours apart.
+  package:
+    rule: "2.1 module"
+    pattern: '^qnsc(?:_[a-z0-9]+)*_pkg$'
+    message: "must be qnsc_<function>_pkg (or qnsc_pkg, the generated contract package)"
+
   parameter:
     rule: "2.4 parameter"
     pattern: '^(?:P_|C_|S_)[A-Z0-9_]+$'
@@ -65,6 +120,22 @@ identifiers:
       must be r_<function> if registered, w_<function> if combinational, or
       mem_<function> if a memory array
 
+# 2.1. The chip top: m_qnsc_top instantiates every block wrapper, m_qnsc_chip is
+# m_qnsc_top plus the pad ring. They are defined in design/top/rtl/ and only there.
+chip_top:
+  rule: "2.1 module"
+  directory: "design/top/rtl"
+  modules: ["m_qnsc_top", "m_qnsc_chip"]
+  message: "the chip top is m_qnsc_top (core) or m_qnsc_chip (pads + m_qnsc_top), in design/top/rtl/"
+
+# 2.7. One design unit per file, the file named after it. Every flow that takes
+# a top from a filelist (VCS, synthesis, connectivity) takes it from the file
+# name. An emacs source is <module>.src.sv.
+files:
+  rule: "2.7 file"
+  message: "one module, package or interface per file, and the file is named after it"
+
+
 # -----------------------------------------------------------------------------
 # Section 1 -- lexical rules, applied to every identifier
 # -----------------------------------------------------------------------------
@@ -79,7 +150,8 @@ lexical:
 
   active_low:
     rule: "1.3 active low"
-    forbid_pattern: '\b(?:rstn|resetn|reset_b|rst_bar)\b'
+    # whole words of an identifier: catches i_rstn and w_sys_rstn, not first_name
+    forbid_pattern: '(?:^|_)(?:rstn|resetn|reset_b|rst_bar|rst_b)(?:_|$)'
     message: "active low is _n after the meaning, as in i_rst_n_sys"
 
   numeric_index:
