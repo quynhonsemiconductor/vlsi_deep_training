@@ -1,6 +1,6 @@
 # `common/tech` — technology cells
 
-Cells that RTL cannot describe portably: a clock gate, a clock mux or buffer at a
+Cells that RTL cannot describe portably: a clock gate, a clock buffer at a
 known point, and later pads and memory macros. RTL instantiates only these
 modules, never a library cell (Naming Rule 2.8). Each technology implements every
 module with the **same name and ports**, and the build chooses one with `TECH`:
@@ -23,7 +23,6 @@ TECH=<tech> make vcs BLOCK=scrc
 | `qnsc_clk_gate` | `i_clk_src`, `i_en`, `i_dft_scan_en`, `o_clk_gated` | enable latched while the clock is low; scan enable forces it on |
 | `qnsc_clk_buf` | `i_clk_src`, `o_clk_buf` | wire |
 | `qnsc_clk_inv` | `i_clk_src`, `o_clk_inv` | inverter |
-| `qnsc_clk_mux` | `i_clk_src_0`, `i_clk_src_1`, `i_sel`, `o_clk_mux` | plain mux: switch only while both clocks are stopped |
 | `qnsc_clk_and` | `i_clk_src`, `i_en`, `o_clk_and` | AND |
 
 No block lists these files. Every flow (lint, VCS, synthesis, GCA, connectivity)

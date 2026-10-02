@@ -30,7 +30,7 @@ directory, owner and specification of every block are in [`doc/BLOCKS.md`](../do
 `design/common/` holds RTL instantiated by **more than one** block. It is owned by
 the maintainers, because a change there affects every block that instantiates it.
 
-`design/common/tech/` holds the technology cells (clock gate, clock mux, later pads
+`design/common/tech/` holds the technology cells (clock gate, clock buffer, later pads
 and macros): RTL instantiates `qnsc_clk_gate`, never a library cell, and `TECH`
 chooses the implementation ([`common/tech/README.md`](common/tech/README.md)).
 
