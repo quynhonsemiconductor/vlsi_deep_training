@@ -19,7 +19,7 @@ out="build/sta/${block}"
 mkdir -p "$out"
 
 yosys -m slang -q -l "$out/map.log" -p "
-  read_slang -F ${flist} --top ${top}
+  read_slang -F ${flist} $(bash flow/tech/libs.sh | tr '\n' ' ') --top ${top}
   synth -top ${top}
   dfflibmap -liberty ${LIBERTY}
   abc -liberty ${LIBERTY}

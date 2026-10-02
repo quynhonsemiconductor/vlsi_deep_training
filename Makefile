@@ -49,6 +49,7 @@ help:
 	@echo "make vcs-post       post that summary on a PR, from your machine BLOCK= PR="
 	@echo "make verdi          open the VCS compile in Verdi (schematic) BLOCK="
 	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=]"
+	@echo "TECH=<tech>         technology cells for lint/vcs/syn/gca/connectivity (default generic; design/common/tech/)"
 
 ide:
 	@python3 flow/ide/gen_verilator_f.py > /dev/null

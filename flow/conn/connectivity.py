@@ -72,8 +72,11 @@ def check_version():
 def elaborate(block, top, out):
     check_version()
     cwd = os.path.join(ROOT, "design", block)
+    tech = subprocess.run(["bash", "flow/tech/libs.sh"], cwd=ROOT, capture_output=True,
+                          text=True, check=True).stdout.split()
+    tech = [x if x == "-v" else os.path.join(ROOT, x) for x in tech]  # cells, as libraries
     args = ["--json-only", "-Wno-fatal", "-Wno-lint", "-Wno-style", "--top-module", top,
-            "-F", f"{block}.f", "--Mdir", out]
+            "-F", f"{block}.f", *tech, "--Mdir", out]
     r = subprocess.run(verilator_cmd(args, cwd), cwd=cwd, capture_output=True, text=True)
     path = os.path.join(out, f"V{top}.tree.json")
     if r.returncode != 0 or not os.path.exists(path):
