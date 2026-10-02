@@ -172,6 +172,7 @@ who must supply it.
 | Import a package or declare a parameter in a wrapper | The IP owner fixes the configuration; `design/top` only connects. verilog-mode does not resolve packages. `IP and integration module rules` fails the PR |
 | Hand-edit `design/top/rtl/qnsc_pkg.sv` | It is generated. CI regenerates and compares |
 | Fork the wrapper per instance for a value that differs | One wrapper; the value is an `i_cfg_*` port tied by `design/top`. A difference in structure is pending with Tâm (`design/README.md`, "Pending") |
+| Instantiate a PDK cell (ICG, clock buffer, pad, SRAM macro) in block RTL | RTL instantiates `qnsc_clk_gate` and the other cells in `design/common/tech/`; `TECH` chooses which library implements them, so the same RTL simulates, runs on FPGA and synthesises for the ASIC. A new library cell is a file in `design/common/tech/<tech>/`, see its README |
 | Rename a vendored module's port to satisfy the naming rule | The rule applies to our RTL. `naming_check.py` already skips identifiers after a dot, after `::`, and system functions such as `$clog2`, for exactly this reason |
 | Rewrite correct RTL to dodge a checker false positive | Report the false positive and fix the checker in `flow/`. A `// naming-check: ignore -- <reason>` is the stop-gap, not a rewrite |
 

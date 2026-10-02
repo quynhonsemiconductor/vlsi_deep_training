@@ -58,6 +58,7 @@ doctor:
 
 hooks:
 	git config core.hooksPath .githooks
+	@echo "TECH=<tech>         technology cells for lint/vcs/syn/gca/connectivity (default generic; design/common/tech/)"
 	@echo "hooks on: git push runs make check (skip once with --no-verify);"
 	@echo "          git pull and branch switches refresh the editor lint paths"
 
