@@ -1,0 +1,10 @@
+`verilator_config
+
+// Reason: New line after the end of verilog module is not needed
+lint_off -rule EOFNEWLINE -file "*/home/stork/QNSC_MCU/CSR/APB-CSR-Generator/RTL/m_vlsi_csr.sv" -match "Missing newline at end of file (POSIX 3.206).*"
+
+// Reason: New line after the end of verilog module is not needed
+lint_off -rule EOFNEWLINE -file "*/home/stork/QNSC_MCU/CSR/APB-CSR-Generator/RTL/models/m_vlsi_synch.sv" -match "Missing newline at end of file (POSIX 3.206).*"
+
+// Reason: PPROT signal of APB Interface not used since CSR APB port is not support protection feature
+lint_off -rule UNUSED -file "*/home/stork/QNSC_MCU/CSR/APB-CSR-Generator/RTL/m_vlsi_csr.sv" -match "Bits of signal are not used: 'i_pprot'[2,0]"
