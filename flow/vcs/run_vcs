@@ -39,6 +39,7 @@ rc=0
 vcs -sverilog +vcs+lic+wait \
     -timescale=1ns/1ps \
     -F "$flist" \
+    $(bash flow/tech/libs.sh) \
     -top "$top" \
     -debug_access -kdb \
     +error+100 \
