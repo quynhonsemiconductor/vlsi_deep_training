@@ -18,10 +18,14 @@ top=${2:-$(grep -oE 'rtl/[A-Za-z0-9_]+\.sv' "$flist" | tail -1 | xargs -n1 basen
 out="build/syn/${block}"
 mkdir -p "$out"
 
+tech=$(bash flow/tech/libs.sh | tr '\n' ' ')
+
+# The one intended latch is the enable latch of the generic clock gate; synthesis
+# keeps the hierarchy, so it is left out of the no-latch check by module.
 yosys -m slang -l "$out/syn.log" -p "
-  read_slang -F ${flist} --top ${top}
+  read_slang -F ${flist} ${tech} --top ${top}
   synth -top ${top}
-  select -assert-none t:\$_DLATCH* t:\$dlatch
+  select -assert-none t:\$_DLATCH* t:\$dlatch %u qnsc_clk_gate/* %d
   check -assert
   stat
   write_verilog -noattr ${out}/${top}_generic.v
