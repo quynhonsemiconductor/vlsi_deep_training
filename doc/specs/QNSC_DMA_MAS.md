@@ -1,6 +1,6 @@
 ---
 title: "DMA"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.3"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -15,6 +15,7 @@ research report it was based on are in
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Ong Bao Vinh | -- | Upstream iDMA used unmodified (frontend `reg`, 32-bit, 2D, APB), per the mentor: open-source 32-bit DMA, IP not redesigned. In-house frontend, descriptor engine and peripheral channels of V2.0 removed; `APB_M13`; idle interrupt |
 | V3.1 | 2026-09-28 | Nghia VT (lead) | -- | Section 4: the libraries iDMA needs (`common_cells`, `axi`, `apb`) |
 | V3.2 | 2026-09-29 | Nghia VT (lead) | Ong Bao Vinh | From Vinh's review: `DST_STRIDE`/`SRC_STRIDE`/`REPS`/`COMPUTE_CFG` at `0xE0`--`0xEC`, `0xDC` empty (6); `NEXT_ID` = 2 and `DONE_ID` = 1 after reset; job IDs retired by the midend, not the backend (3); idle before the last write response (7.4); `LENGTH` = 0 and `REPS` = 0 (7.5); files and libraries (4, 7.6); `BufferDepth` 3; error-handler tie-off (10); tests 010--013 |
+| V3.3 | 2026-10-05 | Nghia VT (lead) | Quan (mentor) | The mentor approved the IP and its interface (Appendix B). Section 4: `cc_stream_fork` and `cc_stream_join` removed, the list checked by elaborating the four modules of 3 with Verilator; `DMA_003` checked in simulation. No change in behaviour |
 
 # 1. Overview
 
@@ -70,11 +71,11 @@ The block is in the `peri` clock cluster, `SCRC` `CLK_EN[10]`.
 | From | Module | Commit | Licence |
 |---|---|---|---|
 | `pulp-platform/iDMA` | `idma_pkg`, `include/idma/typedef.svh`, `guard.svh`; `idma_nd_midend` (with `idma_nd_counter`), `idma_transfer_id_gen`; backend leaves `idma_axi_read`, `idma_axi_write`, `idma_dataflow_element`, `idma_channel_coupler`, `idma_legalizer_page_splitter`; the generated files of 7.6 | `2e0b0fe5` | SHL-0.51 |
-| `pulp-platform/common_cells` | `cc_pkg`; `cc_stream_fifo_optimal_wrap` (with `cc_stream_fifo`, `cc_fifo`, `cc_spill_register_flushable`), `cc_passthrough_stream_fifo`, `cc_fall_through_register`, `cc_rr_arb_tree` (with `cc_lzc`), `cc_popcount`, `cc_stream_fork`, `cc_stream_join`; `registers.svh`, `assertions.svh` | `db427693` (v2.0.0-beta.3+3), the copy `design/bus` uses; iDMA asks for 2.0.0-beta.3 | SHL-0.51 |
+| `pulp-platform/common_cells` | `cc_pkg`; `cc_stream_fifo_optimal_wrap` (with `cc_stream_fifo`, `cc_fifo`, `cc_spill_register_flushable`), `cc_passthrough_stream_fifo`, `cc_fall_through_register`, `cc_rr_arb_tree` (with `cc_lzc`), `cc_popcount`; `registers.svh`, `assertions.svh` | `db427693` (v2.0.0-beta.3+3), the copy `design/bus` uses; iDMA asks for 2.0.0-beta.3 | SHL-0.51 |
 | `pulp-platform/axi` | `axi_pkg`, `axi/typedef.svh` | `70b8e54f`, vendored | SHL-0.51 |
 | `pulp-platform/apb` | `apb_pkg`, `apb/typedef.svh` | `6ae8bf8d`, as iDMA pins | SHL-0.51 |
 
-The filelist is checked by `make lint` and `make vcs` once the wrapper exists: a module a tool reports missing is added, and nothing else. `idma_error_handler` and the on-the-fly compute modules sit only in generate branches this configuration does not elaborate.
+These files, with the generated files of 7.6, elaborate the four modules of 3 in the configuration of 5 with no module missing (Verilator 5.052, `--lint-only`, 2026-10-05). `make lint` and `make vcs` check it again once the wrapper exists: a module a tool reports missing is added, and nothing else. `idma_error_handler` and the on-the-fly compute modules sit only in generate branches this configuration does not elaborate.
 
 Facts this specification relies on, read at that commit:
 
@@ -402,3 +403,5 @@ Accepted limits:
 | Zero `LENGTH`/`REPS`; missing `compute.svh`; error-handler ports | Vinh, V3.1 review | 7.5, 7.6, 10 |
 | `APB` offset of 12 bits in a 16 KiB window | Vinh, V3.1 review | contract convention for every APB block (bus owner); the DMA decodes `paddr[7:0]` |
 | A `done_pend` flag instead of the idle level | Vinh, V3.1 review | Not in V3.x: it adds a register to the wrapper |
+| IP evaluation: interface, and is it usable in QSOC? | Quan (mentor), 2026-10-05 | Approved: frontend APB4 slave on `P_BUS` `APB_M13`, backend AXI4 master on `S_BUS` `AXI_S2`, both generated from upstream templates (5, 7.6). New features (interrupt flags, hardware request) are a separate discussion |
+| Can a 1D job fill a FIFO register? | lead, simulation | No: the frontend drives `INCR`, and on a 32-bit bus five bytes become one 4-byte beat to `THR` and one to `IER`. A 2D job with `LENGTH` = 1 and `DST_STRIDE` = 0 writes `THR` five times with one byte lane each (7.3, `DMA_003`) |
