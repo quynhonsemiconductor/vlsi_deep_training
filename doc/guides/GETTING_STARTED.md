@@ -38,7 +38,7 @@ A block **designed in house** (SYSDBG, INTMAP) has no IP: its RTL is written her
 |---|---|
 | [`CONTRIBUTING.md`](../../CONTRIBUTING.md) | Order of work, the checks, what not to do |
 | [`design/README.md`](../../design/README.md) | Block layout, naming table, the decisions the rule leaves open |
-| [`doc/rules/`](../rules) | **Mandatory** Naming Rule V1.1, and Tâm's EMACS quick guide |
+| [`doc/rules/`](../rules) | **Mandatory** Naming Rule V1.2, and Tâm's EMACS quick guide |
 | Your block's MAS in [`doc/specs/`](../specs) | The ports QSoC needs (Interface), tie-offs, instances |
 | [`util/qsoc_contract.yml`](../../util/qsoc_contract.yml) | Addresses, interrupt lines, clock domains. Never typed by hand |
 
@@ -58,10 +58,18 @@ git switch -c feat/<block>-<what>          # e.g. feat/pwm-wrapper
 | Logic (FSM, counter, register, OR tree) | Plain RTL by hand, rules below |
 
 **Rules for all RTL** (the full table is in `design/README.md`, "Naming"):
-- Ports start with `i_`, `o_` or `io_`: `i_clk_<domain>`, `i_rst_n_<domain>`,
-  `i_bus_apb_*`, `i_bus_axi_<ch>_*`, `o_int_*`, `i_pad_*`/`o_pad_*`, `i_mem_*`, `i_dbg_*`.
+- Ports start with `i_`, `o_` or `io_`, matching their direction: `i_clk_<domain>`,
+  `i_rst_n_<domain>`, `i_bus_apb_*`, `i_bus_axi_<ch>_*`, `o_int_*`, `i_pad_*`/`o_pad_*`,
+  `i_mem_*`, `i_dbg_*`. A module with several bus ports adds the port as the contract
+  names it: `i_bus_axi_s_0_aw_addr`, `o_bus_apb_m_8_psel`.
 - Internal signals: `r_*` for flops, `w_*` for combinational logic. Instances are
   `u_<function>[_<index>]`; parameters and constants are `P_*`, `C_*` and `S_*`.
+- Types end in `_t`, and FSM states are enum members `S_*`:
+  `typedef enum logic [1:0] {S_IDLE, S_BUSY} state_t;`. Packages are `qnsc_<function>_pkg`.
+- One module (or package) per file, the file named after it. The top of your block is
+  its wrapper `m_qnsc_wrap_<block>.sv`: no `_top` file.
+- A clock gate, clock buffer or any other library cell: instantiate `qnsc_clk_gate`
+  (and the others in `design/common/tech/`), never the PDK cell itself.
 - Shared numbers live in `util/qsoc_contract.yml`. Integration modules (`top`, `bus`,
   `intmap`, `iomux`, `scrc`) take them from `qnsc_pkg`. **IP** (every wrapper, and
   `sysdbg`) does not: chip values arrive on `i_cfg_*` ports, and a number copied from
@@ -140,7 +148,7 @@ For every wrapper PR, and again after every new commit on it:
 3. Title: a Conventional Commit, e.g. `feat(pwm): add the apb_adv_timer wrapper`.
 4. To catch up with `main`: `git fetch && git rebase origin/main`. Never merge `main`
    into your branch.
-5. `git push`. CI must pass all 11 checks.
+5. `git push`. CI must pass every check.
 6. Only the maintainers approve and merge: the teacher, Tâm, Nghia and Sinh. Tâm
    reviews wrappers.
 
@@ -149,7 +157,7 @@ For every wrapper PR, and again after every new commit on it:
 | Symptom | Fix |
 |---|---|
 | VS Code: `Import package not found: 'qnsc_pkg'` | Open the repository folder, then run `make ide` (or pull, and the hook does it) |
-| `RTL naming rule` fails | Rename on our side: the right-hand side of the `AUTO_TEMPLATE`, or your own RTL. Never rename the IP |
+| `RTL naming rule` fails | Rename on our side: the right-hand side of the `AUTO_TEMPLATE`, or your own RTL. Never rename the IP. Each finding names its rule; the fix for each is in `design/README.md`, "Fixing a naming finding" |
 | `No hardcoded shared values` fails | Integration module: use the `C_*` constant it names. IP: an `i_cfg_*` port, or tag the line `// contract: <key>` |
 | `IP and integration module rules` fails | Remove the `import` or the parameter; see the message and `design/README.md`, "Shared numbers" |
 | `Contract tags` fails | The number on the tagged line no longer equals the contract: fix the line, or the contract if the chip changed |

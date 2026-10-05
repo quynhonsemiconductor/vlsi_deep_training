@@ -206,7 +206,7 @@ behaviour across the chip.
 
 ## Naming
 
-**`QNSC_RTL_Design_Naming_Rule` V1.1 is mandatory.** The full document is
+**`QNSC_RTL_Design_Naming_Rule` V1.2 is mandatory.** The full document is
 [`doc/rules/QNSC_RTL_Design_Naming_Rule.pdf`](../doc/rules/QNSC_RTL_Design_Naming_Rule.pdf). The rules
 that come up most:
 
@@ -215,9 +215,16 @@ that come up most:
 | Module, in house | `m_qnsc_<function>` | `m_qnsc_intmap` |
 | Module, wrapper around IP | `m_qnsc_wrap_<block>`: the block's name in the contract, without an index | `m_qnsc_wrap_pwm`, `m_qnsc_wrap_uart` (for `uart_0`, `uart_1`), `m_qnsc_wrap_timer` |
 | Module, generic and shared | `qnsc_<function>` (no `m_`) | `qnsc_fifo_sync` |
+| Chip top (2.1) | `m_qnsc_top` (every wrapper), `m_qnsc_chip` (pads + `m_qnsc_top`), in `design/top/rtl/` only. A block's top is its wrapper: no `_top` | `m_qnsc_top` |
+| Nested wrapper (2.1) | `m_qnsc_wrap_<ip>_<part>` | `m_qnsc_wrap_cpu_ibex` |
+| Package (2.1) | `qnsc_<function>_pkg` | `qnsc_pkg`, `qnsc_cpu2axi_pkg` |
+| Type (2.6) | `<function>_t`; enum members `S_` / `C_` | `state_t` = `{S_IDLE, S_BUSY}` |
+| File (2.7) | one module, package or interface, named after it; emacs source `<module>.src.sv` | `m_qnsc_wrap_uart.sv` |
+| Technology cell (2.8) | RTL instantiates `qnsc_<function>` only; the library cell, under its own name, only inside it, instance `u_size_only_<function>` | `qnsc_clk_gate` |
 | Port | `i_` / `o_` / `io_` prefix | `i_clk_sys`, `o_int_timer_0` |
-| Clock, reset | `i_clk_<domain>`, `i_rst_n_<domain>` | `i_rst_n_sys` |
+| Clock, reset | `i_clk_<domain>`, `i_rst_n_<domain>`; in a `qnsc_` cell the domain is the role | `i_rst_n_sys`, `i_clk_src`, `o_clk_gated` |
 | APB, AXI | `i_bus_apb_<sig>`, `i_bus_axi_<ch>_<sig>` | `i_bus_apb_paddr` |
+| Several bus ports (3.3, 3.4) | the port after the protocol, as the contract names it; inside a block a struct `_req` / `_rsp` | `i_bus_axi_s_0_aw_addr`, `o_bus_apb_m_8_psel`, `o_bus_axi_req` |
 | Registered signal | `r_<function>` | `r_timer_count` |
 | Combinational signal | `w_<function>` | `w_timer_done` |
 | Parameter, constant, state | `P_` / `C_` / `S_` uppercase | `P_DATA_WIDTH`, `S_IDLE` |
@@ -269,3 +276,30 @@ A deliberate exception needs a reason on the line:
 ```systemverilog
 logic clk_i;  // naming-check: ignore -- port of a vendored module
 ```
+
+### Fixing a naming finding
+
+Each finding starts with the rule number of the document. The usual ones:
+
+| Finding | Example | Fix |
+|---|---|---|
+| `1.2 port prefix` ... must match the direction | `input logic o_ready` | the prefix states the direction: `i_ready` |
+| `3.1 clock` / `3.2 reset` | `i_clk`, `i_rstn`, `i_rst_sys` | `i_clk_<domain>`, `i_rst_n_<domain>`; in a `qnsc_` cell the role: `i_clk_src` |
+| `1.3 active low` | `w_sys_rstn` | `w_rst_n_sys` |
+| `3.3/3.4 bus` | `i_axi_s_0_aw_id`, `i_paddr`, `o_axi_req` | `i_bus_axi_s_0_aw_id`, `i_bus_apb_paddr`, `o_bus_axi_req` (a struct inside a block) |
+| `2.3 signal` | `logic a, b;`, `axi_pkg::resp_t resp;` | `r_` if a flop, `w_` if combinational, `mem_` if an array |
+| `2.6 type` | `t_state`, `{IDLE, BUSY}` | `state_t`, `{S_IDLE, S_BUSY}` |
+| `2.1 module` (package) | `package s_bus_pkg` | `qnsc_s_bus_pkg`, and rename the file |
+| `2.1 module` (chip top) | `m_qnsc_top` outside `design/top/rtl/` | only the chip top uses that name |
+| `2.7 file` | two modules in one file, or `foo.sv` holding `bar` | one per file; the file is the module name |
+| `1.5 vocabulary` | `o_irq_x`, `w_clock_en` | `o_int_x`, `w_clk_en` |
+
+A finding you believe is wrong: say so in the pull request and fix the checker
+(`flow/lint/naming_check.py`, patterns in `naming_rules.yml`, a case in
+`test_naming_check.py`, which `make naming` runs first). Until then the line takes
+`// naming-check: ignore -- <reason>`.
+
+**In the editor**, Verible (the recommended VS Code extension) shows part of the rule
+while you type: file and package names, one module per file, type names
+(`.rules.verible_lint`). It does not know the rest; `make naming` is the check
+that counts.

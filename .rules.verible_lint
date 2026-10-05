@@ -6,3 +6,10 @@
 parameter-name-style=localparam_style:ALL_CAPS;parameter_style:ALL_CAPS
 # Tables and generated comments in qnsc_pkg run past Verible's 100 columns.
 line-length=length:150
+# Rules 2.6 and 2.7 (V1.2), the part of the naming check Verible does exactly;
+# CI's naming check (make naming) remains the gate for every rule.
+module-filename
+one-module-per-file
+package-filename
+enum-name-style=style_regex:[a-z][a-z0-9_]*_t
+struct-union-name-style

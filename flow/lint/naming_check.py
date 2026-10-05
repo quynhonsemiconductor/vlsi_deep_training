@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-naming_check.py -- enforce QNSC_RTL_Design_Naming_Rule V1.1 on RTL written here.
+naming_check.py -- enforce QNSC_RTL_Design_Naming_Rule V1.2 on RTL written here.
 
 The rule is mandatory and mechanical, so it is checked by a deterministic script
 rather than by review or by a language model: the same input must always give the
@@ -19,7 +19,13 @@ pulp's `clk_i`) and is not ours to rename. Section 4.3 of the rule applies to
 WHAT IS CHECKED (section 4.3, Enforcement Checklist)
 
     module name       m_qnsc_<function> | m_qnsc_wrap_<block> | qnsc_<function>
-    port direction    i_ | o_ | io_ prefix
+    chip top          m_qnsc_top, m_qnsc_chip, in design/top/rtl/ only
+    package           qnsc_<function>_pkg
+    file              one module/package/interface per file, named after it
+    port direction    i_ | o_ | io_ prefix, matching the declared direction
+    clock, reset      i_clk_<domain>, i_rst_n_<domain>
+    bus               <i|o>_bus_apb[_<port>]_<sig>, <i|o>_bus_axi[_<port>]_<ch>_<sig>
+    type              <function>_t; enum members S_<STATE> or C_<FUNCTION>
     parameter         P_<UPPER>          constant C_<UPPER>   FSM state S_<UPPER>
     instance          u_<function>[_<index>]
     internal signal   r_<function> registered, w_<function> combinational
@@ -75,6 +81,14 @@ PORT_OK = re.compile(_ID["port"]["pattern"])
 PARAM_OK = re.compile(_ID["parameter"]["pattern"])
 INST_OK = re.compile(_ID["instance"]["pattern"])
 SIGNAL_OK = re.compile(_ID["signal"]["pattern"])
+DIR_PREFIX = _ID["port_direction"]["prefix"]
+CLOCK = (re.compile(_ID["clock"]["applies_to"]), re.compile(_ID["clock"]["pattern"]))
+RESET = (re.compile(_ID["reset"]["applies_to"]), re.compile(_ID["reset"]["pattern"]))
+BUS = (re.compile(_ID["bus"]["applies_to"]), re.compile(_ID["bus"]["pattern"]))
+TYPE_OK = re.compile(_ID["type"]["pattern"])
+ENUM_OK = re.compile(_ID["enum_member"]["pattern"])
+PACKAGE_OK = re.compile(_ID["package"]["pattern"])
+CHIP_TOP = RULES["chip_top"]
 
 _LX = RULES["lexical"]
 CAMEL = re.compile(_LX["mixed_case"]["forbid_pattern"])
@@ -140,8 +154,91 @@ def strip_literals(text: str) -> str:
     Without this, every 32'hDEAD and 1'b0 in the design would be reported as a
     mixed-case or bad-index identifier.
     """
-    return re.sub(r"\d*'[sS]?[bodhBODH][0-9a-fA-FxXzZ?_]+",
+    text = re.sub(r"\d*'[sS]?[bodhBODH][0-9a-fA-FxXzZ?_]+",
                   lambda m: " " * len(m.group(0)), text)
+    # and strings: the text of a $display is not an identifier
+    return re.sub(r'"(?:[^"\\\n]|\\.)*"', lambda m: " " * len(m.group(0)), text)
+
+
+def blank(text: str, start: int, end: int) -> str:
+    """text with [start, end) replaced by spaces, newlines kept."""
+    return text[:start] + re.sub(r"[^\n]", " ", text[start:end]) + text[end:]
+
+
+def match_close(text: str, pos: int) -> int:
+    """Index of the bracket closing the one at text[pos]."""
+    pairs = {"(": ")", "[": "]", "{": "}"}
+    stack = []
+    for i in range(pos, len(text)):
+        c = text[i]
+        if c in pairs:
+            stack.append(pairs[c])
+        elif stack and c == stack[-1]:
+            stack.pop()
+            if not stack:
+                return i
+    return len(text) - 1
+
+
+def split_top(text: str, base: int) -> list[tuple[str, int]]:
+    """Split text at commas outside brackets; each piece with its offset."""
+    out, depth, start = [], 0, 0
+    for i, c in enumerate(text):
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        elif c == "," and depth == 0:
+            out.append((text[start:i], base + start))
+            start = i + 1
+    out.append((text[start:], base + start))
+    return out
+
+
+DIRECTIONS = ("input", "output", "inout")
+# a declarator: the name, then unpacked dimensions or an initialiser
+DECL_NAME = re.compile(r"([A-Za-z_]\w*)\s*(?:\[[^\]]*\]\s*)*(?:=.*)?$", re.S)
+
+
+def declared_names(piece: str, base: int) -> list[tuple[str, int]]:
+    """The name a declaration piece declares: `logic [3:0] r_a = '0` -> r_a."""
+    m = DECL_NAME.search(piece.strip()) if piece.strip() else None
+    if not m:
+        return []
+    off = piece.find(piece.strip()) + m.start(1)
+    return [(m.group(1), base + off)]
+
+
+def ansi_ports(src: str):
+    """(direction, name, offset) of every port in the ANSI header of each module.
+
+    A port without a direction keyword takes the previous one, as SystemVerilog
+    does (`input logic i_a, i_b`).
+    """
+    for m in re.finditer(r"^\s*module\s+\w+\s*(?:import[^;]*;\s*)*", src, re.M):
+        i = m.end()
+        if src[i:i + 1] == "#":
+            j = src.find("(", i)
+            i = match_close(src, j) + 1
+        j = src.find("(", i)
+        if j < 0 or src[i:j].strip():
+            continue
+        k = match_close(src, j)
+        direction = None
+        for piece, off in split_top(src[j + 1:k], j + 1):
+            w = re.match(r"\s*(input|output|inout)\b", piece)
+            if w:
+                direction = w.group(1)
+            for name, pos in declared_names(piece, off):
+                if name not in KEYWORDS and direction:
+                    yield direction, name, pos
+
+
+def rel_dir(path: Path) -> str:
+    try:
+        return path.parent.relative_to(REPO).as_posix()
+    except ValueError:
+        return path.parent.as_posix()
 
 
 def check_file(path: Path) -> list[Finding]:
@@ -160,25 +257,53 @@ def check_file(path: Path) -> list[Finding]:
     def lineno_of(pos: int) -> int:
         return src.count("\n", 0, pos) + 1
 
-    # ---- 2.1 module name -------------------------------------------------
-    for m in re.finditer(r"^\s*module\s+([A-Za-z_]\w*)", src, re.M):
-        name, ln = m.group(1), lineno_of(m.start(1))
-        if not MODULE_OK.match(name):
+    # ---- 2.1 module and package name, chip top; 2.7 file ------------------
+    units = []
+    for m in re.finditer(r"^\s*(module|package|interface)\s+([A-Za-z_]\w*)", src, re.M):
+        kind, name, ln = m.group(1), m.group(2), lineno_of(m.start(2))
+        units.append((kind, name, ln))
+        if kind == "package":
+            if not PACKAGE_OK.match(name):
+                add(ln, _rule("identifiers", "package"),
+                    f"package '{name}' {_msg('identifiers', 'package')}")
+        elif not MODULE_OK.match(name):
             add(ln, _rule("identifiers", "module"),
-                f"module '{name}' {_msg('identifiers', 'module')}")
+                f"{kind} '{name}' {_msg('identifiers', 'module')}")
+        in_top = rel_dir(path) == CHIP_TOP["directory"]
+        if kind == "module" and (name in CHIP_TOP["modules"]) != in_top:
+            add(ln, CHIP_TOP["rule"], f"module '{name}': {CHIP_TOP['message']}")
+    stem = path.name.split(".")[0]
+    if len(units) > 1:
+        add(units[1][2], RULES["files"]["rule"],
+            f"{len(units)} design units in one file: {RULES['files']['message']}")
+    if units and units[0][1] != stem:
+        add(units[0][2], RULES["files"]["rule"],
+            f"{units[0][0]} '{units[0][1]}' in {path.name}: {RULES['files']['message']}")
 
-    # ---- 1.2 / 3.x port direction prefix ---------------------------------
-    # ANSI port declarations: input/output/inout ... name
-    for m in re.finditer(
-        r"^\s*(input|output|inout)\b([^;,)\n]*?)\b([A-Za-z_]\w*)\s*(?:,|\)|;|$)",
-        src, re.M
-    ):
-        name, ln = m.group(3), lineno_of(m.start(3))
-        if name in KEYWORDS:
-            continue
+    # ---- 1.2 / 3.1 / 3.2 / 3.3 / 3.4 ports --------------------------------
+    # ANSI header ports, and non-ANSI or task/function declarations
+    # (`input logic a, b;`), every name of a list
+    ports = list(ansi_ports(src))
+    for m in re.finditer(r"^[ \t]*(input|output|inout)\b([^;()]*);", src, re.M):
+        for piece, off in split_top(m.group(2), m.start(2)):
+            for name, pos in declared_names(piece, off):
+                if name not in KEYWORDS:
+                    ports.append((m.group(1), name, pos))
+    port_names = set()
+    for direction, name, pos in ports:
+        port_names.add(name)
+        ln = lineno_of(pos)
         if not PORT_OK.match(name):
             add(ln, _rule("identifiers", "port"),
                 f"port '{name}' {_msg('identifiers', 'port')}")
+            continue
+        if not name.startswith(DIR_PREFIX[direction]):
+            add(ln, _rule("identifiers", "port_direction"),
+                f"{direction} '{name}': {_msg('identifiers', 'port_direction')} "
+                f"({DIR_PREFIX[direction]})")
+        for key, (applies, ok) in (("clock", CLOCK), ("reset", RESET), ("bus", BUS)):
+            if applies.search(name) and not ok.match(name):
+                add(ln, _rule("identifiers", key), f"port '{name}' {_msg('identifiers', key)}")
 
     # ---- 2.4 parameter / constant / state --------------------------------
     for m in re.finditer(r"^\s*(?:localparam|parameter)\b[^=;]*?\b([A-Za-z_]\w*)\s*=",
@@ -207,21 +332,43 @@ def check_file(path: Path) -> list[Finding]:
             add(ln, _rule("identifiers", "instance"),
                 f"instance '{inst}' of '{mod}' {_msg('identifiers', 'instance')}")
 
+    # ---- 2.6 types and enum members ---------------------------------------
+    body = src                       # src with struct/union/enum bodies blanked
+    for m in re.finditer(r"\b(struct|union|enum)\b[^{;]*\{", src):
+        o = m.end() - 1
+        c = match_close(src, o)
+        if m.group(1) == "enum":
+            for piece, off in split_top(src[o + 1:c], o + 1):
+                for name, pos in declared_names(piece, off):
+                    if not ENUM_OK.match(name):
+                        add(lineno_of(pos), _rule("identifiers", "enum_member"),
+                            f"'{name}' -- {_msg('identifiers', 'enum_member')}")
+        body = blank(body, o, c + 1)  # a member of a struct is a field, not a signal
+    # a variable local to a function or task is not a signal of the module (2.3)
+    for m in re.finditer(r"\b(function|task)\b.*?\bend\1\b", body, re.S):
+        body = blank(body, m.start(), m.end())
+    for m in re.finditer(r"\btypedef\b[^;]*?([A-Za-z_]\w*)\s*(?:\[[^\]]*\]\s*)*;", body):
+        name = m.group(1)
+        if not TYPE_OK.match(name):
+            add(lineno_of(m.start(1)), _rule("identifiers", "type"),
+                f"type '{name}' {_msg('identifiers', 'type')}")
+
     # ---- 2.3 / 2.5 internal signal ---------------------------------------
+    # every name of a declaration list, of a built-in type or of a type _t
     for m in re.finditer(
-        r"^\s*(?:reg|wire|logic)\b(?:\s+(?:signed|unsigned))?"
-        r"(?:\s*\[[^\]]*\])*\s*([A-Za-z_]\w*)",
-        src, re.M
+        r"^[ \t]*(?:(?:reg|wire|logic|bit)\b(?:\s+(?:signed|unsigned))?"
+        r"|(?:\w+::)?[a-z]\w*_t\b)((?:\s*\[[^\]]*\])*)([^;]*);",
+        body, re.M
     ):
-        name, ln = m.group(1), lineno_of(m.start(1))
-        if name in KEYWORDS:
+        if re.match(r"\s*\(", m.group(2)):          # a cast or a call, not a declaration
             continue
-        # a declaration that is also a port was already checked above
-        if PORT_OK.match(name):
-            continue
-        if not SIGNAL_OK.match(name):
-            add(ln, _rule("identifiers", "signal"),
-                f"'{name}' {_msg('identifiers', 'signal')}")
+        for piece, off in split_top(m.group(2), m.start(2)):
+            for name, pos in declared_names(piece, off):
+                if name in KEYWORDS or name in port_names:
+                    continue
+                if not SIGNAL_OK.match(name):
+                    add(lineno_of(pos), _rule("identifiers", "signal"),
+                        f"'{name}' {_msg('identifiers', 'signal')}")
 
     # ---- 1.1 / 1.3 / 1.4 / 1.5 lexical rules over all identifiers --------
     seen: set[tuple[int, str]] = set()

@@ -71,6 +71,7 @@ lint:
 	bash flow/lint/lint_all.sh $(BLOCK)
 
 naming:
+	python3 flow/lint/test_naming_check.py
 	python3 flow/lint/naming_check.py $(SCOPE)
 
 hardcode:
