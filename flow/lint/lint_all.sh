@@ -55,12 +55,23 @@ for dir in $dirs; do
   [ -f "${dir}waivers.vlt" ] && waiver="${dir}waivers.vlt"
   [ "$block" != top ] && [ -f design/top/waivers.vlt ] && waiver="$waiver design/top/waivers.vlt"
 
+  # The top, named by the flow and not by a tool option in the filelist, the way
+  # flow/vcs/run_vcs derives it. Without one, a tool that elaborates every module
+  # it was given also elaborates the alternatives a vendor file bundles beside
+  # the module we instantiate -- pulp-platform's axi_mux.sv carries an
+  # interface-based axi_mux_intf next to the struct-based axi_mux, and Verilator
+  # 5.020 hits a V3Width internal error on it. Only blocks that have a wrapper
+  # get one; a filelist of packages alone keeps the "no module yet" path below.
+  top=""
+  grep -qE "(^|/)m_qnsc_wrap_${block}\.sv[[:space:]]*$" "$flist" &&
+    top="--top-module m_qnsc_wrap_${block}"
+
   # -F, not -f: paths inside the filelist are relative to the filelist itself
   # (../../vendor/...), and -f would resolve them against the repository root.
   # The log is written first and grepped second: with pipefail, piping verilator
   # into grep took verilator's non-zero exit as the result and reported "ok".
   log="/tmp/lint-${block}.log"
-  verilator --lint-only -Wall -Wno-fatal $waiver -F "$flist" $tech > "$log" 2>&1
+  verilator --lint-only -Wall -Wno-fatal $waiver $top -F "$flist" $tech > "$log" 2>&1
   # A filelist that holds only packages (design/top today: qnsc_pkg.sv) has no
   # module to elaborate. Verilator 5.020, the Ubuntu package CI installs, stops
   # with "No top level module found"; newer releases accept it. Not a defect.
