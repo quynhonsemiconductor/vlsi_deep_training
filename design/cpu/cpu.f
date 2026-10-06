@@ -8,10 +8,13 @@
 # inside ibex_icache.sv. See vendor/manifest.yml for the full trace.
 +define+ASSERTS_OFF
 
-# Required: axi_mux.sv bundles a struct-based axi_mux (ours) and an
-# interface-based axi_mux_intf sibling in one file. Without an explicit top,
-# Verilator elaborates axi_mux_intf too and crashes (V3Width Internal Error).
---top-module m_qnsc_wrap_cpu
+# A filelist is shared by every tool, so it carries no tool option: the top is
+# named by the flow instead (flow/vcs/run_vcs derives m_qnsc_wrap_<block> from
+# the wrapper listed last here). Worth knowing when a tool needs it spelled out:
+# axi_mux.sv bundles a struct-based axi_mux (what we instantiate) with an
+# interface-based axi_mux_intf sibling in the same file, and a tool that
+# elaborates every module rather than one top hits a V3Width Internal Error on
+# the sibling.
 
 # ---- include directories ----------------------------------------------------
 +incdir+../../vendor/lowrisc/opentitan/hw/dv/sv/dv_utils
