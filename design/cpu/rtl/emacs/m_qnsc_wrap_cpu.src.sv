@@ -45,7 +45,7 @@ input  logic i_dft_test_en,
 // AXI4 master bus, flattened (no packed structs on the boundary).
 //---------------------------------------------------------------
 input  logic                    i_bus_axi_aw_ready,
-output logic [cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_aw_id,
+output logic [qnsc_cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_aw_id,
 output logic [31:0]             o_bus_axi_aw_addr,
 output logic [7:0]              o_bus_axi_aw_len,
 output logic [2:0]              o_bus_axi_aw_size,
@@ -56,24 +56,24 @@ output logic [2:0]              o_bus_axi_aw_prot,
 output logic [3:0]              o_bus_axi_aw_qos,
 output logic [3:0]              o_bus_axi_aw_region,
 output logic [5:0]              o_bus_axi_aw_atop,
-output logic [cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_aw_user,
+output logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_aw_user,
 output logic                    o_bus_axi_aw_valid,
 
 input  logic                    i_bus_axi_w_ready,
 output logic [31:0]             o_bus_axi_w_data,
 output logic [3:0]              o_bus_axi_w_strb,
 output logic                    o_bus_axi_w_last,
-output logic [cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_w_user,
+output logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_w_user,
 output logic                    o_bus_axi_w_valid,
 
 output logic                    o_bus_axi_b_ready,
-input  logic [cpu2axi_pkg::P_MST_ID_W-1:0]  i_bus_axi_b_id,
+input  logic [qnsc_cpu2axi_pkg::P_MST_ID_W-1:0]  i_bus_axi_b_id,
 input  logic [1:0]              i_bus_axi_b_resp,
-input  logic [cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_b_user,
+input  logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_b_user,
 input  logic                    i_bus_axi_b_valid,
 
 input  logic                    i_bus_axi_ar_ready,
-output logic [cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_ar_id,
+output logic [qnsc_cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_ar_id,
 output logic [31:0]             o_bus_axi_ar_addr,
 output logic [7:0]              o_bus_axi_ar_len,
 output logic [2:0]              o_bus_axi_ar_size,
@@ -83,15 +83,15 @@ output logic [3:0]              o_bus_axi_ar_cache,
 output logic [2:0]              o_bus_axi_ar_prot,
 output logic [3:0]              o_bus_axi_ar_qos,
 output logic [3:0]              o_bus_axi_ar_region,
-output logic [cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_ar_user,
+output logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_ar_user,
 output logic                    o_bus_axi_ar_valid,
 
 output logic                    o_bus_axi_r_ready,
-input  logic [cpu2axi_pkg::P_MST_ID_W-1:0]  i_bus_axi_r_id,
+input  logic [qnsc_cpu2axi_pkg::P_MST_ID_W-1:0]  i_bus_axi_r_id,
 input  logic [31:0]             i_bus_axi_r_data,
 input  logic [1:0]              i_bus_axi_r_resp,
 input  logic                    i_bus_axi_r_last,
-input  logic [cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_r_user,
+input  logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_r_user,
 input  logic                    i_bus_axi_r_valid
 );
 
@@ -112,8 +112,8 @@ logic [31:0] w_ibex_bridge_data_wdata;
 logic [31:0] w_ibex_bridge_data_rdata;
 logic        w_ibex_bridge_data_err;
 
-cpu2axi_pkg::axi_s_1_req_t  w_bridge_axi_req;
-cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
+qnsc_cpu2axi_pkg::axi_s_1_req_t  w_bridge_axi_req;
+qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
 
 /*AUTOWIRE*/
 
@@ -232,7 +232,7 @@ ibex_top #(
 
 /* m_qnsc_cpu2axi AUTO_TEMPLATE(
     .i_clk_core    (i_clk_cpu),
-    .i_resetn_core (i_rst_n_cpu),
+    .i_rst_n_core  (i_rst_n_cpu),
     .i_instr_req   (w_ibex_bridge_instr_req),
     .o_instr_gnt   (w_ibex_bridge_instr_gnt),
     .o_instr_rvalid (w_ibex_bridge_instr_rvalid),
@@ -248,8 +248,8 @@ ibex_top #(
     .i_data_wdata  (w_ibex_bridge_data_wdata[]),
     .o_data_rdata  (w_ibex_bridge_data_rdata[]),
     .o_data_err    (w_ibex_bridge_data_err),
-    .o_axi_req     (w_bridge_axi_req),
-    .i_axi_resp    (w_bridge_axi_resp),
+    .o_bus_axi_req (w_bridge_axi_req),
+    .i_bus_axi_rsp (w_bridge_axi_resp),
 );
 */
 m_qnsc_cpu2axi u_m_qnsc_cpu2axi(/*AUTOINST*/);

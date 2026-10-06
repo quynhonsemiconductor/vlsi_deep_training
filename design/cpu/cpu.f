@@ -183,7 +183,7 @@
 ../../vendor/pulp-platform/axi/src/axi_mux.sv
 
 # ours: CPU2AXI bridge (merges Ibex's two memory-style ports into one AXI4).
-rtl/cpu2axi_pkg.sv
+rtl/qnsc_cpu2axi_pkg.sv
 rtl/m_qnsc_cpu2axi.sv
 
 # ours: the wrapper (generated, see rtl/emacs/Makefile).

@@ -66,7 +66,7 @@ and `m_qnsc_cpu2axi` as internal wires and never leave `m_qnsc_wrap_cpu`.
 | pulp-platform/axi | `axi_from_mem`, `axi_mux`, `axi_id_prepend` | `70b8e54fd460e3308e58be596ceb3566a6e3576e` | SHL-0.51 |
 | pulp-platform/common_cells (partial, pinned at the commit axi's own Bender.lock specifies for this axi commit) | `cc_rr_arb_tree`, `cc_spill_register` | `db42769334b4589b4b3fc671b34513bdb98be565` | SHL-0.51 |
 
-`m_qnsc_cpu2axi` (the merge logic) and `cpu2axi_pkg` (its AXI struct typedefs)
+`m_qnsc_cpu2axi` (the merge logic) and `qnsc_cpu2axi_pkg` (its AXI struct typedefs)
 are designed in house. See `vendor/manifest.yml` for the full per-file
 reasoning, including why `pulp-platform/common_cells` is vendored at an older,
 pre-rename commit rather than a current release.
