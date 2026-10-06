@@ -21,9 +21,9 @@ port instead of needing two S_BUS slave ports.
 | pulp-platform/axi | `axi_from_mem`, `axi_mux`, `axi_id_prepend` (+ their own `axi_pkg`/`axi_lite_*`/`axi_intf` dependencies) | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 | pulp-platform/common_cells (partial, pinned at the OLDER commit axi's own Bender.lock specifies) | `cc_rr_arb_tree`, `cc_spill_register` (+ their own `cc_pkg`/`cc_lzc`/`cc_fifo`/`cc_spill_register_flushable` dependencies) | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
-`m_qnsc_cpu2axi` (the bridge merge logic) and `cpu2axi_pkg` (its AXI struct
+`m_qnsc_cpu2axi` (the bridge merge logic) and `qnsc_cpu2axi_pkg` (its AXI struct
 typedefs) are designed in house -- see `rtl/m_qnsc_cpu2axi.sv` and
-`rtl/cpu2axi_pkg.sv`. `axi_from_mem`/`axi_mux`/`axi_id_prepend` themselves are
+`rtl/qnsc_cpu2axi_pkg.sv`. `axi_from_mem`/`axi_mux`/`axi_id_prepend` themselves are
 unmodified upstream IP.
 
 ## The wrapper is the boundary
