@@ -1,6 +1,6 @@
 `default_nettype none
 //==============================================================================
-// Module      : cpu2axi_pkg
+// Module      : qnsc_cpu2axi_pkg
 // Description : AXI4 struct typedefs for the CPU2AXI bridge and its S_BUS-facing
 //               master port. "leaf" = pre-mux, per-memory-port ID width (4 bit).
 //               "axi_s_1" = post-mux, S_BUS AXI_S1 slave-port ID width (5 bit).
@@ -8,7 +8,7 @@
 //==============================================================================
 `include "axi/typedef.svh"
 
-package cpu2axi_pkg;
+package qnsc_cpu2axi_pkg;
 
   localparam int unsigned P_AXI_ADDR_W = 32;
   localparam int unsigned P_AXI_DATA_W = 32;

@@ -11,5 +11,5 @@
 ../../../../vendor/pulp-platform/axi/src/axi_lite_to_axi.sv
 ../../../../vendor/pulp-platform/axi/src/axi_from_mem.sv
 ../../../../vendor/pulp-platform/axi/src/axi_mux.sv
-../cpu2axi_pkg.sv
+../qnsc_cpu2axi_pkg.sv
 ../m_qnsc_cpu2axi.sv

@@ -91,7 +91,7 @@ the rule now forbids:
   path instead, a fixed value tagged `// contract: memory_map.isram_dbg.base`,
   which `contract_tag.py` checks against `util/qsoc_contract.yml` on every
   run.
-- Removing `import ibex_pkg::*;`/`import cpu2axi_pkg::*;` (module_rules.py's
+- Removing `import ibex_pkg::*;`/`import qnsc_cpu2axi_pkg::*;` (module_rules.py's
   NO-IMPORT: an emacs-expanded file has no import at all, regardless of which
   package) surfaced one more real AUTOINPUT gap: `ibex_top`'s own
   `cheriot_enable_i`/`fetch_enable_i`/`mcounteren_writable_i`/`crash_dump_o`/
