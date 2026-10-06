@@ -2,89 +2,149 @@
 
     python3 design/sysdbg/doc/build_review.py
 
-Writes sysdbg_review.drawio (one page per drawing, editable) and one .svg per
-page, beside this file. Not part of the MAS: these are what the RTL is written
-and reviewed against (design/README.md, "doc/"). Where a drawing and the MAS
-differ, the MAS is right and the drawing is fixed.
+Writes sysdbg_review.drawio (one page per drawing) and exports each page to
+.svg with draw.io Desktop (/Applications/draw.io.app, or DRAWIO=<path>). Not
+part of the MAS: these are what the RTL is written and reviewed against
+(design/README.md, "doc/"). Where a drawing and the MAS differ, the MAS is
+right and the drawing is fixed.
+
+Drawn as the teacher's reference (doc/reference/VLSI_SYSDBG.drawio): one symbol
+per line of RTL -- flip-flop, multiplexer with its select written at the
+inputs, gate -- and every wire named as in the RTL (Naming Rule V1.2).
 
 Pages, in the order of the data path:
-  2  JTAG side: TAP FSM outputs, IR, data registers, TDO
+  2  JTAG side: TAP FSM, IR, one data register in full, TDO
   3  request logic: Update-DR to read_req / write_req, busy, capture   (to come)
-  4  clock domain crossing, flip-flop level                             (to come)
+  4  clock domain crossing                                              (to come)
   5  AXI manager                                                        (to come)
 Page 1 is the MAS block diagram, doc/figures/img/fig_sysdbg_block.svg.
 """
 import os
+import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-sys.path.insert(0, os.path.join(ROOT, "doc", "build", "tools"))
-from diagen import Node as N, Edge as E, emit  # noqa: E402
+sys.path.insert(0, HERE)
+from sch import Sheet  # noqa: E402
+
+DRAWIO = os.environ.get("DRAWIO", "/Applications/draw.io.app/Contents/MacOS/draw.io")
+
+
+def into(s, src, pin, label=None):
+    """Wire from a point to an input pin, with a jog half way."""
+    (x0, y0), (x1, y1) = src, pin
+    mx = (x0 + x1) / 2
+    s.wire([src, (mx, y0), (mx, y1), pin] if y0 != y1 else [src, pin], label)
+
+
+def feed(s, pin, label, length=150):
+    """A named net entering an input pin from the left."""
+    s.wire([(pin[0] - length, pin[1]), pin], label)
+
+
+def sel(s, m, label, depth=34):
+    """A select line from below."""
+    x, y = m["s"]
+    s.wire([(x, y + depth), (x, y)])
+    s.text(x, y + depth + 8, label, align="center", size=9)
+
 
 # ------------------------------------------------- 2. JTAG side (MAS 5, 6)
-# Every register here is clocked by i_jtag_tck and reset by
-# w_rst_n_tck = i_jtag_trst_n AND i_rst_n_por (MAS 3).
-jtag = [
-    N("zt", 160, 20, 900, 640, "TCK domain  ·  i_jtag_tck  ·  w_rst_n_tck = i_jtag_trst_n & i_rst_n_por",
-      "group", 11, True, "top"),
+p2 = Sheet("2 JTAG side")
+p2.group(140, 20, 1260, 900,
+         "TCK domain: every flip-flop on i_jtag_tck (bubble = falling edge), "
+         "reset w_rst_n_tck  (MAS 3, 5, 6)")
 
-    N("p_tms", 20, 80, 110, 30, "i_jtag_tms", "port", 10),
-    N("p_tdi", 20, 277, 110, 30, "i_jtag_tdi", "port", 10),
-    N("p_tdo", 1100, 560, 120, 30, "o_jtag_tdo", "port", 10),
-    N("p_oe", 1100, 610, 120, 30, "o_jtag_tdo_oe", "port", 10),
+# reset
+g = p2.gate(200, 70, "and")
+feed(p2, g["a"], "i_jtag_trst_n", 120)
+feed(p2, g["b"], "i_rst_n_por", 120)
+p2.wire([g["o"], (g["o"][0] + 60, g["o"][1])], "w_rst_n_tck", arrow=False)
 
-    N("tap", 180, 60, 200, 70, "TAP FSM\nIEEE 1149.1, 16 states", "box", 10, True),
-    N("ctl", 420, 60, 300, 70,
-      "w_capture_ir  w_shift_ir  w_update_ir\nw_capture_dr  w_shift_dr  w_update_dr\nw_test_logic_reset",
-      "box", 9),
+# TAP FSM
+tap = p2.flop(340, 120, "TAP FSM\nIEEE 1149.1\nr_tap_state[3:0]", w=150, h=150)
+feed(p2, tap["d"], "i_jtag_tms", 200)
+outs = ["w_test_logic_reset", "w_capture_ir", "w_shift_ir", "w_update_ir",
+        "w_capture_dr", "w_shift_dr", "w_update_dr"]
+for k, n in enumerate(outs):
+    y = 135 + 19 * k
+    p2.wire([(490, y), (540, y)], arrow=False)
+    p2.text(545, y, n, size=9)
 
-    N("irs", 180, 170, 200, 60, "IR shift  4 bit\nCapture-IR loads 0001", "box", 10),
-    N("ir", 420, 170, 300, 60, "r_ir  4 bit\nUpdate-IR loads shift\nTest-Logic-Reset loads 1110 (IDCODE)",
-      "box", 9),
-    N("dec", 760, 170, 280, 60, "IR decode: one DR between TDI and TDO\nunlisted codes act as BYPASS",
-      "box", 9),
+# IR: shift register, then the instruction register
+m1 = p2.mux(300, 320, ["cap", "sh", "#"])
+feed(p2, m1["i"][0], "4'b0001")
+feed(p2, m1["i"][1], "{i_jtag_tdi, r_ir_sh[3:1]}")
+feed(p2, m1["i"][2], "r_ir_sh")
+sel(p2, m1, "w_capture_ir / w_shift_ir")
+f1 = p2.flop(380, m1["o"][1] - 18, "r_ir_sh[3:0]")
+into(p2, m1["o"], f1["d"])
+m2 = p2.mux(560, 320, ["tlr", "upd", "#"])
+feed(p2, m2["i"][0], "4'b1110", 60)
+into(p2, f1["q"], m2["i"][1])
+feed(p2, m2["i"][2], "r_ir", 60)
+sel(p2, m2, "w_test_logic_reset / w_update_ir")
+f2 = p2.flop(640, m2["o"][1] - 18, "r_ir[3:0]")
+into(p2, m2["o"], f2["d"])
+p2.wire([f2["q"], (f2["q"][0] + 25, f2["q"][1])], arrow=False)
 
-    N("dr_addr", 180, 270, 200, 44, "ADDR 33   0100\ncapture r_addr", "box", 9),
-    N("dr_data", 180, 322, 200, 44, "DATA 32   0101\ncapture r_rdata_hold", "box", 9),
-    N("dr_stat", 180, 374, 200, 44, "STATUS 3   0110\ncapture {busy, r_resp}", "box", 9),
-    N("dr_dbg", 180, 426, 200, 44, "CPUDBG 1   0111\ncapture r_dbgreq", "box", 9),
-    N("dr_hold", 180, 478, 200, 44, "CPUHOLD 1   1000\ncapture r_cpu_hold", "box", 9),
-    N("dr_id", 180, 530, 200, 44, "IDCODE 32   1110\ncapture 0x0515_3001", "box", 9),
-    N("dr_byp", 180, 582, 200, 44, "BYPASS 1   1111\ncapture 0", "box", 9),
+# one data register in full: ADDR; the others are the same structure
+m3 = p2.mux(300, 500, ["cap", "sh", "#"])
+feed(p2, m3["i"][0], "r_addr[32:0]")
+feed(p2, m3["i"][1], "{i_jtag_tdi, r_dr_addr[32:1]}")
+feed(p2, m3["i"][2], "r_dr_addr")
+sel(p2, m3, "IR = ADDR (0100) and w_capture_dr / w_shift_dr")
+f3 = p2.flop(380, m3["o"][1] - 18, "r_dr_addr[32:0]", w=100)
+into(p2, m3["o"], f3["d"])
+m4 = p2.mux(560, 500, ["#", "upd"])
+feed(p2, m4["i"][0], "r_addr", 40)
+into(p2, f3["q"], m4["i"][1])
+sel(p2, m4, "IR = ADDR and w_update_dr and !w_busy")
+f4 = p2.flop(640, m4["o"][1] - 18, "r_addr[32:0]")
+into(p2, m4["o"], f4["d"])
+p2.wire([f4["q"], (f4["q"][0] + 70, f4["q"][1])], "to page 3", arrow=True)
 
-    N("upd", 420, 270, 300, 200,
-      "Update-DR, only when the IR selects it\n\nADDR -> r_addr[32:0]    if !busy\nDATA -> r_wdata[31:0]   if !busy\n"
-      "CPUDBG -> r_dbgreq\nCPUHOLD -> r_cpu_hold\n\nSTATUS, IDCODE, BYPASS: nothing\n\n"
-      "reset: r_addr 0, r_wdata 0,\nr_dbgreq 0, r_cpu_hold 1", "box", 9),
-    N("req", 420, 600, 300, 50, "to page 3: request logic\n(read_req, write_req, busy)", "red", 9),
+p2.box(160, 640, 600, 250,
+       "The other data registers: the same capture / shift / hold multiplexer and shift "
+       "register; an update register where the IR code updates one (MAS 6)\n\n"
+       "DATA 0101, r_dr_data[31:0]: capture r_rdata_hold; update r_wdata[31:0] if !w_busy\n"
+       "STATUS 0110, r_dr_status[2:0]: capture {w_busy, r_resp[1:0]}; no update\n"
+       "CPUDBG 0111, r_dr_cpudbg: capture r_dbgreq; update r_dbgreq\n"
+       "CPUHOLD 1000, r_dr_cpuhold: capture r_cpu_hold; update r_cpu_hold\n"
+       "IDCODE 1110, r_dr_idcode[31:0]: capture 32'h0515_3001; no update\n"
+       "BYPASS 1111 and every other code, r_dr_bypass: capture 1'b0; no update\n\n"
+       "Reset: r_ir 1110, r_addr 0, r_wdata 0, r_dbgreq 0, r_cpu_hold 1", align="left")
 
-    N("mux", 760, 380, 280, 70, "TDO select\nShift-IR: IR shift bit 0\nShift-DR: bit 0 of the selected DR",
-      "box", 9),
-    N("ff", 760, 540, 280, 70,
-      "TDO flip-flop on the FALLING edge of i_jtag_tck\no_jtag_tdo_oe = 1 in Shift-IR, Shift-DR",
-      "box", 9, True),
-]
-jtag_e = [
-    E("p_tms", "r", "tap", "l", "TMS"),
-    E("tap", "r", "ctl", "l"),
-    E("p_tdi", "r", "dr_addr", "l@0.3", "TDI"),
-    E("p_tdi", "r", "irs", "l", mid=150),
-    E("irs", "r", "ir", "l", "Update-IR"),
-    E("ir", "r", "dec", "l"),
-    E("dec", "b", "mux", "t", "select"),
-    E("dr_addr", "r", "upd", "l@0.2"),
-    E("dr_hold", "r", "upd", "l@0.9"),
-    E("upd", "b", "req", "t", "Update-DR ADDR / DATA"),
-    E("mux", "b", "ff", "t"),
-    E("dr_id", "r", "mux", "l", "bit 0 of every DR", mid=740),
-    E("ff", "r", "p_tdo", "l"),
-    E("ff", "r@0.8", "p_oe", "l"),
-]
+# TDO
+m5 = p2.mux(880, 330, ["0100", "0101", "0110", "0111", "1000", "1110", "#"], w=40)
+for k, n in enumerate(["r_dr_addr[0]", "r_dr_data[0]", "r_dr_status[0]", "r_dr_cpudbg",
+                       "r_dr_cpuhold", "r_dr_idcode[0]", "r_dr_bypass"]):
+    feed(p2, m5["i"][k], n, 120)
+sel(p2, m5, "r_ir[3:0]")
+m6 = p2.mux(1000, m5["o"][1] - 33, ["1", "0"])
+p2.wire([(m6["i"][0][0] - 50, m6["i"][0][1]), m6["i"][0]], "r_ir_sh[0]")
+into(p2, m5["o"], m6["i"][1])
+sel(p2, m6, "w_shift_ir")
+f5 = p2.flop(1110, m6["o"][1] - 18, "r_tdo", w=80, falling=True)
+into(p2, m6["o"], f5["d"])
+p2.text(1290, f5["q"][1], "o_jtag_tdo", size=11, bold=True)
+p2.wire([f5["q"], (1285, f5["q"][1])])
 
-PAGES = [("sysdbg_review_2_jtag", "SYSDBG 2: JTAG side (MAS 5, 6)", jtag, jtag_e)]
+g2 = p2.gate(990, 640, "or")
+feed(p2, g2["a"], "w_shift_ir", 100)
+feed(p2, g2["b"], "w_shift_dr", 100)
+f6 = p2.flop(1110, g2["o"][1] - 18, "r_tdo_oe", w=80, falling=True)
+into(p2, g2["o"], f6["d"])
+p2.text(1290, f6["q"][1], "o_jtag_tdo_oe", size=11, bold=True)
+p2.wire([f6["q"], (1285, f6["q"][1])])
+
+SHEETS = [("sysdbg_review_2_jtag", p2)]
 
 if __name__ == "__main__":
-    emit(PAGES, os.path.join(HERE, "sysdbg_review.drawio"), HERE)
-    for key, *_ in PAGES:                      # keep the svg; the png is a by-product
-        os.remove(os.path.join(HERE, key + ".png"))
+    path = os.path.join(HERE, "sysdbg_review.drawio")
+    open(path, "w").write(Sheet.file([s for _, s in SHEETS]))
+    for i, (key, _) in enumerate(SHEETS):
+        subprocess.run([DRAWIO, "-x", "-f", "svg", "-p", str(i + 1), "-o",
+                        os.path.join(HERE, key + ".svg"), path],
+                       check=True, capture_output=True)
+        print("wrote", key + ".svg")
