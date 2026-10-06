@@ -18,9 +18,16 @@ design/<block>/
   constraints/
     <block>.sdc      clocks, I/O delays, CDC constraints (SDC stage)
   waivers.vlt        lint waivers owned by this block (optional)
+  doc/               review drawings (optional): drawio, WaveDrom; not part of the MAS
   README.md          what it is, which IP, link to the spec, owner
   dv -> ../../dv/<block>
 ```
+
+`doc/` holds the drawings a block is reviewed with: flip-flop-level block diagrams
+and waveforms (`.drawio`, WaveDrom `.json`). They help write and review the RTL; the
+MAS stays the specification, and a drawing that shows the MAS wrong or incomplete
+leads to a change in the MAS text, not a copy of the drawing into it. The MAS
+figures themselves are in `doc/figures/`, the teacher's material in `doc/reference/`.
 
 The testbench lives in `dv/<block>/` (see [`dv/README.md`](../dv/README.md)); the
 shared scripts for each sign-off stage live in `flow/`. What each stage requires is
