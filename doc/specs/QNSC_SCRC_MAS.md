@@ -1,6 +1,6 @@
 ---
 title: "SCRC"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.3"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,6 +14,7 @@ The reasoning behind each change, the V1.0--V2.3 history and the V2.3 text are i
 | V3.0 | 2026-09-27 | Nghia VT (lead), for Nguyen Hao Nam | -- | V2.3 moved onto the MAS template; Naming Rule ports; `APB_M0`/`APB_M1`; one SPI domain (bit 13 reserved); per-peripheral soft reset removed; WDT never gated; monochrome figures after the mentor's `VLSI_SCRC.drawio`; timing diagrams; deviations from the HAS listed |
 | V3.1 | 2026-09-28 | Nghia VT (lead), for Nguyen Hao Nam | -- | Owner decisions on the two proposals: no stretch after POR, adopted (7.3, `SCRC_RST_001`); two CSRs, rejected, the mentor's APB BUS and WFs stay. Open item on the APB BUS name narrowed to renaming the generated module |
 | V3.2 | 2026-09-29 | Nghia VT (lead) | -- | 7.10: before gating `dma`, wait for `DONE_ID`, not idle (`QNSC_DMA_MAS` V3.2) |
+| V3.3 | 2026-09-29 | Nguyen Hao Nam | -- | Section 9: `SYSCSR` RTL is in its own block, `design/syscsr` (`QNSC_SYSCSR_MAS` V3.1) |
 
 # 1. Overview
 
@@ -439,7 +440,7 @@ The eleven guards: `timer_0`, `timer_1`, `uart_0`, `uart_1`, `gpio_0`,
 
 | Function | Where it lives |
 |---|---|
-| `RESET_CAUSE`, `DOMAIN_RST_STATUS`, `CHIP_ID_REV` | `SYSCSR`, `APB_M1`, RTL in `design/scrc` |
+| `RESET_CAUSE`, `DOMAIN_RST_STATUS`, `CHIP_ID_REV` | `SYSCSR`, `APB_M1`, RTL in `design/syscsr` |
 | `DBG_EN` capture, `o_dbg_cpu_hold` | `QNSC_SYSDBG_MAS` 7.1 |
 | Ibex `boot_addr_i` mux, `fetch_enable_i` tie | CPU owner, `QNSC_SYSDBG_MAS` 11 |
 | Decode error on an unmapped address | `S_BUS`, `P_BUS` |
