@@ -58,10 +58,12 @@ already speaks APB. One wrapper per IP, and the IP owner owns it. `design/top`
 connects every wrapper by the naming rule.
 
 A block built from several IPs has one **boundary** wrapper, `m_qnsc_wrap_<block>`,
-which is what `design/top` instantiates. Inside it, each IP may have its own nested
-wrapper, `m_qnsc_wrap_<block>_<part>`. In `design/cpu`, `m_qnsc_wrap_cpu` contains
-`m_qnsc_wrap_cpu_ibex` (around `ibex_top`) and `m_qnsc_wrap_cpu_cpu2axi` (around the
-bridge). A nested wrapper follows the same rules as the boundary one.
+which is what `design/top` instantiates. If composing the IPs is easier as
+separate sub-modules, one may get its own nested wrapper,
+`m_qnsc_wrap_<block>_<part>`, instantiated inside the boundary wrapper -- but
+prefer one flat wrapper directly instantiating every IP when that's simple
+enough (`design/cpu` connects `ibex_top` to its bridge directly, no nesting).
+A nested wrapper follows the same rules as the boundary one.
 
 A wrapper has four jobs: map ports to the names of the naming rule, tie off what QSOC
 does not use, adapt the protocol (the bridge) if the IP speaks a different one, and add
