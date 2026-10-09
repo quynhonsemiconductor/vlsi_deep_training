@@ -18,8 +18,6 @@
 ../common/rtl/qnsc_sync.sv
 
 # ---- upstream IP, in compile order -----------------------------------------
-# Clock gate cell behind pulp_clock_gating (see rtl/pulp_clock_gating.sv).
-../../vendor/lowrisc/opentitan/hw/ip/prim_generic/rtl/prim_clock_gating.sv
 # apb_adv_timer; lut_4x4.sv and out_filter.sv are not instantiated.
 ../../vendor/pulp-platform/apb_adv_timer/rtl/adv_timer_apb_if.sv
 ../../vendor/pulp-platform/apb_adv_timer/rtl/comparator.sv
