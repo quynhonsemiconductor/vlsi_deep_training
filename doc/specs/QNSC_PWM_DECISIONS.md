@@ -331,6 +331,8 @@ Taken from `QSOC_HAS` and not changed by this document.
 Sixteen channels exist; eight leave the chip. The pad assignment is fixed by
 `QSOC_HAS` and every one of the eight is shared with a GPIO function.
 
+> **Superseded 2026-10-09.** The pin numbers in this table are those of the earlier pad list. The 40-pin pad list puts `PWM_0`..`PWM_7` on `PIN_23`--`26`, `29`, `30`, `39`, `40` (alternate function of `GPIO1_1`, `GPIO1_0`, `GPIO2_7`..`GPIO2_2`) and `TIM_EXT0`..`3` on `PIN_31`--`34` (`TIM_EXT0`, `1` alternate of `GPIO2_1`, `GPIO2_0`; `TIM_EXT2`, `3` their own pads; there is no `GPIO3`). The pad list is the reference; the PWM MAS names no pin.
+
 **Table 9 -- Channel outputs against pads**
 
 | Pad name | Pin | Shared with |
@@ -422,6 +424,8 @@ The handler must know which channel it selected into which event slot; the block
 cannot tell it, section 4.6.
 
 ## 5.6 External triggers
+
+> **Superseded 2026-10-09.** The pin numbers in this table are those of the earlier pad list. The 40-pin pad list puts `PWM_0`..`PWM_7` on `PIN_23`--`26`, `29`, `30`, `39`, `40` (alternate function of `GPIO1_1`, `GPIO1_0`, `GPIO2_7`..`GPIO2_2`) and `TIM_EXT0`..`3` on `PIN_31`--`34` (`TIM_EXT0`, `1` alternate of `GPIO2_1`, `GPIO2_0`; `TIM_EXT2`, `3` their own pads; there is no `GPIO3`). The pad list is the reference; the PWM MAS names no pin.
 
 `ext_sig_i` is 32 bits wide. **Four of them reach pads**, confirmed by the team's
 `IOPAD_Pin_Summary`: `TIM_EXT0` to `TIM_EXT3` on `PIN_37` to `PIN_40`, each sharing its

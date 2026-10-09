@@ -1,6 +1,6 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.6"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.7"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -18,6 +18,7 @@ The reasoning behind each change is in
 | V2.4 | 2026-09-28 | Nghia VT | Tâm | Module `m_qnsc_wrap_pwm` (Naming Rule V1.1). `APB_ADDR_WIDTH` fixed at 12 in the wrapper (no package, no parameter). Review answers: one clock domain and why `low_speed_clk_i` is 0 (section 3); `TIM_EXT` bits independent, minimum pulse (7.4); four event lines on one `INTMAP` line (7.5) |
 | V2.5 | 2026-09-28 | Nghia VT | -- | `SCRC` bit from `QNSC_SCRC_MAS` V3.0: `CLK_EN[15]`; requirement on `SCRC` closed |
 | V2.6 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`PWM_NNN`), for traceability to tests. No change in behaviour |
+| V2.7 | 2026-10-09 | Nghia VT | -- | `pulp_clock_gating` maps onto `qnsc_clk_gate`, the chip's one clock gate (4). Word writes only: the IP has no `PSTRB` or `PPROT` (7.6). No dead time, complementary output or break input (11). No change in behaviour |
 
 # 1. Overview
 
@@ -65,8 +66,9 @@ branches of it, not other frequencies. The IP's second clock input,
 | `pulp-platform/apb_adv_timer` | `apb_adv_timer`, `adv_timer_apb_if`, `timer_module`, `timer_cntrl`, `input_stage`, `prescaler`, `up_down_counter`, `comparator` | `c8faec1e` | SolderPad 0.51 |
 
 `lut_4x4.sv` and `out_filter.sv` are in the vendor directory and are not instantiated.
-`pulp_clock_gating` is supplied in `design/pwm/rtl` as a wrapper of OpenTitan
-`prim_clock_gating`, which has the same ports and is the cell Ibex already uses.
+`pulp_clock_gating` is supplied in `design/pwm/rtl`. It instantiates `qnsc_clk_gate`,
+the one clock gate of QSOC (`design/common/tech/`, Naming Rule 2.8), so the
+technology selected with `TECH` supplies the cell here as in every other block.
 
 # 5. Interface
 
@@ -246,6 +248,11 @@ every `0x400` across the 16 KiB region. Offsets with no register -- `M+0x30` to
 `M+0x3C` and `0x108` to `0x3FC` -- read 0 and ignore writes. No access returns an
 error: `PSLVERR` is 0 and `PREADY` is 1.
 
+The IP has no `PSTRB` and no `PPROT`, and the wrapper takes neither from `P_BUS`.
+Every write writes all 32 bits of the register: firmware accesses this block with
+word stores (`sw`) only. A byte or halfword store writes the other bytes with
+whatever the bus carries in those lanes.
+
 ## 7.7 Clock gating and safe stop
 
 Two gates are in series: `SCRC` `CLK_EN[15]` gates `i_clk_peri` for the whole block, and
@@ -302,6 +309,10 @@ One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 3. The 1 KiB register window aliases across 16 KiB without an error -- 7.6.
 4. Pads carry modules 0 and 1 only: two independent periods -- 7.3.
 5. `CHn_LUT` has no effect -- section 6.
+6. No dead-time insertion, no complementary output pair and no break (fault) input:
+   a half bridge driven from two channels gets no hardware protection against
+   shoot-through.
+7. Word writes only -- 7.6.
 
 **Open:** gate count, after synthesis.
 

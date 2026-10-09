@@ -30,7 +30,7 @@ The IP already speaks APB, so the wrapper is the core with no bridge. Ours in
 |---|---|
 | `rtl/m_qnsc_wrap_pwm.sv` | **the wrapper, one file**: port groups, added logic and `AUTO_TEMPLATE`s written by hand; the blocks between `// Beginning of automatic` and `// End of automatics` written by `make wrap BLOCK=pwm` in place |
 | `rtl/emacs/Makefile`, `rtl/emacs/filelist_emacs.f` | how emacs is run, and the modules whose ports it reads (`apb_adv_timer`, `qnsc_sync`) |
-| `rtl/pulp_clock_gating.sv` | the clock gate `apb_adv_timer` instantiates but does not ship, mapped onto OpenTitan `prim_clock_gating` |
+| `rtl/pulp_clock_gating.sv` | the clock gate `apb_adv_timer` instantiates but does not ship, mapped onto `qnsc_clk_gate` (`design/common/tech/`) |
 | `waivers.vlt` | lint waivers, each with its reason |
 
 What the wrapper adds (MAS 5, 7.3, 10): `i_pad_tim_ext[3:0]` through
