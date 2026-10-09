@@ -45,9 +45,9 @@ module m_qnsc_rom_wr_resp (
     S_IDLE = 2'd0,
     S_DATA = 2'd1,
     S_RESP = 2'd2
-  } t_wr_state;
+  } wr_state_t;
 
-  t_wr_state  r_wr_state;
+  wr_state_t  r_wr_state;
   logic [6:0] r_bid;
 
   always_ff @(posedge i_clk_mem or negedge i_rst_n_mem) begin
