@@ -2,7 +2,8 @@
 """Protocol tests: qsoc_loader.download() against rom_model.RomModel.
 
 Also checks that the Python constants match ../boot.h, so the C ROM and the
-PC tools cannot silently disagree on the magic, tokens or address limits.
+PC tools cannot silently disagree on the magic, tokens, addresses or LENGTH
+limits.
 Run:  python3 tools/test_protocol.py
 """
 import os
@@ -10,6 +11,7 @@ import random
 import re
 import struct
 import sys
+import time
 import zlib
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -44,13 +46,6 @@ def run(name, payload, tamper=None, retries=3, byte_time=0.0, **frame_kw):
     return ok, rom, link
 
 
-def with_uart_error(data, at):
-    """data with the byte at `at` received with a UART error (rom_model.UART_ERR)."""
-    out = list(data)
-    out[at] = rom_model.UART_ERR
-    return out
-
-
 def test_boot_h_matches():
     print("boot.h constants == Python constants")
     text = open(os.path.join(HERE, "..", "boot.h")).read()
@@ -63,6 +58,12 @@ def test_boot_h_matches():
     for sym, val in (("ISRAM_APP_BASE", img.ISRAM_APP_BASE), ("ISRAM_END", img.ISRAM_END)):
         m = re.search(rf"#define\s+{sym}\s+0x([0-9A-Fa-f]+)u", text)
         check(f"{sym} = 0x{val:08x}", m and int(m.group(1), 16) == val)
+    check("APP_ENTRY = ISRAM_APP_BASE + 0x80 = 0x2000_1080",
+          re.search(r"#define\s+APP_ENTRY\s+\(ISRAM_APP_BASE \+ 0x80u\)", text)
+          and img.APP_ENTRY == 0x2000_1080)
+    check("APP_MIN_LEN = 132, APP_MAX_LEN = 61440",
+          re.search(r"#define\s+APP_MIN_LEN\s+\(APP_ENTRY \+ 4u - ISRAM_APP_BASE\)", text)
+          and img.APP_MIN_LEN == 132 and img.APP_MAX_LEN == 61440)
     check("MAGIC word LE = 0x434F5351", struct.unpack("<I", b"QSOC")[0] == 0x434F5351)
     m = re.search(r"#define\s+UART_DIVISOR\s+(\d+)u", text)
     baud = 20_000_000 / (16 * int(m.group(1))) if m else 0
@@ -94,7 +95,7 @@ def main():
     ok, rom, _ = run("good frame", app)
     check("download ok", ok)
     check("RAM == payload", ram_bytes(rom, 0x2000_1000, len(app)) == app)
-    check("jumped to LOAD+0x80", rom.entry == 0x2000_1080)
+    check("jumped to 0x2000_1080", rom.entry == 0x2000_1080)
     check("no token after reset: ACKH ACKP only", rom.sent == [b"ACKH", b"ACKP"], str(rom.sent))
 
     ok, rom, _ = run("line noise before the frame",
@@ -105,18 +106,19 @@ def main():
     check("download ok", ok and ram_bytes(rom, 0x2000_1000, 1024)[:1021] == app[:1021])
 
     def bad_hcrc(n, d):
-        return d[:16] + bytes([d[16] ^ 1]) + d[17:] if n == 1 else d
+        return d[:8] + bytes([d[8] ^ 1]) + d[9:] if n == 1 else d
     ok, rom, _ = run("header CRC corrupted once", app, tamper=bad_hcrc)
     check("FHCR, QRDY, then retry ok", ok and rom.sent == [b"FHCR", b"QRDY", b"ACKH", b"ACKP"],
           str(rom.sent))
 
-    ok, rom, _ = run("UART error before the magic",
-                     app, tamper=lambda n, d: (with_uart_error(b"UU", 1) + list(d)) if n == 1 else d)
-    check("dropped without a reply, download ok", ok and rom.sent == [b"ACKH", b"ACKP"], str(rom.sent))
+    ok, rom, _ = run("framing error in LENGTH (byte changed)", app,
+                     tamper=lambda n, d: d[:5] + bytes([d[5] ^ 0x10]) + d[6:] if n == 1 else d)
+    check("FHCR, QRDY, then retry ok", ok and rom.sent == [b"FHCR", b"QRDY", b"ACKH", b"ACKP"],
+          str(rom.sent))
 
-    ok, rom, _ = run("UART error in the header", app,
-                     tamper=lambda n, d: with_uart_error(d, 9) if n == 1 else d)
-    check("FUAR, QRDY, then retry ok", ok and rom.sent[:2] == [b"FUAR", b"QRDY"] and rom.entry == 0x2000_1080,
+    ok, rom, _ = run("overrun in the header (byte lost)", app,
+                     tamper=lambda n, d: d[:6] + d[7:] if n == 1 else d)
+    check("FTMO, QRDY, then retry ok", ok and rom.sent[:2] == [b"FTMO", b"QRDY"] and rom.entry == 0x2000_1080,
           str(rom.sent))
 
     def bad_payload(n, d):
@@ -124,17 +126,20 @@ def main():
     ok, rom, _ = run("payload corrupted once", app, tamper=bad_payload)
     check("FPCR then retry ok", ok and b"FPCR" in rom.sent, str(rom.sent))
 
-    ok, rom, _ = run("LOAD_ADDR in the debug window", app, retries=1,
-                     load=0x2000_0000, entry=0x2000_0080, force=True)
-    check("rejected with FHDR", not ok and b"FHDR" in rom.sent, str(rom.sent))
+    ok, rom, _ = run("LENGTH 128, the payload stops before 0x2000_1080", bytes(128), retries=1,
+                     force=True)
+    check("rejected with FHDR, nothing written", not ok and rom.sent[:1] == [b"FHDR"] and not rom.ram,
+          str(rom.sent))
 
-    ok, rom, _ = run("ENTRY outside payload", app, retries=1,
-                     entry=0x2000_1000 + len(app), force=True)
-    check("rejected with FHDR", not ok and b"FHDR" in rom.sent, str(rom.sent))
+    ok, rom, _ = run("LENGTH 132, the shortest image", bytes(132))
+    check("download ok", ok and rom.sent == [b"ACKH", b"ACKP"], str(rom.sent))
 
-    ok, rom, _ = run("image past ISRAM end", bytes(8), retries=1,
-                     load=0x2000_FFFC, entry=0x2000_FFFC, force=True)
-    check("rejected with FHDR", not ok and b"FHDR" in rom.sent, str(rom.sent))
+    ok, rom, _ = run("LENGTH 61 444, past the ISRAM end", bytes(61444), retries=1, force=True)
+    check("rejected with FHDR", not ok and rom.sent[:1] == [b"FHDR"], str(rom.sent))
+
+    ok, rom, _ = run("LENGTH not a multiple of 4", app, retries=1,
+                     tamper=lambda n, d: img.make_header(1022) if n == 1 else d)
+    check("rejected with FHDR", not ok and rom.sent[:1] == [b"FHDR"], str(rom.sent))
 
     ok, rom, _ = run("payload cut short", app, retries=1,
                      tamper=lambda n, d: d[:200] if n == 2 else (b"" if n > 2 else d))
@@ -146,11 +151,15 @@ def main():
                      big, byte_time=20e-6)
     check("download ok, RAM == payload", ok and ram_bytes(rom, 0x2000_1000, len(big)) == big)
 
-    ok, rom, link = run("UART error early in a 16 KiB payload, at wire speed", big, byte_time=20e-6,
-                        tamper=lambda n, d: with_uart_error(d, 100) if n == 2 else d)
+    def pause(n, d):                     # the PC stalls before its 2nd chunk
+        if n == 3:
+            time.sleep(2 * rom_model.RX_TIMEOUT_S)
+        return d
+    ok, rom, link = run("PC stalls early in a 16 KiB payload, at wire speed", big, byte_time=20e-6,
+                        tamper=pause)
     first_try = link.writes - (1 + chunks) - 1          # payload chunks of the first attempt
-    check("PC stopped sending after FUAR, then retry ok",
-          ok and rom.sent == [b"ACKH", b"FUAR", b"QRDY", b"ACKH", b"ACKP"] and first_try < chunks // 2,
+    check("PC stopped sending after FTMO, then retry ok",
+          ok and rom.sent == [b"ACKH", b"FTMO", b"QRDY", b"ACKH", b"ACKP"] and first_try < chunks // 2,
           f"sent={rom.sent} first attempt sent {first_try} of {chunks} chunks")
     print(f"        (first attempt stopped after {first_try} of {chunks} chunks)")
 

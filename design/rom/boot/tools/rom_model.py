@@ -4,8 +4,8 @@
 Mirrors boot_once()/boot_main() step for step; keep the two in sync. Timeouts
 are wall-clock seconds here, loop counts in the C code.
 
-A test can put UART_ERR into the PC -> ROM stream to stand for a byte that
-UART0 received with an overrun, parity or framing error (LSR bit 1-3).
+Like boot.c, the model has no notion of a UART error: a test stands for a
+framing error by changing a byte, and for an overrun by dropping one.
 """
 import queue
 import struct
@@ -13,19 +13,13 @@ import threading
 import time
 import zlib
 
-from qsoc_image import APP_MAX_LEN, ISRAM_APP_BASE, ISRAM_END
+from qsoc_image import APP_ENTRY, APP_MAX_LEN, APP_MIN_LEN, ISRAM_APP_BASE
 
 RX_TIMEOUT_S = 0.1     # boot.h RX_TIMEOUT   (>= 100 ms, QNSC_BOOT_SPEC 7.3)
 DRAIN_IDLE_S = 0.05    # boot.h DRAIN_IDLE   (>= 50 ms)
 
-UART_ERR = object()    # a received byte flagged with a UART error
-
 
 class _Timeout(Exception):
-    pass
-
-
-class _UartError(Exception):
     pass
 
 
@@ -50,7 +44,7 @@ class PcSide:
     """Link object handed to qsoc_loader.download().
 
     tamper(n, data) may change the n-th write (1 = header, 2.. = payload
-    chunks); it may return a list mixing byte values and UART_ERR.
+    chunks).
     byte_time > 0 makes each write take as long as the bytes would on the
     wire, so the ROM answers while the PC is still sending.
     """
@@ -110,8 +104,6 @@ class RomModel(threading.Thread):
         b = self.rx.get(limit)
         if b is None:
             raise _Timeout
-        if b is UART_ERR:
-            raise _UartError
         return b
 
     def get32(self) -> int:
@@ -131,24 +123,18 @@ class RomModel(threading.Thread):
             b = self.rx.get(0.05)
             if self.stop:
                 return b""
-            if b is None or b is UART_ERR:   # a byte with a UART error is dropped
+            if b is None:
                 continue
             window = (window + bytes([b]))[-4:]
         try:
-            length, load, entry, hcrc = (self.get32() for _ in range(4))
-            if zlib.crc32(b"QSOC" + struct.pack("<III", length, load, entry)) != hcrc:
+            length, hcrc = (self.get32() for _ in range(2))
+            if zlib.crc32(b"QSOC" + struct.pack("<I", length)) != hcrc:
                 return b"FHCR"
-            if length == 0 or length % 4 or length > APP_MAX_LEN:
-                return b"FHDR"
-            if load % 4 or load < ISRAM_APP_BASE or load > ISRAM_END:
-                return b"FHDR"
-            if length > ISRAM_END - load:
-                return b"FHDR"
-            if entry % 2 or entry < load or entry - load >= length:
+            if length % 4 or length < APP_MIN_LEN or length > APP_MAX_LEN:
                 return b"FHDR"
             self.put_tok(b"ACKH")
             crc = 0
-            for a in range(load, load + length, 4):
+            for a in range(ISRAM_APP_BASE, ISRAM_APP_BASE + length, 4):
                 w = self.get32()
                 self.ram[a] = w
                 crc = zlib.crc32(struct.pack("<I", w), crc)
@@ -156,10 +142,8 @@ class RomModel(threading.Thread):
                 return b"FPCR"
         except _Timeout:
             return b"FTMO"
-        except _UartError:
-            return b"FUAR"
         self.put_tok(b"ACKP")
-        self.entry = entry
+        self.entry = APP_ENTRY
         return b""
 
     def run(self) -> None:          # boot_main(): no token after reset
