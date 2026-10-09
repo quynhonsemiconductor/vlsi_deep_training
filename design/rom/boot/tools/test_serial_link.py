@@ -36,7 +36,8 @@ class RomOverTcp:
     """Accepts one connection and wires it to a RomModel thread.
 
     tamper(i, b) sees every byte the PC sends (i counts from 0 across the
-    whole connection) and returns a byte value or rom_model.UART_ERR.
+    whole connection) and returns a byte value, or None to drop the byte as
+    an overrun would.
     """
 
     def __init__(self, tamper=None):
@@ -60,7 +61,9 @@ class RomOverTcp:
                 return
             items = []
             for b in data:
-                items.append(self.tamper(self.received, b) if self.tamper else b)
+                v = self.tamper(self.received, b) if self.tamper else b
+                if v is not None:
+                    items.append(v)
                 self.received += 1
             self.rx.put(items)
 
@@ -106,7 +109,7 @@ def main():
 
         first = [True]
         def flip(i, b):                 # one payload byte flipped, first frame only
-            if i == 20 + 100 and first[0]:
+            if i == 12 + 100 and first[0]:
                 first[0] = False
                 return b ^ 0x01
             return b
@@ -115,13 +118,13 @@ def main():
               str(rom.sent) + " " + p.stdout)
 
         hit = [True]
-        def uart_err(i, b):             # a framing error in the first frame's payload
-            if i == 20 + 300 and hit[0]:
+        def overrun(i, b):              # one payload byte lost, first frame only
+            if i == 12 + 300 and hit[0]:
                 hit[0] = False
-                return rom_model.UART_ERR
+                return None
             return b
-        p, rom = run("UART error in the payload", path, uart_err)
-        check("FUAR, QRDY, then retry ok", p.returncode == 0 and rom.sent == [b"ACKH", b"FUAR", b"QRDY", b"ACKH", b"ACKP"],
+        p, rom = run("payload byte lost to an overrun", path, overrun)
+        check("FTMO, QRDY, then retry ok", p.returncode == 0 and rom.sent == [b"ACKH", b"FTMO", b"QRDY", b"ACKH", b"ACKP"],
               str(rom.sent) + " " + p.stdout)
         check("RAM == payload after the retry", words(rom) == app)
     finally:

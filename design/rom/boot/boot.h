@@ -8,7 +8,7 @@
 #ifndef QSOC_BOOT_H
 #define QSOC_BOOT_H
 
-/* ---- Memory map (util/qsoc_contract.yml, QNSC_BOOT_SPEC V3.1 Table 3-1) -
+/* ---- Memory map (util/qsoc_contract.yml, QNSC_BOOT_SPEC V3.2 Table 3-1) -
  * TODO(lead): take these from the qnsc_map.h generated from the contract
  * (BOOT_SPEC Table 10-1), so the C side cannot drift from the RTL side.
  */
@@ -19,6 +19,12 @@
 #define DSRAM_BASE      0x30000000u   /* 32 KiB, AXI_M2                      */
 #define DSRAM_END       0x30008000u   /* stack grows down from here          */
 
+/* Fixed image layout, the same as debug boot (QNSC_SYSDBG_MAS 7.2): the image
+ * is loaded at ISRAM_APP_BASE and entered at ISRAM_APP_BASE + 0x80, where Ibex
+ * starts on its own in debug boot, {boot_addr_i[31:8], 8'h80}. So the frame
+ * carries neither address (QNSC_BOOT_SPEC 6).                              */
+#define APP_ENTRY       (ISRAM_APP_BASE + 0x80u)       /* 0x2000_1080 */
+#define APP_MIN_LEN     (APP_ENTRY + 4u - ISRAM_APP_BASE) /* 132: reaches ENTRY */
 #define APP_MAX_LEN     (ISRAM_END - ISRAM_APP_BASE)   /* 61440 bytes */
 
 /* ---- UART0 (pulp apb_uart wrapping obi_uart, 16550-compatible) --------
@@ -40,8 +46,9 @@
 #define FCR_EN_CLR      0x07u         /* enable FIFOs, clear RX and TX       */
 #define FCR_EN_CLR_RX   0x03u         /* enable FIFOs, clear RX only: a drain */
                                       /* must not drop a token still in TX   */
-#define LSR_DR          0x01u         /* data ready                          */
-#define LSR_ERR         0x0Eu         /* overrun | parity | framing          */
+#define LSR_DR          0x01u         /* data ready. The error bits are not  */
+                                      /* read: a bad byte fails a CRC, a     */
+                                      /* lost one ends in FTMO               */
 #define LSR_THRE        0x20u         /* THR empty: can queue the next byte  */
 #define LSR_TEMT        0x40u         /* transmitter fully empty             */
 
@@ -50,7 +57,7 @@
  * 38 400 and up -1.36 %), inside the mentor's 10 000-20 000 range.        */
 #define UART_DIVISOR    65u
 
-/* ---- Timeouts (loop counts, not time; QNSC_BOOT_SPEC V3.1 7.3) ---------
+/* ---- Timeouts (loop counts, not time; QNSC_BOOT_SPEC V3.2 7.3) ---------
  * A poll is at least one APB read and an APB transfer takes at least 2 clk,
  * so these are MINIMUM times at 20 MHz: RX_TIMEOUT >= 100 ms (192 bytes at
  * 19 231 baud), DRAIN_IDLE >= 50 ms (96 bytes). The margins cover gaps the
@@ -65,11 +72,10 @@
 /* ---- Frame format ------------------------------------------------------
  *  off  size  field      rule checked by ROM
  *  0x00  4    MAGIC      bytes 'Q','S','O','C' in that order
- *  0x04  4    LENGTH     payload bytes, %4 == 0, 4 .. APP_MAX_LEN
- *  0x08  4    LOAD_ADDR  %4 == 0, >= ISRAM_APP_BASE, LOAD+LENGTH <= ISRAM_END
- *  0x0C  4    ENTRY      %2 == 0, LOAD <= ENTRY < LOAD+LENGTH
- *  0x10  4    HDR_CRC    CRC32 of bytes 0x00..0x0F
- *  0x14  N    PAYLOAD    raw bytes, as in the app's .bin
+ *  0x04  4    LENGTH     payload bytes, %4 == 0, APP_MIN_LEN .. APP_MAX_LEN
+ *  0x08  4    HDR_CRC    CRC32 of bytes 0x00..0x07
+ *  0x0C  N    PAYLOAD    raw bytes, as in the app's .bin; written from
+ *                        ISRAM_APP_BASE, entered at APP_ENTRY
  *  +N    4    PAY_CRC    CRC32 of PAYLOAD
  * All multi-byte fields little-endian (least significant byte sent first).
  * CRC32 = zlib/IEEE: reflected poly 0xEDB88320, init and final XOR 0xFFFFFFFF.
@@ -85,9 +91,8 @@
 #define TOK_ACKH        TOK('A', 'C', 'K', 'H')   /* header accepted          */
 #define TOK_ACKP        TOK('A', 'C', 'K', 'P')   /* payload ok, jumping      */
 #define TOK_FHCR        TOK('F', 'H', 'C', 'R')   /* header CRC mismatch      */
-#define TOK_FHDR        TOK('F', 'H', 'D', 'R')   /* header field out of range*/
+#define TOK_FHDR        TOK('F', 'H', 'D', 'R')   /* LENGTH out of range      */
 #define TOK_FPCR        TOK('F', 'P', 'C', 'R')   /* payload CRC mismatch     */
 #define TOK_FTMO        TOK('F', 'T', 'M', 'O')   /* gap between bytes too long*/
-#define TOK_FUAR        TOK('F', 'U', 'A', 'R')   /* UART overrun/parity/frame*/
 
 #endif /* QSOC_BOOT_H */

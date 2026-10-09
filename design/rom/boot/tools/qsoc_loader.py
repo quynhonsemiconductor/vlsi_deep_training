@@ -2,15 +2,15 @@
 """PC-side loader for the QSOC boot ROM (USB-UART -> UART0, 8N1).
 
 The PC opens the port at 19200; the ROM runs at 20 MHz / (16 x 65) = 19 231
-baud, 0.16 % faster, well inside the 8N1 tolerance (QNSC_BOOT_SPEC V3.1, 5).
+baud, 0.16 % faster, well inside the 8N1 tolerance (QNSC_BOOT_SPEC V3.2, 5).
 
   qsoc_loader.py COM5 app.bin                   build the frame and send it
   qsoc_loader.py /dev/ttyUSB0 --frame app.qsoc  send a prebuilt frame
   qsoc_loader.py socket://127.0.0.1:5555 app.bin  any pyserial URL works too
 
 Protocol (ROM tokens are 4 ASCII bytes; the ROM sends nothing after reset):
-  PC: header (20 B)  ->  ROM: ACKH | FHCR | FHDR | FTMO | FUAR
-  PC: payload + PAY_CRC, in chunks  ->  ROM: ACKP | FPCR | FTMO | FUAR
+  PC: header (12 B)  ->  ROM: ACKH | FHCR | FHDR | FTMO
+  PC: payload + PAY_CRC, in chunks  ->  ROM: ACKP | FPCR | FTMO
   The loader checks for a failure token between chunks and stops sending at
   once (there is no hardware flow control). On any F*** token the ROM drains
   the line and sends QRDY; the loader waits for it and resends the whole
@@ -22,7 +22,7 @@ import struct
 import sys
 import time
 
-from qsoc_image import FAIL_TOKENS, HEADER_LEN, TOKENS, make_frame
+from qsoc_image import APP_ENTRY, FAIL_TOKENS, HEADER_LEN, TOKENS, make_frame
 
 BAUD = 19200
 CHUNK = 256            # payload bytes per write; a failure token is checked between chunks
@@ -102,8 +102,8 @@ def send_payload(link, body: bytes):
 
 def download(link, header: bytes, body: bytes, retries: int = 5,
              ready_timeout: float = 3.0, log=print) -> bool:
-    length, load, entry = struct.unpack_from("<III", header, 4)
-    log(f"frame: LENGTH={length} LOAD=0x{load:08x} ENTRY=0x{entry:08x}, "
+    length, = struct.unpack_from("<I", header, 4)
+    log(f"frame: LENGTH={length}, "
         f"~{payload_seconds(len(header) + len(body)):.1f} s at {BAUD} baud")
     failed = False        # the ROM sends QRDY only after a failure token
     for attempt in range(1, retries + 1):
@@ -124,7 +124,7 @@ def download(link, header: bytes, body: bytes, retries: int = 5,
         if not tok:
             tok = wait_token(link, {b"ACKP"} | FAIL_TOKENS, 2.0, seen[-3:])
         if tok == b"ACKP":
-            log(f"[{attempt}] ACKP - application started at 0x{entry:08x}")
+            log(f"[{attempt}] ACKP - application started at 0x{APP_ENTRY:08x}")
             return True
         failed = tok in FAIL_TOKENS
         log(f"[{attempt}] payload: {tok.decode() if tok else 'no answer'}"
@@ -139,8 +139,6 @@ def main() -> int:
     ap.add_argument("port")
     ap.add_argument("bin", nargs="?", help="application .bin (objcopy -O binary)")
     ap.add_argument("--frame", help="prebuilt frame from qsoc_image.py")
-    ap.add_argument("--load", type=lambda s: int(s, 0), default=0x2000_1000)
-    ap.add_argument("--entry", type=lambda s: int(s, 0), default=None)
     ap.add_argument("--retries", type=int, default=5)
     a = ap.parse_args()
 
@@ -148,7 +146,7 @@ def main() -> int:
         raw = open(a.frame, "rb").read()
         header, body = raw[:HEADER_LEN], raw[HEADER_LEN:]
     elif a.bin:
-        header, body = make_frame(open(a.bin, "rb").read(), a.load, a.entry)
+        header, body = make_frame(open(a.bin, "rb").read())
     else:
         ap.error("give an application .bin or --frame")
     link = SerialLink(a.port)
