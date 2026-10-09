@@ -2,13 +2,27 @@
 
 **This is not the specification.** That is [`QNSC_BOOT_SPEC.md`](QNSC_BOOT_SPEC.md).
 
-This file holds why V3.1 differs from V3.0, why V3.0 differs from V2.2, and the
+This file holds why V3.2 differs from V3.1, why V3.1 differs from V3.0, why V3.0
+differs from V2.2, and the
 V2.2 document by Nguyen Hao Nam, kept whole below. Its figures are not reproduced: they were in colour and are
 replaced by the figures of the specification.
 
 ---
 
-# 1. V3.0 to V3.1
+# 1. V3.1 to V3.2
+
+From the mentor review of V3.1 and the owner's decisions of 08/10 and 09/10. The
+retry by the PC, the timeouts and the drain are unchanged.
+
+| Change | Why |
+|---|---|
+| `ENTRY` dropped from the header; the ROM always jumps to `0x2000_1080` | The mentor: keep the normal boot consistent with debug boot. In debug boot the entry is fixed by hardware: Ibex starts at `{boot_addr_i[31:8], 8'h80}` with `boot_addr_i` = `0x2000_1000` (`QNSC_SYSDBG_MAS` 7.2, Ibex RTL). An image that needed another `ENTRY` would run in normal boot and fail in debug boot. The V3.0 answer below ("a convention fixed in the ROM forever") no longer holds: the hardware fixes the same convention anyway |
+| `LOAD_ADDR` dropped with it; the payload always goes to `0x2000_1000` | With the entry fixed at `0x2000_1080` and a 128-byte vector table before it, `0x2000_1000` is the only load address that works. The field, its three range checks and its `FHDR` cases go; the header is 12 bytes instead of 20 |
+| `LENGTH` 132 to 61 440 instead of 4 to 61 440 | Without `ENTRY` < `LOAD_ADDR` + `LENGTH` nothing kept a short image from ending before `0x2000_1080`, and the ROM would jump into `ISRAM` it never wrote. 132 = the vector table plus one instruction word |
+| `FUAR` dropped; the ROM no longer reads the `LSR` error bits | The owner: a UART error is caught anyway. With 8N1 there is no parity error. A framing error leaves a wrong byte that a CRC catches (`FHCR`, `FPCR`); an overrun loses a byte, the frame is short and the ROM ends in `FTMO`. Both lead to the same retry. The byte with an error is kept, not dropped: dropping it would turn every framing error into a timeout, 100 ms or more each time, for nothing. `obi_uart` keeps the error flags per byte in the RX FIFO, so an unread flag blocks nothing. The cost is the diagnosis on the PC: a wrong baud rate shows as repeated `FHCR` instead of `FUAR`. The ROM shrinks from 730 to 672 bytes |
+| Figure 4-1 redrawn by the owner: "Power on", two `SCRC` steps (hold and clock; release all but the CPU), the `DBG_EN` pin, no "CRC pass?" decision | The owner's own reading of the flow. The CRC test that V3.1 put in Figure 4-1 is the last decision of Figure 7-1; Table 4-2 says that the download step repeats until both CRCs and `LENGTH` pass. WDT bite and SW_RST are kept in Table 4-2 |
+
+# 2. V3.0 to V3.1
 
 From the mentor review of 29/09 (Nam's recap) and the owner's decisions of 30/09.
 The frame, the eight tokens and the retry by the PC are unchanged.
@@ -36,7 +50,7 @@ within 2 s and resends. A timeout here would have nothing better to do than wait
 again: there is no other boot source, a periodic `QRDY` is the start-up token the
 mentor removed, and a reset comes back to the same place.
 
-# 2. V2.2 to V3.0
+# 3. V2.2 to V3.0
 
 The protocol, frame and bootloader are V2.2's.
 
@@ -79,6 +93,9 @@ one field the ROM would have to assume either `ENTRY` = `LOAD` (no vector table 
 the start of the image) or `ENTRY` = `LOAD` + `0x80` (a convention fixed in the ROM
 forever). With `ENTRY` from the linker the image describes itself, for 4 header
 bytes and three comparisons.
+
+Superseded in V3.2 (section 1): both fields are gone, because debug boot fixes
+the same layout in hardware.
 
 ---
 
