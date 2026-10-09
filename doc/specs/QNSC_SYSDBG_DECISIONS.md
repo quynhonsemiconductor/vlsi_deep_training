@@ -385,6 +385,8 @@ The team's `IOPAD_Pin_Summary` of 2026-09-20 settles the pad question in this bl
 favour: all five JTAG signals have pads, and **b00 -- the JTAG function -- is the reset
 default**, so the debugger works before firmware runs.
 
+> **Superseded 2026-10-09.** The 40-pin pad list puts `TCK`, `TMS`, `TDI`, `TDO`, `TRSTN` on `PIN_5`--`9` (default function JTAG, alternate `GPIO0_7`..`GPIO0_3`) and `DBG_EN` on `PIN_36` (alternate `UART0_CTSN`). The pad list is the reference; the SYSDBG MAS names no pin.
+
 | Pad | Pin | b00 | b01 |
 |---|---|---|---|
 | `TCK` | `PIN_8` | **TCK** | `GPIO0_7` |
