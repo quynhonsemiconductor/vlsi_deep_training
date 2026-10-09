@@ -2,13 +2,55 @@
 
 **This is not the specification.** That is [`QNSC_BOOT_SPEC.md`](QNSC_BOOT_SPEC.md).
 
-This file holds why V3.0 differs from V2.2, and the V2.2 document by Nguyen Hao
-Nam, kept whole below. Its figures are not reproduced: they were in colour and are
+This file holds why V3.2 differs from V3.1, why V3.1 differs from V3.0, why V3.0
+differs from V2.2, and the
+V2.2 document by Nguyen Hao Nam, kept whole below. Its figures are not reproduced: they were in colour and are
 replaced by the figures of the specification.
 
 ---
 
-# 1. V2.2 to V3.0
+# 1. V3.1 to V3.2
+
+From the mentor review of V3.1 and the owner's decisions of 08/10 and 09/10. The
+retry by the PC, the timeouts and the drain are unchanged.
+
+| Change | Why |
+|---|---|
+| `ENTRY` dropped from the header; the ROM always jumps to `0x2000_1080` | The mentor: keep the normal boot consistent with debug boot. In debug boot the entry is fixed by hardware: Ibex starts at `{boot_addr_i[31:8], 8'h80}` with `boot_addr_i` = `0x2000_1000` (`QNSC_SYSDBG_MAS` 7.2, Ibex RTL). An image that needed another `ENTRY` would run in normal boot and fail in debug boot. The V3.0 answer below ("a convention fixed in the ROM forever") no longer holds: the hardware fixes the same convention anyway |
+| `LOAD_ADDR` dropped with it; the payload always goes to `0x2000_1000` | With the entry fixed at `0x2000_1080` and a 128-byte vector table before it, `0x2000_1000` is the only load address that works. The field, its three range checks and its `FHDR` cases go; the header is 12 bytes instead of 20 |
+| `LENGTH` 132 to 61 440 instead of 4 to 61 440 | Without `ENTRY` < `LOAD_ADDR` + `LENGTH` nothing kept a short image from ending before `0x2000_1080`, and the ROM would jump into `ISRAM` it never wrote. 132 = the vector table plus one instruction word |
+| `FUAR` dropped; the ROM no longer reads the `LSR` error bits | The owner: a UART error is caught anyway. With 8N1 there is no parity error. A framing error leaves a wrong byte that a CRC catches (`FHCR`, `FPCR`); an overrun loses a byte, the frame is short and the ROM ends in `FTMO`. Both lead to the same retry. The byte with an error is kept, not dropped: dropping it would turn every framing error into a timeout, 100 ms or more each time, for nothing. `obi_uart` keeps the error flags per byte in the RX FIFO, so an unread flag blocks nothing. The cost is the diagnosis on the PC: a wrong baud rate shows as repeated `FHCR` instead of `FUAR`. The ROM shrinks from 730 to 672 bytes |
+| Figure 4-1 redrawn by the owner: "Power on", two `SCRC` steps (hold and clock; release all but the CPU), the `DBG_EN` pin, no "CRC pass?" decision | The owner's own reading of the flow. The CRC test that V3.1 put in Figure 4-1 is the last decision of Figure 7-1; Table 4-2 says that the download step repeats until both CRCs and `LENGTH` pass. WDT bite and SW_RST are kept in Table 4-2 |
+
+# 2. V3.0 to V3.1
+
+From the mentor review of 29/09 (Nam's recap) and the owner's decisions of 30/09.
+The frame, the eight tokens and the retry by the PC are unchanged.
+
+| Change | Why |
+|---|---|
+| No `QRDY` after reset; `QRDY` only after a failure, once the line is drained | The mentor: `UART0` is configured long before any PC can send, so a start-up token tells the PC nothing. After a failure it is kept: it is the only point at which the PC knows the drain is over, so no byte of the resent frame is drained away. Without it the PC would have to wait a time derived from `DRAIN_IDLE`, which is a poll count, not a time |
+| 19 200 baud, divisor 65 (19 231 baud, +0.16 %) instead of 115 200 (113 636, -1.36 %) | The mentor asked for about 10 000--20 000 baud, against framing errors. Inside that range only 14 400 and 19 200 are standard PC rates; at 20 MHz 19 200 is the fastest standard rate within 0.5 % (28 800 is +0.94 %, 38 400 and up -1.36 %). The cost is the download time: 60 KiB in about 32 s instead of 5.4 s |
+| Polling written out in 5: the `LSR` loop for receive and send | The mentor: the wait for the PC data was not described. The code already polled |
+| Figure 4-1: "ACKP sent?" became "CRC pass?"; a "SCRC release CPU" step on the normal path and a "SYSDBG release CPU" step on the debug path; the SCRC step stays one box, its steps are described in Table 4-2 | The mentor: sending a token is an action, not a decision; the release of the CPU was missing. The owner kept the SCRC box short and moved the detail into words |
+| Debug boot explained by the hardware boot address mux; the ROM does not read `DBG_EN` | The mentor asked how a CPU that starts in the ROM can run an image loaded over JTAG. It does not start in the ROM: `o_dbg_en` switches `boot_addr_i` (`QNSC_SYSDBG_DECISIONS` D4). A ROM that read `DBG_EN` would need a readable status bit in another block, and would lose the second load path when the ROM itself is faulty. The owner kept the mux |
+| Figure 7-1 redrawn with one decision per check, and Table 7-1 (steps of Figure 7-1) added | The mentor: show how each failure is detected and describe every step |
+| A UART error before `MAGIC` gets no reply (the code returned `FUAR`) | The specification already said so. Plugging in the cable or opening the port produces framing errors before any frame; answering them would put tokens on the line the PC does not expect. The byte is dropped: reading `LSR` clears the flag, reading `RBR` pops the byte, since `obi_uart` keeps the error flags per byte in the RX FIFO |
+| The failure token is sent in full (`LSR.TEMT` = 1) before the drain, and the drain clears the RX FIFO only (`FCR` = `0x03`) | The code wrote `FCR` = `0x07`, which also flushes the TX FIFO. Read in `obi_uart_tx.sv` (obi_peripherals v0.1.1, the version `apb_uart` pins): `THRE` is set as soon as the TX FIFO is empty, that is when the previous byte moves into the shift register, so the fourth byte of the token was still in the FIFO when `put_tok()` returned and the flush dropped it. The PC would have seen `FUA` |
+| `RX_TIMEOUT` 200 000 to 1 000 000 polls, `DRAIN_IDLE` 20 000 to 500 000; Table 7-3 gives minimum times at 2 cycles per poll | The mentor: leave out what is not known. "10 cycles per poll" was an estimate; 2 cycles per APB transfer is the only certain figure, so the table states minimums: 100 ms and 50 ms. At 19 200 baud the old counts left too little margin: at 2 cycles per poll `DRAIN_IDLE` was 4 byte times, shorter than the gaps a USB-serial adapter and the PC operating system put in a stream. The time per poll is to be measured in simulation |
+| The PC loader sends the payload in 256-byte chunks and stops at the first failure token | UART0 has no hardware flow control (`QNSC_UART_MAS`), so only the PC can stop the PC. With one blocking write the ROM drained the rest of a bad 60 KiB payload, up to about 32 s at 19 200 baud |
+| `design/rom/boot/` is in PR #51 | The open item said it was not in the repository |
+
+## Why the `MAGIC` hunt has no time limit
+
+Before `MAGIC` no frame has started, so there is nothing to abandon: the state is
+a 4-byte window. A corrupted `MAGIC` or a PC that stops in the middle of it leaves
+the window sliding; the next frame's `MAGIC` is found. The PC sees no `ACKH`
+within 2 s and resends. A timeout here would have nothing better to do than wait
+again: there is no other boot source, a periodic `QRDY` is the start-up token the
+mentor removed, and a reset comes back to the same place.
+
+# 3. V2.2 to V3.0
 
 The protocol, frame and bootloader are V2.2's.
 
@@ -35,8 +77,9 @@ The protocol, frame and bootloader are V2.2's.
 1. It fits the 1 KiB budget: no handler, no register save, no buffer shared with a
    handler.
 2. The CPU has nothing else to do during boot.
-3. It is fast enough: a byte arrives every 1760 cycles, handling it takes 100--300,
-   and the 16-byte RX FIFO absorbs any delay.
+3. It is fast enough: at 19 200 baud a byte arrives every 10 400 cycles (1760 at
+   the V3.0 rate), handling it takes 100--300, and the 16-byte RX FIFO absorbs any
+   delay.
 4. It is easy to follow in simulation and on FPGA.
 
 The Day006 minutes mention both an interrupt-driven receive and the ROM "watching
@@ -50,6 +93,9 @@ one field the ROM would have to assume either `ENTRY` = `LOAD` (no vector table 
 the start of the image) or `ENTRY` = `LOAD` + `0x80` (a convention fixed in the ROM
 forever). With `ENTRY` from the linker the image describes itself, for 4 header
 bytes and three comparisons.
+
+Superseded in V3.2 (section 1): both fields are gone, because debug boot fixes
+the same layout in hardware.
 
 ---
 

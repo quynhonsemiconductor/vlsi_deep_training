@@ -1,0 +1,24 @@
+`verilator_config
+// =============================================================================
+// Lint waivers owned by the rom block (QNSC_ROM_MAS V3.1). Checked against
+// the Ubuntu 24.04 package, 5.020, the version CI installs.
+// =============================================================================
+
+// The controller's write channel is tied idle and its write outputs are left
+// open: the write path is replaced by the responder (MAS 7.3, Table 10-1).
+lint_off -rule PINCONNECTEMPTY -file "*design/rom/rtl/m_qnsc_wrap_rom.sv"
+
+// AW address/burst/len and W data/strobe are accepted and discarded by the
+// responder: a write is answered with SLVERR whatever it carries (MAS 5, 7.3).
+lint_off -rule UNUSEDSIGNAL -file "*design/rom/rtl/m_qnsc_rom_wr_resp.sv" -match "*i_bus_axi_aw_addr*"
+lint_off -rule UNUSEDSIGNAL -file "*design/rom/rtl/m_qnsc_rom_wr_resp.sv" -match "*i_bus_axi_aw_burst*"
+lint_off -rule UNUSEDSIGNAL -file "*design/rom/rtl/m_qnsc_rom_wr_resp.sv" -match "*i_bus_axi_aw_len*"
+lint_off -rule UNUSEDSIGNAL -file "*design/rom/rtl/m_qnsc_rom_wr_resp.sv" -match "*i_bus_axi_w_data*"
+lint_off -rule UNUSEDSIGNAL -file "*design/rom/rtl/m_qnsc_rom_wr_resp.sv" -match "*i_bus_axi_w_strb*"
+
+// Only bits [10:2] of the controller's byte address index the 512-word image
+// (MAS 7.1).
+lint_off -rule UNUSEDSIGNAL -file "*design/rom/rtl/m_qnsc_wrap_rom.sv" -match "*w_mem_addr*"
+
+// Vendored controller (not edited): inputs it declares but does not use.
+lint_off -rule UNUSEDSIGNAL -file "*vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER/*"

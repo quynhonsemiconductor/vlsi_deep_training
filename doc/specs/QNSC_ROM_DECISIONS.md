@@ -8,6 +8,12 @@ replaced by the figures of the specification.
 
 ---
 
+# 0. V3.1 to V3.2
+
+| Change | Why |
+|---|---|
+| The write-error responder moved from hand-written logic in `m_qnsc_wrap_rom` to its own module, `m_qnsc_rom_wr_resp`, instantiated by the wrapper | A wrapper is generated with emacs verilog-mode (`CONTRIBUTING.md` step 3), whose AUTOs declare only ports that reach an instance. Logic and ports inside the wrapper would need hand-declared ports, which the flow forbids. Behaviour unchanged |
+
 # 1. V2.1 to V3.0
 
 The ROM design is V2.1's. V3.0 is a move onto the MAS template by the lead.
