@@ -1,4 +1,4 @@
-# QSOC boot ROM (QNSC_BOOT_SPEC V3.1 section 8, QNSC_ROM_MAS V3.1 7.2):
+# QSOC boot ROM (QNSC_BOOT_SPEC V3.2 section 8, QNSC_ROM_MAS V3.1 7.2):
 #   C/asm -> boot.elf -> boot.bin -> rom_image.hex -> m_qnsc_rom_image.sv
 #
 #   make                       build + size check
