@@ -36,17 +36,16 @@ path_e = [
 ]
 
 # ---------- Figure: boot frame ----------
-_F = [("MAGIC", 4), ("LENGTH", 4), ("LOAD_ADDR", 4), ("ENTRY", 4), ("HDR_CRC", 4),
-      ("PAYLOAD", 0), ("PAY_CRC", 4)]
+_F = [("MAGIC", 4), ("LENGTH", 4), ("HDR_CRC", 4), ("PAYLOAD", 0), ("PAY_CRC", 4)]
 frame, x = [], 10
 for i, (name, size) in enumerate(_F):
     w = 200 if size == 0 else 100
     frame.append(N("f%d" % i, x, 40, w, 50, name, "box", 11, name in ("HDR_CRC", "PAY_CRC")))
     frame.append(N("s%d" % i, x, 95, w, 20, "LENGTH bytes" if size == 0 else "4 B", "port", 10))
     x += w
-frame.append(N("hdr", 10, 5, 500, 30, "header, 20 B", "port", 10))
+frame.append(N("hdr", 10, 5, 300, 30, "header, 12 B", "port", 10))
 
-# ---------- Figure: bootloader flow (QNSC_BOOT_SPEC V3.1: one decision per check) ----------
+# ---------- Figure: bootloader flow (QNSC_BOOT_SPEC V3.2: one decision per check) ----------
 _FX, _FW, _FH = 20, 270, 40            # boxes
 _DX, _DW, _DH = 45, 220, 64            # decisions
 _TX, _TW, _TH = 340, 120, 32           # failure tokens
@@ -63,35 +62,34 @@ flow = [
     _fb("init", "init UART0"),
     _fb("hunt", "waiting for each MAGIC byte from PC"),
     _fd("mag", "last 4 bytes\n= 'Q' 'S' 'O' 'C'?"),
-    _fb("hdr", "waiting for the next header byte\nLENGTH, LOAD_ADDR, ENTRY, HDR_CRC"),
-    _fd("hue", "UART error?"),
-    _fd("hto", "byte within\nRX_TIMEOUT polls?"),
-    _fd("h16", "16 header bytes\nincludes HDR_CRC\nreceived?"),
+    _fb("hdr", "waiting for the next header byte:\nLENGTH, HDR_CRC"),
+    _fd("hto", "new byte within\nRX_TIMEOUT polls?"),
+    _fd("h8", "8 header bytes\nreceived?"),
     _fd("hcr", "CRC32 = HDR_CRC?"),
-    _fd("hrg", "fields in range?\n(Table 6-1)"),
+    _fd("hrg", "LENGTH valid?\n(Table 6-1)"),
     _fb("ackh", "send ACKH", True),
-    _fb("pay", "wait for the next payload byte;\nevery 4 payload bytes: word to ISRAM, CRC32"),
-    _fd("pue", "UART error?"),
-    _fd("pto", "byte within\nRX_TIMEOUT polls?"),
-    _fd("pn", "LENGTH payload bytes and\nPAY_CRC received?"),
+    _fb("pay", "waiting for the next payload or PAY_CRC byte;\nwrite the payload to 0x2000_1000 (ISRAM)"),
+    _fd("pto", "new byte within\nRX_TIMEOUT polls?"),
+    _fd("pn", "all payload and\nPAY_CRC bytes received?"),
     _fd("pcr", "CRC32 = PAY_CRC?"),
     _fb("ackp", "send ACKP", True),
-    _fb("jump", "jump to ENTRY", True),
+    _fb("jump", "jump to 0x2000_1080 (ISRAM)", True),
 ]
 _fi = {n.id: n for n in flow}
 flow += [
     N("rdy", 520, _fi["hunt"].y, 180, _FH, "send QRDY", "box", 10, True),
-    N("drain", 520, _fi["hdr"].y - 10, 180, 60, "clear RX FIFO,\ndiscard bytes until quiet\nfor DRAIN_IDLE", "red", 10),
+    N("drain", 520, _fi["hdr"].y - 10, 180, 60, "clear RX FIFO,\ndiscard bytes until quiet\nfor DRAIN_IDLE polls", "red", 10),
 ]
-_seq = ["init", "hunt", "mag", "hdr", "hue", "hto", "h16", "hcr", "hrg", "ackh", "pay", "pue", "pto",
+_seq = ["init", "hunt", "mag", "hdr", "hto", "h8", "hcr", "hrg", "ackh", "pay", "pto",
         "pn", "pcr", "ackp", "jump"]
-_yes = {"mag": "yes", "hue": "no", "hto": "yes", "h16": "yes", "hcr": "yes", "hrg": "yes",
-        "pue": "no", "pto": "yes", "pn": "yes", "pcr": "yes"}
+_yes = {"mag": "yes", "hto": "yes", "h8": "yes", "hcr": "yes", "hrg": "yes",
+        "pto": "yes", "pn": "yes", "pcr": "yes"}
 flow_e = [E(a, "b", b, "t", _yes.get(a, "")) for a, b in zip(_seq, _seq[1:])]
-flow_e += [E("mag", "l", "hunt", "l", "no", mid=0), E("h16", "l", "hdr", "l", "no", mid=0),
-           E("pn", "l", "pay", "l", "no", mid=0)]
-for d, tok, lab in [("hue", "FUAR", "yes"), ("hto", "FTMO", "no"), ("hcr", "FHCR", "no"), ("hrg", "FHDR", "no"),
-                    ("pue", "FUAR", "yes"), ("pto", "FTMO", "no"), ("pcr", "FPCR", "no")]:
+# the "no" loops at x = 8: the image starts 24 px left of the boxes, so the label fits
+flow_e += [E("mag", "l", "hunt", "l", "no", mid=8), E("h8", "l", "hdr", "l", "no", mid=8),
+           E("pn", "l", "pay", "l", "no", mid=8)]
+for d, tok, lab in [("hto", "FTMO", "no"), ("hcr", "FHCR", "no"), ("hrg", "FHDR", "no"),
+                    ("pto", "FTMO", "no"), ("pcr", "FPCR", "no")]:
     t = "t_" + d
     flow.append(N(t, _TX, _fi[d].y + (_DH - _TH) / 2, _TW, _TH, "send " + tok, "box", 10, True))
     flow_e += [E(d, "r", t, "l", lab), E(t, "r", "drain", "b")]
@@ -121,31 +119,28 @@ _X, _W, _H = 40, 330, 44
 def _s(nid, y, label, style="box", bold=False):
     return N(nid, _X, y, _W, _H, label, style, 10, bold)
 top = [
-    _s("rst", 0, "Reset: POR, WDT bite or SW_RST", "term", True),
-    _s("scrc", 70, "SCRC: chip reset, then power-up\n(QNSC_SCRC_MAS 7.3, 7.5)"),
-    N("dbg", _X + 65, 140, 200, 70, "DBG_EN\ncaptured = 1?", "diamond", 10),
-    N("note", 395, 186, 300, 30, "boot address picked by a hardware mux (o_dbg_en -> boot_addr_i),\n"
-      "not by ROM code: in debug boot the ROM never runs", "port", 8),
-    _s("srel", 250, "SCRC release CPU"),
-    _s("rom", 320, "Ibex fetches 0x0000_0080 (ROM)"),
-    _s("uart", 390, "init UART0 (19200 - 8N1 - polling)"),
-    _s("dl", 460, "download frame to ISRAM\n(Figure 7-1)", bold=True),
-    N("ok", _X + 65, 530, 200, 70, "CRC\npass?", "diamond", 10),
-    _s("jmp", 640, "jump to ENTRY"),
-    _s("app", 710, "application runs from ISRAM", "term", True),
-    N("host", 720, 140, 330, 70, "SYSDBG holds the CPU\nhost writes the image over JTAG\nthen CPUHOLD = 0 (QNSC_SYSDBG_MAS 7.1)", "box", 10),
-    N("hrel", 720, 390, 330, 44, "SYSDBG release CPU", "box", 10),
-    N("dapp", 720, 640, 330, 44, "Ibex fetches 0x2000_1080 (ISRAM)", "box", 10),
-    N("fail", 430, 545, 240, 40, "failure token, drain, QRDY", "red", 10),
+    _s("rst", 0, "Power on", "term", True),
+    _s("scrc", 70, "SCRC: hold the whole chip in reset, clock the IPs"),
+    _s("rel", 140, "SCRC: release the reset of every IP except the CPU"),
+    N("dbg", _X + 65, 210, 200, 70, "DBG_EN pin = 1?", "diamond", 10),
+    N("note", 395, 256, 300, 30, "boot address picked by a hardware mux (o_dbg_en -> boot_addr_i),\n"
+      "in debug boot the ROM never runs", "port", 8),
+    _s("srel", 320, "SCRC releases the CPU reset"),
+    _s("rom", 390, "Ibex fetches 0x0000_0080 (ROM)"),
+    _s("uart", 460, "init UART0 (19200 - 8N1 - polling)"),
+    N("dl", _X, 530, _W, 60, "receive the frame from the PC over UART0\nand write it to 0x2000_1000 (ISRAM)\n(Figure 7-1)", "box", 10, True),
+    _s("jmp", 620, "jump to 0x2000_1080 (ISRAM)"),
+    _s("app", 690, "application runs from ISRAM", "term", True),
+    N("host", 720, 210, 330, 70, "SYSDBG holds the CPU in reset,\nthe debug program is loaded to\n0x2000_1000 (ISRAM) over JTAG", "box", 10),
+    N("hrel", 720, 460, 330, 44, "SYSDBG releases the CPU reset", "box", 10),
+    N("dapp", 720, 620, 330, 44, "Ibex fetches 0x2000_1080 (ISRAM)", "box", 10),
 ]
 top_e = [
-    E("rst", "b", "scrc", "t"), E("scrc", "b", "dbg", "t"),
+    E("rst", "b", "scrc", "t"), E("scrc", "b", "rel", "t"), E("rel", "b", "dbg", "t"),
     E("dbg", "b", "srel", "t", "0: normal boot"),
     E("dbg", "r", "host", "l", "1: debug boot"),
     E("srel", "b", "rom", "t"),
-    E("rom", "b", "uart", "t"), E("uart", "b", "dl", "t"), E("dl", "b", "ok", "t"),
-    E("ok", "b", "jmp", "t", "yes"), E("ok", "r", "fail", "l", "no"),
-    E("fail", "r", "dl", "r", mid=695),
+    E("rom", "b", "uart", "t"), E("uart", "b", "dl", "t"), E("dl", "b", "jmp", "t"),
     E("jmp", "b", "app", "t"),
     E("host", "b", "hrel", "t"),
     E("hrel", "b", "dapp", "t"),
