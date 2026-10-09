@@ -3,7 +3,7 @@
 // QNSC wrapper of pulp-platform/apb_adv_timer: the QSoC PWM on APB_M12, INTMAP
 // fast line 7. The wrapper is IP: no package, no parameter; the IP's
 // configuration is fixed at the instance below (design/README.md, "Shared numbers").
-// Spec: doc/specs/QNSC_PWM_MAS.md (V2.5).
+// Spec: doc/specs/QNSC_PWM_MAS.md (V2.7).
 //
 // One file, expanded in place by emacs verilog-mode (Veripool's intended flow):
 // edit anything outside the blocks between "// Beginning of automatic ..." and
