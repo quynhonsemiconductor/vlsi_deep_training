@@ -107,7 +107,7 @@ machine is a green CI. How a wrapper is written with emacs is in
 | `PR title (conventional commits)` | the title is not a conventional commit |
 | `Verilator lint` | your block does not lint through its filelist |
 | `Filelist paths` | a path in a `.f` is absolute, or names a file that does not exist |
-| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` |
+| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make wrap` regenerates from its AUTO comments |
 | `Generated IP` | a file in `util/gen/<ip>/` differs from what its `gen.sh` produces with the pinned tools |
 | `Connectivity` | a changed block's top leaves an instance input open, or drives a top output from nothing |
 | `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** |

@@ -1,6 +1,6 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.3"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.7"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,7 +14,11 @@ The reasoning behind each change is in
 | V2.0 | 2026-09-23 | Nghia VT | -- | Rewritten as specification only, onto the template |
 | V2.1 | 2026-09-24 | Nghia VT | -- | Corrected against the RTL (`CH_EN`, output MODE, events, input stage, decode); full register fields; tie-off table; new block diagram |
 | V2.2 | 2026-09-25 | Nghia VT | -- | Pad ports named `o_pad_pwm`, `i_pad_tim_ext` (was `o_pwm`, `i_tim_ext`), per `QNSC_RTL_Design_Naming_Rule` 3.8 |
-| V2.3 | 2026-09-28 | Nghia VT | -- | `SCRC` bit from `QNSC_SCRC_MAS` V3.0: `CLK_EN[15]`; requirement on `SCRC` closed |
+| V2.3 | 2026-09-25 | Nghia VT | -- | 7.2: an unconfigured channel goes to 1 at `CMD.START` (reset `MODE` 0 is SET, reset `TH` 0 matches at once), seen in simulation of the wrapper. `TIM_EXT` synchronised by the shared `qnsc_sync` cell. Moved to `APB_M12` at `0x8003_0000` with the peripherals after the dropped GPIO3 |
+| V2.4 | 2026-09-28 | Nghia VT | Tâm | Module `m_qnsc_wrap_pwm` (Naming Rule V1.1). `APB_ADDR_WIDTH` fixed at 12 in the wrapper (no package, no parameter). Review answers: one clock domain and why `low_speed_clk_i` is 0 (section 3); `TIM_EXT` bits independent, minimum pulse (7.4); four event lines on one `INTMAP` line (7.5) |
+| V2.5 | 2026-09-28 | Nghia VT | -- | `SCRC` bit from `QNSC_SCRC_MAS` V3.0: `CLK_EN[15]`; requirement on `SCRC` closed |
+| V2.6 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`PWM_NNN`), for traceability to tests. No change in behaviour |
+| V2.7 | 2026-10-09 | Nghia VT | -- | `pulp_clock_gating` maps onto `qnsc_clk_gate`, the chip's one clock gate (4). Word writes only: the IP has no `PSTRB` or `PPROT` (7.6). No dead time, complementary output or break input (11). No change in behaviour |
 
 # 1. Overview
 
@@ -25,7 +29,7 @@ lines drive `INTMAP` fast line 7.
 
 The block has no event status register, no period-end interrupt and no DMA request.
 
-Block directory `design/pwm`, module `m_qnsc_wrap_apb_adv_timer`, owner Nghia Van
+Block directory `design/pwm`, module `m_qnsc_wrap_pwm`, owner Nghia Van
 Trong.
 
 # 2. Features
@@ -48,6 +52,11 @@ Clock `i_clk_peri` (`peri` cluster, gated by `SCRC` `CLK_EN[15]`), reset
 `i_rst_n_peri`. The register file and the event multiplexer run on `i_clk_peri`.
 Timer module `i` runs on `i_clk_peri` gated by `CH_EN[i]`.
 
+The block has **one clock domain**, `i_clk_peri`. The four module clocks are gated
+branches of it, not other frequencies. The IP's second clock input,
+`low_speed_clk_i`, is tied 0: QSOC has one frequency and no slow clock source
+(contract, `clock_domains`). A slower count comes from the prescaler (7.1).
+
 # 4. IP used
 
 : Upstream IP used
@@ -57,12 +66,13 @@ Timer module `i` runs on `i_clk_peri` gated by `CH_EN[i]`.
 | `pulp-platform/apb_adv_timer` | `apb_adv_timer`, `adv_timer_apb_if`, `timer_module`, `timer_cntrl`, `input_stage`, `prescaler`, `up_down_counter`, `comparator` | `c8faec1e` | SolderPad 0.51 |
 
 `lut_4x4.sv` and `out_filter.sv` are in the vendor directory and are not instantiated.
-`pulp_clock_gating` is supplied in `design/pwm/rtl` as a wrapper of OpenTitan
-`prim_clock_gating`, which has the same ports and is the cell Ibex already uses.
+`pulp_clock_gating` is supplied in `design/pwm/rtl`. It instantiates `qnsc_clk_gate`,
+the one clock gate of QSOC (`design/common/tech/`, Naming Rule 2.8), so the
+technology selected with `TECH` supplies the cell here as in every other block.
 
 # 5. Interface
 
-Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. `o_pad_pwm` and `o_int_pwm` are 0 in reset.
+Names follow `QNSC_RTL_Design_Naming_Rule` V1.1. `o_pad_pwm` and `o_int_pwm` are 0 in reset.
 
 : PWM interface
 
@@ -76,7 +86,7 @@ Names follow `QNSC_RTL_Design_Naming_Rule` V1.0. `o_pad_pwm` and `o_int_pwm` are
 | `o_bus_apb_prdata` | out | 32 | read data; 0 at unimplemented offsets |
 | `o_bus_apb_pready` | out | 1 | constant 1, zero wait states |
 | `o_bus_apb_pslverr` | out | 1 | constant 0 |
-| `i_pad_tim_ext` | in | 4 | pads `TIM_EXT0`-`3` through IO MUX. Two flip-flops in the wrapper synchronise it to `i_clk_peri`, then `ext_sig_i[3:0]` |
+| `i_pad_tim_ext` | in | 4 | pads `TIM_EXT0`-`3` through IO MUX. Two flip-flops in the wrapper (`qnsc_sync`, `design/common`) synchronise it to `i_clk_peri`, then `ext_sig_i[3:0]` |
 | `o_pad_pwm` | out | 8 | `[3:0]` = `ch_0_o[3:0]`, `[7:4]` = `ch_1_o[3:0]`, to IO MUX -- 7.3 |
 | `o_int_pwm` | out | 4 | `events_o[3:0]`, one-cycle pulses, to `INTMAP` line 7 -- 7.5 |
 
@@ -149,6 +159,11 @@ Each channel output is a flip-flop in its `comparator`. A match is COUNTER equal
 MODE 2 with `SAW` = 1 gives an edge-aligned output; MODE 2 with `SAW` = 0 gives a
 centre-aligned output. `CMD.RST` drives the output to 0 in every MODE.
 
+**Unconfigured channels.** Out of reset every channel has `MODE` 0 (SET) and `TH` 0,
+so `CMD.START` drives each channel firmware did not configure to 1 at the first
+count of 0, and it stays 1. Before `CMD.START`, set every channel of the module:
+`MODE` 4 (RST) keeps an unused output at 0.
+
 ## 7.3 Channel outputs and pads
 
 `ch_i_o[n]` is channel `n` of module `i`. Modules 0 and 1 drive the pads, so the pads
@@ -196,6 +211,12 @@ and qualifies it with `CFG.IN_MODE`. Start and stop come only from `CMD`.
 `CFG.CLK_SEL` = 1 additionally requires a rising edge of `low_speed_clk_i`, which
 is tied 0, so a module with `CLK_SEL` = 1 does not count.
 
+The four `TIM_EXT` bits are **independent** signals: each is its own external
+trigger, and each module selects **one** of them with `IN_SEL`. No module reads them
+as a multi-bit value, so synchronising each bit on its own with `qnsc_sync` (two
+flip-flops to `i_clk_peri`) is correct. A level or pulse on `TIM_EXTn` must last at
+least two `i_clk_peri` cycles (100 ns at 20 MHz) to be seen.
+
 ## 7.5 Event lines
 
 Event line `k` is `EN[k] & new & ~old`, where `new` and `old` are two successive
@@ -214,12 +235,23 @@ The block has no software-readable event status. `timer_module.status_o` is not
 connected to the register file. An event that the core does not take is not
 recorded anywhere.
 
+The four event lines are not one per module: each selects any of the sixteen
+channels. `INTMAP` ORs all four onto **one** core interrupt, fast line 7, so the core
+sees one PWM interrupt whether one or four lines are enabled. Because nothing records
+which line fired, firmware that must know the source enables one event line at a
+time.
+
 ## 7.6 Address decode
 
 The register index is `PADDR[9:2]`, so the decoded window is 1 KiB and repeats
 every `0x400` across the 16 KiB region. Offsets with no register -- `M+0x30` to
 `M+0x3C` and `0x108` to `0x3FC` -- read 0 and ignore writes. No access returns an
 error: `PSLVERR` is 0 and `PREADY` is 1.
+
+The IP has no `PSTRB` and no `PPROT`, and the wrapper takes neither from `P_BUS`.
+Every write writes all 32 bits of the register: firmware accesses this block with
+word stores (`sw`) only. A byte or halfword store writes the other bytes with
+whatever the bus carries in those lanes.
 
 ## 7.7 Clock gating and safe stop
 
@@ -277,6 +309,10 @@ One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 3. The 1 KiB register window aliases across 16 KiB without an error -- 7.6.
 4. Pads carry modules 0 and 1 only: two independent periods -- 7.3.
 5. `CHn_LUT` has no effect -- section 6.
+6. No dead-time insertion, no complementary output pair and no break (fault) input:
+   a half bridge driven from two channels gets no hardware protection against
+   shoot-through.
+7. Word writes only -- 7.6.
 
 **Open:** gate count, after synthesis.
 
@@ -284,24 +320,24 @@ One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 
 The IP has no testbench.
 
-1. `ch_i_o[n]` is channel `n` of module `i`; `o_pad_pwm[3:0]` = `ch_0_o`, `o_pad_pwm[7:4]` =
+1. `PWM_001` `ch_i_o[n]` is channel `n` of module `i`; `o_pad_pwm[3:0]` = `ch_0_o`, `o_pad_pwm[7:4]` =
    `ch_1_o`.
-2. Every register field resets to the value in section 6; reserved bits and `CMD`
+2. `PWM_002` Every register field resets to the value in section 6; reserved bits and `CMD`
    read 0.
-3. Out of reset, `CMD.START` has no effect until `CH_EN[i]` = 1.
-4. `SAW` = 1 period is (END - START + 1) x (PRESC + 1); `SAW` = 0 period is
+3. `PWM_003` Out of reset, `CMD.START` has no effect until `CH_EN[i]` = 1.
+4. `PWM_004` `SAW` = 1 period is (END - START + 1) x (PRESC + 1); `SAW` = 0 period is
    2 x (END - START) x (PRESC + 1).
-5. Each `CHn_TH.MODE` value 0-7 gives the action of the MODE table, in both `SAW`
+5. `PWM_005` Each `CHn_TH.MODE` value 0-7 gives the action of the MODE table, in both `SAW`
    settings; MODE 2 with `SAW` = 0 is centre-aligned.
-6. Changing one `CHn_TH` changes no other channel and not `TH`; `CHn_LUT` writes
+6. `PWM_006` Changing one `CHn_TH` changes no other channel and not `TH`; `CHn_LUT` writes
    read back and change no output.
-7. `CMD.STOP` holds all four outputs; `CMD` = STOP | RST drives them to 0.
-8. An event fires on a rising edge of the selected channel only, is one
+7. `PWM_007` `CMD.STOP` holds all four outputs; `CMD` = STOP | RST drives them to 0.
+8. `PWM_008` An event fires on a rising edge of the selected channel only, is one
    `i_clk_peri` cycle wide, and never fires while `EN[k]` = 0.
-9. Each `IN_MODE` 0-7 with `ext_sig_i[3:0]` and with a channel feedback source;
+9. `PWM_009` Each `IN_MODE` 0-7 with `ext_sig_i[3:0]` and with a channel feedback source;
     `IN_SEL` 4-31 and 48-255 never count except in `IN_MODE` 0 and 1.
-10. Holes read 0 and ignore writes; offset `+0x400` aliases offset 0; `PSLVERR` = 0.
-11. Confirm in simulation: when a new `TH` takes effect (at `CMD.START`, at
+10. `PWM_010` Holes read 0 and ignore writes; offset `+0x400` aliases offset 0; `PSLVERR` = 0.
+11. `PWM_011` Confirm in simulation: when a new `TH` takes effect (at `CMD.START`, at
     `CMD.UPDATE` while stopped, at the period end after `CMD.UPDATE` while running),
     and when new `CHn_TH`, `IN_SEL`, `IN_MODE` and `PRESC` values take effect while
     running.
