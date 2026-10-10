@@ -14,7 +14,7 @@
 # When you change a `pattern`, change the `message` beside it too -- the script
 # prints the message verbatim and cannot tell that the two have diverged.
 #
-# Source: doc/rules/QNSC_RTL_Design_Naming_Rule.pdf (moved from MCU_guide_ws 3d66c27)
+# Source: doc/rules/QNSC_RTL_Design_Naming_Rule.docx (moved from MCU_guide_ws 3d66c27)
 # Version enforced: V1.2, 01/10/2026 (chip top, types, files, technology cells,
 # buses with several ports). V1.1: 28/09/2026 (wrapper name, rule 2.1).
 # V1.0: 15/09/2026, Tam Nguyen

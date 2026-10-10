@@ -4,7 +4,7 @@
 |---|---|---|
 | `qsoc_contract.yml` | **The single source of truth** for every number shared between blocks: memory map, bus ports, interrupt lines, clock and reset domains, and the `tbd:` list of numbers not yet agreed | edit, then `make pkg` |
 | `gen_qnsc_pkg.py` | Generates `design/top/rtl/qnsc_pkg.sv` from the contract | `make pkg`, checked by `make pkg-check` |
-| `gen/<ip>/` | Output of an upstream generator (IP that ships templates, such as iDMA), committed with its recipe: `gen.sh` and pinned `requirements.txt`. Never edited by hand | `make gen IP=<ip>`, checked by `make gen-check` |
+| `gen/<ip>/` | Output of an upstream generator (IP that ships templates and a generator rather than RTL), committed with its recipe: `gen.sh` and pinned `requirements.txt`. Never edited by hand | `make gen IP=<ip>`, checked by `make gen-check` |
 | `vendor_ip.py` | Copies an upstream IP into `vendor/` at the commit pinned in `vendor/manifest.yml`, applies `vendor/patches/`, and records the SHA in `vendor/vendor.lock.yml` | `python3 util/vendor_ip.py --list` |
 
 The specification tables that restate the contract are generated from it too,
