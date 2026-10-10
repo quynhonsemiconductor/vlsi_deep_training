@@ -48,7 +48,7 @@ help:
 	@echo "make vcs-branch     compile a branch in a scratch clone, on the server BLOCK= BRANCH="
 	@echo "make vcs-post       post that summary on a PR, from your machine BLOCK= PR="
 	@echo "make verdi          open the VCS compile in Verdi (schematic) BLOCK="
-	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=]"
+	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=] [WAVES=1]"
 	@echo "TECH=<tech>         technology cells for lint/vcs/syn/gca/connectivity (default generic; design/common/tech/)"
 
 ide:
