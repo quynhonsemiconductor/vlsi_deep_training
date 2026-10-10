@@ -19,7 +19,7 @@ a review rule for every block at once.
 | `labels.yml` | Source of truth for the label set. |
 | `labeler.yml` | Maps file paths to labels. Every label it names must exist in `labels.yml`. |
 | `workflows/pr-title.yml` | PR title must be a Conventional Commit. Its own workflow — see the header comment for why. |
-| `workflows/rtl-ci.yml` | The RTL checks: lint, filelist paths, generated wrappers, naming, hardcoded values, contract, vendor guard, docs. Every step calls a target of the root `Makefile`. |
+| `workflows/rtl-ci.yml` | The RTL checks: lint, filelist paths, generated wrappers, generated IP, connectivity, simulation, naming, hardcoded values, module rules, contract tags, contract package, vendor guard, docs. Every step calls a target of the root `Makefile` or a script in `flow/`. Connectivity and Simulation also post one PR comment each. |
 | `workflows/labeler.yml` | Applies path labels via the org's shared CI. |
 | `workflows/security.yml` | Pins/audits the GitHub Actions this repo calls. |
 
@@ -146,6 +146,27 @@ Notes:
 - To require a maintainer specifically on `design/**`, that is already handled
   by CODEOWNERS + `require_code_owner_review`, not by the ruleset.
 
+### 4. Create the `main-merge-by-maintainers` ruleset
+
+Only the maintainers may merge (see "Who approves and who merges"). `19374826` is the
+id of the `vlsi-maintainers` team (`gh api orgs/quynhonsemiconductor/teams/vlsi-maintainers --jq .id`).
+
+```json
+{
+  "name": "main-merge-by-maintainers",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [ { "type": "update" } ],
+  "bypass_actors": [
+    { "actor_type": "RepositoryRole", "actor_id": 5, "bypass_mode": "always" },
+    { "actor_type": "Team", "actor_id": 19374826, "bypass_mode": "pull_request" }
+  ]
+}
+```
+
+Create it with the same `gh api -X POST .../rulesets --input` command as step 3.
+
 Verify:
 
 ```bash
@@ -158,8 +179,8 @@ gh ruleset check --repo quynhonsemiconductor/vlsi_deep_training   # if gh versio
 Only the `vlsi-maintainers` team -- Tâm (`@Stork1323`), the teacher (`@quannhqnsc`),
 `@Nghia-VanTrong` and `@SinhHPT` -- approves and merges into `main`:
 
-- **Approve.** `CODEOWNERS` names only that team, so only its approval satisfies the
-  required code-owner review. Anyone can comment or leave a review; it does not count.
+- **Approve.** `CODEOWNERS` names only that team (and Tâm alone for `doc/rules/`), so
+  only its approval satisfies the required code-owner review. Anyone can comment or leave a review; it does not count.
 - **Merge.** A second ruleset, `main-merge-by-maintainers`, restricts updates to `main`.
   Its bypass list is the maintainers team, in `pull_request` mode (through a pull
   request only), plus the repository admin role. A member's merge button stays
@@ -173,7 +194,10 @@ work, not the merge.
 ## Keeping the ruleset in step with CI
 
 A new CI job is not a gate until its name is added to `required_status_checks`.
-The live ruleset requires all eleven contexts above (checked 2026-09-25). When a
+The live ruleset requires the eleven contexts above (checked 2026-10-11). These jobs
+run on every pull request but are **not required**, so a red one does not block the
+merge button; the reviewer must look: `Connectivity`, `Generated IP`,
+`IP and integration module rules`, `Contract tags`, `Simulation`. When a
 job is added to or renamed in a workflow, update the list here and in the ruleset
 in the same change:
 

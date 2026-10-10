@@ -214,7 +214,7 @@ behaviour across the chip.
 ## Naming
 
 **`QNSC_RTL_Design_Naming_Rule` V1.2 is mandatory.** The full document is
-[`doc/rules/QNSC_RTL_Design_Naming_Rule.pdf`](../doc/rules/QNSC_RTL_Design_Naming_Rule.pdf). The rules
+[`doc/rules/QNSC_RTL_Design_Naming_Rule.docx`](../doc/rules/QNSC_RTL_Design_Naming_Rule.docx) (the `.pdf` beside it is still V1.1). The rules
 that come up most:
 
 | Thing | Form | Example |

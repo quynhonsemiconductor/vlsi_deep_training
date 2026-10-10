@@ -19,7 +19,7 @@ doc/
 | Folder | Contents | Edit it? |
 |---|---|---|
 | [`guides/`](guides) | [`GETTING_STARTED.md`](guides/GETTING_STARTED.md): setup to merged PR, for any code. [`EMACS_AUTO.md`](guides/EMACS_AUTO.md): writing a module that instantiates others | yes |
-| [`rules/`](rules) | Naming Rule (`.docx` source and `.pdf` release) and the EMACS quick guide. See [`rules/README.md`](rules/README.md) | Tâm reviews every change |
+| [`rules/`](rules) | Naming Rule (`.docx`, the current version; `.pdf` export) and the EMACS quick guide. See [`rules/README.md`](rules/README.md) | Tâm reviews every change |
 | [`specs/`](specs) | `QNSC_<BLOCK>_MAS.md` (the specification) and `QNSC_<BLOCK>_DECISIONS.md` (why), plus `QNSC_TEMPLATE_MAS.md`. **The Markdown is the source of truth** | yes |
 | `specs/docx/` | The `.docx` built from `specs/*.md`, committed so a reader without pandoc can open them | generated |
 | [`reference/`](reference) | `QSOC_HAS_Report_EN_v4_final.docx`, `QNSC_Diagram.drawio`, `VLSI_SCRC.drawio`, `VLSI_SYSDBG.drawio`: material from the teacher | no |

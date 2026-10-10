@@ -2,10 +2,10 @@
 
 QSOC is a training project, so the implementation flow uses open-source tools.
 
-| Stage | Tool | Script | Output |
+| Stage | Tool | Command | Output |
 |---|---|---|---|
-| SYN | Yosys + `yosys-slang` | `flow/syn/run_syn.sh <block>` | `build/syn/<block>/`: generic netlist, `syn.log` with the cell count |
-| GCA | OpenSTA `check_setup` | `flow/sta/run_gca.sh <block>` | `build/sta/<block>/gca.log` |
+| SYN | Yosys + `yosys-slang` | `make syn BLOCK=<block>` | `build/syn/<block>/`: generic netlist, `syn.log` with the cell count |
+| GCA | OpenSTA `check_setup` | `make gca BLOCK=<block>` | `build/sta/<block>/gca.log` |
 | Place and route (later) | OpenROAD, on an open PDK | to be added here | — |
 
 The SMIC 28 nm libraries are not open, so any step that needs cells uses an open PDK

@@ -38,9 +38,9 @@ Honest status, so nobody has to guess:
 | | |
 |---|---|
 | Architecture and memory map | **agreed** — one contract file, checked by CI |
-| Specifications | **12 of 17 blocks** written: RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA, UART, I2C, WDT |
-| RTL | **started.** Scaffold, naming rules and CI in place; INTMAP RTL generated, CPU/UART/I2C wrappers under review |
-| Verification | not started |
+| Specifications | **in `doc/specs/`:** RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA, UART, I2C, WDT. CPU, BUS and GPIO in their open pull requests; SPI and IO MUX not yet. DMA is being rewritten for a new IP |
+| RTL | **started.** Scaffold, naming rules and CI in place; wrappers under review as pull requests (PWM, INTMAP, CPU, BUS, GPIO, ROM, SYSCSR, UART) |
+| Verification | **started.** CI runs the self-checking tests of every block that has a testbench (`dv/`); the first is PWM, under review |
 | Physical design | not started |
 | Per-IP status | the teacher's assistant's tracker; directory, owner and specification of every block in [`doc/BLOCKS.md`](doc/BLOCKS.md) |
 
@@ -66,6 +66,8 @@ Install these once. `make doctor` then says what is still missing.
 | Python 3 + PyYAML | every check | `brew install python`, `pip3 install pyyaml` | `apt install python3 python3-yaml` |
 | `make`, `git`, `bash` | every check | Xcode command-line tools | `apt install make git` |
 | Verilator 5 | lint, simulation | `brew install verilator` | `apt install verilator` |
+| Docker | `make connectivity` when the local Verilator is older than 5.022 (`VERILATOR_IMAGE=`, see `flow/conn/connectivity.py`) | Docker Desktop | `apt install docker.io` |
+| Surfer or GTKWave | viewing `make sim ... WAVES=1` waveforms (optional) | Surfer VS Code extension | `apt install gtkwave` |
 | emacs | emacs wrappers | `brew install emacs` | `apt install emacs-nox` |
 | pandoc | `make docs` | `brew install pandoc` | `apt install pandoc` |
 | rsvg-convert | doc diagrams (optional) | `brew install librsvg` | `apt install librsvg2-bin` |
@@ -91,8 +93,9 @@ python3 util/vendor_ip.py --list       # which upstream IP is pinned, and at wha
 **New here? [`doc/guides/GETTING_STARTED.md`](doc/guides/GETTING_STARTED.md)** walks from setup to a merged pull request. **Then [`CONTRIBUTING.md`](CONTRIBUTING.md)** — what to read first, the five
 steps for writing a block, and the checks that gate a pull request.
 
-`main` is protected: no direct pushes, and a code-owner review is required.
-Ownership is per directory in [`.github/CODEOWNERS`](.github/CODEOWNERS).
+`main` is protected: no direct pushes, and a maintainer's review is required
+([`.github/POLICY.md`](.github/POLICY.md)). Block owners are named in
+[`doc/BLOCKS.md`](doc/BLOCKS.md).
 
 Upstream IP is **vendored at a pinned commit rather than submoduled**, because
 tape-out needs a frozen, auditable source: every upstream fact a specification

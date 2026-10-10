@@ -22,8 +22,8 @@ None directly. Every IP enters through its block's wrapper.
 two RAMs, one of everything else (table in [`design/README.md`](../README.md)).
 What differs between two instances of one wrapper is a value on an `i_cfg_*` port,
 which `design/top` ties from `qnsc_pkg`. A wrapper declares no parameter; a
-difference in structure is pending with Tâm ([`design/README.md`](../README.md),
-"Pending").
+difference in structure makes two blocks, each with its own wrapper, as `isram` and
+`dsram` ([`design/README.md`](../README.md), "Instances are decided in `design/top`").
 
 ## Ownership
 
