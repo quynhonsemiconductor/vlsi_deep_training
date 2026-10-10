@@ -35,6 +35,28 @@ LINT stage uses. Never keep a second list of design files here.
 ```bash
 make sim BLOCK=<block>                   # the default test
 make sim BLOCK=<block> TEST=<test>       # passes +test=<test> to the testbench
+make sim BLOCK=<block> TEST=<test> WAVES=1   # also writes build/sim/<block>_<test>/waves.vcd
 ```
 
-Output goes to `build/sim/`, which is not committed.
+Output goes to `build/sim/`, which is not committed. The technology cells
+(`design/common/tech/$TECH`) are added as for every other flow.
+
+## Waveforms
+
+A waveform is a by-product of a test, for understanding and debugging; it is not a
+check (rule 1). With `WAVES=1` the testbench gets `+waves=<file>` and dumps when it
+is present:
+
+```systemverilog
+initial begin
+  string w;
+  if ($value$plusargs("waves=%s", w)) begin
+    $dumpfile(w);
+    $dumpvars(0, tb_<block>);
+  end
+end
+```
+
+Open the `.vcd` with Surfer (the VS Code extension, or the web version) or GTKWave.
+A waveform that goes into a document is converted to WaveDrom and committed as
+`design/<block>/doc/*.json` and `.svg`, from the simulation, never drawn by hand.
