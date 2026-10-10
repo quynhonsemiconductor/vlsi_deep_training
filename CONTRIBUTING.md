@@ -110,6 +110,7 @@ machine is a green CI. How a wrapper is written with emacs is in
 | `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` |
 | `Generated IP` | a file in `util/gen/<ip>/` differs from what its `gen.sh` produces with the pinned tools |
 | `Connectivity` | a changed block's top leaves an instance input open, or drives a top output from nothing |
+| `Simulation` | a test fails in a changed block that has a testbench (`dv/<block>/`). A block with no testbench is skipped, not failed |
 | `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** |
 | `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region |
 | `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract |
@@ -189,7 +190,7 @@ reason.
 | Stage | Tool | Files, per block | Command | `done` when |
 |---|---|---|---|---|
 | **RTL integration** | Verilator (elaborate); VCS on the server | `design/<block>/rtl/`, `<block>.f` | `make lint BLOCK=<block>`; `make vcs BLOCK=<block>` | The wrapper follows [`design/README.md`](design/README.md), elaborates through `<block>.f` in both tools (VCS log in the PR), and is instantiated in `design/top` |
-| **SIM** ("VCS") | Verilator `--binary --timing` | `dv/<block>/tb_<block>.sv`, `dv/<block>/tests/` | `make sim BLOCK=<block>` | Every test in the MAS verification section runs **self-checking** and ends in `PASS`; a failure calls `$fatal` |
+| **SIM** ("VCS") | Verilator `--binary --timing` | `dv/<block>/tb_<block>.sv`, `dv/<block>/tests/` | `make sim BLOCK=<block>` (CI: `Simulation`) | Every test in the MAS verification section runs **self-checking** and ends in `PASS`; a failure calls `$fatal`. Not required in the RTL pull request; once a block has tests, CI runs them on every change to it |
 | **LINT** | Verilator `--lint-only -Wall`, `naming_check.py`, `hardcode_check.py` | `design/<block>/waivers.vlt` | `make lint naming hardcode BLOCK=<block>` (CI) | All three are clean in CI. Every waiver line has a reason |
 | **SDC** | OpenSTA syntax | `design/<block>/constraints/<block>.sdc` | read by the SYN and GCA stages | Every clock and every input/output is constrained. Clock names follow the table in [`flow/sta/README.md`](flow/sta/README.md). CDC paths carry the constraint their MAS states |
 | **CDC** | Review against the MAS, plus lint | MAS crossing table | review in the pull request | Every crossing in the RTL is in the MAS crossing table, and every one goes through a shared cell in `design/common` or a handshake the MAS specifies. See [`flow/cdc/README.md`](flow/cdc/README.md) |

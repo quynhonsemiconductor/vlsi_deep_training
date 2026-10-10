@@ -163,6 +163,7 @@ For every wrapper PR, and again after every new commit on it:
 | `Contract tags` fails | The number on the tagged line no longer equals the contract: fix the line, or the contract if the chip changed |
 | `Filelist paths` fails | A path in your `.f` is absolute, or names a missing file |
 | `Generated wrappers` fails | You forgot `make wrap`, or edited a generated block by hand |
+| `Simulation` fails | A test of your block, or of a block that compiles code you changed, fails: the comment names the `$fatal`. Reproduce with `make sim BLOCK=<block> TEST=<id> WAVES=1` and open `build/sim/.../waves.vcd`, or download the `sim-waves` artifact |
 | `Verilator lint` fails | Read the `%Error` line; a missing file usually means a missing filelist entry |
 | `make check` is fine but CI says the branch is out of date | `git fetch && git rebase origin/main`, then push |
 
