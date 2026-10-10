@@ -1,11 +1,11 @@
 # =============================================================================
 # One entry point for every check CI runs.
 #
-# Each target calls the same script the CI job calls, so a green `make check` on
-# your machine is a green CI. The logic stays in flow/, util/ and doc/; this file
-# only names it.
+# Each target calls the same script the CI job calls. The logic stays in flow/,
+# util/ and doc/; this file only names it.
 #
-#   make check                 everything below except docs, before every push
+#   make check                 the CI checks that run locally, before every push
+#                              (CI also runs connectivity, sim, docs: CONTRIBUTING.md)
 #   make lint BLOCK=pwm        one block; omit BLOCK for all
 #   make wrap BLOCK=pwm        regenerate an emacs wrapper
 #   make doctor                which tools this machine has, and how to get the rest
@@ -24,8 +24,8 @@ SCOPE = $(if $(BLOCK),design/$(BLOCK))
 help:
 	@echo "make doctor         which tools are here, and how to install the rest"
 	@echo "make ide            editor lint search paths (.vscode/verilator.f)"
-	@echo "make hooks          once per clone: run make check before every push"
-	@echo "make check          all CI checks: filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check gen-check vendor-guard"
+	@echo "make hooks          once per clone: make check before push, editor paths after pull"
+	@echo "make check          the CI checks that run locally: filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check gen-check vendor-guard"
 	@echo "make filelists      paths in every .f are relative and exist"
 	@echo "make lint           Verilator lint through <block>.f      [BLOCK=]"
 	@echo "make naming         QNSC_RTL_Design_Naming_Rule           [BLOCK=]"
@@ -48,7 +48,8 @@ help:
 	@echo "make vcs-branch     compile a branch in a scratch clone, on the server BLOCK= BRANCH="
 	@echo "make vcs-post       post that summary on a PR, from your machine BLOCK= PR="
 	@echo "make verdi          open the VCS compile in Verdi (schematic) BLOCK="
-	@echo "make sim|syn|gca    later sign-off stages                 BLOCK= [TEST=] [WAVES=1]"
+	@echo "make sim            self-checking tests of dv/<block> (CI: Simulation) BLOCK= [TEST=] [WAVES=1]"
+	@echo "make syn|gca        synthesis, constraint check            BLOCK="
 	@echo "TECH=<tech>         technology cells for lint/vcs/syn/gca/connectivity (default generic; design/common/tech/)"
 
 ide:

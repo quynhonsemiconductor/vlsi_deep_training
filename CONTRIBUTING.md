@@ -61,7 +61,7 @@ ports, and a number copied from the contract tagged `// contract: <key>`
 ```bash
 make doctor                 # once: which tools are missing (install list in README)
 make hooks                  # once per clone: push runs make check; pull refreshes VS Code lint paths
-make check                  # everything CI checks, before every push
+make check                  # the CI checks marked "local" below, before every push
 make lint BLOCK=<block>     # one check, one block, while you work
 make new-wrap BLOCK=<block> IP=<ip top .sv>   # scaffold an emacs wrapper, once
 make wrap BLOCK=<block>     # regenerate an emacs wrapper after editing its .src.sv
@@ -70,9 +70,9 @@ make verdi BLOCK=<block>    # open that compile's schematic in Verdi, on the ser
 make help                   # the full list
 ```
 
-Every CI step calls the same `make` target, so a green `make check` on your
-machine is a green CI. How a wrapper is written with emacs is in
-[`doc/guides/EMACS_AUTO.md`](doc/guides/EMACS_AUTO.md).
+Every CI step calls the same `make` target. `make check` runs the checks marked
+**local** in the table under step 5, so a green `make check` is a green CI for those;
+Connectivity, Simulation, the document build and the title run in CI only.
 
 ### 5. Open the pull request
 
@@ -100,24 +100,27 @@ machine is a green CI. How a wrapper is written with emacs is in
   see the design. Connectivity is a cross-check from another tool, not a replacement:
   VCS and Verdi are the reference
 - `main` is protected: no direct pushes, and a code-owner review is required
-- These checks must pass (`make check` runs all but the last three locally):
+- These checks must pass. `make check` runs the ones marked **local** on your machine
+  (and the pre-push hook runs `make check`); the others run only in CI:
 
-| Check | Fails when |
-|---|---|
-| `PR title (conventional commits)` | the title is not a conventional commit |
-| `Verilator lint` | your block does not lint through its filelist |
-| `Filelist paths` | a path in a `.f` is absolute, or names a file that does not exist |
-| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` |
-| `Generated IP` | a file in `util/gen/<ip>/` differs from what its `gen.sh` produces with the pinned tools |
-| `Connectivity` | a changed block's top leaves an instance input open, or drives a top output from nothing |
-| `Simulation` | a test fails in a changed block that has a testbench (`dv/<block>/`). A block with no testbench is skipped, not failed |
-| `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** |
-| `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region |
-| `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract |
-| `Vendor tree unmodified` | `vendor/` changed without `vendor/manifest.yml` |
-| `Specifications build and check` | the specifications no longer build |
-| `actions-security / Workflow lint (actionlint)` | a workflow file is malformed |
-| `actions-security / Actions security (zizmor)` | a workflow has a security finding |
+| Check | Fails when | |
+|---|---|---|
+| `PR title (conventional commits)` | the title is not a conventional commit | CI |
+| `Verilator lint` | your block does not lint through its filelist | local |
+| `Filelist paths` | a path in a `.f` is absolute, or names a file that does not exist | local |
+| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` | local |
+| `Generated IP` | a file in `util/gen/<ip>/` differs from what its `gen.sh` produces with the pinned tools | local |
+| `Connectivity` | a changed block's top leaves an instance input open, or drives a top output from nothing | CI; `make connectivity BLOCK=` |
+| `Simulation` | a test fails in a changed block that has a testbench (`dv/<block>/`). A block with no testbench is skipped, not failed | CI; `make sim BLOCK=` |
+| `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** | local |
+| `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region | local |
+| `IP and integration module rules` | an IP module uses `qnsc_pkg`, a wrapper declares a parameter or is not named `m_qnsc_wrap_<block>`, or an emacs-expanded file has an `import` | local |
+| `Contract tags` | a line tagged `// contract: <key>` no longer holds the contract value | local |
+| `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract | local |
+| `Vendor tree unmodified` | `vendor/` changed without `vendor/manifest.yml` | local |
+| `Specifications build and check` | the specifications no longer build | CI; `make docs` |
+| `actions-security / Workflow lint (actionlint)` | a workflow file is malformed | CI |
+| `actions-security / Actions security (zizmor)` | a workflow has a security finding | CI |
 
 ## What `vendor/` is
 
@@ -139,8 +142,8 @@ Commit the vendored files, the manifest and `vendor/vendor.lock.yml` together.
 |---|---|
 | The IP needs **another upstream** (a Bender dependency, a `common_cells` cell) | Vendor it as its **own manifest entry**, at the exact version the parent pins, with `files:` limited to what is compiled and `used_by:` naming the block. List only the compiled files in `<block>.f` |
 | You vendor a repo only to **read** it, not compile it | Say "reference only, not compiled" in its manifest `notes:` and in the block README, and keep it out of `<block>.f` |
-| The IP lacks a **feature** QSOC needs | Add it in the **wrapper** if it can be built from the IP's ports. Use a **patch** only when it needs the IP's internal state (the UART and I2C DMA request lines are the examples). Name it `vendor/patches/<vendor>_<repo>/NNNN-<what>.patch` and describe it in the manifest `notes:`, the block README and the MAS. Commit the patch and the patched vendor files in the same PR |
-| The IP ships **templates and a generator**, not RTL (iDMA: Mako, SystemRDL, `gen_idma.py`) | Vendor the generator with the IP: add its files (for iDMA `util/gen_idma.py`, `util/mario/**`) to the entry's `files:`, same commit. In `util/gen/<ip>/` write `gen.sh` (the commands; reads `vendor/`, writes only into the directory it is given) and `requirements.txt` (the generator's Python tools, every version `==`, taken from the upstream lock file). Run `make gen IP=<ip>` and commit the generated files with the recipe; never edit them. List them in `<block>.f`. `make gen-check` (CI) regenerates and must match |
+| The IP lacks a **feature** QSOC needs | Add it in the **wrapper** if it can be built from the IP's ports. Use a **patch** only when it needs the IP's internal state (for example a DMA request line taken from an IP's FIFO level). Name it `vendor/patches/<vendor>_<repo>/NNNN-<what>.patch` and describe it in the manifest `notes:`, the block README and the MAS. Commit the patch and the patched vendor files in the same PR |
+| The IP ships **templates and a generator**, not RTL (Mako, SystemRDL, a Python generator) | Vendor the generator with the IP: add its files (the upstream generator script and its modules) to the entry's `files:`, same commit. In `util/gen/<ip>/` write `gen.sh` (the commands; reads `vendor/`, writes only into the directory it is given) and `requirements.txt` (the generator's Python tools, every version `==`, taken from the upstream lock file). Run `make gen IP=<ip>` and commit the generated files with the recipe; never edit them. List them in `<block>.f`. `make gen-check` (CI) regenerates and must match |
 | Your wrapper **starts from an upstream file** (a sample wrapper) | Allowed as a starting point that you then own. Keep the upstream licence header, which the licence requires, and add one line `QNSC: derived from <path> @ <commit>`. State it in the README |
 
 ## Changing a shared number
@@ -150,7 +153,8 @@ quietly.
 
 ```bash
 vim util/qsoc_contract.yml         # edit the source
-python3 util/gen_qnsc_pkg.py       # regenerate the package
+make pkg                           # regenerate the package
+make tables                        # the specification tables that restate it
 git add util/qsoc_contract.yml design/top/rtl/qnsc_pkg.sv   # commit BOTH
 ```
 
@@ -172,7 +176,7 @@ who must supply it.
 | Type an address, interrupt index or domain name into a wrapper | That is how ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11` and eleven interrupt sources against twelve all happened. A chip value reaches IP on an `i_cfg_*` port that `design/top` ties from `qnsc_pkg`; a structural number is tagged `// contract: <key>`. `No hardcoded shared values` fails the PR otherwise |
 | Import a package or declare a parameter in a wrapper | The IP owner fixes the configuration; `design/top` only connects. verilog-mode does not resolve packages. `IP and integration module rules` fails the PR |
 | Hand-edit `design/top/rtl/qnsc_pkg.sv` | It is generated. CI regenerates and compares |
-| Fork the wrapper per instance for a value that differs | One wrapper; the value is an `i_cfg_*` port tied by `design/top`. A difference in structure is pending with Tâm (`design/README.md`, "Pending") |
+| Fork the wrapper per instance for a value that differs | One wrapper; the value is an `i_cfg_*` port tied by `design/top`. A difference in structure (a depth, a width) makes two blocks, each with its own wrapper, as `isram` and `dsram` (`design/README.md`, "Instances are decided in `design/top`") |
 | Instantiate a PDK cell (ICG, clock buffer, pad, SRAM macro) in block RTL | RTL instantiates `qnsc_clk_gate` and the other cells in `design/common/tech/`; `TECH` chooses which library implements them, so the same RTL simulates, runs on FPGA and synthesises for the ASIC. A new library cell is a file in `design/common/tech/<tech>/`, see its README |
 | Rename a vendored module's port to satisfy the naming rule | The rule applies to our RTL. `naming_check.py` already skips identifiers after a dot, after `::`, and system functions such as `$clog2`, for exactly this reason |
 | Rewrite correct RTL to dodge a checker false positive | Report the false positive and fix the checker in `flow/`. A `// naming-check: ignore -- <reason>` is the stop-gap, not a rewrite |
@@ -181,8 +185,9 @@ who must supply it.
 
 Every IP moves through these stages; their status is kept in the teacher's
 assistant's tracker, not in this repository. QSOC is a training project, so every
-stage runs on **open-source tools**, in CI. The one licensed step is the VCS compile
-of a wrapper on the training server (RTL integration). The stage names are the
+stage runs on **open-source tools**: LINT and SIM in CI, SYN and GCA with `make` on
+your machine, CDC and RDC by review. The one licensed step is the VCS compile of a
+wrapper on the training server (RTL integration). The stage names are the
 tracker's; "VCS" is the simulation stage and runs on Verilator here. A stage that does not apply to a block
 (for example CDC in a block with no clock) is waived in the block's README, with the
 reason.
@@ -202,14 +207,21 @@ CDC and RDC have no mature open-source checker, so their evidence is the MAS tab
 the review. That is why every crossing must go through a **named shared cell**: it
 makes a crossing findable with `grep` instead of by reading every line.
 
-Mark a cell `done` only in the pull request that meets its definition, and link the
-evidence (the CI run, the test log, the review comment) in that pull request.
+A stage is `done` in the tracker only once the pull request that meets its
+definition is merged; that pull request links the evidence (the CI run, the test
+log, the review comment).
 
 ## Ownership
 
-Ownership is per directory in [`.github/CODEOWNERS`](.github/CODEOWNERS). `vendor/`,
-`util/` and `design/top/` need a maintainer, because a change there reaches every
-block. Repository policy, CI and the ruleset are described in
+Two different things:
+
+- **Who owns the work** on a block: named in the block `README.md` and in
+  [`doc/BLOCKS.md`](doc/BLOCKS.md).
+- **Who approves and merges**: [`.github/CODEOWNERS`](.github/CODEOWNERS) names the
+  maintainers team for every path (Tâm alone for `doc/rules/`); only their review
+  counts and only they can merge.
+
+Repository policy, CI and the rulesets are described in
 [`.github/POLICY.md`](.github/POLICY.md).
 
 ## Specifications

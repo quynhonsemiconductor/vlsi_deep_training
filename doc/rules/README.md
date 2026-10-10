@@ -6,8 +6,8 @@ and moved here once the team repository existed. Edit them here only.
 
 | File | What it is | Enforced by |
 |---|---|---|
-| `QNSC_RTL_Design_Naming_Rule.docx` | Naming Rule, editable source | -- |
-| `QNSC_RTL_Design_Naming_Rule.pdf` | Naming Rule **V1.2**, the released version | `flow/lint/naming_rules.yml` + `naming_check.py` (`make naming`) |
+| `QNSC_RTL_Design_Naming_Rule.docx` | Naming Rule **V1.2**, the source and the current version | `flow/lint/naming_rules.yml` + `naming_check.py` (`make naming`) |
+| `QNSC_RTL_Design_Naming_Rule.pdf` | **V1.1**: not yet exported from the V1.2 `.docx`. Read the `.docx` until it is replaced | -- |
 | `EMACS_quick_guide.pdf` | How to write a wrapper with emacs verilog-mode: the template and every template function | `flow/emacs/template.src.sv.in`, `make new-wrap`, `make wrap-check` |
 
 How the rules are applied in this repository, and the decisions for the cases the
