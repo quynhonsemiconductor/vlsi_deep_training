@@ -112,7 +112,12 @@ web/backend checks.
           { "context": "Inter-block contract" },
           { "context": "No hardcoded shared values" },
           { "context": "Filelist paths" },
-          { "context": "Generated wrappers" }
+          { "context": "Generated wrappers" },
+          { "context": "Connectivity" },
+          { "context": "Generated IP" },
+          { "context": "IP and integration module rules" },
+          { "context": "Contract tags" },
+          { "context": "Simulation" }
         ]
       }
     }
@@ -185,7 +190,7 @@ Only the `vlsi-maintainers` team -- Tâm (`@Stork1323`), the teacher (`@quannhqn
   Its bypass list is the maintainers team, in `pull_request` mode (through a pull
   request only), plus the repository admin role. A member's merge button stays
   disabled even when every check is green and the review is approved.
-- `main-protection` still applies to the maintainers: the eleven checks and one
+- `main-protection` still applies to the maintainers: the required checks and one
   approval from someone other than the author.
 
 Block owners are named in each block README and in `doc/BLOCKS.md`; they own the
@@ -194,10 +199,10 @@ work, not the merge.
 ## Keeping the ruleset in step with CI
 
 A new CI job is not a gate until its name is added to `required_status_checks`.
-The live ruleset requires the eleven contexts above (checked 2026-10-11). These jobs
-run on every pull request but are **not required**, so a red one does not block the
-merge button; the reviewer must look: `Connectivity`, `Generated IP`,
-`IP and integration module rules`, `Contract tags`, `Simulation`. When a
+The live ruleset requires the sixteen contexts above (checked 2026-10-11). Every job
+in `rtl-ci.yml` runs on every pull request to `main`, with no path filter, so a
+required context always reports. A new job becomes required only once it is on
+`main`; required earlier, it blocks every branch that does not have it yet. When a
 job is added to or renamed in a workflow, update the list here and in the ruleset
 in the same change:
 
