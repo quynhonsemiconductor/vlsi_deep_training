@@ -16,7 +16,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import module_rules as mr  # noqa: E402
 
 INTEGRATION = {"top", "bus", "intmap", "iomux", "scrc"}
-OWN = {"qnsc_cpu2axi_pkg"}
 
 # (name, block, source, expected rules)
 CASES = [
@@ -34,9 +33,26 @@ CASES = [
      "module m_qnsc_top (input logic a);\n  import qnsc_pkg::*;\n  /*AUTOWIRE*/\nendmodule", ["NO-IMPORT"]),
     ("qnsc_pkg in IP", "pwm",
      "module m_qnsc_wrap_pwm (input logic a);\n  ip #(.W(qnsc_pkg::C_W)) u_ip ();\nendmodule", ["NO-PKG"]),
-    ("own package in a wrapper", "cpu",
+    ("flat ports accepted", "cpu",
+     "module m_qnsc_wrap_cpu (\n  input logic i_clk,\n  input logic [11:0] i_a,  // contract: x\n"
+     "  output logic [32-1:0] o_d,\n  output logic [$clog2(16)-1:0] o_n,\n  input wire [4:0] i_id\n); endmodule", []),
+    ("width from a package", "cpu",
      "module m_qnsc_wrap_cpu (output logic [qnsc_cpu2axi_pkg::P_ID_W-1:0] o_id); endmodule",
-     ["NO-OWN-PKG"]),
+     ["FLAT-PORT"]),
+    ("width named by a parameter", "cpu",
+     "module m_qnsc_wrap_cpu (output logic [P_ID_W-1:0] o_id); endmodule", ["FLAT-PORT"]),
+    ("struct port", "cpu",
+     "module m_qnsc_wrap_cpu (input req_t i_req, output logic o_a); endmodule", ["FLAT-PORT"]),
+    ("package-typed port", "cpu",
+     "module m_qnsc_wrap_cpu (input axi_pkg::req_t i_req); endmodule", ["FLAT-PORT"]),
+    ("in-house block top is a boundary too", "sysdbg",
+     "module m_qnsc_sysdbg (input logic [W-1:0] i_a); endmodule", ["FLAT-PORT"]),
+    ("qnsc_pkg width in an integration block", "bus",
+     "module m_qnsc_wrap_bus (input logic [qnsc_pkg::C_N-1:0] i_a); endmodule", []),
+    ("internal wire of the IP's struct type accepted", "cpu",
+     "module m_qnsc_wrap_cpu (input logic i_a);\n  qnsc_cpu2axi_pkg::req_t w_req;\nendmodule", []),
+    ("a module inside the block is not its boundary", "cpu",
+     "module m_qnsc_cpu2axi (input req_t i_req); endmodule", []),
     ("vendored IP's own constant accepted", "cpu",
      "module m_qnsc_wrap_cpu (input logic a);\n  ibex_top #(.RV32M(ibex_pkg::RV32MFast)) u_ibex ();\nendmodule", []),
     ("literal accepted", "pwm",
@@ -64,7 +80,7 @@ def main() -> int:
             f = Path(tmp) / block / "rtl" / "t.sv"
             f.parent.mkdir(parents=True, exist_ok=True)
             f.write_text(src + "\n")
-            got = sorted(x.rule for x in mr.check_file(f, INTEGRATION, OWN))
+            got = sorted(x.rule for x in mr.check_file(f, INTEGRATION))
             if got != sorted(want):
                 failed += 1
                 print(f"FAIL  {name}: expected {want}, got {got}")

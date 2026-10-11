@@ -27,17 +27,20 @@ hierarchy.
                 m_qnsc_wrap_cpu_ibex and m_qnsc_wrap_cpu_cpu2axi). Two configurations
                 of one IP are two blocks (design/isram, design/dsram).
   4. NO-IMPORT  A wrapper file, and any file expanded by emacs verilog-mode (it
-                contains an AUTO comment), has no import statement. verilog-mode's
-                parser does not resolve package declarations; an integration module
+                contains an AUTO comment), has no import statement. verilog-mode does
+                not read packages, so an item is named pkg::item where it is used,
+                visible to the reader and to every tool; an integration module
                 generated with emacs names a constant as qnsc_pkg::C_X at the
                 connection.
-  5. NO-OWN-PKG A wrapper does not use a package written here (any package declared
-                under design/), for a value, a width or a type. The configuration
-                is a literal in the wrapper; a type the IP needs is declared in the
-                wrapper (pulp: `AXI_TYPEDEF_ALL). A constant of the vendored IP's own
-                package (ibex_pkg::RV32MFast) is the IP's own fixed value and is
-                accepted. qnsc_pkg is covered by rule 1 and, in an integration
-                block, allowed.
+  5. FLAT-PORT  The boundary of a block -- its wrapper m_qnsc_wrap_<block>[_<part>],
+                or the top m_qnsc_<block> of a block designed here -- has flat
+                ports: type `logic` (or wire/reg/bit), width a number. No struct or
+                other package type, no width named by a parameter or an imported
+                constant. An integration block may write a width as qnsc_pkg::C_X.
+                verilog-mode copies these ports into design/top: a package type
+                is dropped or mis-connected there, a name is copied unresolved.
+                Inside the wrapper the IP's own package may be used as pkg::item
+                (ibex_pkg::RV32MFast, an internal wire of the IP's struct type).
   6. NO-OVERRIDE  Nobody sets a wrapper's configuration from outside: no
                 `defparam`, and no #( ) on an m_qnsc_wrap_* instance. design/top
                 only connects.
@@ -77,8 +80,10 @@ IMPORT = re.compile(r"\bimport\s+\w+\s*::")
 QNSC_PKG = re.compile(r"\bqnsc_pkg\b")
 WRAP_NAME = re.compile(r"\bmodule\s+(?P<name>m_qnsc_wrap_\w+)")
 BODY_PARAM = re.compile(r"(?<![\w`])parameter\b")
-PKG_DECL = re.compile(r"^\s*package\s+(\w+)\s*;", re.M)
-PKG_REF = re.compile(r"\b(\w+)\s*::")
+MODULE = re.compile(r"\bmodule\s+(?P<name>m_qnsc_\w+)")
+PORT_KEYWORDS = {"input", "output", "inout", "logic", "wire", "reg", "bit",
+                 "signed", "unsigned", "var", "tri"}
+QNSC_CONST = re.compile(r"\bqnsc_pkg\s*::\s*C_\w+")
 DEFPARAM = re.compile(r"\bdefparam\b")
 WRAP_INST_PARAM = re.compile(r"\b(m_qnsc_wrap_\w+)\s*#\s*\(")
 # module <name> [import ...;] #( ... ) (
@@ -129,15 +134,59 @@ def block_of(path: Path) -> str:
     return rel.parts[0]
 
 
-def own_packages() -> set[str]:
-    """Every package declared under design/ (written here, not vendored)."""
-    names: set[str] = set()
-    for f in DESIGN.rglob("*.sv"):
-        names.update(PKG_DECL.findall(strip_comments(f.read_text(errors="ignore"))))
-    return names
+def port_list(src: str, name_end: int) -> tuple[int, str] | None:
+    """(offset, text) of the ANSI port list of the module whose name ends at name_end."""
+    pos = name_end
+    while True:
+        m = re.compile(r"\s*import\s[^;]*;").match(src, pos)
+        if not m:
+            break
+        pos = m.end()
+    m = re.compile(r"\s*#\s*\(").match(src, pos)
+    if m:
+        pos = m.end() - 1 + len(paren_body(src, m.end() - 1)) + 2
+    m = re.compile(r"\s*\(").match(src, pos)
+    if not m:
+        return None
+    return m.end(), paren_body(src, m.end() - 1)
 
 
-def check_file(path: Path, integration: set[str], own_pkgs: set[str]) -> list[Finding]:
+def split_top(text: str) -> list[tuple[int, str]]:
+    """Split on commas outside brackets; (offset, item) pairs."""
+    out, depth, start = [], 0, 0
+    for i, c in enumerate(text):
+        if c in "([{":
+            depth += 1
+        elif c in ")]}":
+            depth -= 1
+        elif c == "," and depth == 0:
+            out.append((start, text[start:i]))
+            start = i + 1
+    out.append((start, text[start:]))
+    return out
+
+
+def port_problem(item: str, integration_block: bool) -> str | None:
+    """Why a port declaration is not flat, or None."""
+    text = QNSC_CONST.sub("0", item) if integration_block else item
+    if "::" in text:
+        return "a package type or constant"
+    if "." in re.sub(r"\d+\.\d+", "", text):
+        return "an interface port"
+    ranges = re.findall(r"\[([^\]]*)\]", text)
+    for r in ranges:
+        r = re.sub(r"\$\w+", "", r)                      # $clog2(16)
+        r = re.sub(r"\d*'[sS]?[bBoOdDhH][0-9a-fA-F_xXzZ]+", "0", r)
+        if re.search(r"[A-Za-z_]\w*", r):
+            return f"the width [{r.strip()}] is a name, not a number"
+    words = [w for w in re.findall(r"[A-Za-z_]\w*", re.sub(r"\[[^\]]*\]", " ", text))
+             if w not in PORT_KEYWORDS]
+    if len(words) > 1:
+        return f"the type {words[0]}"
+    return None
+
+
+def check_file(path: Path, integration: set[str]) -> list[Finding]:
     raw = path.read_text(errors="ignore")
     raw_lines = raw.splitlines()
     src = strip_comments(raw)
@@ -168,23 +217,10 @@ def check_file(path: Path, integration: set[str], own_pkgs: set[str]) -> list[Fi
         for m in IMPORT.finditer(src):
             add(m.start(), "NO-IMPORT",
                 "a wrapper, or a file expanded by emacs verilog-mode, has no import: "
-                "verilog-mode's parser does not resolve packages. Write the IP's "
-                "configuration as a literal (design/README.md)")
+                "verilog-mode does not read packages. Name the item as pkg::item "
+                "where it is used, or write a number (design/README.md)")
 
     if is_wrapper:
-        seen: set[str] = set()
-        for m in PKG_REF.finditer(src):
-            pkg = m.group(1)
-            if pkg == "qnsc_pkg" or pkg not in own_pkgs:
-                continue
-            ln = lineno(m.start())
-            if (pkg, ln) in seen:
-                continue
-            seen.add((pkg, ln))
-            add(m.start(), "NO-OWN-PKG",
-                f"a wrapper takes nothing from {pkg}, a package written here: the "
-                "IP owner writes the configuration as a literal in the wrapper, and "
-                "declares the types the IP needs there (design/README.md)")
         headers = []  # (start, end) of each wrapper #( ) header
         for h in WRAP_HEADER.finditer(src):
             start = h.end() - 1
@@ -195,6 +231,28 @@ def check_file(path: Path, integration: set[str], own_pkgs: set[str]) -> list[Fi
             add(m.start(), "NO-PARAM",
                 "a wrapper declares no parameter: write a fixed value, or a "
                 "localparam (design/README.md)")
+
+    for m in MODULE.finditer(src):
+        name = m.group("name")
+        boundary = (name == f"m_qnsc_{block}" or name == f"m_qnsc_wrap_{block}"
+                    or name.startswith(f"m_qnsc_wrap_{block}_"))
+        if not boundary:
+            continue
+        pl = port_list(src, m.end())
+        if not pl:
+            continue
+        base, body = pl
+        for off, item in split_top(body):
+            if not item.strip():
+                continue
+            why = port_problem(item, not is_ip)
+            if why:
+                lead = len(item) - len(item.lstrip())
+                add(base + off + lead, "FLAT-PORT",
+                    f"port '{' '.join(item.split())}' of {name}: {why}. A block's "
+                    "boundary has flat ports, `logic [N-1:0]` with N a number "
+                    "(tag it // contract: <key> when the contract fixes it); "
+                    "design/top's verilog-mode copies them (design/README.md)")
 
     for m in DEFPARAM.finditer(src):
         add(m.start(), "NO-OVERRIDE",
@@ -249,10 +307,9 @@ def main(argv: list[str]) -> int:
         print("module-rules: no RTL under design/ yet -- nothing to check")
         return 0
 
-    own_pkgs = own_packages()
     findings: list[Finding] = []
     for f in files:
-        findings.extend(check_file(f, integration, own_pkgs))
+        findings.extend(check_file(f, integration))
 
     print(f"module-rules: {len(files)} file(s) checked; integration blocks: "
           f"{', '.join(sorted(integration))}")
