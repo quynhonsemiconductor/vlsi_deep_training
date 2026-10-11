@@ -21,11 +21,6 @@ make sim BLOCK=pwm TEST=pwm_005 WAVES=1    # and build/sim/pwm_pwm_005/waves.vcd
 | `PWM_008` events | `pwm_008` | line 0: one-cycle pulse per rising edge, none from a static channel, none with `EN` = 0. Lines 1-3 not yet |
 | `PWM_009` input stage | `pwm_009` | part: `IN_MODE` 3 on each `TIM_EXT` pin. Other `IN_MODE` values and channel feedback not yet |
 | `PWM_010` holes, alias, no error | `pwm_010` | full |
-| `PWM_011` when new values take effect | -- | not yet; `pwm_005` records one measured fact (below) |
-
-Measured, to be stated in the MAS (`PWM_011` is "confirm in simulation"): with
-`SAW` = 1 and MODE 6 RSTSET, a channel is high `TH` + 1 cycles per period (251 of
-1000 for `TH` = 250, `END` = 999); it rises at the start of the period and falls one
-cycle after the counter passes `TH`. SETRST with the same `TH` is its exact complement.
+| `PWM_011` when new values take effect | `pwm_011` | full: `TH` at `START`/`UPDATE` (stopped and running), `CHn_TH` raised and lowered, `PRESC`, `IN_SEL`/`IN_MODE` while running; MAS 7.8 |
 
 Each test was checked to fail: changing its expected value makes it call `$fatal`.
