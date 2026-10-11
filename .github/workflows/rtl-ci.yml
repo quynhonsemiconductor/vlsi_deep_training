@@ -196,10 +196,16 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           title="**Simulation, Verilator** (self-checking tests of dv/; VCS on the server checks X)"
-          if grep -q '^no block with RTL or a testbench changed' build/sim/report.md; then exit 0; fi
-          body=$(printf '%s\n\n%s\n' "$title" "$(cat build/sim/report.md)")
           id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
                  --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"**Simulation, Verilator**\"))) | .id" | tail -1)
+          # Nothing simulated (no touched block has a testbench): no comment, and an
+          # earlier one is removed so it cannot show a stale result. The job summary
+          # still lists the skipped blocks.
+          if [ "$(cat build/sim/ran 2>/dev/null || echo 0)" = 0 ]; then
+            if [ -n "$id" ]; then gh api -X DELETE "repos/$REPO/issues/comments/$id" > /dev/null; fi
+            exit 0
+          fi
+          body=$(printf '%s\n\n%s\n' "$title" "$(cat build/sim/report.md)")
           if [ -n "$id" ]; then
             gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null
           else
