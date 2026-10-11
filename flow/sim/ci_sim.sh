@@ -10,20 +10,23 @@
 # request (CONTRIBUTING.md, "Sign-off stages"). A block that has one runs every
 # test, so a change cannot break tests that already pass.
 #
-# Writes build/sim/report.md and exits 1 if a testbench fails. A failing block is
-# run again with WAVES=1, so its waveform can be kept as a CI artifact.
+# Writes build/sim/report.md and build/sim/ran (how many blocks were simulated; the
+# PR comment is posted only when it is not 0), and exits 1 if a testbench fails. A
+# failing block is run again with WAVES=1, so its waveform can be kept as a CI
+# artifact.
 set -uo pipefail
 base=${1:-origin/main}
 mkdir -p build/sim
 report=build/sim/report.md
 changed=$(git diff --name-only "$base"...HEAD)
 
-if echo "$changed" | grep -qE '^(design/common/|flow/sim/|flow/tech/|vendor/)'; then
+shared=$(echo "$changed" | grep -oE '^(design/common|flow/sim|flow/tech|vendor)/' | sort -u)
+if [ -n "$shared" ]; then
   blocks=$(ls -d design/*/ | xargs -n1 basename)
-  why="a change to code every block compiles"
+  why="every block with a testbench, because this pull request changes $(echo "$shared" | sed 's/.*/`&`/' | paste -sd, - | sed 's/,/, /g'), which every block compiles"
 else
   blocks=$(echo "$changed" | awk -F/ '($1=="design"||$1=="dv") && NF>2 {print $2}' | sort -u)
-  why="blocks changed in this pull request"
+  why="the blocks this pull request changes"
 fi
 
 rows=() ; skipped=() ; rc=0 ; ran=0
@@ -50,6 +53,9 @@ done
 {
   if [ ${#rows[@]} -eq 0 ] && [ ${#skipped[@]} -eq 0 ]; then
     echo "no block with RTL or a testbench changed"
+  elif [ $ran -eq 0 ]; then
+    list=$(printf '%s, ' "${skipped[@]}"); list=${list%, }
+    echo "nothing simulated: no block this change touches has a testbench yet ($list)"
   else
     echo "Blocks simulated: $why. Verilator 2-state; X is checked with VCS on the server."
     echo
@@ -75,5 +81,6 @@ done
     fi
   fi
 } > "$report"
+echo "$ran" > build/sim/ran
 cat "$report"
 exit $rc

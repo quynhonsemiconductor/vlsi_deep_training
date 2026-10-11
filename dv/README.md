@@ -50,8 +50,9 @@ Output goes to `build/sim/`, which is not committed. The technology cells
 
 The job **Simulation** runs `make sim` for every block a pull request changes that has
 a `tb_<block>.sv`, and for every such block when code they all compile changes
-(`design/common/`, `flow/sim/`, `flow/tech/`, `vendor/`). It posts one comment with a
-PASS/FAIL row per block, and keeps the waveform of a failing block as the artifact
+(`design/common/`, `flow/sim/`, `flow/tech/`, `vendor/`). When at least one block ran,
+it posts one comment with a PASS/FAIL row per block; when none of the touched blocks
+has a testbench yet, it posts nothing (the job summary lists them). It keeps the waveform of a failing block as the artifact
 `sim-waves` for seven days.
 
 A block with **no testbench yet is skipped, not failed**: the testbench belongs to the
