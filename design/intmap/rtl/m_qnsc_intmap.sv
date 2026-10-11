@@ -24,7 +24,7 @@ module m_qnsc_intmap
   input  logic                             i_int_timer_0,     // TIMER0 irq_lo_o, 64-bit mode
   input  logic                             i_int_wdt_bark,    // WDT nmi_wdog_timer_bark_o
   // ---- to the Ibex core ----                                       // REQ-016
-  output logic [C_INT_FAST_LINES_USED-1:0] o_int_fast,        // to irq_fast_i[10:0]
+  output logic [qnsc_pkg::C_INT_FAST_LINES_USED-1:0] o_int_fast,       // to irq_fast_i[10:0]
   output logic                             o_int_nm           // to irq_nm_i
 );
 
