@@ -26,6 +26,9 @@ module tb_pwm;
 
   always #25 r_clk = ~r_clk;   // i_clk_peri, 20 MHz
 
+  int unsigned r_cycle = 0;    // clock cycles since time 0, to time events
+  always @(posedge r_clk) r_cycle <= r_cycle + 1;
+
   m_qnsc_wrap_pwm u_dut (
     .i_clk_peri        (r_clk),
     .i_rst_n_peri      (r_rst_n),
@@ -135,6 +138,7 @@ module tb_pwm;
   `include "tests/pwm_008.svh"
   `include "tests/pwm_009.svh"
   `include "tests/pwm_010.svh"
+  `include "tests/pwm_011.svh"
 
   initial begin
     string t;
@@ -148,6 +152,7 @@ module tb_pwm;
     if (t == "all" || t == "pwm_008") begin reset_dut(); pwm_008(); end
     if (t == "all" || t == "pwm_009") begin reset_dut(); pwm_009(); end
     if (t == "all" || t == "pwm_010") begin reset_dut(); pwm_010(); end
+    if (t == "all" || t == "pwm_011") begin reset_dut(); pwm_011(); end
     $display("PASS (%s)", t);
     $finish;
   end

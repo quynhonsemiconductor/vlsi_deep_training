@@ -1,6 +1,6 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.8"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.9"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -20,6 +20,7 @@ The reasoning behind each change is in
 | V2.6 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`PWM_NNN`), for traceability to tests. No change in behaviour |
 | V2.7 | 2026-10-09 | Nghia VT | -- | `pulp_clock_gating` maps onto `qnsc_clk_gate`, the chip's one clock gate (4). Word writes only: the IP has no `PSTRB` or `PPROT` (7.6). No dead time, complementary output or break input (11). No change in behaviour |
 | V2.8 | 2026-10-15 | Nghia VT | -- | `i_bus_apb_paddr` is 14 bits, was 12: the contract `meta.apb_paddr_width` changed in #77 because the windows are 16 KiB. The requirement on the bus owner no longer says that `P_BUS` subtracts the base (nothing does; the window is aligned to its size). The decode is unchanged: `PADDR[9:2]`, so the 1 KiB map repeats every `0x400` across the window |
+| V2.9 | 2026-10-12 | Nghia VT | -- | 7.2: with `SAW` = 1, `RSTSET` is high `TH` + 1 cycles per period and `SETRST` is its complement. New 7.8: when a new value takes effect, measured by `PWM_011`. Section 12: `PWM_011` states what it checks |
 
 # 1. Overview
 
@@ -160,6 +161,12 @@ Each channel output is a flip-flop in its `comparator`. A match is COUNTER equal
 MODE 2 with `SAW` = 1 gives an edge-aligned output; MODE 2 with `SAW` = 0 gives a
 centre-aligned output. `CMD.RST` drives the output to 0 in every MODE.
 
+With `SAW` = 1 the counter reaches END, and the output is set at that count event, one
+cycle before the counter is back at START. The output of MODE 6 (RSTSET) is therefore
+high for `TH` + 1 cycles per period: `TH` = 250, END = 999 gives 251 of 1000 cycles. It
+rises at the start of the period and falls one cycle after the counter passes `TH`.
+MODE 2 (SETRST) with the same `TH` is its exact complement.
+
 **Unconfigured channels.** Out of reset every channel has `MODE` 0 (SET) and `TH` 0,
 so `CMD.START` drives each channel firmware did not configure to 1 at the first
 count of 0, and it stays 1. Before `CMD.START`, set every channel of the module:
@@ -266,6 +273,27 @@ Two gates are in series: `SCRC` `CLK_EN[15]` gates `i_clk_peri` for the whole bl
 - Safe stop: with `CH_EN[i]` = 1, write `CMD` = STOP | RST (`0x0A`). All four
   outputs of module `i` go to 0; the clock may then be gated.
 
+## 7.8 When a new value takes effect
+
+Measured by `PWM_011`, on a timer that is running unless stated.
+
+: When a write takes effect
+
+| Written | Takes effect |
+|---|---|
+| `TH` (START, END), `CFG.SAW` | only at `CMD.START`, or at `CMD.UPDATE`. A write alone changes nothing: with the counter running, END written without `UPDATE` leaves the period unchanged |
+| `CMD.UPDATE`, running | at the end of the period in progress, which keeps its old length; the next period uses the new START, END and `SAW` |
+| `CMD.UPDATE`, stopped | at once: `COUNTER` reads START. A `TH` write while stopped leaves `COUNTER` as it was |
+| `CMD.START` | loads START, END and `SAW`; the first period is END - START + 1 count events |
+| `CHn_TH` (`TH`, `MODE`), `CFG.PRESC`, `CFG.IN_SEL`, `CFG.IN_MODE` | at the next count event, in the period in progress, without `UPDATE` |
+
+Consequence for `CHn_TH`: a value above the counter is used in the period in progress.
+A value **below** the counter has already passed, so its match is missed in this period.
+With `MODE` 6 (RSTSET) the output stays high to the end of the period and falls at the
+match in the next one, so one pulse is long. To change a duty cycle without a wrong
+pulse, write `CHn_TH` just after the period starts, while the counter is still below
+both the old and the new value.
+
 # 8. Instances
 
 One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
@@ -338,10 +366,11 @@ The IP has no testbench.
 9. `PWM_009` Each `IN_MODE` 0-7 with `ext_sig_i[3:0]` and with a channel feedback source;
     `IN_SEL` 4-31 and 48-255 never count except in `IN_MODE` 0 and 1.
 10. `PWM_010` Holes read 0 and ignore writes; offset `+0x400` aliases offset 0; `PSLVERR` = 0.
-11. `PWM_011` Confirm in simulation: when a new `TH` takes effect (at `CMD.START`, at
-    `CMD.UPDATE` while stopped, at the period end after `CMD.UPDATE` while running),
-    and when new `CHn_TH`, `IN_SEL`, `IN_MODE` and `PRESC` values take effect while
-    running.
+11. `PWM_011` Each row of the table in 7.8 holds: `TH` is used only at `CMD.START` or
+    `CMD.UPDATE` (stopped: at once; running: at the end of the period in progress);
+    `CHn_TH` raised before its match is used in the period in progress, lowered below
+    the counter it is used in the next one; `PRESC`, `IN_SEL` and `IN_MODE` take effect
+    while running.
 
 **Acceptance criterion:** eight pads carry two independent periods with four
 independently set compare values under each, and each event arrives one

@@ -375,6 +375,12 @@ useful: any of the sixteen can be selected as an event source, section 4.5.
 rather than clocking from it, so it introduces no clock domain crossing and needs no
 `set_false_path`. Tie it to the domain clock unless a slower counting rate is wanted.
 
+> **Superseded 2026-10-12.** `low_speed_clk_i` is tied 0, not to the domain clock: the
+> IP counts only on a rising edge of it, sampled by three flops (`input_stage`,
+> `CFG.CLK_SEL` = 1). A clock sampled by its own flops has no defined edge (a hold-time
+> race in silicon), so tying it to the domain clock would make `CLK_SEL` = 1 behave
+> unpredictably. Tie 0 is defined: such a module does not count. See MAS section 10.
+
 **Closing gate bit 15 freezes the channel outputs at their current level.** For a
 motor drive that is not a neutral state. Firmware should stop the modules through
 `CMD` and let the outputs reach their idle level before the gate is closed, rather
@@ -496,7 +502,7 @@ block that interrupts before firmware is ready is hard to debug from the symptom
 | Which 8 of 16 channels reach pads | pad and IO mux owner | `ch_0_o` and `ch_1_o` -- all four channels of modules 0 and 1, for two independent base frequencies |
 | `ext_sig_i` wiring | pad / IO MUX owner | **Four pads already exist** (`TIM_EXT0`--`3`, `PIN_37`--`40`). This block proposes they attach to `ext_sig_i[3:0]` in pad order; remaining 28 bits tied low. No selection register needed -- the IP selects per module |
 | `dft_cg_enable_i` | DFT owner | **tie 0 for v1** -- no test-mode pin exists, Day005. Revisit if a DFT strategy is adopted; do not record QSOC as having no scan |
-| `low_speed_clk_i` | `SCRC` | tie to the domain clock; the IP samples it |
+| `low_speed_clk_i` | `SCRC` | ~~tie to the domain clock; the IP samples it~~ superseded 2026-10-12: tied 0, see section 3 |
 | Clock gate bit 15 | `SCRC` | may start **closed**; the block does nothing useful until programmed |
 | **No pad pull fights the rest level** | pad owner | Section 5.9 -- firmware leaves each channel at a chosen level before the gate closes; a pull in the opposite direction would fight it. One-line check against the pad list |
 | Four interrupt sources on one line | `INTMAP` | already assumed by `QNSC_Interrupt_Map_MAS`; no change |
@@ -695,5 +701,5 @@ the correction holds.
 ## Decided 2026-09-24
 
 - `i_tim_ext` gets a two-flop synchroniser inside the PWM wrapper, so it does not depend on the IO MUX.
-- `pulp_clock_gating` is a local wrapper of OpenTitan `prim_clock_gating`, which has the same ports and is already used by Ibex. Synthesis then maps one cell to the library ICG.
+- `pulp_clock_gating` is a local wrapper of OpenTitan `prim_clock_gating`, which has the same ports and is already used by Ibex. Synthesis then maps one cell to the library ICG. **Superseded 2026-10-09:** it instantiates `qnsc_clk_gate`, the chip's one clock gate, and `prim_clock_gating` is not in `pwm.f` (MAS V2.7, section 4).
 - `paddr` is 12 bits at the wrapper; the IP decodes `[9:2]`. **Superseded 2026-10-14:** 14 bits (#77); the decode is unchanged.
