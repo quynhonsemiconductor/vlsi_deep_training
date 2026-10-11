@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 """
-module_rules.py -- what an IP module and an emacs-generated file may contain.
+module_rules.py -- what an IP module, a wrapper and an emacs-generated file may contain.
 
-Three rules, from design/README.md ("Shared numbers: who may use qnsc_pkg" and
-"Writing a wrapper with emacs verilog-mode"):
+The rules, from design/README.md ("Shared numbers: who may use qnsc_pkg" and
+"Writing a wrapper with emacs verilog-mode"). The reasons are Tam's: verilog-mode's
+parser has trouble with import, so a wrapper takes no configuration from a package;
+and the IP owner controls the IP's configuration, written as fixed values in the
+wrapper, while design/top only connects -- clearer, and it holds at any depth of
+hierarchy.
 
   1. NO-PKG     An IP module does not use qnsc_pkg -- no import, no qnsc_pkg::.
                 IP is every block not listed as integration in module_rules.yml,
                 plus design/common. An IP that knows the chip cannot be reused in
                 another chip, and a chip value inside it is a second copy of the
                 contract.
-  2. NO-PARAM   A wrapper (m_qnsc_wrap_*) declares no parameter. The IP owner
-                fixes the IP's configuration inside the wrapper; design/top only
-                connects. An empty #() is accepted, as in the I2C demo.
+  2. NO-PARAM   A wrapper (m_qnsc_wrap_*) declares no parameter, in its #( ) header
+                or as a `parameter` in its body. The IP owner fixes the IP's
+                configuration inside the wrapper; design/top only connects. An empty
+                #() is accepted, as in the I2C demo; a localparam is a fixed value
+                and is accepted.
   3. WRAP-NAME  The wrapper of design/<block>, its boundary, is m_qnsc_wrap_<block>:
                 named after the block (its name in the contract), not the IP module,
                 so the name stays when the IP is replaced. A block built from several
@@ -20,10 +26,21 @@ Three rules, from design/README.md ("Shared numbers: who may use qnsc_pkg" and
                 m_qnsc_wrap_<block>_<part> (design/cpu: m_qnsc_wrap_cpu around
                 m_qnsc_wrap_cpu_ibex and m_qnsc_wrap_cpu_cpu2axi). Two configurations
                 of one IP are two blocks (design/isram, design/dsram).
-  4. NO-IMPORT  A file expanded by emacs verilog-mode (it contains an AUTO
-                comment) has no import statement. verilog-mode's parser does not
-                resolve package declarations; an integration module generated
-                with emacs names a constant as qnsc_pkg::C_X at the connection.
+  4. NO-IMPORT  A wrapper file, and any file expanded by emacs verilog-mode (it
+                contains an AUTO comment), has no import statement. verilog-mode's
+                parser does not resolve package declarations; an integration module
+                generated with emacs names a constant as qnsc_pkg::C_X at the
+                connection.
+  5. NO-OWN-PKG A wrapper does not use a package written here (any package declared
+                under design/), for a value, a width or a type. The configuration
+                is a literal in the wrapper; a type the IP needs is declared in the
+                wrapper (pulp: `AXI_TYPEDEF_ALL). A constant of the vendored IP's own
+                package (ibex_pkg::RV32MFast) is the IP's own fixed value and is
+                accepted. qnsc_pkg is covered by rule 1 and, in an integration
+                block, allowed.
+  6. NO-OVERRIDE  Nobody sets a wrapper's configuration from outside: no
+                `defparam`, and no #( ) on an m_qnsc_wrap_* instance. design/top
+                only connects.
 
 SCOPE   design/**/rtl/**/*.sv, *.v   (vendor/ and the generated qnsc_pkg.sv excluded)
 OUTPUT  GitHub Actions annotations in CI, so a violation lands inline on the diff
@@ -59,6 +76,11 @@ AUTO = re.compile(r"/\*\s*AUTO[A-Z_]*")
 IMPORT = re.compile(r"\bimport\s+\w+\s*::")
 QNSC_PKG = re.compile(r"\bqnsc_pkg\b")
 WRAP_NAME = re.compile(r"\bmodule\s+(?P<name>m_qnsc_wrap_\w+)")
+BODY_PARAM = re.compile(r"(?<![\w`])parameter\b")
+PKG_DECL = re.compile(r"^\s*package\s+(\w+)\s*;", re.M)
+PKG_REF = re.compile(r"\b(\w+)\s*::")
+DEFPARAM = re.compile(r"\bdefparam\b")
+WRAP_INST_PARAM = re.compile(r"\b(m_qnsc_wrap_\w+)\s*#\s*\(")
 # module <name> [import ...;] #( ... ) (
 WRAP_HEADER = re.compile(
     r"\bmodule\s+(?P<name>m_qnsc_wrap_\w+)\s*(?:import[^;]*;\s*)*#\s*\(",
@@ -107,13 +129,22 @@ def block_of(path: Path) -> str:
     return rel.parts[0]
 
 
-def check_file(path: Path, integration: set[str]) -> list[Finding]:
+def own_packages() -> set[str]:
+    """Every package declared under design/ (written here, not vendored)."""
+    names: set[str] = set()
+    for f in DESIGN.rglob("*.sv"):
+        names.update(PKG_DECL.findall(strip_comments(f.read_text(errors="ignore"))))
+    return names
+
+
+def check_file(path: Path, integration: set[str], own_pkgs: set[str]) -> list[Finding]:
     raw = path.read_text(errors="ignore")
     raw_lines = raw.splitlines()
     src = strip_comments(raw)
     block = block_of(path)
     is_ip = block not in integration
     is_emacs = bool(AUTO.search(raw))
+    is_wrapper = bool(WRAP_NAME.search(src))
     out: list[Finding] = []
 
     def lineno(pos: int) -> int:
@@ -133,12 +164,48 @@ def check_file(path: Path, integration: set[str]) -> list[Finding]:
                 "port that design/top ties; tag a structural value with "
                 "'// contract: <key>' (design/README.md)")
 
-    if is_emacs:
+    if is_emacs or is_wrapper:
         for m in IMPORT.finditer(src):
             add(m.start(), "NO-IMPORT",
-                "a file expanded by emacs verilog-mode has no import: the parser "
-                "does not resolve packages. Name the item as pkg::item where it "
-                "is used (design/README.md)")
+                "a wrapper, or a file expanded by emacs verilog-mode, has no import: "
+                "verilog-mode's parser does not resolve packages. Write the IP's "
+                "configuration as a literal (design/README.md)")
+
+    if is_wrapper:
+        seen: set[str] = set()
+        for m in PKG_REF.finditer(src):
+            pkg = m.group(1)
+            if pkg == "qnsc_pkg" or pkg not in own_pkgs:
+                continue
+            ln = lineno(m.start())
+            if (pkg, ln) in seen:
+                continue
+            seen.add((pkg, ln))
+            add(m.start(), "NO-OWN-PKG",
+                f"a wrapper takes nothing from {pkg}, a package written here: the "
+                "IP owner writes the configuration as a literal in the wrapper, and "
+                "declares the types the IP needs there (design/README.md)")
+        headers = []  # (start, end) of each wrapper #( ) header
+        for h in WRAP_HEADER.finditer(src):
+            start = h.end() - 1
+            headers.append((start, start + len(paren_body(src, start)) + 1))
+        for m in BODY_PARAM.finditer(src):
+            if any(a <= m.start() <= b for a, b in headers):
+                continue  # inside the #( ) header: reported once by the header check
+            add(m.start(), "NO-PARAM",
+                "a wrapper declares no parameter: write a fixed value, or a "
+                "localparam (design/README.md)")
+
+    for m in DEFPARAM.finditer(src):
+        add(m.start(), "NO-OVERRIDE",
+            "no defparam: the IP owner fixes the configuration inside the wrapper, "
+            "design/top only connects (design/README.md)")
+    for m in WRAP_INST_PARAM.finditer(src):
+        if src[:m.start()].rstrip().endswith("module"):
+            continue  # the wrapper's own header, not an instance
+        add(m.start(), "NO-OVERRIDE",
+            f"{m.group(1)} is instantiated with #( ): a wrapper has no parameter "
+            "to set, design/top only connects (design/README.md)")
 
     for m in WRAP_NAME.finditer(src):
         name = m.group("name")
@@ -182,9 +249,10 @@ def main(argv: list[str]) -> int:
         print("module-rules: no RTL under design/ yet -- nothing to check")
         return 0
 
+    own_pkgs = own_packages()
     findings: list[Finding] = []
     for f in files:
-        findings.extend(check_file(f, integration))
+        findings.extend(check_file(f, integration, own_pkgs))
 
     print(f"module-rules: {len(files)} file(s) checked; integration blocks: "
           f"{', '.join(sorted(integration))}")

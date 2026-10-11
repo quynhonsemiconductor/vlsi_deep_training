@@ -79,6 +79,7 @@ hardcode:
 	python3 flow/lint/hardcode_check.py $(SCOPE)
 
 module-rules:
+	python3 flow/lint/test_module_rules.py
 	python3 flow/lint/module_rules.py $(SCOPE)
 
 contract-tags:

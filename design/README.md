@@ -67,9 +67,21 @@ A wrapper has four jobs: map ports to the names of the naming rule, tie off what
 does not use, adapt the protocol (the bridge) if the IP speaks a different one, and add
 what the IP is missing — the byte-enable path the RAM controller lacks is the example.
 
-A wrapper is **IP** in the sense of "Shared numbers" below: it does not use
-`qnsc_pkg` and declares no parameter. The IP owner fixes the IP's configuration inside
-the wrapper; `design/top` only connects.
+A wrapper is **IP** in the sense of "Shared numbers" below. The IP owner fixes the
+IP's configuration inside the wrapper, as literals; `design/top` only connects. So a
+wrapper has:
+
+| | Rule (`make module-rules`) |
+|---|---|
+| no `parameter` | in its `#( )` header or its body. A `localparam` is a fixed value and is fine |
+| no `import` | of any package. verilog-mode's parser has trouble with `import` |
+| no package of ours | nothing from a package declared under `design/` (`qnsc_cpu2axi_pkg`, a bus config package): not a value, a width or a type. A type the IP needs is declared in the wrapper (pulp: `` `AXI_TYPEDEF_ALL `` from `axi/typedef.svh`). A constant of the vendored IP's own package, `ibex_pkg::RV32MFast`, is the IP's own fixed value and is fine |
+| no `qnsc_pkg` | except a wrapper of an integration block (`bus`), as `qnsc_pkg::C_X` without `import` |
+| no override from outside | no `defparam`, no `#( )` on an `m_qnsc_wrap_*` instance |
+
+Tâm's two reasons: verilog-mode's parser has trouble with `import`, and the IP owner,
+not the top level, controls the IP's configuration. The top level only connects,
+which stays clear at any depth of hierarchy.
 
 ## Writing a wrapper with emacs verilog-mode
 
@@ -264,7 +276,7 @@ table changes first.
 | Where does the generated wrapper live? | `make wrap` copies it to `rtl/<wrapper>.sv`, the file `<block>.f` compiles; `rtl/emacs/` keeps the source and the intermediate copy | The I2C demo on `share_review`, made for this repository. The CPU demo keeps it in `EMACS/` only |
 | JTAG and `DBG_EN` pins: `i_pad_*` or their own prefix? | Their own: `i_jtag_tck`, `o_jtag_tdo`, `i_dbg_en`. Every other pad-bound port is `i_pad_*` / `o_pad_*` | The rule has dedicated sections 3.11 (JTAG) and 3.12 (Debug); a dedicated section wins over the general 3.8 (Pad) |
 | Wrapper name: block or IP module? | **The block** (rule 2.1, V1.1), as named in the contract, without an index: `m_qnsc_wrap_pwm` (IP `apb_adv_timer`), `m_qnsc_wrap_uart` (`apb_uart`, used by `uart_0` and `uart_1`), `m_qnsc_wrap_i2c`, `m_qnsc_wrap_timer`, `m_qnsc_wrap_isram` and `m_qnsc_wrap_dsram` (one IP, two configurations, two blocks). The name stays when the IP is replaced | Tâm's review of PR #26 (2026-09-28): a short IP name, `m_qnsc_wrap_pwm` or `m_qnsc_wrap_timer_pwm`, not the IP module's. `pwm` is chosen because it is the contract's name, and `timer_pwm` reads as one of `timer_0`/`timer_1`. His I2C demo is `m_qnsc_wrap_i2c`. Tâm confirmed it on 2026-09-28, with `m_qnsc_wrap_isram`/`m_qnsc_wrap_dsram` for the two RAMs; rule 2.1 is updated in V1.1 |
-| Package and parameters in a wrapper? | None: no `import`, no parameter; the IP's configuration is fixed at the instance. Chip values arrive on `i_cfg_*` ports; a copied contract number is tagged `// contract: <key>` | Tâm's review of PR #26 (2026-09-28) and his I2C demo, `apb_i2c #(.P_APB_ADDR_WIDTH(12))`. Extended to all IP and to every emacs file in "Shared numbers" above |
+| Package and parameters in a wrapper? | None: no `import`, no parameter, no package of ours; the IP's configuration is fixed at the instance (table in "The wrapper is the boundary"). Chip values arrive on `i_cfg_*` ports; a copied contract number is tagged `// contract: <key>` | Tâm's review of PR #26 (2026-09-28) and his I2C demo, `apb_i2c #(.P_APB_ADDR_WIDTH(12))`. Extended to all IP and to every emacs file in "Shared numbers" above |
 
 `flow/lint/naming_check.py` enforces these in CI and reports each violation **inline
 on the pull request diff**. Run it before pushing:

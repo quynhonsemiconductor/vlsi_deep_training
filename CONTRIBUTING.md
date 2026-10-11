@@ -114,7 +114,7 @@ Connectivity, Simulation, the document build and the title run in CI only.
 | `Simulation` | a test fails in a changed block that has a testbench (`dv/<block>/`). A block with no testbench is skipped, not failed | CI; `make sim BLOCK=` |
 | `RTL naming rule` | an identifier breaks the naming rule — reported **inline on the diff** | local |
 | `No hardcoded shared values` | a literal duplicates a contract constant, or lands inside a mapped region | local |
-| `IP and integration module rules` | an IP module uses `qnsc_pkg`, a wrapper declares a parameter or is not named `m_qnsc_wrap_<block>`, or an emacs-expanded file has an `import` | local |
+| `IP and integration module rules` | an IP module uses `qnsc_pkg`; a wrapper declares a parameter, has an `import`, uses a package of ours, or is not named `m_qnsc_wrap_<block>`; an emacs-expanded file has an `import`; a wrapper is configured from outside (`defparam`, `#( )`) | local |
 | `Contract tags` | a line tagged `// contract: <key>` no longer holds the contract value | local |
 | `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract | local |
 | `Vendor tree unmodified` | `vendor/` changed without `vendor/manifest.yml` | local |
@@ -174,7 +174,7 @@ who must supply it.
 | Edit anything under `vendor/` | It is vendored at a pinned commit so tape-out has a frozen, auditable source. Local fixes go in `vendor/patches/` with a reason. CI fails on it |
 | Copy upstream IP into `design/<block>/rtl/` | `rtl/` is what makes "self-designed or IP?" answerable by reading one directory. List the IP in your filelist instead |
 | Type an address, interrupt index or domain name into a wrapper | That is how ROM 8 KiB against 2 KiB, `APB_M11` against `APB_S11` and eleven interrupt sources against twelve all happened. A chip value reaches IP on an `i_cfg_*` port that `design/top` ties from `qnsc_pkg`; a structural number is tagged `// contract: <key>`. `No hardcoded shared values` fails the PR otherwise |
-| Import a package or declare a parameter in a wrapper | The IP owner fixes the configuration; `design/top` only connects. verilog-mode does not resolve packages. `IP and integration module rules` fails the PR |
+| Import a package, use a package of ours, or declare a parameter in a wrapper; set one from `design/top` | The IP owner fixes the configuration as literals; `design/top` only connects. verilog-mode does not resolve packages. `IP and integration module rules` fails the PR |
 | Hand-edit `design/top/rtl/qnsc_pkg.sv` | It is generated. CI regenerates and compares |
 | Fork the wrapper per instance for a value that differs | One wrapper; the value is an `i_cfg_*` port tied by `design/top`. A difference in structure (a depth, a width) makes two blocks, each with its own wrapper, as `isram` and `dsram` (`design/README.md`, "Instances are decided in `design/top`") |
 | Instantiate a PDK cell (ICG, clock buffer, pad, SRAM macro) in block RTL | RTL instantiates `qnsc_clk_gate` and the other cells in `design/common/tech/`; `TECH` chooses which library implements them, so the same RTL simulates, runs on FPGA and synthesises for the ASIC. A new library cell is a file in `design/common/tech/<tech>/`, see its README |
