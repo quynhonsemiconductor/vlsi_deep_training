@@ -5,7 +5,7 @@
 | File | Owner | Holds |
 |---|---|---|
 | `design/<block>/constraints/<block>.sdc` | block owner | the block's clocks, I/O delays and any CDC constraint its MAS states |
-| `design/top/constraints/qsoc.sdc` | lead | chip clocks, pad I/O, clock groups; sources the block files |
+| `design/top/constraints/qsoc.sdc` (not written yet) | lead | chip clocks, pad I/O, clock groups; sources the block files |
 
 Write SDC in the subset OpenSTA and Yosys both read: `create_clock`,
 `create_generated_clock`, `set_clock_groups`, `set_input_delay`, `set_output_delay`,

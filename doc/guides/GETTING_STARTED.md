@@ -56,6 +56,7 @@ git switch -c feat/<block>-<what>          # e.g. feat/pwm-wrapper
 | A wrapper around an IP | `make new-wrap BLOCK=<block> IP=vendor/<org>/<ip>/<top>.sv`, then [`EMACS_AUTO.md`](EMACS_AUTO.md) |
 | A module that instantiates others (block top, `design/top`, testbench top) | [`EMACS_AUTO.md`](EMACS_AUTO.md) |
 | Logic (FSM, counter, register, OR tree) | Plain RTL by hand, rules below |
+| A testbench (the SIM stage, its own pull request) | [`dv/README.md`](../../dv/README.md): `dv/<block>/tb_<block>.sv`, one self-checking test per MAS verification item. Example: `dv/pwm/` |
 
 **Rules for all RTL** (the full table is in `design/README.md`, "Naming"):
 - Ports start with `i_`, `o_` or `io_`, matching their direction: `i_clk_<domain>`,
@@ -75,8 +76,9 @@ git switch -c feat/<block>-<what>          # e.g. feat/pwm-wrapper
   `sysdbg`) does not: chip values arrive on `i_cfg_*` ports, and a number copied from
   the contract is tagged `// contract: <key>`. A wrapper has no `import` and no
   parameter (`design/README.md`, "Shared numbers").
-- A signal from another clock domain goes through `design/common/rtl/qnsc_sync.sv`, or
-  through a handshake your MAS specifies.
+- A signal from another clock domain goes through a synchroniser named `u_sync_*`, or
+  through a handshake your MAS specifies, and is listed in the MAS crossing table
+  ([`flow/cdc/README.md`](../../flow/cdc/README.md)).
 - Module names: `m_qnsc_<function>` for in-house modules, `m_qnsc_wrap_<block>`
   for wrappers, `qnsc_<function>` for shared cells.
 
@@ -90,10 +92,15 @@ one line per warning, each with its reason.
 ## 4. Check
 
 ```bash
-make check                  # everything CI runs (the push hook runs it too)
+make check                  # every CI check that runs locally (the push hook runs it too)
 make lint BLOCK=<block>     # one check, one block, while you work
 make naming BLOCK=<block>
+make connectivity BLOCK=<block>   # what the Connectivity comment will show
+make sim BLOCK=<block>      # if dv/<block>/ has a testbench: CI runs it on every change
 ```
+
+`make check` does not run Connectivity, Simulation or the full document build; CI
+does. [`CONTRIBUTING.md`](../../CONTRIBUTING.md) marks which check runs where.
 
 ### On the training server: compile with VCS, look at the schematic
 
@@ -163,7 +170,9 @@ For every wrapper PR, and again after every new commit on it:
 | `Contract tags` fails | The number on the tagged line no longer equals the contract: fix the line, or the contract if the chip changed |
 | `Filelist paths` fails | A path in your `.f` is absolute, or names a missing file |
 | `Generated wrappers` fails | You forgot `make wrap`, or edited a generated block by hand |
-| `Simulation` fails | A test of your block, or of a block that compiles code you changed, fails: the comment names the `$fatal`. Reproduce with `make sim BLOCK=<block> TEST=<id> WAVES=1` and open `build/sim/.../waves.vcd`, or download the `sim-waves` artifact |
+| `Connectivity` fails | An instance input is left open, or a top output is driven by nothing: the comment's FAIL list names the pin. Tie it in the `AUTO_TEMPLATE`, as the MAS tie-off table says |
+| `Generated IP` fails | A file in `util/gen/<ip>/` differs from what `make gen IP=<ip>` produces: regenerate, never edit by hand |
+| `Simulation` fails | A test of your block, or of a block that compiles code you changed, fails: the comment names the `$fatal`. Reproduce with `make sim BLOCK=<block> WAVES=1` and open `build/sim/<block>/waves.vcd`, or download the `sim-waves` artifact |
 | `Verilator lint` fails | Read the `%Error` line; a missing file usually means a missing filelist entry |
 | `make check` is fine but CI says the branch is out of date | `git fetch && git rebase origin/main`, then push |
 

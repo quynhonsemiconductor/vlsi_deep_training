@@ -16,7 +16,7 @@ and work in progress is visible as an open pull request.
 | 4 | SRAM | `design/isram`, `design/dsram` | Trong Nghia | [`QNSC_RAM_MAS`](specs/QNSC_RAM_MAS.md) |
 | 5 | S_BUS | `design/bus` | Truong Sinh | -- |
 | 6 | P_BUS | `design/bus` | Truong Sinh | -- |
-| 7 | DMA | `design/dma` | Bao Vinh | [`QNSC_DMA_MAS`](specs/QNSC_DMA_MAS.md) |
+| 7 | DMA | `design/dma` | Trong Nghia (from Bao Vinh) | [`QNSC_DMA_MAS`](specs/QNSC_DMA_MAS.md) |
 | 8 | PWM | `design/pwm` | Trong Nghia | [`QNSC_PWM_MAS`](specs/QNSC_PWM_MAS.md) |
 | 9 | TIMER | `design/timer` | Trong Nghia | [`QNSC_TIMER_MAS`](specs/QNSC_TIMER_MAS.md) |
 | 10 | I2C | `design/i2c` | Bao Vinh | [`QNSC_I2C_MAS`](specs/QNSC_I2C_MAS.md) |
