@@ -79,9 +79,14 @@ wrapper has:
 | no `qnsc_pkg` | except a wrapper of an integration block (`bus`), as `qnsc_pkg::C_X` without `import` |
 | no override from outside | no `defparam`, no `#( )` on an `m_qnsc_wrap_*` instance |
 
-Tâm's two reasons: verilog-mode's parser has trouble with `import`, and the IP owner,
-not the top level, controls the IP's configuration. The top level only connects,
-which stays clear at any depth of hierarchy.
+Tâm's two reasons. **verilog-mode does not read packages** (tested with the emacs 31
+verilog-mode): a port typed `foo_pkg::req_t` is not seen as a port, so AUTOINPUT
+drops it; a width `[W-1:0]` with `W` from a package is copied as the name, and
+compiles only where the package is visible. A literal parameter value is resolved:
+`.N(4)` gives `[3:0]` with `verilog-auto-inst-param-value`, `.N(foo_pkg::N)` does not.
+And the IP owner, not the top level, controls the IP's configuration; the top level
+only connects, which stays clear at any depth of hierarchy (a choice for QSOC:
+OpenTitan and PULP pass parameters from the top).
 
 ## Writing a wrapper with emacs verilog-mode
 
