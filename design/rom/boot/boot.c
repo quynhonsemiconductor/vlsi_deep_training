@@ -1,12 +1,15 @@
 /*
  * QSOC boot ROM -- serial bootloader.
  *
- * Receives one frame over UART0 (polling, no interrupt), writes the payload
- * into ISRAM word by word from ISRAM_APP_BASE, checks both CRCs and jumps to
- * APP_ENTRY (QNSC_BOOT_SPEC V3.2, 7). Nothing is sent after reset: the ROM listens for
- * the magic at once. Every step after the magic answers the PC loader with a
- * 4-byte token (boot.h); on any failure the ROM sends the token, drains the
- * line, sends QRDY and waits for the PC to resend the whole frame.
+ * Receives one frame over UART0 (polling, no interrupt): the debug program,
+ * when DEBUG_PROG says the frame carries one, into ISRAM from ISRAM_DBG_BASE,
+ * then the payload from ISRAM_APP_BASE, word by word, each with its own CRC.
+ * Then, while SYSCSR DBG_BOOT.dbg_en is 1, it waits for the host; then it
+ * jumps to APP_ENTRY (QNSC_BOOT_SPEC V3.3, 7). Nothing is sent after reset:
+ * the ROM listens for the magic at once. Every step after the magic answers
+ * the PC loader with a 4-byte token (boot.h); on any failure the ROM sends
+ * the token, drains the line, sends QRDY and waits for the PC to resend the
+ * whole frame.
  *
  * Constraints that shape the code:
  *  - ROM budget 1 KiB of code (Day005). Bitwise CRC32, no lookup table.
@@ -20,6 +23,7 @@
 
 #define REG32(addr) (*(volatile uint32_t *)(addr))
 #define UART(off)   REG32(UART0_BASE + (off))
+#define SYSCSR(off) REG32(SYSCSR_BASE + (off))
 
 #define RX_TMO   (-1)
 
@@ -90,6 +94,20 @@ static uint32_t crc32_word(uint32_t crc, uint32_t w)
     return crc;
 }
 
+/* len bytes into memory from a, one word write per 4 bytes, then their
+ * CRC32. Returns 0, the timeout token, or bad_crc. */
+static uint32_t get_block(uint32_t a, uint32_t len, uint32_t bad_crc)
+{
+    uint32_t w, rc, crc = 0xFFFFFFFFu;
+    for (uint32_t end = a + len; a != end; a += 4) {
+        if ((rc = get32(&w))) return rc;
+        REG32(a) = w;
+        crc = crc32_word(crc, w);
+    }
+    if ((rc = get32(&w))) return rc;
+    return ((crc ^ 0xFFFFFFFFu) != w) ? bad_crc : 0;
+}
+
 /* Throw away whatever the PC was still sending, until the line is quiet.
  * Clears the RX FIFO only: the TX side may still hold the failure token. */
 static void uart_drain(void)
@@ -101,7 +119,7 @@ static void uart_drain(void)
 /* One download attempt. Returns only on failure, with the token to send. */
 static uint32_t boot_once(void)
 {
-    uint32_t w, len, crc, rc;
+    uint32_t w, len, dbg, crc, rc;
 
     /* Hunt the magic through a 4-byte sliding window, with no time limit.
      * Noise on the line (cable plugged in, terminal opened) is skipped
@@ -115,29 +133,37 @@ static uint32_t boot_once(void)
     crc = crc32_word(0xFFFFFFFFu, w);
     if ((rc = get32(&len)))   return rc;
     crc = crc32_word(crc, len);
+    if ((rc = get32(&dbg)))   return rc;
+    crc = crc32_word(crc, dbg);
     if ((rc = get32(&w)))     return rc;
     if ((crc ^ 0xFFFFFFFFu) != w)
         return TOK_FHCR;
 
     if ((len & 3u) || len < APP_MIN_LEN || len > APP_MAX_LEN)   return TOK_FHDR;
+    if (dbg != DEBUG_PROG_ON && dbg != DEBUG_PROG_OFF)          return TOK_FHDR;
 
     put_tok(TOK_ACKH);
 
-    /* ---- Payload: one AXI word write per 4 bytes, CRC as it arrives -- */
-    crc = 0xFFFFFFFFu;
-    for (uint32_t a = ISRAM_APP_BASE; a != ISRAM_APP_BASE + len; a += 4) {
-        if ((rc = get32(&w))) return rc;
-        REG32(a) = w;
-        crc = crc32_word(crc, w);
+    /* ---- Debug program, only when the frame carries one ------------- */
+    if (dbg == DEBUG_PROG_ON) {
+        if ((rc = get_block(ISRAM_DBG_BASE, DBG_LEN, TOK_FDCR))) return rc;
+        put_tok(TOK_ACKD);
     }
-    if ((rc = get32(&w))) return rc;
-    if ((crc ^ 0xFFFFFFFFu) != w)
-        return TOK_FPCR;
 
-    /* ---- Jump: ACK must be fully on the wire before the app may
-     *      reprogram UART0.                                              */
+    /* ---- Payload ---------------------------------------------------- */
+    if ((rc = get_block(ISRAM_APP_BASE, len, TOK_FPCR)))         return rc;
+
+    /* ---- ACK must be fully on the wire before the app may reprogram
+     *      UART0.                                                        */
     put_tok(TOK_ACKP);
     uart_tx_flush();
+
+    /* ---- Debug boot: wait while the DBG_EN pin asks for it. The CPU is
+     *      not held: it runs this loop, so the host can halt it into the
+     *      debug program at any time, and lets it go by writing
+     *      DBG_BOOT.dbg_en_mask = 1 (QNSC_BOOT_SPEC 7.5).            */
+    while (SYSCSR(SYSCSR_DBG_BOOT) & DBG_BOOT_EN) { }
+
     /* fence.i (Zifencei, in -march; QNSC_BOOT_SPEC 7.5, 8). Ibex flushes
      * its prefetch buffer on it, so no stale ROM-era fetch survives the
      * jump.                                                              */
