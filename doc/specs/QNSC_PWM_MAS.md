@@ -20,7 +20,7 @@ The reasoning behind each change is in
 | V2.6 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`PWM_NNN`), for traceability to tests. No change in behaviour |
 | V2.7 | 2026-10-09 | Nghia VT | -- | `pulp_clock_gating` maps onto `qnsc_clk_gate`, the chip's one clock gate (4). Word writes only: the IP has no `PSTRB` or `PPROT` (7.6). No dead time, complementary output or break input (11). No change in behaviour |
 | V2.8 | 2026-10-15 | Nghia VT | -- | `i_bus_apb_paddr` is 14 bits, was 12: the contract `meta.apb_paddr_width` changed in #77 because the windows are 16 KiB. The requirement on the bus owner no longer says that `P_BUS` subtracts the base (nothing does; the window is aligned to its size). The decode is unchanged: `PADDR[9:2]`, so the 1 KiB map repeats every `0x400` across the window |
-| V2.9 | 2026-10-12 | Nghia VT | -- | 7.2: with `SAW` = 1, `RSTSET` is high `TH` + 1 cycles per period and `SETRST` is its complement. New 7.8: when a new value takes effect, measured by `PWM_011`. Section 12: `PWM_011` states what it checks |
+| V2.9 | 2026-10-12 | Nghia VT | -- | 7.2: with `SAW` = 1, `RSTSET` is high `TH` + 1 cycles per period and `SETRST` is its complement. New 7.8: when a new value takes effect, measured by `PWM_011`. Section 11: pad functions and their state after reset. Section 12: `PWM_011` states what it checks |
 
 # 1. Overview
 
@@ -329,7 +329,7 @@ One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 |---|---|---|
 | `i_bus_apb_paddr[13:0]` = the offset inside the 16 KiB window, the low 14 bits of the address (the window is aligned to its size); offset bits 13:10 are not decoded | bus owner | register decode |
 | `SCRC` closes the PWM clock only after firmware's safe stop -- 7.7 | firmware owner | outputs frozen at a non-zero level at a power stage |
-| Pins for `PWM_0..7` and `TIM_EXT0..3`, and their IO MUX default after reset | IO pad / IO MUX owner | pin owner out of reset |
+| `PWM_0..7` are output pads (`OE` = 1 while selected) on `PIN_23`--`26`, `29`, `30`, `39`, `40`; `TIM_EXT0..3` are input pads (`OE` = 0) on `PIN_31`--`34`. After reset each pad is `GPIO` (`b00`), or Hi-Z on `PIN_33`, `PIN_34`, so no PWM output drives a pin until firmware selects it | IO pad / IO MUX owner | a power stage sees a floating input until firmware selects the function |
 
 **Accepted limits:**
 
