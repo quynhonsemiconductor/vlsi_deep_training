@@ -12,6 +12,12 @@ so it is not a block owner's file.
 Put something here only when a second block actually needs it. One user is not
 shared code.
 
+**Adding a shared module:** write `rtl/<module>.sv` (named after the module) and add one
+line `rtl/<module>.sv` to [`common.f`](common.f). Do not list it in a block's filelist:
+every flow appends `common.f` and the technology cells as library files
+(`flow/tech/libs.sh`, `-v`), so the module is compiled once, where a block instantiates
+it, and the chip filelist does not define it twice. A block only instantiates it.
+
 Technology cells (clock gate, clock buffer, and later pads and macros) are in
 [`tech/`](tech/README.md): one generic implementation, one per ASIC library, chosen
 with `TECH`.

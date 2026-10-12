@@ -163,6 +163,11 @@ and not checked. `find` is not used, for three reasons that are already true her
 3. Compile order matters — a package must precede whatever imports it — and `find`
    returns alphabetical order.
 
+Two kinds of file are **not** listed, because every flow appends them as library files
+(`-v`, `flow/tech/libs.sh`): the shared RTL of `design/common/common.f` and the
+technology cells of `design/common/tech/`. Listing one in a block's filelist makes the
+chip filelist define it twice.
+
 The same convention is used by the reference workspace (`MCU_guide_ws` ships
 `filelist.f` for its CPU and VCS setups) and by the mentor's own IP.
 
