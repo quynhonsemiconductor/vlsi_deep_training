@@ -4,13 +4,14 @@
 
 ## What this block is
 
-Three read-only views of the chip, on `APB_M1` (`0x8000_4000`):
+Three read-only views of the chip and the debug boot register, on `APB_M1` (`0x8000_4000`):
 
 | Offset | Register | Access | What |
 |---|---|---|---|
 | `0x00` | `RESET_CAUSE` | W1C | Which reset happened: power-on, watchdog, software. Survives WDT and software resets |
 | `0x04` | `DOMAIN_RST_STATUS` | RO | Which clock/reset domains are in reset now, bit map of `QNSC_SCRC_MAS` Table 6-3 |
 | `0x08` | `CHIP_ID_REV` | RO | `'QSOC'`, from `i_cfg_chip_id` |
+| `0x0C` | `DBG_BOOT` | RO, RW | bit 0 `dbg_en`: the `DBG_EN` pin through two flip-flops, which the boot ROM polls; bit 1 `dbg_en_mask`: written 1 by the host over JTAG to force `dbg_en` to 0 |
 
 It is a separate APB slave from `SCRC`; `SCRC` feeds it the reset-cause set
 enables and the domain reset states, and `design/top` connects the two.
@@ -30,6 +31,7 @@ in [`syscsr.f`](./syscsr.f), never copied into `rtl/`.
 |---|---|---|
 | `rtl/emacs/m_qnsc_wrap_syscsr.src.sv` | hand | Wrapper source: port groups, `AUTO_TEMPLATE` |
 | `rtl/m_qnsc_wrap_syscsr.sv` | emacs, `make wrap BLOCK=syscsr` | The wrapper `syscsr.f` compiles; never edited by hand |
+| `rtl/m_qnsc_syscsr_dbg_en.sv` | hand | `DBG_BOOT.dbg_en`: the `DBG_EN` pin synchroniser and the mask (MAS 7.5) |
 
 The wrapper is IP: no `qnsc_pkg`, no parameter. `CHIP_ID_REV` comes in on
 `i_cfg_chip_id`, which `design/top` ties to `qnsc_pkg::C_CHIP_ID`.

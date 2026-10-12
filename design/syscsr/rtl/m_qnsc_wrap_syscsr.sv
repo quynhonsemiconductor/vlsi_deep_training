@@ -15,7 +15,8 @@
 // nguyenquanicd/APB-CSR-Generator from util/gen/syscsr/syscsr_workbook.xlsx; it
 // already speaks APB: no bridge. The wrapper renames its ports to the Naming
 // Rule and drives its option and constant inputs (MAS Table 10-1); it adds no
-// logic.
+// logic of its own. The DBG_BOOT.dbg_en bit (DBG_EN pin synchroniser and
+// mask) is the sub-module m_qnsc_syscsr_dbg_en.
 
 // This wrapper is IP: it imports no chip package and declares no parameter.
 // CHIP_ID_REV arrives on i_cfg_chip_id, tied by design/top to qnsc_pkg::C_CHIP_ID.
@@ -27,8 +28,8 @@ module m_qnsc_wrap_syscsr
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_clk\|^i_rst")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
-input                   i_clk_cpu,              // To u_csr of m_qnsc_syscsr_csr.v
-input                   i_rst_n_por,            // To u_csr of m_qnsc_syscsr_csr.v
+input logic             i_clk_cpu,              // To u_csr of m_qnsc_syscsr_csr.v, ...
+input logic             i_rst_n_por,            // To u_csr of m_qnsc_syscsr_csr.v, ...
 // End of automatics
 
 //---------------------------------------------------------------
@@ -62,6 +63,14 @@ input [31:0]            i_domain_rst_stat,      // To u_csr of m_qnsc_syscsr_csr
 // End of automatics
 
 //---------------------------------------------------------------
+// DBG_EN pad, asynchronous: the boot ROM waits while it is 1 (MAS 7.5)
+//---------------------------------------------------------------
+/*AUTOINPUT("^i_dbg")*/
+// Beginning of automatic inputs (from unused autoinst inputs)
+input logic             i_dbg_en,               // To u_dbg_en of m_qnsc_syscsr_dbg_en.v
+// End of automatics
+
+//---------------------------------------------------------------
 // Chip configuration, tied by design/top from qnsc_pkg
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_cfg")*/
@@ -78,6 +87,10 @@ input [31:0]            i_cfg_chip_id          // To u_csr of m_qnsc_syscsr_csr.
 );
 
 /*AUTOWIRE*/
+// Beginning of automatic wires (for undeclared instantiated-module outputs)
+wire                    w_dbg_en_mask;          // From u_csr of m_qnsc_syscsr_csr.v
+logic                   w_dbg_en_masked;        // From u_dbg_en of m_qnsc_syscsr_dbg_en.v
+// End of automatics
 
 //---------------------------------------------------------------
 // Integration policy (QNSC_SYSCSR_MAS 5, 6, 10)
@@ -85,6 +98,7 @@ input [31:0]            i_cfg_chip_id          // To u_csr of m_qnsc_syscsr_csr.
 //   0x00 RESET_CAUSE        W1C  reset 0x0000_0001  por / wdt / soft
 //   0x04 DOMAIN_RST_STATUS  RO   live               bit n = ~o_rst_n_<d>
 //   0x08 CHIP_ID_REV        RO   i_cfg_chip_id      'QSOC'
+//   0x0C DBG_BOOT           [0] RO dbg_en, [1] RW dbg_en_mask, reset 0
 //
 // - PADDR: P_BUS passes 12 bits; the generator decodes 16, the top 4 are 0.
 // - PPROT is connected but not checked (i_protect_en = 0); PSLVERR is enabled
@@ -94,6 +108,8 @@ input [31:0]            i_cfg_chip_id          // To u_csr of m_qnsc_syscsr_csr.
 //   reset (QNSC_SCRC_MAS 7.7). The generator's per-field outputs are unused.
 // - DOMAIN_RST_STATUS: bit map of QNSC_SCRC_MAS Table 6-3; bits 13 and 30:18
 //   do not exist (reserved, read 0).
+// - DBG_BOOT: dbg_en = dbg_en_mask ? 0 : DBG_EN pin through two flip-flops
+//   (u_dbg_en); the host writes dbg_en_mask = 1 over JTAG.
 
 /*AUTO_LISP(setq verilog-auto-inout-ignore-regexp
   (concat
@@ -150,6 +166,8 @@ input [31:0]            i_cfg_chip_id          // To u_csr of m_qnsc_syscsr_csr.
     .i_domainrststatus_stat_gpio_2   (i_domain_rst_stat[17]),
     .i_domainrststatus_stat_cpu      (i_domain_rst_stat[31]),
     .i_chipidrev_chip_id_rev         (i_cfg_chip_id[]),
+    .i_dbgboot_dbg_en                (w_dbg_en_masked),
+    .o_dbgboot_dbg_en_mask           (w_dbg_en_mask),
 );
 */
 m_qnsc_syscsr_csr u_csr (/*AUTOINST*/
@@ -160,6 +178,7 @@ m_qnsc_syscsr_csr u_csr (/*AUTOINST*/
                          .o_resetcause_cause_por(),              // Templated
                          .o_resetcause_cause_wdt(),              // Templated
                          .o_resetcause_cause_soft(),             // Templated
+                         .o_dbgboot_dbg_en_mask (w_dbg_en_mask), // Templated
                          // Inputs
                          .i_bus_clk             (i_clk_cpu),     // Templated
                          .i_bus_rstn            (i_rst_n_por),   // Templated
@@ -196,7 +215,22 @@ m_qnsc_syscsr_csr u_csr (/*AUTOINST*/
                          .i_domainrststatus_stat_gpio_1(i_domain_rst_stat[16]), // Templated
                          .i_domainrststatus_stat_gpio_2(i_domain_rst_stat[17]), // Templated
                          .i_domainrststatus_stat_cpu(i_domain_rst_stat[31]), // Templated
-                         .i_chipidrev_chip_id_rev(i_cfg_chip_id[31:0])); // Templated
+                         .i_chipidrev_chip_id_rev(i_cfg_chip_id[31:0]), // Templated
+                         .i_dbgboot_dbg_en      (w_dbg_en_masked)); // Templated
+
+/* m_qnsc_syscsr_dbg_en AUTO_TEMPLATE(
+    .i_dbg_en_mask                   (w_dbg_en_mask),
+    .o_dbg_en_masked                 (w_dbg_en_masked),
+);
+*/
+m_qnsc_syscsr_dbg_en u_dbg_en (/*AUTOINST*/
+                               // Outputs
+                               .o_dbg_en_masked (w_dbg_en_masked), // Templated
+                               // Inputs
+                               .i_clk_cpu       (i_clk_cpu),
+                               .i_rst_n_por     (i_rst_n_por),
+                               .i_dbg_en        (i_dbg_en),
+                               .i_dbg_en_mask   (w_dbg_en_mask)); // Templated
 
 endmodule
 // Local Variables:

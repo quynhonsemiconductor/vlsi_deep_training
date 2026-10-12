@@ -2,7 +2,7 @@
 //--------------------------------------------------------------------
 // Project: APB-CSR-Generator
 // Generator: benn2
-// Date and time: 2026-09-29 10:00:47.439263
+// Date and time: 2026-10-12 14:08:37.900856
 // Module: m_qnsc_syscsr_csr
 // Function: Control & Status register via APB interface
 // Page: VLSI Technology
@@ -10,7 +10,8 @@
 module m_qnsc_syscsr_csr # (
   localparam PARA_RESETCAUSE_OFFSET = 16'h0000,
   localparam PARA_DOMAINRSTSTATUS_OFFSET = 16'h0004,
-  localparam PARA_CHIPIDREV_OFFSET = 16'h0008
+  localparam PARA_CHIPIDREV_OFFSET = 16'h0008,
+  localparam PARA_DBGBOOT_OFFSET = 16'h000C
 
 )(
   input i_bus_clk,
@@ -54,7 +55,9 @@ module m_qnsc_syscsr_csr # (
   input i_domainrststatus_stat_gpio_1,
   input i_domainrststatus_stat_gpio_2,
   input i_domainrststatus_stat_cpu,
-  input [31:0] i_chipidrev_chip_id_rev
+  input [31:0] i_chipidrev_chip_id_rev,
+  input i_dbgboot_dbg_en,
+  output o_dbgboot_dbg_en_mask
 );
   //Logic signal declaration
   logic apb_setup;
@@ -84,6 +87,10 @@ module m_qnsc_syscsr_csr # (
   logic we_domainrststatus;
   logic [31:0] domainrststatus_value;
   logic [31:0] chipidrev_value;
+  logic we_dbgboot;
+  logic reg_dbgboot_dbg_en_mask;
+  logic nxt_dbgboot_dbg_en_mask;
+  logic [31:0] dbgboot_value;
   //end of logic signal declaration
 
   //APB general access phase assignment - START
@@ -119,6 +126,7 @@ module m_qnsc_syscsr_csr # (
   //--------------------------------------------------------------------
   assign we_resetcause = apb_write_en & (reg_address == PARA_RESETCAUSE_OFFSET);
   assign we_domainrststatus = apb_write_en & (reg_address == PARA_DOMAINRSTSTATUS_OFFSET);
+  assign we_dbgboot = apb_write_en & (reg_address == PARA_DBGBOOT_OFFSET);
 
 
   //APB read/write register (appear when option Async is not selected) - START
@@ -235,6 +243,24 @@ module m_qnsc_syscsr_csr # (
   //--------------------------------------------------------------------
   always_comb begin
     chipidrev_value[31:0] = i_chipidrev_chip_id_rev;
+  end  //Assignment for next value of dbgboot_dbg_en_mask rw
+  assign nxt_dbgboot_dbg_en_mask = (we_dbgboot) ? reg_pwdata[1] : reg_dbgboot_dbg_en_mask;
+  //FF for bit dbgboot_dbg_en_mask
+  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
+    if(!i_bus_rstn) 
+      reg_dbgboot_dbg_en_mask <= 1'h0;
+    else
+      reg_dbgboot_dbg_en_mask <= nxt_dbgboot_dbg_en_mask;
+  end 
+  assign o_dbgboot_dbg_en_mask = reg_dbgboot_dbg_en_mask;
+
+  //--------------------------------------------------------------------
+  //Combine the value of dbgboot
+  //--------------------------------------------------------------------
+  always_comb begin
+    dbgboot_value[0] = i_dbgboot_dbg_en;
+    dbgboot_value[1] = reg_dbgboot_dbg_en_mask;
+    dbgboot_value[31:2] = '0;
   end
   //--------------------------------------------------------------------
   //O_PRDATA phase
@@ -244,6 +270,7 @@ module m_qnsc_syscsr_csr # (
       PARA_RESETCAUSE_OFFSET: nxt_prdata = resetcause_value;
       PARA_DOMAINRSTSTATUS_OFFSET: nxt_prdata = domainrststatus_value;
       PARA_CHIPIDREV_OFFSET: nxt_prdata = chipidrev_value;
+      PARA_DBGBOOT_OFFSET: nxt_prdata = dbgboot_value;
       default nxt_prdata = '0;
     endcase
   end
