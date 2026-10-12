@@ -25,9 +25,10 @@ TECH=<tech> make vcs BLOCK=scrc
 | `qnsc_clk_inv` | `i_clk_src`, `o_clk_inv` | inverter |
 | `qnsc_clk_and` | `i_clk_src`, `i_en`, `o_clk_and` | AND |
 
-No block lists these files. Every flow (lint, VCS, synthesis, GCA, connectivity)
-appends them with `flow/tech/libs.sh` as **library files** (`-v`): a cell is
-compiled only where a block instantiates it.
+No block lists these files. Every flow (lint, VCS, synthesis, GCA, connectivity, sim)
+appends them, and the shared RTL of [`../common.f`](../common.f), with
+`flow/tech/libs.sh` as **library files** (`-v`): a cell is compiled only where a block
+instantiates it, and once when several blocks do.
 
 ## Adding a technology
 
@@ -37,11 +38,13 @@ compiled only where a block instantiates it.
    ```systemverilog
    <ICG cell> u_size_only_icg (.CK(i_clk_src), .E(i_en), .SE(i_dft_scan_en), .ECK(o_clk_gated));  // naming-check: ignore -- library cell
    ```
-3. A cell an upstream IP instantiates by its own name (`prim_clock_gating` in Ibex
-   and OpenTitan, `tc_clk_gating` in common_cells, `pulp_clock_gating` in PWM) gets
-   a file of that name in `<tech>/` that instantiates `qnsc_clk_gate`, so the whole
-   chip uses one gate. `vendor/` is not edited; the file replaces the upstream one
-   in that technology's build.
+3. A cell an upstream IP instantiates by its own name gets a module of that name that
+   instantiates `qnsc_clk_gate`, so the whole chip uses one gate. `vendor/` is not
+   edited. If the upstream tree ships the cell (`prim_clock_gating` in Ibex and
+   OpenTitan, `tc_clk_gating` in common_cells), the file in `<tech>/` replaces the
+   upstream one in that technology's build. If it does not ship it (`pulp_clock_gating`,
+   which `apb_adv_timer` instantiates), the block that needs it writes the module in
+   its own `rtl/`, as `design/pwm/rtl/pulp_clock_gating.sv`.
 4. Synthesis preserves the cells by instance name: `set_size_only` (or
    `dont_touch`) on `*/u_size_only_*`.
 
