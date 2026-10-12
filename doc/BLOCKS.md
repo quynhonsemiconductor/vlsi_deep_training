@@ -24,7 +24,7 @@ and work in progress is visible as an open pull request.
 | 12 | UART | `design/uart` | Bao Vinh | [`QNSC_UART_MAS`](specs/QNSC_UART_MAS.md) |
 | 13 | GPIO | `design/gpio` | Bui Hieu | -- |
 | 14 | WDT | `design/wdt` | Bui Hieu | [`QNSC_WDT_MAS`](specs/QNSC_WDT_MAS.md) |
-| 15 | SYSCSR | `design/scrc` | Hao Nam | [`QNSC_SYSCSR_MAS`](specs/QNSC_SYSCSR_MAS.md) |
+| 15 | SYSCSR | `design/syscsr` | Hao Nam | [`QNSC_SYSCSR_MAS`](specs/QNSC_SYSCSR_MAS.md) |
 | 16 | SCRC | `design/scrc` | Hao Nam | [`QNSC_SCRC_MAS`](specs/QNSC_SCRC_MAS.md) |
 | 17 | INTMAP | `design/intmap` | Trong Nghia | [`QNSC_Interrupt_Map_MAS`](specs/QNSC_Interrupt_Map_MAS.md) |
 | 18 | IO MUX | `design/iomux` | Bui Hieu | -- |
@@ -38,6 +38,5 @@ A `--` is a block whose specification is not in the repository yet.
 |---|---|
 | SRAM | `design/isram` and `design/dsram`: one IP, two configurations, two wrappers |
 | S_BUS, P_BUS | `design/bus` |
-| SYSCSR | the status registers in `design/scrc`, a separate APB slave on `APB_M1` |
 | IO MUX | not on the assistant's tracker yet |
 | VCS | the simulation stage; QSOC runs it with Verilator, see `CONTRIBUTING.md` |
