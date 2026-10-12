@@ -14,8 +14,9 @@
 #     not ours -- see vendor/manifest.yml for its pinned commit and licence.
 # =============================================================================
 
-# ---- shared cells (PWM is IP: no qnsc_pkg) ---------------------------------
-../common/rtl/qnsc_sync.sv
+# qnsc_sync (design/common) is not listed: every flow appends design/common/common.f as
+# library files (flow/tech/libs.sh), so it is compiled once, where this block
+# instantiates it. The same holds for the technology cells.
 
 # ---- upstream IP, in compile order -----------------------------------------
 # apb_adv_timer; lut_4x4.sv and out_filter.sv are not instantiated.
