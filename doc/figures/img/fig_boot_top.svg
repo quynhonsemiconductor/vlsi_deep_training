@@ -1,54 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1058" height="782" viewBox="16 -24 1058 782" font-family="Helvetica,Arial,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1058" height="822" viewBox="16 -24 1058 822" font-family="Helvetica,Arial,sans-serif">
 <defs><marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto"><polygon points="0 0, 9 3.5, 0 7" fill="#000000"/></marker><marker id="ahs" markerWidth="9" markerHeight="7" refX="0.5" refY="3.5" orient="auto"><polygon points="9 0, 0 3.5, 9 7" fill="#000000"/></marker></defs>
-<rect x="16" y="-24" width="1058" height="782" fill="#ffffff"/>
+<rect x="16" y="-24" width="1058" height="822" fill="#ffffff"/>
 <rect x="40" y="0" width="330" height="44" rx="22.0" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
 <rect x="40" y="70" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
 <rect x="40" y="140" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<polygon points="205.0,210 305,245.0 205.0,280 105,245.0" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<rect x="395" y="256" width="300" height="30" rx="3" fill="none" stroke="none" stroke-width="0"/>
-<rect x="40" y="320" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<rect x="40" y="390" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<rect x="40" y="460" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<rect x="40" y="530" width="330" height="60" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<rect x="40" y="620" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<rect x="40" y="690" width="330" height="44" rx="22.0" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<rect x="720" y="210" width="330" height="70" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<rect x="720" y="460" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
-<rect x="720" y="620" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="210" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="280" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="395" y="282" width="300" height="40" rx="3" fill="none" stroke="none" stroke-width="0"/>
+<rect x="40" y="350" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="420" width="330" height="70" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<polygon points="205.0,520 305,555.0 205.0,590 105,555.0" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="720" y="533" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="720" y="590" width="330" height="60" rx="3" fill="none" stroke="none" stroke-width="0"/>
+<rect x="395" y="600" width="300" height="30" rx="3" fill="none" stroke="none" stroke-width="0"/>
+<rect x="40" y="660" width="330" height="44" rx="3" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
+<rect x="40" y="730" width="330" height="44" rx="22.0" fill="#ffffff" stroke="#000000" stroke-width="1.4"/>
 <polyline points="205.0,44.0 205.0,70.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
 <polyline points="205.0,114.0 205.0,140.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
 <polyline points="205.0,184.0 205.0,210.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="205.0,280.0 205.0,320.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="160.0" y="292.0" width="90.0" height="14" fill="#ffffff"/>
-<text x="205.0" y="303.0" font-size="10" fill="#000000" text-anchor="middle">0: normal boot</text>
-<polyline points="305.0,245.0 720.0,245.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="470.5" y="237.0" width="84.0" height="14" fill="#ffffff"/>
-<text x="512.5" y="248.0" font-size="10" fill="#000000" text-anchor="middle">1: debug boot</text>
-<polyline points="205.0,364.0 205.0,390.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="205.0,434.0 205.0,460.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="205.0,504.0 205.0,530.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="205.0,590.0 205.0,620.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="205.0,664.0 205.0,690.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="885.0,280.0 885.0,460.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="885.0,504.0 885.0,620.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<polyline points="885.0,664.0 885.0,712.0 370.0,712.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,254.0 205.0,280.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,324.0 205.0,350.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,394.0 205.0,420.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,490.0 205.0,520.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="305.0,555.0 720.0,555.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="470.5" y="547.0" width="84.0" height="14" fill="#ffffff"/>
+<text x="512.5" y="558.0" font-size="10" fill="#000000" text-anchor="middle">1: debug boot</text>
+<polyline points="885.0,533.0 885.0,505.0 205.0,505.0 205.0,520.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<polyline points="205.0,590.0 205.0,660.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
+<rect x="160.0" y="617.0" width="90.0" height="14" fill="#ffffff"/>
+<text x="205.0" y="628.0" font-size="10" fill="#000000" text-anchor="middle">0: normal boot</text>
+<polyline points="205.0,704.0 205.0,730.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
 <text x="205.0" y="25.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">Power on</text>
 <text x="205.0" y="95.3" font-size="10" text-anchor="middle" fill="#000000">SCRC: hold the whole chip in reset, clock the IPs</text>
 <text x="205.0" y="165.3" font-size="10" text-anchor="middle" fill="#000000">SCRC: release the reset of every IP except the CPU</text>
-<text x="205.0" y="248.3" font-size="10" text-anchor="middle" fill="#000000">DBG_EN pin = 1?</text>
-<text x="545.0" y="268.2" font-size="8" text-anchor="middle" fill="#000000">boot address picked by a hardware mux (o_dbg_en -&gt; boot_addr_i),</text>
-<text x="545.0" y="279.2" font-size="8" text-anchor="middle" fill="#000000">in debug boot the ROM never runs</text>
-<text x="205.0" y="345.3" font-size="10" text-anchor="middle" fill="#000000">SCRC releases the CPU reset</text>
-<text x="205.0" y="415.3" font-size="10" text-anchor="middle" fill="#000000">Ibex fetches 0x0000_0080 (ROM)</text>
-<text x="205.0" y="485.3" font-size="10" text-anchor="middle" fill="#000000">init UART0 (19200 - 8N1 - polling)</text>
-<text x="205.0" y="550.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">receive the frame from the PC over UART0</text>
-<text x="205.0" y="563.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">and write it to 0x2000_1000 (ISRAM)</text>
-<text x="205.0" y="576.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">(Figure 7-1)</text>
-<text x="205.0" y="645.3" font-size="10" text-anchor="middle" fill="#000000">jump to 0x2000_1080 (ISRAM)</text>
-<text x="205.0" y="715.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">application runs from ISRAM</text>
-<text x="885.0" y="235.3" font-size="10" text-anchor="middle" fill="#000000">SYSDBG holds the CPU in reset,</text>
-<text x="885.0" y="248.3" font-size="10" text-anchor="middle" fill="#000000">the debug program is loaded to</text>
-<text x="885.0" y="261.3" font-size="10" text-anchor="middle" fill="#000000">0x2000_1000 (ISRAM) over JTAG</text>
-<text x="885.0" y="485.3" font-size="10" text-anchor="middle" fill="#000000">SYSDBG releases the CPU reset</text>
-<text x="885.0" y="645.3" font-size="10" text-anchor="middle" fill="#000000">Ibex fetches 0x2000_1080 (ISRAM)</text>
+<text x="205.0" y="235.3" font-size="10" text-anchor="middle" fill="#000000">SCRC releases the CPU reset</text>
+<text x="205.0" y="305.3" font-size="10" text-anchor="middle" fill="#000000">Ibex fetches 0x0000_0080 (ROM)</text>
+<text x="545.0" y="299.2" font-size="8" text-anchor="middle" fill="#000000">no boot address mux and no CPU hold:</text>
+<text x="545.0" y="310.2" font-size="8" text-anchor="middle" fill="#000000">normal and debug boot both run the ROM</text>
+<text x="205.0" y="375.3" font-size="10" text-anchor="middle" fill="#000000">init UART0 (19200 - 8N1 - polling)</text>
+<text x="205.0" y="440.0" font-size="9" text-anchor="middle" fill="#000000" font-weight="bold">receive the frame from the PC over UART0</text>
+<text x="205.0" y="452.0" font-size="9" text-anchor="middle" fill="#000000" font-weight="bold">(Figure 7-1):</text>
+<text x="205.0" y="464.0" font-size="9" text-anchor="middle" fill="#000000" font-weight="bold">DEBUG_PAYLOAD -&gt; 0x2000_0000 (if DEBUG_PROG = 0x55)</text>
+<text x="205.0" y="476.0" font-size="9" text-anchor="middle" fill="#000000" font-weight="bold">PAYLOAD -&gt; 0x2000_1000</text>
+<text x="205.0" y="558.3" font-size="10" text-anchor="middle" fill="#000000">SYSCSR.DBG_EN = 1?</text>
+<text x="885.0" y="551.8" font-size="10" text-anchor="middle" fill="#000000">CPU polling: read SYSCSR.DBG_EN again</text>
+<text x="885.0" y="564.8" font-size="10" text-anchor="middle" fill="#000000">(the CPU runs the ROM; it is not held in reset)</text>
+<text x="885.0" y="611.7" font-size="8" text-anchor="middle" fill="#000000">leaves the loop when the host writes DBG_BOOT.dbg_en_mask = 1</text>
+<text x="885.0" y="622.7" font-size="8" text-anchor="middle" fill="#000000">(SYSDBG bus master, AXI_S0)</text>
+<text x="885.0" y="633.7" font-size="8" text-anchor="middle" fill="#000000">at any time: debug request -&gt; debug program at 0x2000_0000</text>
+<text x="545.0" y="612.2" font-size="8" text-anchor="middle" fill="#000000">DBG_EN = DBG_EN pin through 2 FF,</text>
+<text x="545.0" y="623.2" font-size="8" text-anchor="middle" fill="#000000">forced to 0 while dbg_en_mask = 1</text>
+<text x="205.0" y="685.3" font-size="10" text-anchor="middle" fill="#000000">jump to 0x2000_1080 (ISRAM)</text>
+<text x="205.0" y="755.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">application runs from ISRAM</text>
 </svg>
