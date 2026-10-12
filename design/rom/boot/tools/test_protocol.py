@@ -37,12 +37,15 @@ def ram_bytes(rom, load, n):
     return b"".join(struct.pack("<I", rom.ram.get(a, 0)) for a in range(load, load + n, 4))
 
 
-def run(name, payload, tamper=None, retries=3, byte_time=0.0, **frame_kw):
+def run(name, payload, tamper=None, retries=3, byte_time=0.0, dbg_en_pin=False, keep=False,
+        **frame_kw):
+    """keep=True leaves the ROM thread running, for a test that releases it."""
     print(name)
-    header, body = img.make_frame(payload, **frame_kw)
-    link, rom = rom_model.connect(tamper, byte_time)
-    ok = ldr.download(link, header, body, retries=retries, ready_timeout=0.5, log=quiet)
-    rom.stop = True
+    header, dpart, body = img.make_frame(payload, **frame_kw)
+    link, rom = rom_model.connect(tamper, byte_time, dbg_en_pin)
+    ok = ldr.download(link, header, dpart, body, retries=retries, ready_timeout=0.5, log=quiet)
+    if not keep:
+        rom.stop = True
     return ok, rom, link
 
 
@@ -55,9 +58,15 @@ def test_boot_h_matches():
     py_toks = {t.decode() for t in img.TOKENS}
     c_toks = {v for k, v in toks.items() if k.startswith("TOK_")}
     check("same token set", py_toks == c_toks, f"C={sorted(c_toks)} Py={sorted(py_toks)}")
-    for sym, val in (("ISRAM_APP_BASE", img.ISRAM_APP_BASE), ("ISRAM_END", img.ISRAM_END)):
+    for sym, val in (("ISRAM_DBG_BASE", img.ISRAM_DBG_BASE), ("ISRAM_APP_BASE", img.ISRAM_APP_BASE),
+                     ("ISRAM_END", img.ISRAM_END), ("DEBUG_PROG_ON", img.DEBUG_PROG_ON),
+                     ("DEBUG_PROG_OFF", img.DEBUG_PROG_OFF), ("SYSCSR_BASE", 0x8000_4000),
+                     ("SYSCSR_DBG_BOOT", 0x0C), ("DBG_BOOT_EN", 0x01)):
         m = re.search(rf"#define\s+{sym}\s+0x([0-9A-Fa-f]+)u", text)
-        check(f"{sym} = 0x{val:08x}", m and int(m.group(1), 16) == val)
+        check(f"{sym} = 0x{val:08x}", bool(m) and int(m.group(1), 16) == val)
+    check("DBG_LEN = ISRAM_APP_BASE - ISRAM_DBG_BASE = 4096",
+          re.search(r"#define\s+DBG_LEN\s+\(ISRAM_APP_BASE - ISRAM_DBG_BASE\)", text)
+          and img.DBG_LEN == 4096)
     check("APP_ENTRY = ISRAM_APP_BASE + 0x80 = 0x2000_1080",
           re.search(r"#define\s+APP_ENTRY\s+\(ISRAM_APP_BASE \+ 0x80u\)", text)
           and img.APP_ENTRY == 0x2000_1080)
@@ -106,7 +115,7 @@ def main():
     check("download ok", ok and ram_bytes(rom, 0x2000_1000, 1024)[:1021] == app[:1021])
 
     def bad_hcrc(n, d):
-        return d[:8] + bytes([d[8] ^ 1]) + d[9:] if n == 1 else d
+        return d[:12] + bytes([d[12] ^ 1]) + d[13:] if n == 1 else d
     ok, rom, _ = run("header CRC corrupted once", app, tamper=bad_hcrc)
     check("FHCR, QRDY, then retry ok", ok and rom.sent == [b"FHCR", b"QRDY", b"ACKH", b"ACKP"],
           str(rom.sent))
@@ -140,6 +149,63 @@ def main():
     ok, rom, _ = run("LENGTH not a multiple of 4", app, retries=1,
                      tamper=lambda n, d: img.make_header(1022) if n == 1 else d)
     check("rejected with FHDR", not ok and rom.sent[:1] == [b"FHDR"], str(rom.sent))
+
+    ok, rom, _ = run("DEBUG_PROG neither 0x55 nor 0xAA", app, retries=1,
+                     tamper=lambda n, d: img.make_header(len(app), 0x33) if n == 1 else d)
+    check("rejected with FHDR, nothing written", not ok and rom.sent[:1] == [b"FHDR"] and not rom.ram,
+          str(rom.sent))
+
+    # ---- debug program (DEBUG_PROG = 0x55) ---------------------------------
+    dbg = bytes(rnd.randrange(256) for _ in range(3000))
+    ok, rom, _ = run("good frame with a debug program, DBG_EN pin 0", app, debug=dbg)
+    check("download ok: ACKH ACKD ACKP", ok and rom.sent == [b"ACKH", b"ACKD", b"ACKP"], str(rom.sent))
+    check("0x2000_0000.. == debug program padded to 4096 B",
+          ram_bytes(rom, 0x2000_0000, 4096) == dbg + bytes(4096 - len(dbg)))
+    check("0x2000_1000.. == payload, jumped to 0x2000_1080",
+          ram_bytes(rom, 0x2000_1000, len(app)) == app and rom.entry == 0x2000_1080)
+
+    def bad_dbg(n, d):                   # write 2 = first chunk of the debug program
+        return d[:50] + bytes([d[50] ^ 0x04]) + d[51:] if n == 2 else d
+    ok, rom, _ = run("debug program corrupted once", app, debug=dbg, tamper=bad_dbg)
+    check("FDCR, QRDY, then retry ok",
+          ok and rom.sent == [b"ACKH", b"FDCR", b"QRDY", b"ACKH", b"ACKD", b"ACKP"], str(rom.sent))
+
+    lost = [True]
+    def lose_dbg(n, d):                  # one debug byte lost to an overrun, once
+        if n == 3 and lost[0]:
+            lost[0] = False
+            return d[:10] + d[11:]
+        return d
+    ok, rom, _ = run("debug program byte lost", app, debug=dbg, tamper=lose_dbg)
+    check("FTMO, QRDY, then retry ok", ok and rom.sent[:3] == [b"ACKH", b"FTMO", b"QRDY"]
+          and rom.entry == 0x2000_1080, str(rom.sent))
+
+    try:
+        img.make_frame(app, bytes(4097))
+        check("debug program over 4096 B refused by qsoc_image", False)
+    except ValueError:
+        check("debug program over 4096 B refused by qsoc_image", True)
+
+    # ---- DBG_EN pin = 1: the ROM waits after ACKP until the host masks it ---
+    ok, rom, _ = run("DBG_EN pin 1, debug program: debug boot", app, debug=dbg, dbg_en_pin=True,
+                     keep=True)
+    time.sleep(0.2)
+    check("ACKP sent, ROM polls SYSCSR, no jump yet",
+          ok and rom.sent == [b"ACKH", b"ACKD", b"ACKP"] and rom.polling and rom.entry is None,
+          f"{rom.sent} polling={rom.polling} entry={rom.entry}")
+    rom.dbg_en_mask = True             # the host writes DBG_BOOT.dbg_en_mask = 1
+    time.sleep(0.1)
+    check("dbg_en_mask = 1: jumped to 0x2000_1080", rom.entry == 0x2000_1080 and not rom.polling)
+    rom.stop = True
+
+    ok, rom, _ = run("DBG_EN pin 1 without a debug program (0xAA)", app, dbg_en_pin=True, keep=True)
+    time.sleep(0.2)
+    check("ROM polls as usual, no failure token",
+          ok and rom.sent == [b"ACKH", b"ACKP"] and rom.polling and rom.entry is None, str(rom.sent))
+    rom.dbg_en_mask = True
+    time.sleep(0.1)
+    check("released by dbg_en_mask = 1", rom.entry == 0x2000_1080)
+    rom.stop = True
 
     ok, rom, _ = run("payload cut short", app, retries=1,
                      tamper=lambda n, d: d[:200] if n == 2 else (b"" if n > 2 else d))

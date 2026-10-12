@@ -77,11 +77,11 @@ class RomOverTcp:
                     return
 
 
-def run(name, app_path, tamper=None):
+def run(name, app_path, tamper=None, extra=()):
     print(name)
     rom = RomOverTcp(tamper)
     cmd = [sys.executable, os.path.join(HERE, "qsoc_loader.py"),
-           f"socket://127.0.0.1:{rom.port}", app_path, "--retries", "3"]
+           f"socket://127.0.0.1:{rom.port}", app_path, "--retries", "3", *extra]
     p = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
     rom.rom.stop = True
     return p, rom.rom
@@ -98,6 +98,10 @@ def main():
     fd, path = tempfile.mkstemp(suffix=".bin")
     with os.fdopen(fd, "wb") as f:
         f.write(app)
+    dbg = bytes(random.Random(12).randrange(256) for _ in range(2000))
+    fd, dpath = tempfile.mkstemp(suffix=".bin")
+    with os.fdopen(fd, "wb") as f:
+        f.write(dbg)
     words = lambda rom: b"".join(struct.pack("<I", rom.ram.get(a, 0))
                                  for a in range(0x2000_1000, 0x2000_1000 + len(app), 4))
     try:
@@ -109,7 +113,7 @@ def main():
 
         first = [True]
         def flip(i, b):                 # one payload byte flipped, first frame only
-            if i == 12 + 100 and first[0]:
+            if i == 16 + 100 and first[0]:
                 first[0] = False
                 return b ^ 0x01
             return b
@@ -119,7 +123,7 @@ def main():
 
         hit = [True]
         def overrun(i, b):              # one payload byte lost, first frame only
-            if i == 12 + 300 and hit[0]:
+            if i == 16 + 300 and hit[0]:
                 hit[0] = False
                 return None
             return b
@@ -127,8 +131,17 @@ def main():
         check("FTMO, QRDY, then retry ok", p.returncode == 0 and rom.sent == [b"ACKH", b"FTMO", b"QRDY", b"ACKH", b"ACKP"],
               str(rom.sent) + " " + p.stdout)
         check("RAM == payload after the retry", words(rom) == app)
+
+        p, rom = run("debug program, loader CLI --debug", path, extra=("--debug", dpath))
+        dwords = b"".join(struct.pack("<I", rom.ram.get(a, 0))
+                          for a in range(0x2000_0000, 0x2000_1000, 4))
+        check("exit code 0, tokens ACKH ACKD ACKP",
+              p.returncode == 0 and rom.sent == [b"ACKH", b"ACKD", b"ACKP"], str(rom.sent) + " " + p.stdout)
+        check("debug program at 0x2000_0000, payload at 0x2000_1000",
+              dwords == dbg + bytes(4096 - len(dbg)) and words(rom) == app)
     finally:
         os.remove(path)
+        os.remove(dpath)
 
     print()
     print("ALL PASS" if not FAILS else f"{len(FAILS)} FAILED: {FAILS}")

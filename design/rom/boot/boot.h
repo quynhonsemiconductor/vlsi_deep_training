@@ -8,24 +8,34 @@
 #ifndef QSOC_BOOT_H
 #define QSOC_BOOT_H
 
-/* ---- Memory map (util/qsoc_contract.yml, QNSC_BOOT_SPEC V3.2 Table 3-1) -
+/* ---- Memory map (util/qsoc_contract.yml, QNSC_BOOT_SPEC V3.3 Table 3-1) -
  * TODO(lead): take these from the qnsc_map.h generated from the contract
  * (BOOT_SPEC Table 10-1), so the C side cannot drift from the RTL side.
  */
 #define ROM_BASE        0x00000000u   /* 2 KiB, AXI_M0                       */
 #define ISRAM_BASE      0x20000000u   /* 64 KiB, AXI_M1                      */
-#define ISRAM_APP_BASE  0x20001000u   /* first 4 KiB = debug window, skip it */
+#define ISRAM_DBG_BASE  0x20000000u   /* first 4 KiB: the debug program      */
+#define ISRAM_APP_BASE  0x20001000u   /* the application, after the debug 4 KiB */
 #define ISRAM_END       0x20010000u   /* one past the last byte              */
 #define DSRAM_BASE      0x30000000u   /* 32 KiB, AXI_M2                      */
 #define DSRAM_END       0x30008000u   /* stack grows down from here          */
 
-/* Fixed image layout, the same as debug boot (QNSC_SYSDBG_MAS 7.2): the image
- * is loaded at ISRAM_APP_BASE and entered at ISRAM_APP_BASE + 0x80, where Ibex
- * starts on its own in debug boot, {boot_addr_i[31:8], 8'h80}. So the frame
- * carries neither address (QNSC_BOOT_SPEC 6).                              */
+/* Fixed image layout: the application is loaded at ISRAM_APP_BASE and entered
+ * at ISRAM_APP_BASE + 0x80, after its 128-byte vector table. The debug program,
+ * when the frame carries one, fills the 4 KiB at ISRAM_DBG_BASE, where Ibex
+ * enters debug mode. So the frame carries no address (QNSC_BOOT_SPEC 6).   */
 #define APP_ENTRY       (ISRAM_APP_BASE + 0x80u)       /* 0x2000_1080 */
 #define APP_MIN_LEN     (APP_ENTRY + 4u - ISRAM_APP_BASE) /* 132: reaches ENTRY */
 #define APP_MAX_LEN     (ISRAM_END - ISRAM_APP_BASE)   /* 61440 bytes */
+#define DBG_LEN         (ISRAM_APP_BASE - ISRAM_DBG_BASE) /* 4096, always full */
+
+/* ---- SYSCSR (APB_M1, QNSC_SYSCSR_MAS V3.2 6) -------------------------------
+ * DBG_BOOT[0] dbg_en: the DBG_EN pin through two flip-flops, read 0 once
+ * the host has written DBG_BOOT[1] dbg_en_mask = 1 over JTAG. The ROM
+ * only reads it (QNSC_BOOT_SPEC 7.5).                                      */
+#define SYSCSR_BASE     0x80004000u   /* APB_M1                              */
+#define SYSCSR_DBG_BOOT 0x0Cu         /* DBG_BOOT register offset             */
+#define DBG_BOOT_EN     0x01u         /* 1 = wait for the host before the app */
 
 /* ---- UART0 (pulp apb_uart wrapping obi_uart, 16550-compatible) --------
  * apb_uart forwards {PADDR[2:0], 2'b00}: register n sits at byte offset 4*n.
@@ -57,7 +67,7 @@
  * 38 400 and up -1.36 %), inside the mentor's 10 000-20 000 range.        */
 #define UART_DIVISOR    65u
 
-/* ---- Timeouts (loop counts, not time; QNSC_BOOT_SPEC V3.2 7.3) ---------
+/* ---- Timeouts (loop counts, not time; QNSC_BOOT_SPEC V3.3 7.3) ---------
  * A poll is at least one APB read and an APB transfer takes at least 2 clk,
  * so these are MINIMUM times at 20 MHz: RX_TIMEOUT >= 100 ms (192 bytes at
  * 19 231 baud), DRAIN_IDLE >= 50 ms (96 bytes). The margins cover gaps the
@@ -70,13 +80,19 @@
 #define DRAIN_IDLE      500000u       /* line quiet this long = drained      */
 
 /* ---- Frame format ------------------------------------------------------
- *  off  size  field      rule checked by ROM
- *  0x00  4    MAGIC      bytes 'Q','S','O','C' in that order
- *  0x04  4    LENGTH     payload bytes, %4 == 0, APP_MIN_LEN .. APP_MAX_LEN
- *  0x08  4    HDR_CRC    CRC32 of bytes 0x00..0x07
- *  0x0C  N    PAYLOAD    raw bytes, as in the app's .bin; written from
- *                        ISRAM_APP_BASE, entered at APP_ENTRY
- *  +N    4    PAY_CRC    CRC32 of PAYLOAD
+ *  off  size  field         rule checked by ROM
+ *  0x00  4    MAGIC         bytes 'Q','S','O','C' in that order
+ *  0x04  4    LENGTH        payload bytes, %4 == 0, APP_MIN_LEN .. APP_MAX_LEN
+ *  0x08  4    DEBUG_PROG    DEBUG_PROG_ON or DEBUG_PROG_OFF
+ *  0x0C  4    HDR_CRC       CRC32 of bytes 0x00..0x0B
+ *  only when DEBUG_PROG = DEBUG_PROG_ON:
+ *  0x10  4096 DEBUG_PAYLOAD the debug program, written from ISRAM_DBG_BASE
+ *  +4096 4    DBG_CRC       CRC32 of DEBUG_PAYLOAD
+ *  then:
+ *  D     N    PAYLOAD       raw bytes, as in the app's .bin; written from
+ *                           ISRAM_APP_BASE, entered at APP_ENTRY
+ *  D+N   4    PAY_CRC       CRC32 of PAYLOAD
+ *  (D = 0x10, or 0x1014 with the debug program.)
  * All multi-byte fields little-endian (least significant byte sent first).
  * CRC32 = zlib/IEEE: reflected poly 0xEDB88320, init and final XOR 0xFFFFFFFF.
  */
@@ -84,14 +100,18 @@
                          ((unsigned)(c) << 16) | ((unsigned)(d) << 24))
 
 #define MAGIC_QSOC      TOK('Q', 'S', 'O', 'C')   /* 0x434F5351 */
+#define DEBUG_PROG_ON   0x00000055u   /* the debug program precedes the payload */
+#define DEBUG_PROG_OFF  0x000000AAu   /* the payload only                    */
 
 /* ---- Handshake tokens, ROM -> PC, always 4 ASCII bytes ----------------- */
 #define TOK_QRDY        TOK('Q', 'R', 'D', 'Y')   /* drained after a failure: */
                                                   /* resend the whole frame   */
 #define TOK_ACKH        TOK('A', 'C', 'K', 'H')   /* header accepted          */
-#define TOK_ACKP        TOK('A', 'C', 'K', 'P')   /* payload ok, jumping      */
+#define TOK_ACKD        TOK('A', 'C', 'K', 'D')   /* debug program ok         */
+#define TOK_ACKP        TOK('A', 'C', 'K', 'P')   /* payload ok               */
 #define TOK_FHCR        TOK('F', 'H', 'C', 'R')   /* header CRC mismatch      */
-#define TOK_FHDR        TOK('F', 'H', 'D', 'R')   /* LENGTH out of range      */
+#define TOK_FHDR        TOK('F', 'H', 'D', 'R')   /* LENGTH or DEBUG_PROG bad */
+#define TOK_FDCR        TOK('F', 'D', 'C', 'R')   /* debug program CRC mismatch*/
 #define TOK_FPCR        TOK('F', 'P', 'C', 'R')   /* payload CRC mismatch     */
 #define TOK_FTMO        TOK('F', 'T', 'M', 'O')   /* gap between bytes too long*/
 
