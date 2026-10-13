@@ -15,8 +15,9 @@ receives one frame from the PC: when `DEBUG_PROG` = 0x55, a 4 096-byte debug
 program written from `0x2000_0000`; then the payload, written from
 `0x2000_1000`; each part with its own CRC. After `ACKP` it reads SYSCSR
 `DBG_BOOT` (0x8000_400C) and waits while bit 0, `dbg_en`, is 1: the `DBG_EN`
-pin is 1 and the host has not yet written `dbg_en_mask` = 1 over JTAG. Then it
-jumps to `0x2000_1080`. Every step after the magic answers with a 4-byte
+pin is 1 and the host has not yet written `dbg_en_mask` = 1 over JTAG. A halt
+during the wait enters the debug program at `0x2000_0800` (`DmHaltAddr`) and
+`dret` returns to the wait. Then it jumps to `0x2000_1080`. Every step after the magic answers with a 4-byte
 token; on failure the ROM sends the token, drains the line, sends `QRDY`, and
 the PC resends the whole frame.
 
