@@ -11,7 +11,7 @@ The reasoning behind each change, the V1.0--V2.2 history and the V2.2 text are i
 
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
-| V3.3 | 2026-10-12 | Nguyen Hao Nam | -- | Mentor's debug boot flow of 12/10 (Appendix B): the ROM loads the debug program too, over `UART0`; JTAG no longer loads the image or holds the CPU, and the boot address mux is gone, so both modes run the ROM; header 16 bytes with `DEBUG_PROG` (`0x55`: a 4 096-byte debug program and its `DBG_CRC` follow the header and go to `0x2000_0000`; `0xAA`: none); tokens `ACKD` and `FDCR`; after `ACKP` the ROM waits while `SYSCSR` `DBG_BOOT.dbg_en` = 1, which the `DBG_EN` pin sets and the host clears over JTAG; Figures 4-1, 6-1, 7-1, 7-2 redrawn and Tables 4-2, 7-1 with them |
+| V3.3 | 2026-10-12 | Nguyen Hao Nam | -- | Mentor's debug boot flow of 12/10 (Appendix B): the ROM loads the debug program too, over `UART0`; JTAG no longer loads the image or holds the CPU, and the boot address mux is gone, so both modes run the ROM; header 16 bytes with `DEBUG_PROG` (`0x55`: a 4 096-byte debug program and its `DBG_CRC` follow the header and go to `0x2000_0000`; `0xAA`: none); tokens `ACKD` and `FDCR`; after `ACKP` the ROM waits while `SYSCSR` `DBG_BOOT.dbg_en` = 1, which the `DBG_EN` pin sets and the host clears over JTAG; a debug request during the wait enters the debug program at `DmHaltAddr` `0x2000_0800` and `dret` returns to the wait; the debug program follows the `SYSDBG` debug window layout (9); Figures 4-1, 6-1, 7-1, 7-2 redrawn and Tables 4-2, 7-1 with them |
 | V3.2 | 2026-10-09 | Nguyen Hao Nam | -- | Mentor review of V3.1 (Appendix B): `ENTRY` dropped from the header, for the same entry as debug boot; `LOAD_ADDR` dropped with it, so the payload always goes to `0x2000_1000` and the ROM jumps to `0x2000_1080`; header 12 bytes; `LENGTH` 132 to 61 440; `FUAR` dropped and the UART error bits no longer read, since a CRC or the timeout catches every UART error; Figure 4-1 redrawn (two `SCRC` steps, the `DBG_EN` pin, no CRC test) and Table 4-2 with it |
 | V3.1 | 2026-09-30 | Nguyen Hao Nam | -- | Mentor review 29/09 (Appendix B): no `QRDY` after reset, only after a failure; 19 200 baud; Figure 4-1 shows the CPU release and tests CRC pass; debug boot explained by the boot address mux; steps of Figures 4-1 and 7-1 described (Tables 4-2, 7-1); how each failure is detected; timeouts given as minimums; UART errors before `MAGIC` get no reply; Figure 7-1 redrawn with one decision per check; the PC stops on a failure token; `RX_TIMEOUT` and `DRAIN_IDLE` raised |
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Nguyen Hao Nam | -- | V2.2 moved onto the template: `UART0` address corrected to `0x8002_0000`, hardware sequencing referenced to `SCRC`/`SYSDBG`, bootloader image limits moved here from the ROM, timing recomputed, monochrome figures |
@@ -86,7 +86,8 @@ pin only makes the ROM wait at stage 5. `SYSCSR` passes the pin through two
 flip-flops into `DBG_BOOT.dbg_en`, which the ROM reads; the host clears it by
 writing `DBG_BOOT.dbg_en_mask` = 1 over JTAG (`QNSC_SYSCSR_MAS` 7.5). The debug
 program, if the frame carries one, is in `ISRAM` from `0x2000_0000` before the
-wait starts, so the host can halt the CPU into it at any time.
+wait starts, so the host can halt the CPU into it at any time: Ibex enters it at
+`DmHaltAddr`, `0x2000_0800`.
 
 : Steps of Figure 4-1
 
@@ -100,7 +101,7 @@ wait starts, so the host can halt the CPU into it at any time.
 | init UART0 | Sets 19 200 baud, 8 data bits, no parity and 1 stop bit, turns the FIFOs on and the interrupts off (section 5). The ROM starts listening for MAGIC at once. | 5 |
 | receive the frame from the PC over UART0: DEBUG_PAYLOAD to 0x2000_0000 (only when DEBUG_PROG = 0x55), PAYLOAD to 0x2000_1000 | Receive and check the frame, Figure 7-1 and Table 7-1. The step ends when the header CRC, `LENGTH`, `DEBUG_PROG`, the debug program CRC if there is one, and the payload CRC all pass. On any failure the ROM sends a failure token, empties the line and sends `QRDY`, and the PC resends the whole frame. | 7 |
 | SYSCSR.DBG_EN = 1? | The ROM reads `SYSCSR` `DBG_BOOT`. Bit 0, `dbg_en`, is the `DBG_EN` pin through two flip-flops, forced to 0 once the host has written `dbg_en_mask` = 1. | 7.5, `QNSC_SYSCSR_MAS` 7.5 |
-| CPU polling: read SYSCSR.DBG_EN again (1: debug boot) | The ROM reads `DBG_BOOT` in a loop. The CPU is not held in reset: it runs this loop, so the host can halt it into the debug program at `0x2000_0000` at any time. The host ends the wait by writing `DBG_BOOT.dbg_en_mask` = 1 through the `SYSDBG` bus master. With `DEBUG_PROG` = `0xAA` the ROM waits all the same and sends no token. | 7.5 |
+| CPU polling: read SYSCSR.DBG_EN again (1: debug boot) | The ROM reads `DBG_BOOT` in a loop. The CPU is not held in reset: it runs this loop, so the host can halt it into the debug program at any time: Ibex enters it at `DmHaltAddr`, `0x2000_0800`, and `dret` brings it back into this loop. The host ends the wait by writing `DBG_BOOT.dbg_en_mask` = 1 through the `SYSDBG` bus master. With `DEBUG_PROG` = `0xAA` the ROM waits all the same and sends no token. | 7.5 |
 | jump to 0x2000_1080 (ISRAM) (0: normal boot) | The ROM clears the instruction prefetch and jumps to `0x2000_1080`. | 7.5 |
 | application runs from ISRAM | Section 9. If the frame carried a debug program, the host can halt the CPU into it while the application runs. | 9 |
 
@@ -272,13 +273,22 @@ it reads `SYSCSR` `DBG_BOOT` (`0x8000_400C`) until bit 0, `dbg_en`, is 0:
 
 - **Normal boot**, `DBG_EN` pin at 0: the first read returns 0.
 - **Debug boot**, `DBG_EN` pin at 1: the ROM reads in a loop. The CPU runs and is
-  not held in reset, so the host can raise the Ibex debug request at any time and
-  the CPU enters the debug program at `0x2000_0000`. The host ends the wait by
-  writing `DBG_BOOT.dbg_en_mask` = 1 through the `SYSDBG` bus master (`AXI_S0`,
-  `S_BUS`, `P_BUS`); the host can only clear `dbg_en`, never set it.
+  not held in reset, so the host can raise the Ibex debug request at any time.
+  The host ends the wait by writing `DBG_BOOT.dbg_en_mask` = 1 through the
+  `SYSDBG` bus master (`AXI_S0`, `S_BUS`, `P_BUS`); the host can only clear
+  `dbg_en`, never set it. The bus master needs no help from the CPU, so the mask
+  can be written while the CPU is halted.
+- **A debug request during the wait** suspends the loop, it does not end it. Ibex
+  saves the PC of the interrupted loop instruction in `dpc` and enters the debug
+  program at its dispatch loop, `DmHaltAddr` = `0x2000_0800` (9). When the host
+  resumes it, `dret` returns to `dpc`, back into the wait loop, which reads
+  `DBG_BOOT` again. Only `dbg_en` = 0 ends the wait. To stop on the first
+  instruction of the application, the host halts the CPU, plants a breakpoint at
+  `0x2000_1080`, writes `dbg_en_mask` = 1 and resumes.
 - `DEBUG_PROG` = `0xAA` with the pin at 1 is an operator mistake: there is no debug
-  program to halt into. The ROM waits all the same and sends no token; the host
-  still releases it with `dbg_en_mask` = 1.
+  program, so `0x2000_0800` holds no dispatch loop and the host must not raise the
+  debug request. The ROM waits all the same and sends no token; the host releases
+  it with `dbg_en_mask` = 1.
 
 Then the ROM executes `fence.i` and jumps to `0x2000_1080`. It does not return.
 
@@ -319,9 +329,25 @@ Then the ROM executes `fence.i` and jumps to `0x2000_1080`. It does not return.
 - Find `UART0` configured (19 231 baud 8N1, FIFOs on, interrupts off, transmitter
   empty), every peripheral clock running except `TIMER1`, and the watchdog off.
 - Read and clear `SYSCSR` `RESET_CAUSE` (`QNSC_SYSCSR_MAS` 7.6).
-- A debug program is linked at `0x2000_0000`, at most 4 KiB; its content is the
-  debug handler Ibex enters on a debug request, specified with the debug flow, not
-  here.
+- A debug program is linked at `0x2000_0000`, at most 4 KiB, and follows the
+  debug window layout of `QNSC_SYSDBG_DECISIONS` 4.11 (Table 9-1), because the
+  Ibex debug addresses are fixed when the CPU is built.
+
+: Debug program layout, fixed by the Ibex debug parameters
+
+| Address | Contents |
+|---|---|
+| `0x2000_0000`--`0x2000_07FF` | Instruction sequence area, written by the host |
+| `0x2000_0800` | Dispatch loop, `DmHaltAddr`: Ibex enters here on every halt |
+| `0x2000_0810` | Exception handler, `DmExceptionAddr`: a fault in debug mode |
+| `0x2000_0F00` | Result words |
+| `0x2000_0F08` | Command word |
+| `0x2000_0F0C` | Resume flag: the dispatch loop clears it and executes `dret` |
+
+Without a valid dispatch loop at `0x2000_0800` the first halt runs whatever is
+there. Before V3.3 `SYSDBG` wrote the dispatch loop over JTAG; now it comes in the
+frame. What the loop and the sequences do is specified with the debug flow, not
+here.
 
 Download time at 19 231 baud: 60 KiB in about 32 s, 22 KiB in about 11.7 s; a debug
 program adds about 2.1 s.
@@ -336,7 +362,7 @@ program adds about 2.1 s.
 | `SYSCSR` `DBG_BOOT` at `0x0C`: `dbg_en` RO, `dbg_en_mask` RW, the `DBG_EN` pin through two flip-flops | `SYSCSR` (same owner) | 7.5 |
 | The `DBG_EN` pad wired to `SYSCSR` `i_dbg_en` | top (lead) | 7.5 |
 | `QNSC_SYSDBG_MAS` follows this flow: no CPU hold, no boot address mux, no debug window initialiser; the bus master reaches `SYSCSR` | `SYSDBG` (lead) | debug boot as in 4 and 7.5 |
-| Ibex `DmHaltAddr` inside the debug program at `0x2000_0000` | `SYSDBG`, CPU | the debug request of 7.5 |
+| Ibex `DmHaltAddr` = `0x2000_0800`, `DmExceptionAddr` = `0x2000_0810`, as in `QNSC_SYSDBG_DECISIONS` 4.11 | `SYSDBG`, CPU | the debug request of 7.5, the layout of 9 |
 
 Open items: `design/rom/boot/` is in PR #51 (`feat/rom-wrapper`), not yet merged. ROM
 owner. Time per `LSR` poll, measured in simulation, to replace the minimums of

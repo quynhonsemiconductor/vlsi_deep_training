@@ -160,8 +160,9 @@ static uint32_t boot_once(void)
 
     /* ---- Debug boot: wait while the DBG_EN pin asks for it. The CPU is
      *      not held: it runs this loop, so the host can halt it into the
-     *      debug program at any time, and lets it go by writing
-     *      DBG_BOOT.dbg_en_mask = 1 (QNSC_BOOT_SPEC 7.5).            */
+     *      debug program at any time (entry 0x2000_0800; dret comes back
+     *      here), and lets it go by writing DBG_BOOT.dbg_en_mask = 1
+     *      (QNSC_BOOT_SPEC 7.5).                                         */
     while (SYSCSR(SYSCSR_DBG_BOOT) & DBG_BOOT_EN) { }
 
     /* fence.i (Zifencei, in -march; QNSC_BOOT_SPEC 7.5, 8). Ibex flushes

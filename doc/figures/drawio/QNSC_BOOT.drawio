@@ -34,7 +34,7 @@
         <mxCell id="poll" value="CPU polling: read SYSCSR.DBG_EN again&#10;(the CPU runs the ROM; it is not held in reset)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="720" y="533" width="330" height="44" as="geometry"/>
         </mxCell>
-        <mxCell id="pnote" value="leaves the loop when the host writes DBG_BOOT.dbg_en_mask = 1&#10;(SYSDBG bus master, AXI_S0)&#10;at any time: debug request -&gt; debug program at 0x2000_0000" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontSize=8;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="pnote" value="leaves the loop when the host writes DBG_BOOT.dbg_en_mask = 1&#10;(SYSDBG bus master, AXI_S0)&#10;at any time: debug request -&gt; debug program at 0x2000_0800,&#10;dret -&gt; back to this loop" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontSize=8;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="720" y="590" width="330" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="dnote" value="DBG_EN = DBG_EN pin through 2 FF,&#10;forced to 0 while dbg_en_mask = 1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontSize=8;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
@@ -313,7 +313,7 @@
         <mxCell id="poll" value="CPU polling: read&#10;SYSCSR.DBG_EN again" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="340" y="1634.0" width="150" height="32" as="geometry"/>
         </mxCell>
-        <mxCell id="pnote" value="leaves the loop when the host writes&#10;DBG_BOOT.dbg_en_mask = 1 over JTAG;&#10;the host may halt the CPU into the&#10;debug program at 0x2000_0000 at any time" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="pnote" value="leaves the loop when the host writes&#10;DBG_BOOT.dbg_en_mask = 1 over JTAG;&#10;a halt enters the debug program at&#10;0x2000_0800; dret returns to this loop" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;fontSize=9;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="500" y="1612" width="260" height="76" as="geometry"/>
         </mxCell>
         <mxCell id="t_hto" value="send FTMO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">

@@ -117,7 +117,7 @@ flow.append(N("poll", _TX, _fi["wt"].y + (_DH - _TH) / 2, 150, _TH,
               "CPU polling: read\nSYSCSR.DBG_EN again", "box", 10))
 flow.append(N("pnote", _TX + 160, _fi["wt"].y - 6, 260, 76,
               "leaves the loop when the host writes\nDBG_BOOT.dbg_en_mask = 1 over JTAG;\n"
-              "the host may halt the CPU into the\ndebug program at 0x2000_0000 at any time", "port", 9))
+              "a halt enters the debug program at\n0x2000_0800; dret returns to this loop", "port", 9))
 flow_e += [E("wt", "r", "poll", "l", "yes"),
            E("poll", "t", "wt", "t", mid=_fi["wt"].y - 12)]
 for d, tok, lab in [("hto", "FTMO", "no"), ("hcr", "FHCR", "no"), ("hrg", "FHDR", "no"),
@@ -170,7 +170,8 @@ top = [
       "(the CPU runs the ROM; it is not held in reset)", "box", 10),
     N("pnote", 720, 590, 330, 60, "leaves the loop when the host writes DBG_BOOT.dbg_en_mask = 1\n"
       "(SYSDBG bus master, AXI_S0)\n"
-      "at any time: debug request -> debug program at 0x2000_0000", "port", 8),
+      "at any time: debug request -> debug program at 0x2000_0800,\n"
+      "dret -> back to this loop", "port", 8),
     N("dnote", 395, 600, 300, 30, "DBG_EN = DBG_EN pin through 2 FF,\n"
       "forced to 0 while dbg_en_mask = 1", "port", 8),
     _s("jmp", 660, "jump to 0x2000_1080 (ISRAM)"),

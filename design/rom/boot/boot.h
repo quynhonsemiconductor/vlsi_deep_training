@@ -22,8 +22,9 @@
 
 /* Fixed image layout: the application is loaded at ISRAM_APP_BASE and entered
  * at ISRAM_APP_BASE + 0x80, after its 128-byte vector table. The debug program,
- * when the frame carries one, fills the 4 KiB at ISRAM_DBG_BASE, where Ibex
- * enters debug mode. So the frame carries no address (QNSC_BOOT_SPEC 6).   */
+ * when the frame carries one, fills the 4 KiB at ISRAM_DBG_BASE; Ibex enters it
+ * on a halt at DmHaltAddr = ISRAM_DBG_BASE + 0x800 (QNSC_BOOT_SPEC 9). So the
+ * frame carries no address (QNSC_BOOT_SPEC 6).                             */
 #define APP_ENTRY       (ISRAM_APP_BASE + 0x80u)       /* 0x2000_1080 */
 #define APP_MIN_LEN     (APP_ENTRY + 4u - ISRAM_APP_BASE) /* 132: reaches ENTRY */
 #define APP_MAX_LEN     (ISRAM_END - ISRAM_APP_BASE)   /* 61440 bytes */
