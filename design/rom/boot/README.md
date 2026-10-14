@@ -1,6 +1,6 @@
 # `rom/boot` — serial bootloader burned into the boot ROM
 
-**Owner:** Nam Nguyen Hao · **Spec:** [`QNSC_BOOT_SPEC.md`](../../../doc/specs/QNSC_BOOT_SPEC.md) V3.3
+**Owner:** Nam Nguyen Hao · **Spec:** [`QNSC_BOOT_SPEC.md`](../../../doc/specs/QNSC_BOOT_SPEC.md) V3.4
 
 Software, not RTL: its only output consumed by the hardware is `rom_image.hex`,
 which `make rtl` copies to `util/gen/rom/` and turns into the constant module
@@ -27,7 +27,7 @@ the PC resends the whole frame.
 |---|---|---|---|
 | 0x00 | 4 | MAGIC | `'Q','S','O','C'` in that order (LE word `0x434F5351`) |
 | 0x04 | 4 | LENGTH | payload bytes, `%4 == 0`, 132 .. 61440 (the image reaches `0x2000_1080` and fits in ISRAM) |
-| 0x08 | 4 | DEBUG_PROG | `0x55`: a debug program follows; `0xAA`: none; anything else `FHDR` |
+| 0x08 | 4 | DEBUG_PROG | not checked: exactly `0x0000_0055`, a debug program follows; any other value, none (the loader sends `0xAA`) |
 | 0x0C | 4 | HDR_CRC | CRC32 of bytes 0x00..0x0B |
 | 0x10 | 4096 | DEBUG_PAYLOAD | only with 0x55: the debug program, zero-padded, linked at `0x2000_0000` |
 | 0x1010 | 4 | DBG_CRC | only with 0x55: CRC32 of DEBUG_PAYLOAD |
@@ -71,7 +71,7 @@ at once: UART0 has no hardware flow control.
 | `tools/qsoc_loader.py` | PC loader over USB-UART (needs `pyserial`) |
 | `tools/rom_model.py` | Python model of `boot.c`, step for step, with the `DBG_EN` pin and `dbg_en_mask` |
 | `tools/test_serial_link.py` | the loader command line through pyserial (`socket://`) against the model: good frame, FPCR and FTMO (lost byte) retries, `--debug` |
-| `tools/test_protocol.py` | loader vs model: good frame, noise, changed and lost bytes, bad CRCs, LENGTH and DEBUG_PROG checks, debug program, debug wait and release, timeout, early stop after a stall |
+| `tools/test_protocol.py` | loader vs model: good frame, noise, changed and lost bytes, bad CRCs, LENGTH checks, DEBUG_PROG other than 0x55, debug program, debug wait and release, timeout, early stop after a stall |
 
 ## Build and test
 
@@ -84,7 +84,18 @@ python3 tools/qsoc_loader.py COM5 app.bin   # opens the port at 19200 8N1
 python3 tools/qsoc_loader.py COM5 app.bin --debug dbg.bin   # with a debug program
 ```
 
-## Status (12/10/2026, QNSC_BOOT_SPEC V3.3)
+## Status (14/10/2026, QNSC_BOOT_SPEC V3.4)
+
+- V3.4 from the mentor's feedback of 14/10: the ROM loads the debug program
+  when `DEBUG_PROG` is exactly `0x0000_0055` and skips it otherwise; `0xAA`
+  is no longer checked and `FHDR` is now for `LENGTH` only. `HDR_CRC` already
+  vouches for the value, so nothing is lost.
+- `make test`: 46 checks pass; `make test-serial`: 10 checks pass.
+- Built with xPack `riscv-none-elf-gcc` 15.2.0 and `-Werror`:
+  **734 B image, 606 B of code after the 128 B vector table** (budget 1024 B,
+  418 B left). `make CROSS=riscv-none-elf- rtl` put the image into `util/gen/rom/`.
+
+### V3.3 (12/10/2026)
 
 - V3.3 changes from the mentor's debug boot flow of 12/10: the header gains
   `DEBUG_PROG` (16 B); with 0x55 a 4 096-byte debug program and `DBG_CRC`
