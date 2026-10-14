@@ -365,7 +365,7 @@ The IP has no testbench.
    `i_clk_peri` cycle wide, and never fires while `EN[k]` = 0.
 9. `PWM_009` Each `IN_MODE` 0-7 with `ext_sig_i[3:0]` and with a channel feedback source;
     `IN_SEL` 4-31 and 48-255 never count except in `IN_MODE` 0 and 1.
-10. `PWM_010` Holes read 0 and ignore writes; offset `+0x400` aliases offset 0; `PSLVERR` = 0.
+10. `PWM_010` Holes read 0 and ignore writes; the 1 KiB map repeats every `0x400` across the 16 KiB window (`+0x400`, `+0x1000`, `+0x2000`, `+0x3C00` alias offset 0); `PSLVERR` = 0.
 11. `PWM_011` Each row of the table in 7.8 holds: `TH` is used only at `CMD.START` or
     `CMD.UPDATE` (stopped: at once; running: at the end of the period in progress);
     `CHn_TH` raised before its match is used in the period in progress, lowered below
