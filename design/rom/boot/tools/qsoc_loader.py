@@ -2,7 +2,7 @@
 """PC-side loader for the QSOC boot ROM (USB-UART -> UART0, 8N1).
 
 The PC opens the port at 19200; the ROM runs at 20 MHz / (16 x 65) = 19 231
-baud, 0.16 % faster, well inside the 8N1 tolerance (QNSC_BOOT_SPEC V3.3, 5).
+baud, 0.16 % faster, well inside the 8N1 tolerance (QNSC_BOOT_SPEC V3.4, 5).
 
   qsoc_loader.py COM5 app.bin                   build the frame and send it
   qsoc_loader.py COM5 app.bin --debug dbg.bin   with a debug program (DEBUG_PROG 0x55)

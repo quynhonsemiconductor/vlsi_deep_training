@@ -17,8 +17,8 @@ import threading
 import time
 import zlib
 
-from qsoc_image import (APP_ENTRY, APP_MAX_LEN, APP_MIN_LEN, DBG_LEN, DEBUG_PROG_OFF,
-                        DEBUG_PROG_ON, ISRAM_APP_BASE, ISRAM_DBG_BASE)
+from qsoc_image import (APP_ENTRY, APP_MAX_LEN, APP_MIN_LEN, DBG_LEN, DEBUG_PROG_ON,
+                        ISRAM_APP_BASE, ISRAM_DBG_BASE)
 
 RX_TIMEOUT_S = 0.1     # boot.h RX_TIMEOUT   (>= 100 ms, QNSC_BOOT_SPEC 7.3)
 DRAIN_IDLE_S = 0.05    # boot.h DRAIN_IDLE   (>= 50 ms)
@@ -150,8 +150,6 @@ class RomModel(threading.Thread):
             if zlib.crc32(b"QSOC" + struct.pack("<II", length, dbg)) != hcrc:
                 return b"FHCR"
             if length % 4 or length < APP_MIN_LEN or length > APP_MAX_LEN:
-                return b"FHDR"
-            if dbg not in (DEBUG_PROG_ON, DEBUG_PROG_OFF):
                 return b"FHDR"
             self.put_tok(b"ACKH")
             if dbg == DEBUG_PROG_ON:

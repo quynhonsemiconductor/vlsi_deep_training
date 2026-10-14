@@ -31,7 +31,8 @@ APP_MAX_LEN = ISRAM_END - ISRAM_APP_BASE
 DBG_LEN = ISRAM_APP_BASE - ISRAM_DBG_BASE      # 4096, always sent in full
 MAGIC = b"QSOC"
 DEBUG_PROG_ON = 0x55       # the debug program precedes the payload
-DEBUG_PROG_OFF = 0xAA      # the payload only
+DEBUG_PROG_OFF = 0xAA      # what this tool sends for "payload only"; the ROM
+                           # compares with 0x55 only, any other value is "none"
 
 TOKENS = {
     b"QRDY": "ROM ready, waiting for a frame",
@@ -40,7 +41,7 @@ TOKENS = {
     b"ACKP": "payload CRC ok; the ROM jumps to 0x2000_1080, after the host "
              "releases it if the DBG_EN pin is 1",
     b"FHCR": "header CRC mismatch",
-    b"FHDR": "LENGTH out of range or DEBUG_PROG not 0x55/0xAA",
+    b"FHDR": "LENGTH out of range",
     b"FDCR": "debug program CRC mismatch",
     b"FPCR": "payload CRC mismatch",
     b"FTMO": "timeout between two bytes",
@@ -51,12 +52,10 @@ HEADER_LEN = 16
 DEBUG_PART_LEN = DBG_LEN + 4               # DEBUG_PAYLOAD + DBG_CRC
 
 
-def check_header(length: int, debug_prog: int = DEBUG_PROG_OFF) -> str:
+def check_header(length: int) -> str:
     """Same check as boot.c. Returns '' if valid."""
     if length % 4 or length < APP_MIN_LEN or length > APP_MAX_LEN:
         return f"LENGTH {length} must be a multiple of 4, {APP_MIN_LEN} to {APP_MAX_LEN}"
-    if debug_prog not in (DEBUG_PROG_ON, DEBUG_PROG_OFF):
-        return f"DEBUG_PROG 0x{debug_prog:x} must be 0x55 or 0xAA"
     return ""
 
 
@@ -75,7 +74,7 @@ def make_frame(payload: bytes, debug: bytes = None, force: bool = False) -> tupl
     when there is no debug program."""
     payload = payload + bytes(-len(payload) % 4)
     debug_prog = DEBUG_PROG_OFF if debug is None else DEBUG_PROG_ON
-    err = check_header(len(payload), debug_prog)
+    err = check_header(len(payload))
     if debug is not None and len(debug) > DBG_LEN:
         err = err or f"debug program {len(debug)} B, at most {DBG_LEN}"
     if err and not force:

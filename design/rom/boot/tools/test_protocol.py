@@ -60,7 +60,7 @@ def test_boot_h_matches():
     check("same token set", py_toks == c_toks, f"C={sorted(c_toks)} Py={sorted(py_toks)}")
     for sym, val in (("ISRAM_DBG_BASE", img.ISRAM_DBG_BASE), ("ISRAM_APP_BASE", img.ISRAM_APP_BASE),
                      ("ISRAM_END", img.ISRAM_END), ("DEBUG_PROG_ON", img.DEBUG_PROG_ON),
-                     ("DEBUG_PROG_OFF", img.DEBUG_PROG_OFF), ("SYSCSR_BASE", 0x8000_4000),
+                     ("SYSCSR_BASE", 0x8000_4000),
                      ("SYSCSR_DBG_BOOT", 0x0C), ("DBG_BOOT_EN", 0x01)):
         m = re.search(rf"#define\s+{sym}\s+0x([0-9A-Fa-f]+)u", text)
         check(f"{sym} = 0x{val:08x}", bool(m) and int(m.group(1), 16) == val)
@@ -150,10 +150,13 @@ def main():
                      tamper=lambda n, d: img.make_header(1022) if n == 1 else d)
     check("rejected with FHDR", not ok and rom.sent[:1] == [b"FHDR"], str(rom.sent))
 
-    ok, rom, _ = run("DEBUG_PROG neither 0x55 nor 0xAA", app, retries=1,
-                     tamper=lambda n, d: img.make_header(len(app), 0x33) if n == 1 else d)
-    check("rejected with FHDR, nothing written", not ok and rom.sent[:1] == [b"FHDR"] and not rom.ram,
-          str(rom.sent))
+    # DEBUG_PROG is not checked: only exactly 0x0000_0055 brings a debug program
+    for v in (0x00, 0x33, 0x155):
+        ok, rom, _ = run(f"DEBUG_PROG 0x{v:x}: no debug program", app,
+                         tamper=lambda n, d, v=v: img.make_header(len(app), v) if n == 1 else d)
+        check("ACKH ACKP, nothing below 0x2000_1000, jumped to 0x2000_1080",
+              ok and rom.sent == [b"ACKH", b"ACKP"] and rom.entry == 0x2000_1080
+              and min(rom.ram) >= 0x2000_1000, str(rom.sent))
 
     # ---- debug program (DEBUG_PROG = 0x55) ---------------------------------
     dbg = bytes(rnd.randrange(256) for _ in range(3000))
@@ -198,7 +201,7 @@ def main():
     check("dbg_en_mask = 1: jumped to 0x2000_1080", rom.entry == 0x2000_1080 and not rom.polling)
     rom.stop = True
 
-    ok, rom, _ = run("DBG_EN pin 1 without a debug program (0xAA)", app, dbg_en_pin=True, keep=True)
+    ok, rom, _ = run("DBG_EN pin 1 without a debug program", app, dbg_en_pin=True, keep=True)
     time.sleep(0.2)
     check("ROM polls as usual, no failure token",
           ok and rom.sent == [b"ACKH", b"ACKP"] and rom.polling and rom.entry is None, str(rom.sent))

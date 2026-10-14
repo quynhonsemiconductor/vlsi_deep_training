@@ -8,7 +8,7 @@
 #ifndef QSOC_BOOT_H
 #define QSOC_BOOT_H
 
-/* ---- Memory map (util/qsoc_contract.yml, QNSC_BOOT_SPEC V3.3 Table 3-1) -
+/* ---- Memory map (util/qsoc_contract.yml, QNSC_BOOT_SPEC V3.4 Table 3-1) -
  * TODO(lead): take these from the qnsc_map.h generated from the contract
  * (BOOT_SPEC Table 10-1), so the C side cannot drift from the RTL side.
  */
@@ -68,7 +68,7 @@
  * 38 400 and up -1.36 %), inside the mentor's 10 000-20 000 range.        */
 #define UART_DIVISOR    65u
 
-/* ---- Timeouts (loop counts, not time; QNSC_BOOT_SPEC V3.3 7.3) ---------
+/* ---- Timeouts (loop counts, not time; QNSC_BOOT_SPEC V3.4 7.3) ---------
  * A poll is at least one APB read and an APB transfer takes at least 2 clk,
  * so these are MINIMUM times at 20 MHz: RX_TIMEOUT >= 100 ms (192 bytes at
  * 19 231 baud), DRAIN_IDLE >= 50 ms (96 bytes). The margins cover gaps the
@@ -84,7 +84,8 @@
  *  off  size  field         rule checked by ROM
  *  0x00  4    MAGIC         bytes 'Q','S','O','C' in that order
  *  0x04  4    LENGTH        payload bytes, %4 == 0, APP_MIN_LEN .. APP_MAX_LEN
- *  0x08  4    DEBUG_PROG    DEBUG_PROG_ON or DEBUG_PROG_OFF
+ *  0x08  4    DEBUG_PROG    DEBUG_PROG_ON: a debug program follows;
+ *                           any other value: none (not checked)
  *  0x0C  4    HDR_CRC       CRC32 of bytes 0x00..0x0B
  *  only when DEBUG_PROG = DEBUG_PROG_ON:
  *  0x10  4096 DEBUG_PAYLOAD the debug program, written from ISRAM_DBG_BASE
@@ -101,8 +102,8 @@
                          ((unsigned)(c) << 16) | ((unsigned)(d) << 24))
 
 #define MAGIC_QSOC      TOK('Q', 'S', 'O', 'C')   /* 0x434F5351 */
-#define DEBUG_PROG_ON   0x00000055u   /* the debug program precedes the payload */
-#define DEBUG_PROG_OFF  0x000000AAu   /* the payload only                    */
+#define DEBUG_PROG_ON   0x00000055u   /* the debug program precedes the payload;
+                                         any other value: the payload only */
 
 /* ---- Handshake tokens, ROM -> PC, always 4 ASCII bytes ----------------- */
 #define TOK_QRDY        TOK('Q', 'R', 'D', 'Y')   /* drained after a failure: */
@@ -111,7 +112,7 @@
 #define TOK_ACKD        TOK('A', 'C', 'K', 'D')   /* debug program ok         */
 #define TOK_ACKP        TOK('A', 'C', 'K', 'P')   /* payload ok               */
 #define TOK_FHCR        TOK('F', 'H', 'C', 'R')   /* header CRC mismatch      */
-#define TOK_FHDR        TOK('F', 'H', 'D', 'R')   /* LENGTH or DEBUG_PROG bad */
+#define TOK_FHDR        TOK('F', 'H', 'D', 'R')   /* LENGTH out of range      */
 #define TOK_FDCR        TOK('F', 'D', 'C', 'R')   /* debug program CRC mismatch*/
 #define TOK_FPCR        TOK('F', 'P', 'C', 'R')   /* payload CRC mismatch     */
 #define TOK_FTMO        TOK('F', 'T', 'M', 'O')   /* gap between bytes too long*/

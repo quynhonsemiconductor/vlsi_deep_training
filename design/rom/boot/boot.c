@@ -5,7 +5,7 @@
  * when DEBUG_PROG says the frame carries one, into ISRAM from ISRAM_DBG_BASE,
  * then the payload from ISRAM_APP_BASE, word by word, each with its own CRC.
  * Then, while SYSCSR DBG_BOOT.dbg_en is 1, it waits for the host; then it
- * jumps to APP_ENTRY (QNSC_BOOT_SPEC V3.3, 7). Nothing is sent after reset:
+ * jumps to APP_ENTRY (QNSC_BOOT_SPEC V3.4, 7). Nothing is sent after reset:
  * the ROM listens for the magic at once. Every step after the magic answers
  * the PC loader with a 4-byte token (boot.h); on any failure the ROM sends
  * the token, drains the line, sends QRDY and waits for the PC to resend the
@@ -140,11 +140,12 @@ static uint32_t boot_once(void)
         return TOK_FHCR;
 
     if ((len & 3u) || len < APP_MIN_LEN || len > APP_MAX_LEN)   return TOK_FHDR;
-    if (dbg != DEBUG_PROG_ON && dbg != DEBUG_PROG_OFF)          return TOK_FHDR;
 
     put_tok(TOK_ACKH);
 
-    /* ---- Debug program, only when the frame carries one ------------- */
+    /* ---- Debug program, only when DEBUG_PROG is exactly 0x55; any
+     *      other value means none and is not checked (HDR_CRC already
+     *      vouches that it is what the PC sent) -------------------------- */
     if (dbg == DEBUG_PROG_ON) {
         if ((rc = get_block(ISRAM_DBG_BASE, DBG_LEN, TOK_FDCR))) return rc;
         put_tok(TOK_ACKD);
