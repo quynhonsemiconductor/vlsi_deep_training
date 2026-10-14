@@ -100,7 +100,7 @@ module @DESIGN@
 // Fix the IP's parameters at the instance; verilog-auto-inst-param-value t
 // substitutes them into the widths. A value copied from the contract is tagged:
 //   @IP_MODULE@ #(
-//     .APB_ADDR_WIDTH (12)                // contract: meta.apb_paddr_width
+//     .APB_ADDR_WIDTH (14)                // contract: meta.apb_paddr_width
 //   ) u_@IP_MODULE@ (/*AUTOINST*/);
 // An enum-typed parameter is named with its package, never imported:
 //   .RV32M (ibex_pkg::RV32MFast)

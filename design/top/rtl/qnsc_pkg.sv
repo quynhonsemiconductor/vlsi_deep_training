@@ -19,7 +19,8 @@ package qnsc_pkg;
   localparam int unsigned C_DATA_WIDTH = 32;
   localparam int unsigned C_ADDR_WIDTH = 32;
   localparam int unsigned C_CLK_MHZ    = 20;
-  localparam int unsigned C_APB_PADDR_WIDTH = 12;  // P_BUS -> every APB slave
+  localparam int unsigned C_APB_PADDR_WIDTH  = 14;  // P_BUS -> every APB slave: offset in its window
+  localparam int unsigned C_PBUS_PADDR_WIDTH = 18;  // AXI2APB -> P_BUS: offset in the AXI2APB window
   localparam logic [31:0]  C_CHIP_ID = 32'h51534F43;  // SYSCSR CHIP_ID_REV, ASCII 'QSOC'
 
   // ---- memory map ----------------------------------------------------------
