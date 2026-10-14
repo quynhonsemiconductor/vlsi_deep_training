@@ -49,9 +49,9 @@ task automatic pwm_011();
   // --- CMD.UPDATE while stopped: the counter loads START at once; TH alone does not
   restart_timer(0, 99, 0);
   apb_write(mod_base(0) + C_TH, (32'd50 << 16) | 32'd5);
-  expect_reg(mod_base(0) + 12'h02C, 32'd0, "PWM_011: COUNTER after a TH write, stopped");
+  expect_reg(mod_base(0) + 14'h02C, 32'd0, "PWM_011: COUNTER after a TH write, stopped");
   apb_write(C_CMD, C_UPDATE);
-  expect_reg(mod_base(0) + 12'h02C, 32'd5, "PWM_011: COUNTER after UPDATE, stopped");
+  expect_reg(mod_base(0) + 14'h02C, 32'd5, "PWM_011: COUNTER after UPDATE, stopped");
 
   // --- CMD.START loads TH: a period of END - START + 1 = 46
   channel(0, 1, C_RSTSET, 5);              // the marker needs TH >= START to match
@@ -105,9 +105,9 @@ task automatic pwm_011();
   repeat (20) @(posedge r_clk);
   apb_write(mod_base(0) + C_CFG, (32'd2 << 8) | (32'd1 << 12) | 32'd4);
   repeat (10) @(posedge r_clk);
-  apb_read(mod_base(0) + 12'h02C, c0);
+  apb_read(mod_base(0) + 14'h02C, c0);
   repeat (30) @(posedge r_clk);
-  apb_read(mod_base(0) + 12'h02C, c1);
+  apb_read(mod_base(0) + 14'h02C, c1);
   if (c0 !== c1) $fatal(1, "PWM_011: COUNTER moved after IN_MODE 2 / IN_SEL 4 were written: %0d -> %0d", c0, c1);
 
   $display("PWM_011 ok: TH only at START or UPDATE (running: at period end; stopped: at once); CHn_TH, MODE, PRESC, IN_SEL, IN_MODE within the period in progress");
