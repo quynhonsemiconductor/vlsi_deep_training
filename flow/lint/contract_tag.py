@@ -6,8 +6,8 @@ IP does not use qnsc_pkg (design/README.md), so a value an IP shares with the
 chip -- the APB address width, a RAM depth -- is written as a number. The tag
 says which contract entry the number copies:
 
-    .APB_ADDR_WIDTH (12),              // contract: meta.apb_paddr_width
-    input logic [11:0] i_bus_apb_paddr, // contract: meta.apb_paddr_width
+    .APB_ADDR_WIDTH (14),              // contract: meta.apb_paddr_width
+    input logic [13:0] i_bus_apb_paddr, // contract: meta.apb_paddr_width
 
 The line passes when it holds a literal equal to the value, or a range [N:0]
 with N = value - 1 (a width). If util/qsoc_contract.yml changes, every tagged
@@ -16,7 +16,7 @@ line that no longer matches fails, so the copy cannot drift.
 The key is a path into util/qsoc_contract.yml. A list is entered by the `name`
 of one of its items:
 
-    meta.apb_paddr_width          -> 12
+    meta.apb_paddr_width          -> 14
     memory_map.isram.size         -> the size of the region named isram
 
 SCOPE   design/**/rtl/**/*.sv, *.v   (vendor/ excluded)

@@ -29,11 +29,21 @@ meta:
   data_width: 32
   addr_width: 32
   clock_mhz: 20
-  # Address bits P_BUS passes to every APB slave: the low 12 bits of the offset
-  # inside the slave's 16 KiB window. Every pulp APB IP declares
-  # APB_ADDR_WIDTH = 12 and decodes only low bits, so 12 fits them all.
-  # Decided 2026-09-24 by the overall lead; it closes the former tbd item.
-  apb_paddr_width: 12
+  # Address bits P_BUS passes to every APB slave: the offset inside the slave's
+  # 16 KiB window, 14 bits. Nothing subtracts a base: the windows are aligned to
+  # their size, so the low 14 bits of the address ARE the offset.
+  # It was 12 until 2026-10-14, on the argument that every pulp APB IP decodes
+  # only low bits. That does not hold for SPI: spi_device (OpenTitan,
+  # BlockAw = 13) has its buffers from offset 0x1000, and the SPI sub-map of the
+  # team's P_BUS sheet puts the device at 0x2000 inside the window. 12 bits
+  # cannot reach either. The IPs that decode fewer bits (PWM [9:2], TIMER [5:0],
+  # UART [4:2], WDT [5:2]) keep doing so and alias inside the window.
+  apb_paddr_width: 14
+  # Address bits at the input of P_BUS, from AXI2APB: the offset inside the
+  # 256 KiB AXI2APB window (0x8000_0000 - 0x8003_FFFF), 16 slots of 16 KiB.
+  # 14 slots are populated; the last two answer PSLVERR. Source: the P_BUS
+  # sheets of the team's HAS configuration (AXI2APB master, ADDRESS WIDTH 18).
+  pbus_paddr_width: 18
   # SYSCSR CHIP_ID_REV. ASCII 'QSOC', most significant byte first: 0x51 'Q',
   # 0x53 'S', 0x4F 'O', 0x43 'C'. Read by firmware, and by host tools through
   # SYSDBG, to check they run on a QSOC. Mistyped once already ('QCOS').
@@ -66,7 +76,9 @@ memory_map:
     kind: memory
     note: >
       The debug window: the first 4 KiB of ISRAM, not a block of its own.
-      Firmware must place nothing here. The host writes it through SYSDBG.
+      Firmware must place nothing here. The boot ROM loads the debug program
+      into it over UART0 when the frame header has DEBUG_PROG = 0x55
+      (QNSC_BOOT_SPEC 6); the host writes only its sequence area through SYSDBG.
       PMP is disabled (HAS Table 6-4 row 11), so this is a firmware convention.
 
   - name: isram

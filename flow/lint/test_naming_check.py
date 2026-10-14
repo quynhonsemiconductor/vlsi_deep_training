@@ -19,7 +19,7 @@ GOOD_WRAP = """\
 module m_qnsc_wrap_x (
   input  logic        i_clk_peri,
   input  logic        i_rst_n_peri,
-  input  logic [11:0] i_bus_apb_paddr,
+  input  logic [13:0] i_bus_apb_paddr,
   input  logic        i_bus_apb_psel, i_bus_apb_penable,
   output logic [31:0] o_bus_apb_prdata,
   output logic        o_int_x

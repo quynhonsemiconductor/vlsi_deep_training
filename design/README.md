@@ -196,7 +196,7 @@ When an IP needs a number the chip decides, there are two cases:
 
 ```systemverilog
 apb_adv_timer #(
-  .APB_ADDR_WIDTH (12),               // contract: meta.apb_paddr_width
+  .APB_ADDR_WIDTH (14),               // contract: meta.apb_paddr_width
   .EXTSIG_NUM     (32),               // the IP owner's choice: no tag
   .TIMER_NBITS    (16)
 ) u_apb_adv_timer (/*AUTOINST*/);
@@ -240,7 +240,7 @@ behaviour across the chip.
 
 | Item | Rule |
 |---|---|
-| `i_bus_apb_paddr` | 12 bits (`[11:0]`, contract `meta.apb_paddr_width`): the low 12 bits of the offset inside the 16 KiB window, after P_BUS subtracts the base. Set with the IP's parameter, tagged `// contract: meta.apb_paddr_width`. Offsets the IP does not decode alias, and that is accepted |
+| `i_bus_apb_paddr` | 14 bits (`[13:0]`, contract `meta.apb_paddr_width`): the offset inside the slave's 16 KiB window. Nothing subtracts a base; the window is aligned to its size, so the low 14 bits of the address are the offset. Set with the IP's parameter, tagged `// contract: meta.apb_paddr_width`. An IP decodes only the bits it needs, so offsets it does not decode alias, and that is accepted. The input of P_BUS is 18 bits (`meta.pbus_paddr_width`): the offset inside the 256 KiB AXI2APB window |
 | `PSTRB`, `PPROT` | Connect them if the IP has them. If the IP has no `PSTRB`, leave the port unconnected and state in the MAS that a sub-word write writes the whole word |
 | `PREADY`, `PSLVERR` | Pass the IP's through. A wrapper that adds its own decode error states it, and the reason, in its MAS |
 | Clock, reset | `i_clk_peri`, `i_rst_n_peri`: the `peri` cluster, gateable by `SCRC` |

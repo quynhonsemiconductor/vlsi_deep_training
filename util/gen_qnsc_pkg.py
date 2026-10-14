@@ -37,6 +37,23 @@ def hexlit(value: int, width: int = 32) -> str:
     return f"{width}'h{value:08X}"
 
 
+def check_paddr(c: dict) -> list[str]:
+    """The two APB address widths must describe the memory map, not just sit next to it."""
+    meta = c["meta"]
+    slave, master = 1 << meta["apb_paddr_width"], 1 << meta["pbus_paddr_width"]
+    apb = [r for r in c["memory_map"] if str(r.get("port", "")).startswith("APB_M")]
+    bad = []
+    for r in apb:
+        if r["size"] != slave:
+            bad.append(f"{r['name']}: size {r['size']:#x}, but 2**apb_paddr_width = {slave:#x}")
+    lo = min(r["base"] for r in apb)
+    hi = max(r["base"] + r["size"] for r in apb)
+    if lo % master or hi - lo > master:
+        bad.append(f"APB regions {lo:#x}..{hi:#x} do not fit one window of "
+                   f"2**pbus_paddr_width = {master:#x} aligned to itself")
+    return bad
+
+
 def emit(c: dict) -> str:
     meta = c["meta"]
     L: list[str] = []
@@ -63,7 +80,8 @@ def emit(c: dict) -> str:
     a(f"  localparam int unsigned C_DATA_WIDTH = {meta['data_width']};")
     a(f"  localparam int unsigned C_ADDR_WIDTH = {meta['addr_width']};")
     a(f"  localparam int unsigned C_CLK_MHZ    = {meta['clock_mhz']};")
-    a(f"  localparam int unsigned C_APB_PADDR_WIDTH = {meta['apb_paddr_width']};  // P_BUS -> every APB slave")
+    a(f"  localparam int unsigned C_APB_PADDR_WIDTH  = {meta['apb_paddr_width']};  // P_BUS -> every APB slave: offset in its window")
+    a(f"  localparam int unsigned C_PBUS_PADDR_WIDTH = {meta['pbus_paddr_width']};  // AXI2APB -> P_BUS: offset in the AXI2APB window")
     a(f"  localparam logic [31:0]  C_CHIP_ID = {hexlit(meta['chip_id'])};  // SYSCSR CHIP_ID_REV, ASCII 'QSOC'")
     a("")
 
@@ -137,6 +155,12 @@ def emit(c: dict) -> str:
 
 def main(argv: list[str]) -> int:
     contract = yaml.safe_load(CONTRACT.read_text())
+    problems = check_paddr(contract)
+    if problems:
+        print("FAIL: the APB address widths disagree with the memory map:")
+        for p in problems:
+            print("  " + p)
+        return 1
     text = emit(contract)
 
     if "--check" in argv:

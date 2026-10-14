@@ -98,7 +98,7 @@ contract-tags` checks it:
 
 ```systemverilog
 apb_adv_timer #(
-  .APB_ADDR_WIDTH (12),               // contract: meta.apb_paddr_width
+  .APB_ADDR_WIDTH (14),               // contract: meta.apb_paddr_width
   .EXTSIG_NUM     (32),
   .TIMER_NBITS    (16)
 ) u_apb_adv_timer (/*AUTOINST*/);
