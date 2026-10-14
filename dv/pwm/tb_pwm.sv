@@ -15,7 +15,7 @@ module tb_pwm;
   // ------------------------------------------------------------ DUT
   logic        r_clk = 1'b0;
   logic        r_rst_n = 1'b0;
-  logic [11:0] r_paddr = '0;
+  logic [13:0] r_paddr = '0;
   logic        r_psel = 1'b0, r_penable = 1'b0, r_pwrite = 1'b0;
   logic [31:0] r_pwdata = '0;
   logic [3:0]  r_tim_ext = '0;
@@ -46,18 +46,18 @@ module tb_pwm;
   );
 
   // ------------------------------------------------------------ registers (MAS 6)
-  localparam logic [11:0] C_CMD = 12'h000, C_CFG = 12'h004, C_TH = 12'h008, C_CH0_TH = 12'h00C,
-                          C_CH0_LUT = 12'h01C, C_COUNTER = 12'h02C, C_EVENT_CFG = 12'h100,
-                          C_CH_EN = 12'h104;
+  localparam logic [13:0] C_CMD = 14'h000, C_CFG = 14'h004, C_TH = 14'h008, C_CH0_TH = 14'h00C,
+                          C_CH0_LUT = 14'h01C, C_COUNTER = 14'h02C, C_EVENT_CFG = 14'h100,
+                          C_CH_EN = 14'h104;
   localparam logic [31:0] C_START = 32'h01, C_STOP = 32'h02, C_UPDATE = 32'h04, C_RST = 32'h08;
   localparam int C_SETRST = 2, C_RST_MODE = 4, C_RSTSET = 6;
 
-  function automatic logic [11:0] mod_base(input int unsigned m);
+  function automatic logic [13:0] mod_base(input int unsigned m);
     return 12'(m * 32'h40);
   endfunction
 
   // ------------------------------------------------------------ APB driver
-  task automatic apb_write(input logic [11:0] a, input logic [31:0] d);
+  task automatic apb_write(input logic [13:0] a, input logic [31:0] d);
     @(posedge r_clk);
     r_paddr <= a; r_pwdata <= d; r_pwrite <= 1'b1; r_psel <= 1'b1;
     @(posedge r_clk);
@@ -66,7 +66,7 @@ module tb_pwm;
     r_psel <= 1'b0; r_penable <= 1'b0; r_pwrite <= 1'b0;
   endtask
 
-  task automatic apb_read(input logic [11:0] a, output logic [31:0] d);
+  task automatic apb_read(input logic [13:0] a, output logic [31:0] d);
     @(posedge r_clk);
     r_paddr <= a; r_pwrite <= 1'b0; r_psel <= 1'b1;
     @(posedge r_clk);
@@ -78,7 +78,7 @@ module tb_pwm;
     r_psel <= 1'b0; r_penable <= 1'b0;
   endtask
 
-  task automatic expect_reg(input logic [11:0] a, input logic [31:0] exp, input string what);
+  task automatic expect_reg(input logic [13:0] a, input logic [31:0] exp, input string what);
     logic [31:0] d;
     apb_read(a, d);
     if (d !== exp) $fatal(1, "%s: 0x%03h read 0x%08h, expected 0x%08h", what, a, d, exp);
