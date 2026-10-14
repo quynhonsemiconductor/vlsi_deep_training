@@ -1,6 +1,6 @@
 ---
 title: "PWM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.7"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.8"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -19,6 +19,7 @@ The reasoning behind each change is in
 | V2.5 | 2026-09-28 | Nghia VT | -- | `SCRC` bit from `QNSC_SCRC_MAS` V3.0: `CLK_EN[15]`; requirement on `SCRC` closed |
 | V2.6 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`PWM_NNN`), for traceability to tests. No change in behaviour |
 | V2.7 | 2026-10-09 | Nghia VT | -- | `pulp_clock_gating` maps onto `qnsc_clk_gate`, the chip's one clock gate (4). Word writes only: the IP has no `PSTRB` or `PPROT` (7.6). No dead time, complementary output or break input (11). No change in behaviour |
+| V2.8 | 2026-10-15 | Nghia VT | -- | `i_bus_apb_paddr` is 14 bits, was 12: the contract `meta.apb_paddr_width` changed in #77 because the windows are 16 KiB. The requirement on the bus owner no longer says that `P_BUS` subtracts the base (nothing does; the window is aligned to its size). The decode is unchanged: `PADDR[9:2]`, so the 1 KiB map repeats every `0x400` across the window |
 
 # 1. Overview
 
@@ -80,7 +81,7 @@ Names follow `QNSC_RTL_Design_Naming_Rule` V1.1. `o_pad_pwm` and `o_int_pwm` are
 |---|---|---:|---|
 | `i_clk_peri` | in | 1 | `peri` cluster clock, to `HCLK` |
 | `i_rst_n_peri` | in | 1 | asynchronous active-low reset, to `HRESETn` |
-| `i_bus_apb_paddr` | in | 12 | only `[9:2]` decoded -- 7.6 |
+| `i_bus_apb_paddr` | in | 14 | only `[9:2]` decoded -- 7.6 |
 | `i_bus_apb_pwdata` | in | 32 | write data |
 | `i_bus_apb_pwrite`, `i_bus_apb_psel`, `i_bus_apb_penable` | in | 1 each | APB4 control |
 | `o_bus_apb_prdata` | out | 32 | read data; 0 at unimplemented offsets |
@@ -298,7 +299,7 @@ One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
 
 | Item | Owner | What it blocks |
 |---|---|---|
-| `i_bus_apb_paddr[11:0]` = the low 12 bits of the offset (`P_BUS` subtracts the base; offset bits 13:12 are not used) | bus owner | register decode |
+| `i_bus_apb_paddr[13:0]` = the offset inside the 16 KiB window, the low 14 bits of the address (the window is aligned to its size); offset bits 13:10 are not decoded | bus owner | register decode |
 | `SCRC` closes the PWM clock only after firmware's safe stop -- 7.7 | firmware owner | outputs frozen at a non-zero level at a power stage |
 | Pins for `PWM_0..7` and `TIM_EXT0..3`, and their IO MUX default after reset | IO pad / IO MUX owner | pin owner out of reset |
 
