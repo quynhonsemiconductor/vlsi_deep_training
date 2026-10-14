@@ -57,7 +57,7 @@ for i, (name, w, size, opt) in enumerate(_F):
 frame.append(N("hdr", 10, 5, 360, 30, "header, 16 B", "port", 10))
 frame.append(N("dpt", 370, 5, 240, 30, "only when DEBUG_PROG = 0x55", "port", 10))
 
-# ---------- Figure: bootloader flow (QNSC_BOOT_SPEC V3.3: one decision per check) ----------
+# ---------- Figure: bootloader flow (QNSC_BOOT_SPEC V3.4: one decision per check) ----------
 _FX, _FW, _FH = 20, 270, 40            # boxes
 _DX, _DW, _DH = 45, 220, 64            # decisions
 _TX, _TW, _TH = 340, 120, 32           # failure tokens
@@ -78,7 +78,7 @@ flow = [
     _fd("hto", "new byte within\nRX_TIMEOUT polls?"),
     _fd("h8", "12 header bytes\nreceived?"),
     _fd("hcr", "CRC32 = HDR_CRC?"),
-    _fd("hrg", "LENGTH and DEBUG_PROG\nvalid? (Table 6-1)"),
+    _fd("hrg", "LENGTH valid?\n(Table 6-1)"),
     _fb("ackh", "send ACKH", True),
     _fd("dsel", "DEBUG_PROG = 0x55?"),
     _fb("dpay", "waiting for the next debug program\nor DBG_CRC byte; write it to 0x2000_0000"),
@@ -106,10 +106,10 @@ _yes = {"mag": "yes", "hto": "yes", "h8": "yes", "hcr": "yes", "hrg": "yes", "ds
         "wt": "no"}
 flow_e = [E(a, "b", b, "t", _yes.get(a, "")) for a, b in zip(_seq, _seq[1:])]
 # the "no" loops at x = 8: the image starts 24 px left of the boxes, so the label fits;
-# the 0xAA bypass runs further left, at x = -8, past the debug-program loop
+# the no-debug-program bypass runs further left, at x = -8, past the debug-program loop
 flow_e += [E("mag", "l", "hunt", "l", "no", mid=8), E("h8", "l", "hdr", "l", "no", mid=8),
            E("dn", "l", "dpay", "l", "no", mid=8), E("pn", "l", "pay", "l", "no", mid=8),
-           E("dsel", "l", "pay", "l@0.25", "no (0xAA)", mid=-8)]
+           E("dsel", "l", "pay", "l@0.25", "no", mid=-8)]
 # widens the image so the bypass and its label are not cut
 flow.append(N("lspace", -50, _fi["dsel"].y, 1, 1, "", "port", 9))
 # the debug wait: the CPU runs this loop until the host writes DBG_BOOT.dbg_en_mask = 1

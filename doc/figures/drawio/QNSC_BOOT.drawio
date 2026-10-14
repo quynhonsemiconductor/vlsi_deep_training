@@ -256,7 +256,7 @@
         <mxCell id="hcr" value="CRC32 = HDR_CRC?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="45" y="478" width="220" height="64" as="geometry"/>
         </mxCell>
-        <mxCell id="hrg" value="LENGTH and DEBUG_PROG&#10;valid? (Table 6-1)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="hrg" value="LENGTH valid?&#10;(Table 6-1)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="45" y="568" width="220" height="64" as="geometry"/>
         </mxCell>
         <mxCell id="ackh" value="send ACKH" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=10;dashed=0;fontStyle=1;verticalAlign=middle;" vertex="1" parent="1">
@@ -412,7 +412,7 @@
         <mxCell id="pn_pay_24" value="no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pn" target="pay">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="dsel_pay_25" value="no (0xAA)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=0.0;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dsel" target="pay">
+        <mxCell id="dsel_pay_25" value="no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0.0;exitY=0.5;entryX=0.0;entryY=0.25;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="dsel" target="pay">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="wt_poll_26" value="yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="wt" target="poll">

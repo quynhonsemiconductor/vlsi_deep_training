@@ -2,14 +2,27 @@
 
 **This is not the specification.** That is [`QNSC_BOOT_SPEC.md`](QNSC_BOOT_SPEC.md).
 
-This file holds why V3.3 differs from V3.2, why V3.2 differs from V3.1, why V3.1
+This file holds why V3.4 differs from V3.3, why V3.3 differs from V3.2, why V3.2 differs from V3.1, why V3.1
 differs from V3.0, why V3.0 differs from V2.2, and the
 V2.2 document by Nguyen Hao Nam, kept whole below. Its figures are not reproduced: they were in colour and are
 replaced by the figures of the specification.
 
 ---
 
-# 1. V3.2 to V3.3
+# 1. V3.3 to V3.4
+
+From the mentor's feedback of 14/10: "DEBUG_PROG = 0x55: load the program; if it
+does not match, skip it (no need to check 0xAA)". With this the mentor considers
+the boot flow complete.
+
+| Change | Why |
+|---|---|
+| The ROM compares `DEBUG_PROG` with `0x0000_0055` only: equal, the debug program follows; any other value, none. `0xAA` is no longer a checked value, and `FHDR` is for `LENGTH` only | The mentor. Nothing is lost: `HDR_CRC` is checked first, so a value that reaches this test is the one the PC sent, and the PC sends the debug program on the same test, so the two sides cannot disagree. The V3.3 reason for two far-apart values, a flipped bit, is already covered by the CRC |
+| The whole word is compared, not its low byte | So `0x0000_0155` is not taken as a debug frame; the same single comparison in C |
+| The PC loader still sends `0x0000_00AA` when there is no debug program | Any value but `0x55` works; `0xAA` keeps frames built by V3.3 tools valid and is the mentor's original value for "user program only" |
+| The ROM shrinks from 748 to 734 bytes (606 bytes of code) | One comparison less |
+
+# 2. V3.2 to V3.3
 
 From the mentor's drawing of the debug boot flow (12/10,
 `Diagram/QSOC_Boot_Flow.drawio` in the owner's workspace) and the owner's decisions
@@ -20,7 +33,7 @@ unchanged.
 |---|---|
 | The ROM loads the debug program too, over `UART0`; JTAG no longer writes the image | The mentor: "ROM code is responsible for loading the programs (no JTAG)". One load path for both modes, the one already verified, instead of a second one through `SYSDBG` that only debug boot exercised |
 | No CPU hold and no boot address mux: the CPU always starts in the ROM; with the `DBG_EN` pin at 1 the ROM waits after `ACKP` by polling `SYSCSR` | The mentor's drawing: "= 1: CPU polling, = 0: jump to 0x2000_1000". The wait moves from hardware (`o_dbg_cpu_hold`, `boot_addr_i` mux, `QNSC_SYSDBG_DECISIONS` D2, D4) into a three-instruction loop. The CPU runs during the wait, so the host can halt it into the debug program with the debug request at any time, which a CPU held in reset cannot do. The V3.1 answer to "how does the CPU run an image loaded over JTAG" no longer applies: nothing is loaded over JTAG |
-| `DEBUG_PROG` in the header, a 4-byte word: `0x55` a debug program follows, `0xAA` none; any other value `FHDR` | The mentor named the field and its two values. A whole word keeps `HDR_CRC` and everything after it on a 4-byte boundary, so the ROM keeps reading words; the owner chose 4 bytes over 1. Two values far apart, instead of 0 and 1, so a single flipped bit cannot turn one into the other, and a wrong value is refused rather than read as "no" |
+| `DEBUG_PROG` in the header, a 4-byte word: `0x55` a debug program follows, `0xAA` none; any other value `FHDR` (V3.4: only `0x55` is checked, 1) | The mentor named the field and its two values. A whole word keeps `HDR_CRC` and everything after it on a 4-byte boundary, so the ROM keeps reading words; the owner chose 4 bytes over 1. Two values far apart, instead of 0 and 1, so a single flipped bit cannot turn one into the other, and a wrong value is refused rather than read as "no" |
 | The debug program is always 4 096 bytes, with its own `DBG_CRC`; no length field | The owner: fixed 4 KiB for simplicity. The debug window is exactly the 4 KiB below the application, so a fixed size can neither overlap the payload nor need a range check; the cost is about 2.1 s per download with a debug program. A CRC of its own tells a bad debug program from a bad payload |
 | Tokens `ACKD` (debug program accepted) and `FDCR` (its CRC wrong) | Every other part of the frame has its acknowledgement and its failure token; the PC sends the payload only after `ACKD`, as it sends the payload only after `ACKH`. Proposed by the owner, confirmed by the mentor on 12/10 |
 | The ROM reads `DBG_BOOT.dbg_en`, the mentor's `SYSCSR.DEBUG_EN`; the host writes `dbg_en_mask`, the mentor's `DEBUG_EN_MASK` | The Naming Rule writes `dbg`, not `debug`, in RTL names (rule 1.5), and the pin is already `DBG_EN` in `QNSC_SYSDBG_MAS`. The behaviour is the mentor's: the pin through two flip-flops, a mux to 0 selected by the mask, reset value 0 (`QNSC_SYSCSR_MAS` 7.5) |
@@ -29,7 +42,7 @@ unchanged.
 | Entry stays `0x2000_1080` | The drawing writes `0x2000_1000`, which is where the application is loaded. Its first 128 bytes are its vector table, and the code starts after it, as in V3.2. Confirmed by the mentor on 12/10 |
 | The ROM grows from 672 to 748 bytes (620 bytes of code) | The debug program reuses the payload loop (`get_block`), so the new code is the header field, one branch and the wait loop |
 
-# 2. V3.1 to V3.2
+# 3. V3.1 to V3.2
 
 From the mentor review of V3.1 and the owner's decisions of 08/10 and 09/10. The
 retry by the PC, the timeouts and the drain are unchanged.
@@ -42,7 +55,7 @@ retry by the PC, the timeouts and the drain are unchanged.
 | `FUAR` dropped; the ROM no longer reads the `LSR` error bits | The owner: a UART error is caught anyway. With 8N1 there is no parity error. A framing error leaves a wrong byte that a CRC catches (`FHCR`, `FPCR`); an overrun loses a byte, the frame is short and the ROM ends in `FTMO`. Both lead to the same retry. The byte with an error is kept, not dropped: dropping it would turn every framing error into a timeout, 100 ms or more each time, for nothing. `obi_uart` keeps the error flags per byte in the RX FIFO, so an unread flag blocks nothing. The cost is the diagnosis on the PC: a wrong baud rate shows as repeated `FHCR` instead of `FUAR`. The ROM shrinks from 730 to 672 bytes |
 | Figure 4-1 redrawn by the owner: "Power on", two `SCRC` steps (hold and clock; release all but the CPU), the `DBG_EN` pin, no "CRC pass?" decision | The owner's own reading of the flow. The CRC test that V3.1 put in Figure 4-1 is the last decision of Figure 7-1; Table 4-2 says that the download step repeats until both CRCs and `LENGTH` pass. WDT bite and SW_RST are kept in Table 4-2 |
 
-# 3. V3.0 to V3.1
+# 4. V3.0 to V3.1
 
 From the mentor review of 29/09 (Nam's recap) and the owner's decisions of 30/09.
 The frame, the eight tokens and the retry by the PC are unchanged.
@@ -70,7 +83,7 @@ within 2 s and resends. A timeout here would have nothing better to do than wait
 again: there is no other boot source, a periodic `QRDY` is the start-up token the
 mentor removed, and a reset comes back to the same place.
 
-# 4. V2.2 to V3.0
+# 5. V2.2 to V3.0
 
 The protocol, frame and bootloader are V2.2's.
 

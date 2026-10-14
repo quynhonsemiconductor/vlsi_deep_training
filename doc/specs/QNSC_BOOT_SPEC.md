@@ -1,6 +1,6 @@
 ---
 title: "BOOT"
-subtitle: "BOOT FLOW SPECIFICATION -- V3.3"
+subtitle: "BOOT FLOW SPECIFICATION -- V3.4"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -11,6 +11,7 @@ The reasoning behind each change, the V1.0--V2.2 history and the V2.2 text are i
 
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
+| V3.4 | 2026-10-14 | Nguyen Hao Nam | -- | Mentor feedback of 14/10 (Appendix B): the ROM loads the debug program when `DEBUG_PROG` is `0x0000_0055` and skips it for any other value; `0xAA` is no longer checked, so `FHDR` is for `LENGTH` only; Figures 6-1 and 7-1, Tables 6-1, 7-1, 7-2 and 11 with them |
 | V3.3 | 2026-10-12 | Nguyen Hao Nam | -- | Mentor's debug boot flow of 12/10 (Appendix B): the ROM loads the debug program too, over `UART0`; JTAG no longer loads the image or holds the CPU, and the boot address mux is gone, so both modes run the ROM; header 16 bytes with `DEBUG_PROG` (`0x55`: a 4 096-byte debug program and its `DBG_CRC` follow the header and go to `0x2000_0000`; `0xAA`: none); tokens `ACKD` and `FDCR`; after `ACKP` the ROM waits while `SYSCSR` `DBG_BOOT.dbg_en` = 1, which the `DBG_EN` pin sets and the host clears over JTAG; a debug request during the wait enters the debug program at `DmHaltAddr` `0x2000_0800` and `dret` returns to the wait; the debug program follows the `SYSDBG` debug window layout (9); Figures 4-1, 6-1, 7-1, 7-2 redrawn and Tables 4-2, 7-1 with them |
 | V3.2 | 2026-10-09 | Nguyen Hao Nam | -- | Mentor review of V3.1 (Appendix B): `ENTRY` dropped from the header, for the same entry as debug boot; `LOAD_ADDR` dropped with it, so the payload always goes to `0x2000_1000` and the ROM jumps to `0x2000_1080`; header 12 bytes; `LENGTH` 132 to 61 440; `FUAR` dropped and the UART error bits no longer read, since a CRC or the timeout catches every UART error; Figure 4-1 redrawn (two `SCRC` steps, the `DBG_EN` pin, no CRC test) and Table 4-2 with it |
 | V3.1 | 2026-09-30 | Nguyen Hao Nam | -- | Mentor review 29/09 (Appendix B): no `QRDY` after reset, only after a failure; 19 200 baud; Figure 4-1 shows the CPU release and tests CRC pass; debug boot explained by the boot address mux; steps of Figures 4-1 and 7-1 described (Tables 4-2, 7-1); how each failure is detected; timeouts given as minimums; UART errors before `MAGIC` get no reply; Figure 7-1 redrawn with one decision per check; the PC stops on a failure token; `RX_TIMEOUT` and `DRAIN_IDLE` raised |
@@ -99,9 +100,9 @@ wait starts, so the host can halt the CPU into it at any time: Ibex enters it at
 | SCRC releases the CPU reset | Last, `MCPU` releases the CPU reset, in both modes. | `QNSC_SCRC_MAS` 7.5 |
 | Ibex fetches 0x0000_0080 (ROM) | Ibex starts at its boot address + 0x80: `0x0000_0080` in the ROM. The start-up code points the stack at the top of DSRAM, `0x3000_8000`, and calls the bootloader, `boot_main`. | `QNSC_ROM_MAS` 6, section 8 |
 | init UART0 | Sets 19 200 baud, 8 data bits, no parity and 1 stop bit, turns the FIFOs on and the interrupts off (section 5). The ROM starts listening for MAGIC at once. | 5 |
-| receive the frame from the PC over UART0: DEBUG_PAYLOAD to 0x2000_0000 (only when DEBUG_PROG = 0x55), PAYLOAD to 0x2000_1000 | Receive and check the frame, Figure 7-1 and Table 7-1. The step ends when the header CRC, `LENGTH`, `DEBUG_PROG`, the debug program CRC if there is one, and the payload CRC all pass. On any failure the ROM sends a failure token, empties the line and sends `QRDY`, and the PC resends the whole frame. | 7 |
+| receive the frame from the PC over UART0: DEBUG_PAYLOAD to 0x2000_0000 (only when DEBUG_PROG = 0x55), PAYLOAD to 0x2000_1000 | Receive and check the frame, Figure 7-1 and Table 7-1. The step ends when the header CRC, `LENGTH`, the debug program CRC if there is one, and the payload CRC all pass. On any failure the ROM sends a failure token, empties the line and sends `QRDY`, and the PC resends the whole frame. | 7 |
 | SYSCSR.DBG_EN = 1? | The ROM reads `SYSCSR` `DBG_BOOT`. Bit 0, `dbg_en`, is the `DBG_EN` pin through two flip-flops, forced to 0 once the host has written `dbg_en_mask` = 1. | 7.5, `QNSC_SYSCSR_MAS` 7.5 |
-| CPU polling: read SYSCSR.DBG_EN again (1: debug boot) | The ROM reads `DBG_BOOT` in a loop. The CPU is not held in reset: it runs this loop, so the host can halt it into the debug program at any time: Ibex enters it at `DmHaltAddr`, `0x2000_0800`, and `dret` brings it back into this loop. The host ends the wait by writing `DBG_BOOT.dbg_en_mask` = 1 through the `SYSDBG` bus master. With `DEBUG_PROG` = `0xAA` the ROM waits all the same and sends no token. | 7.5 |
+| CPU polling: read SYSCSR.DBG_EN again (1: debug boot) | The ROM reads `DBG_BOOT` in a loop. The CPU is not held in reset: it runs this loop, so the host can halt it into the debug program at any time: Ibex enters it at `DmHaltAddr`, `0x2000_0800`, and `dret` brings it back into this loop. The host ends the wait by writing `DBG_BOOT.dbg_en_mask` = 1 through the `SYSDBG` bus master. With `DEBUG_PROG` other than `0x55` the ROM waits all the same and sends no token. | 7.5 |
 | jump to 0x2000_1080 (ISRAM) (0: normal boot) | The ROM clears the instruction prefetch and jumps to `0x2000_1080`. | 7.5 |
 | application runs from ISRAM | Section 9. If the frame carried a debug program, the host can halt the CPU into it while the application runs. | 9 |
 
@@ -146,7 +147,7 @@ frame.
 |---|---|---|
 | `0x00` | `MAGIC` | the bytes 'Q', 'S', 'O', 'C' in that order |
 | `0x04` | `LENGTH` | multiple of 4, 132 to 61 440 |
-| `0x08` | `DEBUG_PROG` | `0x0000_0055`: a debug program follows the header; `0x0000_00AA`: none |
+| `0x08` | `DEBUG_PROG` | not checked: `0x0000_0055`, a debug program follows the header; any other value, none |
 | `0x0C` | `HDR_CRC` | CRC32 of bytes `0x00`--`0x0B` |
 | `0x10` | `DEBUG_PAYLOAD` | only with `DEBUG_PROG` = `0x55`: 4 096 bytes, the debug program zero-padded by the PC; written to `ISRAM` from `0x2000_0000` |
 | `0x1010` | `DBG_CRC` | only with `DEBUG_PROG` = `0x55`: CRC32 of `DEBUG_PAYLOAD` |
@@ -160,8 +161,11 @@ reaches the first instruction at `0x2000_1080`, and at most 61 440 so that it en
 inside `ISRAM`, at `0x2001_0000`. The debug program has no length field: it is
 always sent in full, so it can neither overlap the payload nor stop short.
 
-`DEBUG_PROG` is a whole word so that every field stays on a 4-byte boundary. Any
-other value than the two above is refused with `FHDR`.
+`DEBUG_PROG` is a whole word so that every field stays on a 4-byte boundary. The
+ROM compares the whole word with `0x0000_0055` and checks nothing else: any other
+value means no debug program, and the PC loader sends `0x0000_00AA` for that.
+`HDR_CRC` already shows that the value is the one the PC sent, and the PC sends the
+debug program on the same test, so the two sides cannot disagree.
 
 CRC32 is the zlib variant: reflected polynomial `0xEDB88320`, initial value and
 final XOR `0xFFFF_FFFF`. The ROM computes it bitwise.
@@ -183,9 +187,9 @@ check is done by the bootloader in software.
 | new byte within RX_TIMEOUT polls? | The poll count restarts at every byte (7.3). | no: `FTMO` |
 | 12 header bytes received? | No: wait for the next header byte. | -- |
 | CRC32 = HDR_CRC? | Checked before the fields: with a wrong CRC their values mean nothing. | no: `FHCR` |
-| LENGTH and DEBUG_PROG valid? | The CRC only shows that the bytes arrived as the PC sent them, not that the values make sense. `LENGTH` must be a multiple of 4 and 132 to 61 440 (Table 6-1), so the payload reaches `0x2000_1080` and stays inside `ISRAM`; `DEBUG_PROG` must be `0x55` or `0xAA`. | no: `FHDR` |
+| LENGTH valid? | The CRC only shows that the bytes arrived as the PC sent them, not that the value makes sense. `LENGTH` must be a multiple of 4 and 132 to 61 440 (Table 6-1), so the payload reaches `0x2000_1080` and stays inside `ISRAM`. `DEBUG_PROG` is not checked. | no: `FHDR` |
 | send ACKH | `ISRAM` is written only after this token. | -- |
-| DEBUG_PROG = 0x55? | No: go to the payload. | -- |
+| DEBUG_PROG = 0x55? | The whole word is compared. No, any other value: go to the payload. | -- |
 | waiting for the next debug program or DBG_CRC byte; write it to 0x2000_0000 (ISRAM) | Every 4 bytes are written as one word to `ISRAM`, the first at `0x2000_0000`, and fed to a CRC32. The 4 bytes of `DBG_CRC` are neither written nor fed. | -- |
 | new byte within RX_TIMEOUT polls? | As for the header. | no: `FTMO` |
 | 4 096 bytes and DBG_CRC received? | The loop bound only. No: wait for the next byte. | -- |
@@ -209,11 +213,11 @@ check is done by the bootloader in software.
 | Token | Sent when |
 |---|---|
 | `QRDY` | after every failure, once the line is drained; not after reset |
-| `ACKH` | header received, `HDR_CRC` correct, `LENGTH` in range, `DEBUG_PROG` valid |
+| `ACKH` | header received, `HDR_CRC` correct, `LENGTH` in range |
 | `ACKD` | `DBG_CRC` correct; only with `DEBUG_PROG` = `0x55` |
 | `ACKP` | `PAY_CRC` correct |
 | `FHCR` | `HDR_CRC` wrong |
-| `FHDR` | `LENGTH` out of range, or `DEBUG_PROG` neither `0x55` nor `0xAA` |
+| `FHDR` | `LENGTH` out of range |
 | `FDCR` | `DBG_CRC` wrong |
 | `FPCR` | `PAY_CRC` wrong |
 | `FTMO` | more than `RX_TIMEOUT` between two bytes after `MAGIC` |
@@ -285,7 +289,7 @@ it reads `SYSCSR` `DBG_BOOT` (`0x8000_400C`) until bit 0, `dbg_en`, is 0:
   `DBG_BOOT` again. Only `dbg_en` = 0 ends the wait. To stop on the first
   instruction of the application, the host halts the CPU, plants a breakpoint at
   `0x2000_1080`, writes `dbg_en_mask` = 1 and resumes.
-- `DEBUG_PROG` = `0xAA` with the pin at 1 is an operator mistake: there is no debug
+- `DEBUG_PROG` other than `0x55` with the pin at 1 is an operator mistake: there is no debug
   program, so `0x2000_0800` holds no dispatch loop and the host must not raise the
   debug request. The ROM waits all the same and sends no token; the host releases
   it with `dbg_en_mask` = 1.
@@ -305,7 +309,7 @@ Then the ROM executes `fence.i` and jumps to `0x2000_1080`. It does not return.
 - `crt0.S` holds the 32 vectors and `_start` at `0x80`: `sp` = `0x3000_8000`, the
   top of `DSRAM`, then `boot_main`.
 - Built with `-march=rv32imc_zicsr_zifencei`, which `fence.i` needs.
-- V3.3 image: 748 bytes, 620 bytes of code after the vector table.
+- V3.4 image: 734 bytes, 606 bytes of code after the vector table.
 
 : Source, `design/rom/boot/`
 
@@ -377,8 +381,10 @@ again only after a power-on.
 1. `BOOT_001` After each reset source the ROM sends no token and accepts a correct
    frame: `ACKH`, `ACKP`, then execution at `0x2000_1080`.
 2. `BOOT_002` Bytes before `MAGIC` get no reply.
-3. `BOOT_003` A wrong `HDR_CRC` gives `FHCR`; a `LENGTH` out of range or a
-   `DEBUG_PROG` other than `0x55` and `0xAA` gives `FHDR`; none writes `ISRAM`.
+3. `BOOT_003` A wrong `HDR_CRC` gives `FHCR`; a `LENGTH` out of range gives `FHDR`;
+   neither writes `ISRAM`. A `DEBUG_PROG` other than `0x0000_0055` (`0x0`, `0x33`,
+   `0x155`) is taken as no debug program: `ACKH`, `ACKP`, nothing written below
+   `0x2000_1000`.
 4. `BOOT_004` A wrong `PAY_CRC` gives `FPCR` and no jump.
 5. `BOOT_005` A gap longer than `RX_TIMEOUT` after `MAGIC` gives `FTMO`; a byte
    changed on the line gives `FHCR`, `FDCR` or `FPCR`, a byte lost gives `FTMO`.
@@ -391,7 +397,7 @@ again only after a power-on.
     wrong `DBG_CRC` gives `FDCR` and a retry.
 11. `BOOT_011` With the `DBG_EN` pin at 1 the ROM sends `ACKP` and does not jump
     until `DBG_BOOT.dbg_en_mask` is written 1; then it jumps to `0x2000_1080`.
-12. `BOOT_012` With the `DBG_EN` pin at 1 and `DEBUG_PROG` = `0xAA` the ROM waits as
+12. `BOOT_012` With the `DBG_EN` pin at 1 and no debug program the ROM waits as
     in `BOOT_011` and sends no failure token.
 
 # Appendix A. Acronyms
@@ -435,3 +441,4 @@ again only after a power-on.
 | Tokens `ACKD` and `FDCR` for the debug program | Quan (mentor), 12/10, confirmed | 7.1 |
 | Entry `0x2000_1080`, after the application's vector table, not the load address `0x2000_1000` | Quan (mentor), 12/10, confirmed | 6, 7.5 |
 | `dbg_en_mask` reset by power-on only | Quan (mentor), 12/10, confirmed | 10, `QNSC_SYSCSR_MAS` 7.5 |
+| `DEBUG_PROG` = `0x55`: load the debug program; any other value: skip it, no `0xAA` check | Quan (mentor), 14/10 | V3.4: 6, 7.1; `FHDR` for `LENGTH` only |

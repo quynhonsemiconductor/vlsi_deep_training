@@ -95,8 +95,8 @@
 <rect x="-1.0" y="1312.0" width="18.0" height="14" fill="#ffffff"/>
 <text x="8.0" y="1323.0" font-size="10" fill="#000000" text-anchor="middle">no</text>
 <polyline points="45.0,756.0 -8.0,756.0 -8.0,1226.0 20.0,1226.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
-<rect x="-38.0" y="983.0" width="60.0" height="14" fill="#ffffff"/>
-<text x="-8.0" y="994.0" font-size="10" fill="#000000" text-anchor="middle">no (0xAA)</text>
+<rect x="-17.0" y="983.0" width="18.0" height="14" fill="#ffffff"/>
+<text x="-8.0" y="994.0" font-size="10" fill="#000000" text-anchor="middle">no</text>
 <polyline points="265.0,1650.0 340.0,1650.0" fill="none" stroke="#000000" stroke-width="1.4" marker-end="url(#ah)"/>
 <rect x="290.5" y="1642.0" width="24.0" height="14" fill="#ffffff"/>
 <text x="302.5" y="1653.0" font-size="10" fill="#000000" text-anchor="middle">yes</text>
@@ -144,8 +144,8 @@
 <text x="155.0" y="416.8" font-size="10" text-anchor="middle" fill="#000000">12 header bytes</text>
 <text x="155.0" y="429.8" font-size="10" text-anchor="middle" fill="#000000">received?</text>
 <text x="155.0" y="513.3" font-size="10" text-anchor="middle" fill="#000000">CRC32 = HDR_CRC?</text>
-<text x="155.0" y="596.8" font-size="10" text-anchor="middle" fill="#000000">LENGTH and DEBUG_PROG</text>
-<text x="155.0" y="609.8" font-size="10" text-anchor="middle" fill="#000000">valid? (Table 6-1)</text>
+<text x="155.0" y="596.8" font-size="10" text-anchor="middle" fill="#000000">LENGTH valid?</text>
+<text x="155.0" y="609.8" font-size="10" text-anchor="middle" fill="#000000">(Table 6-1)</text>
 <text x="155.0" y="681.3" font-size="10" text-anchor="middle" fill="#000000" font-weight="bold">send ACKH</text>
 <text x="155.0" y="759.3" font-size="10" text-anchor="middle" fill="#000000">DEBUG_PROG = 0x55?</text>
 <text x="155.0" y="830.8" font-size="10" text-anchor="middle" fill="#000000">waiting for the next debug program</text>
