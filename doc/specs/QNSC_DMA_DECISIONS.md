@@ -53,7 +53,7 @@ Each finding was re-checked in the vendored source before V3.2:
 | `BufferDepth` 3 | backend template: "recommended" for misaligned transfers | Adopted, 5 |
 | `COMPUTE_CFG` must stay 0 | frontend copies it; legalizer forces decoupling | Adopted, 4, 6 |
 | Add unelaborated modules to the filelist | -- | Not adopted: the tools decide when the wrapper exists, 4 |
-| 12-bit `paddr` for a 16 KiB window | -- | Contract convention for every APB block, not DMA-specific |
+| 12-bit `paddr` for a 16 KiB window | -- | Contract convention for every APB block, not DMA-specific. **Superseded 2026-10-14:** 14 bits (#77) |
 | `done_pend` flag in the wrapper | -- | Not in V3.x |
 
 Figures 3-1 and 7-2 are redrawn by `build_dma.py`; the review's drawio pages are not
@@ -257,7 +257,7 @@ python util/gen_idma.py --entity backend   --tpl src/backend/tpl/idma_backend.sv
 
 ### 10. [P3] Bảng 5-1 / 6-1 – độ rộng địa chỉ APB
 
-`i_bus_apb_paddr` 12 bit nhưng window 16 KiB (cần 14 bit). Frontend chỉ dùng `paddr[7:0]`, nên chức năng không đổi; đề nghị thống nhất lại với contract `meta.apb_paddr_width` (hoặc ghi rõ "12 bit offset; bit 13:12 của window không được decode").
+`i_bus_apb_paddr` 12 bit nhưng window 16 KiB (cần 14 bit). Frontend chỉ dùng `paddr[7:0]`, nên chức năng không đổi; đề nghị thống nhất lại với contract `meta.apb_paddr_width` (hoặc ghi rõ "12 bit offset; bit 13:12 của window không được decode"). **Đã giải quyết 2026-10-14:** contract là 14 bit (#77).
 
 ---
 

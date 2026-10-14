@@ -15,7 +15,7 @@ hold. Its figures are not reproduced.
 |---|---|
 | Upstream `apb_i2c` used unmodified: `TXCMD` (`0x18`), `RXCMD` (`0x1C`), `dma_last_i` and the two DMA request lines dropped | `QNSC_DMA_MAS` V3.0 has no hardware request. `RXCMD` also read with a side effect (a debugger read starts a bus transfer) and lagged one byte (report F6); without it, F1, F2 and F4 disappear |
 | Open drain as two output enables to the IO MUX, no `1'bz` in the wrapper | Report F5: a tri-state inside core logic does not synthesise; the pad cell makes the line |
-| Wrapper `m_qnsc_wrap_i2c`, `i_clk_peri`/`i_rst_n_peri`, `o_int_i2c`, 12-bit `PADDR`, no parameter | Naming Rule V1.1, `design/README.md` "Shared numbers"; the report used `m_qnsc_wrap_apb_i2c`, `i_clk_sys` and `P_APB_ADDR_WIDTH` |
+| Wrapper `m_qnsc_wrap_i2c`, `i_clk_peri`/`i_rst_n_peri`, `o_int_i2c`, 12-bit `PADDR` (14 bits since 2026-10-14, contract #77), no parameter | Naming Rule V1.1, `design/README.md` "Shared numbers"; the report used `m_qnsc_wrap_apb_i2c`, `i_clk_sys` and `P_APB_ADDR_WIDTH` |
 | Prescaler table at 20 MHz | The report's example used 50 MHz; QSOC runs at 20 MHz (contract `meta.clock_mhz`). Values from the report's own formula |
 | `APB_M11`, `INTMAP` line 3 | The report used `APB_S12`; the contract names the port `APB_M11` |
 | `#1` delays and `timescale` (F8) | Harmless in synthesis; not a specification matter |
