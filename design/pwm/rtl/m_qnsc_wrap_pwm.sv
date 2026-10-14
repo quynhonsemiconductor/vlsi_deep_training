@@ -3,7 +3,7 @@
 // QNSC wrapper of pulp-platform/apb_adv_timer: the QSoC PWM on APB_M12, INTMAP
 // fast line 7. The wrapper is IP: no package, no parameter; the IP's
 // configuration is fixed at the instance below (design/README.md, "Shared numbers").
-// Spec: doc/specs/QNSC_PWM_MAS.md (V2.7).
+// Spec: doc/specs/QNSC_PWM_MAS.md (V2.8).
 //
 // One file, expanded in place by emacs verilog-mode (Veripool's intended flow):
 // edit anything outside the blocks between "// Beginning of automatic ..." and
@@ -36,7 +36,7 @@ input logic             i_rst_n_peri,           // To u_sync_tim_ext of qnsc_syn
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_bus_apb")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
-input logic [11:0]      i_bus_apb_paddr,        // To u_apb_adv_timer of apb_adv_timer.v
+input logic [13:0]      i_bus_apb_paddr,        // To u_apb_adv_timer of apb_adv_timer.v
 input logic             i_bus_apb_penable,      // To u_apb_adv_timer of apb_adv_timer.v
 input logic             i_bus_apb_psel,         // To u_apb_adv_timer of apb_adv_timer.v
 input logic [31:0]      i_bus_apb_pwdata,       // To u_apb_adv_timer of apb_adv_timer.v
@@ -149,7 +149,7 @@ qnsc_sync #(
 );
 */
 apb_adv_timer #(
-  .APB_ADDR_WIDTH (12),                 // contract: meta.apb_paddr_width
+  .APB_ADDR_WIDTH (14),                 // contract: meta.apb_paddr_width
   .EXTSIG_NUM     (32),
   .TIMER_NBITS    (16)
 ) u_apb_adv_timer (/*AUTOINST*/
@@ -165,7 +165,7 @@ apb_adv_timer #(
                    // Inputs
                    .HCLK                (i_clk_peri),            // Templated
                    .HRESETn             (i_rst_n_peri),          // Templated
-                   .PADDR               (i_bus_apb_paddr[11:0]), // Templated
+                   .PADDR               (i_bus_apb_paddr[13:0]), // Templated
                    .PWDATA              (i_bus_apb_pwdata[31:0]), // Templated
                    .PWRITE              (i_bus_apb_pwrite),      // Templated
                    .PSEL                (i_bus_apb_psel),        // Templated
