@@ -154,3 +154,24 @@ left to do. The single remaining `.src.sv` file's Local Variables footer
 lists both `filelist_emacs.f` and `filelist_emacs_bridge.f`, since Emacs must
 resolve both `ibex_top`'s and `m_qnsc_cpu2axi`'s port lists in the same
 AUTOINST pass now.
+
+## Moved to the shared emacs flow (2026-10-14)
+
+`design/cpu/rtl/emacs/Makefile` is now `DESIGN` + `include flow/emacs/wrap.mk`, like every
+wrapper (`make wrap BLOCK=cpu`). The generated wrapper is copied to `rtl/m_qnsc_wrap_cpu.sv`
+and `cpu.f` compiles that copy. `fixup_ibex_wrap.py` is gone: `flow/emacs/fix_pkg_ports.py`
+removes the package-typed port and parameter connections, and `PARAM_FIX = /rvfi_/d` drops the
+`rvfi_` lines. The expanded wrapper is identical to the old flow's apart from whitespace and
+the removed empty `#()`. The older sections above that mention `fixup_ibex_wrap.py` describe
+the flow as it was then.
+
+## Boot address follows the new boot flow (2026-10-12)
+
+The two sections above describe a boot-address mux that selected `C_ISRAM_BASE`
+when `i_dbg_en` was set. That is the older flow. Under the boot flow decided on
+2026-10-12 the CPU always starts in ROM: the wrapper ties `boot_addr_i` to
+`32'h0`, Ibex starts at `0x0000_0080`, and debug boot is done by the ROM code
+(UART download, then a poll of `SYSCSR.DBG_EN`). Since the value never changes, the
+`i_cfg_boot_addr` port is removed and `boot_addr_i` is tied inside the wrapper to
+`32'h0000_0000`, tagged `// contract: memory_map.rom.base`; the wrapper has 55
+ports. `QNSC_CPU_MAS` Section 7.4 has the current wording.

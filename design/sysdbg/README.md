@@ -6,8 +6,8 @@
 
 **Self-designed.** SYSDBG is written in house. It is a JTAG TAP (TCK domain) and a
 single-beat AXI4 manager on `AXI_S0` (system clock), linked by a 4-phase
-handshake. It also drives the Ibex `debug_req`, and it holds the CPU in reset in
-debug boot (`DBG_EN` pin). No vendored IP is instantiated here: everything in
+handshake. It also drives the Ibex `debug_req`. It does not hold the CPU: a debug boot is the
+ROM code waiting on `SYSCSR.DBG_EN`. No vendored IP is instantiated here: everything in
 `rtl/` is ours.
 
 ## Reference (read, not instantiated)

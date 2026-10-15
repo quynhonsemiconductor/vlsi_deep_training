@@ -13,6 +13,14 @@ mentor's reference diagram is `doc/reference/VLSI_SCRC.drawio`.
 
 ---
 
+# 0. V3.2 to V3.3 (new boot flow, 2026-10-15)
+
+`SYSDBG` no longer holds the CPU (`QNSC_BOOT_SPEC` V3.1). `i_dbg_cpu_hold`, the CPU-hold
+column of the reset table and the tests `SCRC_RST_004` and `SCRC_DBG_001` are removed
+from `QNSC_SCRC_MAS`. The CPU releases from `RST_REL[31]` alone, after the 16-cycle
+wait. The older text below that speaks of `o_dbg_cpu_hold` and `CPUHOLD` describes the
+old flow and is kept as record.
+
 # 1. V2.3 to V3.0
 
 V3.0 is a move onto the MAS template by the lead. The design is V2.3's; the

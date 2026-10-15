@@ -12,8 +12,6 @@ module m_qnsc_wrap_cpu
 //---------------------------------------------------------------
 // Config -- tied by design/top from qnsc_pkg (cpu is IP, no
 // qnsc_pkg import here).
-// i_cfg_boot_addr = i_dbg_en ? C_ISRAM_BASE : 0. Must be C_ISRAM_BASE,
-// not C_ISRAM_DBG_BASE (see DmBaseAddr below) -- see DECISIONS.
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_cfg")*/
 
@@ -156,7 +154,7 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
 /* ibex_top AUTO_TEMPLATE(
     .clk_i                    (i_clk_cpu),
     .rst_ni                   (i_rst_n_cpu),
-    .boot_addr_i              (i_cfg_boot_addr[]),
+    .boot_addr_i              (32'h0000_0000),  // contract: memory_map.rom.base
     .debug_req_i              (i_dbg_req),
     .irq_software_i           (1'b0),
     .irq_timer_i              (1'b0),

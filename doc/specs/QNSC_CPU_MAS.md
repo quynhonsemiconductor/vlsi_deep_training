@@ -34,11 +34,10 @@ their interfaces are exposed as top-level ports, described in Section 9.
 - Sleep on WFI: the core gates its own clock, and wakes on an enabled
   interrupt, NMI, debug request, already being in debug mode, or a single
   step -- 7.3.
-- Boot address: cold boot fetches from ROM (`0x0000_0000`); debug boot fetches
-  from the downloaded application in ISRAM instead (`qnsc_pkg::C_ISRAM_BASE`),
-  bypassing ROM entirely. `cpu` is IP, so it does not resolve this itself --
-  it takes the already-resolved address on `i_cfg_boot_addr`, tied by
-  `design/top` from `qnsc_pkg` -- 7.4.
+- Boot address: always ROM. The CPU starts at `0x0000_0080` on every reset;
+  there is no boot-mode mux. Debug boot is done by the ROM code (UART
+  download into ISRAM, then a poll of `SYSCSR.DBG_EN`), not by a different
+  reset vector. `cpu` ties `boot_addr_i` to the ROM base itself -- 7.4.
 - CPU2AXI merge: two Ibex memory-style ports arbitrated round-robin onto one
   AXI4 master port, with the port index folded into the AXI ID so responses
   return unambiguously -- 7.5.
@@ -79,13 +78,14 @@ pre-rename commit rather than a current release.
 |---|---|---|---|
 | `i_clk_cpu` | in | 1 | CPU clock domain, always-on |
 | `i_rst_n_cpu` | in | 1 | Active-low reset, already released together with the other domains by SCRC |
-| `i_cfg_boot_addr` | in | 32 | Resolved boot address, tied by `design/top`: `i_dbg_en ? qnsc_pkg::C_ISRAM_BASE : 32'h0` (cold boot fetches ROM at `0x0`; debug boot fetches the downloaded application in ISRAM) |
 | `i_cfg_hart_id` | in | 32 | Tied by `design/top`; `32'h0` while QSOC has one core |
 | `i_dbg_req` | in | 1 | From SYSDBG; requests debug mode |
 | `i_int_fast` | in | 11 | From INTMAP, `mcause` 16-26; padded to Ibex's 15-bit port internally |
 | `i_int_nm` | in | 1 | Watchdog bark (NMI), from INTMAP |
 | `i_dft_test_en` | in | 1 | DFT scan bypass |
 | `o_pwr_sleep` | out | 1 | Core has stopped its own clock (WFI) |
+| `o_crash_dump` | out | 160 | To SYSCSR. `ibex_pkg::crash_dump_t` flattened MSB..LSB: `current_pc`, `next_pc`, `last_data_addr`, `exception_pc`, `exception_addr`. Only the last two hold; SYSCSR must capture on an event |
+| `o_double_fault_seen` | out | 1 | To SYSCSR. One-cycle pulse; SYSCSR needs a sticky bit |
 | `i_bus_axi_aw_ready` | in | 1 | AXI4 AW channel, from S_BUS |
 | `o_bus_axi_aw_id` | out | 5 | AXI4 AW channel, to S_BUS |
 | `o_bus_axi_aw_addr` | out | 32 | AXI4 AW channel, to S_BUS |
@@ -152,23 +152,30 @@ still work, since neither is gated by `mie`.
 ## 7.4 Boot address
 
 `cpu` is IP (design/README.md, "Shared numbers: who may use `qnsc_pkg`"), so
-it does not import `qnsc_pkg` or compute this mux itself. `design/top` ties
-`i_cfg_boot_addr` directly to Ibex's `boot_addr_i`:
+it does not import `qnsc_pkg`. It has no boot-address port: Ibex's `boot_addr_i`
+is tied inside the wrapper to the ROM base, as a fixed value tagged with its
+contract key, the same way as `DmBaseAddr` (Section 10):
 
 ```
-i_cfg_boot_addr = i_dbg_en ? qnsc_pkg::C_ISRAM_BASE : 32'h0000_0000
+.boot_addr_i (32'h0000_0000),  // contract: memory_map.rom.base
 ```
 
-Ibex forms its own reset entry point as `{boot_addr_i[31:8], 8'h80}`, so cold
-boot's first instruction is at `0x0000_0080` (inside ROM, per `QNSC_ROM_MAS`)
-and debug boot's is at `0x2000_1080` (inside ISRAM's program region, per
-`util/qsoc_contract.yml`'s `isram` entry) -- **not** `0x2000_0080`, inside the
-4 KiB `isram_dbg` debug/DM window at `0x2000_0000`. `mtvec` resets from the
-same port, so a debug boot's trap-vector table lives in ISRAM as well, not
-ROM. `DmBaseAddr`/`DmAddrMask`/`DmHaltAddr`/`DmExceptionAddr` are a separate,
+There is no boot-mode mux and no `i_dbg_en` input on `cpu`. Ibex forms its
+own reset entry point as `{boot_addr_i[31:8], 8'h80}`, so the first
+instruction is always at `0x0000_0080`, inside ROM (`QNSC_ROM_MAS`). `mtvec`
+resets from the same port, so the trap-vector table is in ROM.
+
+Debug boot is not a different reset vector. The ROM code downloads the image
+over UART into ISRAM (debug program at `0x2000_0000`, user program at
+`0x2000_1000`), polls `SYSCSR.DBG_EN`, and then jumps to `0x2000_1080`. This
+follows the boot flow decided on 2026-10-12; `QNSC_BOOT_DECISIONS` and
+`QNSC_SYSDBG_MAS` still describe the older flow, in which `i_dbg_en` selected
+`C_ISRAM_BASE` as the boot address.
+
+`DmBaseAddr`/`DmAddrMask`/`DmHaltAddr`/`DmExceptionAddr` are a separate,
 unrelated set of `ibex_top` parameters (Section 10): they configure the RISC-V
 Debug Module's own halt/exception entry points inside the 4 KiB debug window,
-not the boot-address mux. Being IP, `m_qnsc_wrap_cpu` writes `DmBaseAddr`
+not the boot address. Being IP, `m_qnsc_wrap_cpu` writes `DmBaseAddr`
 as the fixed value `32'h2000_0000` tagged `// contract: memory_map.isram_dbg.base`
 rather than importing `qnsc_pkg::C_ISRAM_DBG_BASE`; `contract_tag.py` still
 checks the literal against `util/qsoc_contract.yml` so it cannot drift.
@@ -226,7 +233,7 @@ One. `design/top` instantiates `m_qnsc_wrap_cpu` once; QSOC has a single core.
 | `i_mem_instr_rdata_intg`, `i_mem_data_rdata_intg` | `7'h0` | `MemECC` follows `SecureIbex = 1'b0`; no integrity checking |
 | `i_mem_data_tag`, `o_mem_data_tag`, `o_mem_data_wdata_intg`, `o_mem_data_wdata_intg_shadow` | `1'b0` / open | No CHERIoT, no `MemECC` |
 | `o_mem_*_shadow` (lockstep diagnostic outputs) | open | `SecureIbex = 1'b0`; lockstep not present |
-| `o_alert_minor`, `o_alert_major_internal`, `o_alert_major_bus`, `o_crash_dump`, `o_double_fault_seen`, `o_lockstep_cmp_en` | open | Diagnostic-only outputs, no alert handler or lockstep in QSOC |
+| `o_alert_minor`, `o_alert_major_internal`, `o_alert_major_bus`, `o_lockstep_cmp_en` | open | Diagnostic-only outputs, no alert handler or lockstep in QSOC |
 | `i_dft_scan_rst_n` | `1'b1` | Only used by the lockstep branch, which is absent (`SecureIbex = 1'b0`) |
 
 # 11. Requirements on others, and open items
@@ -236,7 +243,7 @@ One. `design/top` instantiates `m_qnsc_wrap_cpu` once; QSOC has a single core.
 | Item | Owner | What it blocks |
 |---|---|---|
 | `AXI_S1` slave-port ID width at S_BUS must equal this block's 5-bit master ID | S_BUS owner | Cannot be checked from this block alone; flag at S_BUS integration review |
-| SYSDBG must load the ISRAM application and the debug window before releasing `i_dbg_req`/asserting `i_dbg_en` for a debug boot | SYSDBG owner | Debug boot's first fetch at `0x2000_1080` returning garbage otherwise |
+| The ROM code must have loaded the ISRAM application and the debug window before `i_dbg_req` is asserted | ROM and SYSDBG owners | The jump to `0x2000_1080` or the debug entry fetches garbage otherwise |
 
 Accepted limits, stated rather than hidden:
 
@@ -263,11 +270,9 @@ Accepted limits, stated rather than hidden:
 4. `flow/lint/naming_check.py`, `flow/lint/hardcode_check.py` and
    `flow/lint/filelist_check.py` against `design/cpu`: clean.
 5. `bash flow/lint/lint_all.sh cpu`: 0 `%Error`.
-6. A check that would fail if the design drifts from Section 7.4: debug boot's
-   first fetch address must equal `qnsc_pkg::C_ISRAM_BASE + 32'h80`, not
-   `qnsc_pkg::C_ISRAM_DBG_BASE + 32'h80` -- this exact confusion was found and
-   fixed once already (2026-09-28), by cross-referencing this section against
-   `QNSC_ROM_MAS` rather than by any automated check.
+6. A check that would fail if the design drifts from Section 7.4: the first
+   fetch after reset must be at `0x0000_0080`, i.e. `boot_addr_i` tied to
+   `32'h0` in the wrapper.
 
 # Appendix A. Acronyms
 

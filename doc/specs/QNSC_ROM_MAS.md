@@ -113,7 +113,8 @@ The RAM's macro ports `o_mem_*`, `i_mem_rdata` are internal here, to the image.
 | `0x000`--`0x07F` | 128 B | 32 x `j rom_trap`, each a 4-byte instruction | `mtvec` resets to `boot_addr_i` in vectored mode; causes 16--30 are the fast interrupts, 31 the NMI |
 | `0x080`--`0x7FF` | 1920 B | `_start`, then the rest of the bootloader | Ibex fetches first from `{boot_addr_i[31:8], 8'h80}` |
 
-Ibex `boot_addr_i` = `0x0000_0000` in normal boot. A trap while the bootloader runs
+Ibex `boot_addr_i` is always `0x0000_0000`, tied inside `m_qnsc_wrap_cpu`, so the
+CPU starts here on every reset. A trap while the bootloader runs
 enters `rom_trap`, a loop left only by a reset.
 
 # 7. Functional behaviour
@@ -172,7 +173,7 @@ One `m_qnsc_wrap_rom` at `AXI_M0`.
 |---|---|
 | Bootloader behaviour, its size budget and its build | `QNSC_BOOT_SPEC`; source `design/rom/boot/` |
 | Decode error above `0x0000_07FF` | `S_BUS` |
-| `boot_addr_i` and its debug-boot mux | CPU owner, `QNSC_SYSDBG_MAS` 11 |
+| `boot_addr_i`, tied to `0x0000_0000` | CPU owner, `QNSC_CPU_MAS` 7.4 |
 | Debugging the bootloader from its first instruction | `QNSC_SYSDBG_MAS` 7.2 |
 
 # 10. Tie-offs
@@ -193,7 +194,7 @@ One `m_qnsc_wrap_rom` at `AXI_M0`.
 | Item | Owner | What it blocks |
 |---|---|---|
 | `AXI_M0` window exactly `0x0000_0000`--`0x0000_07FF`, no aliasing | bus owner | 6 |
-| `boot_addr_i` = `0x0000_0000` in normal boot | CPU owner | 6 |
+| `boot_addr_i` = `0x0000_0000` on every boot | CPU owner | 6 |
 
 : HAS text this specification departs from
 

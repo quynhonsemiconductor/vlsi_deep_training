@@ -274,7 +274,7 @@ that come up most:
 | Pad (3.8) | `i_pad_<function>`, `o_pad_<function>`, `io_pad_<function>` | `i_pad_i2c_scl`, `o_pad_i2c_scl`, `o_pad_pwm` |
 | Output enable of a pad | the IP's polarity; active low ends in `_n` | `o_pad_i2c_scl_oe_n` |
 | JTAG (3.11) | `i_jtag_<function>`, `o_jtag_<function>` | `i_jtag_tck`, `o_jtag_tdo` |
-| Debug (3.12) | `i_dbg_<function>`, `o_dbg_<function>` | `o_dbg_req`, `o_dbg_cpu_hold` |
+| Debug (3.12) | `i_dbg_<function>`, `o_dbg_<function>` | `o_dbg_req` |
 | Memory (3.9) | `i_mem_<function>`, `o_mem_<function>` | `o_mem_addr`, `o_mem_be`, `i_mem_rdata` |
 | DMA (3.10) | `i_dma_<function>`, `o_dma_<function>` | `o_dma_tx_req`, `i_dma_last` |
 | CSR, boot (3.5, 3.13) | `i_csr_*`, `o_csr_*`, `i_boot_*` | `i_boot_addr` |

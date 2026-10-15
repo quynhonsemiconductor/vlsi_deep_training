@@ -2,11 +2,34 @@
 
 **This is not the specification.** That is [`QNSC_BOOT_SPEC.md`](QNSC_BOOT_SPEC.md).
 
-This file holds why V3.0 differs from V2.2, and the V2.2 document by Nguyen Hao
-Nam, kept whole below. Its figures are not reproduced: they were in colour and are
+This file holds why V3.1 differs from V3.0 and V3.0 from V2.2, and the V2.2 document
+by Nguyen Hao Nam, kept whole below. The V2.2 text is a record: it describes the old
+debug boot and a different frame, and is not the current flow. Its figures are not reproduced: they were in colour and are
 replaced by the figures of the specification.
 
 ---
+
+# 0. V3.0 to V3.1 (new boot flow, 2026-10-15)
+
+The boot flow was redecided on 2026-10-12 and written out in full on 2026-10-15.
+`QNSC_BOOT_SPEC` V3.1 follows it.
+
+| Change | Why |
+|---|---|
+| The CPU always starts at `0x0000_0080` in ROM; the boot-address mux and `i_dbg_en` are gone | One reset vector is simpler to verify; debug boot no longer needs a different entry |
+| Debug boot is the ROM code polling `SYSCSR.DBG_EN`; the CPU is never held in reset and `CPUHOLD` is not used | The ROM always loads over UART. `SYSDBG` no longer captures `DBG_EN` once; the bit follows the pin through two flip-flops, and JTAG clears it with `DBG_EN_MASK` |
+| `UART0` 19 200 baud, 8N1; no parity | The data check is moved up to the CRC layer. 115 200 was the V2.2 baud rate |
+| Header 16 bytes: `MAGIC`, `LENGTH`, `DEBUG_PROG`, `HDR_CRC`; `LOAD_ADDR` and `ENTRY` removed | Load addresses are fixed (`0x2000_0000`, `0x2000_1000`) and the CPU jumps to `0x2000_1080`, so the image needs no address fields |
+| `DEBUG_PROG` = `0x55` adds a 4096-byte debug payload and `DBG_CRC` | The debug program is downloaded by the same path as the user program |
+| New tokens `ACKD`, `FDCR`; `FUAR` removed | Debug payload needs its own acknowledge and failure. Without a parity bit there is no UART error to report; a bad byte shows up as a CRC failure |
+| Timeouts 1 000 000 polls (between bytes) and 500 000 polls (drain); `MAGIC` found by sliding one byte | As specified in the new flow; the old 200 000 and 20 000 were for the old baud rate |
+| `LENGTH` limited to a multiple of 4 and 60 KiB; `DEBUG_PROG` checked | A CRC cannot catch a field that is wrong but consistent, so the ROM range-checks it |
+| Debug window layout added (dispatch loop `0x2000_0800`, exception handler `0x2000_0810`, command, resume, result words) | The debug program must match the layout the CPU jumps into |
+| `DBG_BOOT` register at `0x8000_400C` named in the spec, owned by the `SYSCSR` owner | Step 8 reads it; `QNSC_SYSCSR_MAS` reserves that offset today |
+
+Three values in V3.1 are derived here, not given by the flow: the divisor 65 (20 MHz
+/ (16 x 19 200)), the download times, and the little-endian byte order, which is kept
+from V2.2. The `MAGIC` constant is left to `boot.h`.
 
 # 1. V2.2 to V3.0
 

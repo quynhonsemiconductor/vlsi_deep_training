@@ -185,17 +185,16 @@ Only offset bits 11:0 reach `SYSCSR`, so the map repeats every 4 KiB in the wind
 - `DOMAIN_RST_STATUS[n]` is `i_domain_rst_stat[n]`, captured when the register is
   read. It is not stored: every `SCRC` output is synchronous to `o_clk_pbus`.
 - A bit is 1 while its domain is in reset: during a chip reset, for `timer_1` until
-  its clock first runs, and for the CPU while `SYSDBG` holds it.
+  its clock first runs.
 
 : Values read in the states firmware and the debugger meet
 
 | State | `DOMAIN_RST_STATUS` | Reason |
 |---|---|---|
-| After any reset, normal boot | `0x0000_0010` | `timer_1` is gated after reset, so still in reset |
-| Debug boot, CPU held, read by `SYSDBG` | `0x8000_0010` | also `stat_cpu`: `o_dbg_cpu_hold` = 1 |
+| After any reset | `0x0000_0010` | `timer_1` is gated after reset, so still in reset |
 | After firmware sets `SCRC` `CLK_EN[4]` | `0x0000_0000` | `timer_1` clocked and released |
 
-Ibex reads `stat_cpu` = 0 whenever it can read at all; the bit is for `SYSDBG`.
+Ibex reads `stat_cpu` = 0 whenever it can read at all.
 
 ## 7.4 Bus access
 
@@ -278,7 +277,7 @@ Open items: none.
 7. `SYSCSR_007` Each row of Table 7-2 gives the stated `PREADY` cycle, `PSLVERR` and effect.
 8. `SYSCSR_008` A W1C write of `0x7` whose SETUP cycle is the last before a watchdog
    chip reset leaves `cause_wdt` = 1 after the reset.
-9. `SYSCSR_009` Table 7-1 values after a normal boot and a debug boot (SoC test).
+9. `SYSCSR_009` Table 7-1 values after a reset and after firmware sets `CLK_EN[4]` (SoC test).
 10. `SYSCSR_010` Every `SYSCSR` flip-flop is reset by `i_rst_n_por` only (netlist check).
 
 # Appendix A. Acronyms
@@ -303,7 +302,6 @@ Open items: none.
 | `CHIP_ID_REV` misspelled 'QCOS'; separate REV field | Sinh | V1.1; now `C_CHIP_ID` in the contract, 6 |
 | `MRV_BUSY` premature | Sinh | Removed in V1.1 |
 | `RESET_CAUSE` must survive WDT/SW | Nam, V2.0 | POR-only reset, 7.1 |
-| `SYSDBG` reads `SYSCSR` while it holds the CPU | `SYSDBG` MAS V3.0 | `stat_cpu`, 7.3 |
 | `APB_S1` against contract `APB_M1` | lead, V3.0 | 5, 6 |
 | `spi_device` and `GPIO3` domains removed | lead, V3.0 | bits 13 and 18 reserved |
 | One-cycle cause pulse lost against a W1C write in the same cycle | lead, V3.0 | set held for the whole reset, 7.2, `SYSCSR_008` |

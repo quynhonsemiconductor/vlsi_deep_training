@@ -1,6 +1,6 @@
 ---
 title: "SCRC"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.3"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,6 +14,7 @@ The reasoning behind each change, the V1.0--V2.3 history and the V2.3 text are i
 | V3.0 | 2026-09-27 | Nghia VT (lead), for Nguyen Hao Nam | -- | V2.3 moved onto the MAS template; Naming Rule ports; `APB_M0`/`APB_M1`; one SPI domain (bit 13 reserved); per-peripheral soft reset removed; WDT never gated; monochrome figures after the mentor's `VLSI_SCRC.drawio`; timing diagrams; deviations from the HAS listed |
 | V3.1 | 2026-09-28 | Nghia VT (lead), for Nguyen Hao Nam | -- | Owner decisions on the two proposals: no stretch after POR, adopted (7.3, `SCRC_RST_001`); two CSRs, rejected, the mentor's APB BUS and WFs stay. Open item on the APB BUS name narrowed to renaming the generated module |
 | V3.2 | 2026-09-29 | Nghia VT (lead) | -- | 7.10: before gating `dma`, wait for `DONE_ID`, not idle (`QNSC_DMA_MAS` V3.2) |
+| V3.3 | 2026-10-15 | Sinh | -- | New boot flow (`QNSC_BOOT_SPEC` V3.1): `SYSDBG` no longer holds the CPU. Removed `i_dbg_cpu_hold`, the CPU-hold column of the reset table, section 7.8 hold rule and `SCRC_RST_004`, `SCRC_DBG_001` |
 
 # 1. Overview
 
@@ -29,7 +30,7 @@ No register field has two writers.
 
 `SCRC` does not divide or switch frequency (no PLL; one 20 MHz clock, contract
 `meta.clock_mhz`), does not hold the status registers (`SYSCSR`, `APB_M1`, a
-separate specification), and does not capture `DBG_EN` (`SYSDBG`).
+separate specification), and does not read `DBG_EN` (the ROM code reads it from `SYSCSR`, `QNSC_BOOT_SPEC` 4.1).
 
 Block directory `design/scrc`, top module `m_qnsc_scrc`, owner Nguyen Hao Nam.
 
@@ -44,10 +45,10 @@ Block directory `design/scrc`, top module `m_qnsc_scrc`, owner Nguyen Hao Nam.
 - Power-up sequence after every chip reset: all domains together, APB guards
   opened, CPU released last -- 7.5.
 - Runtime clock gating on request from Ibex -- 7.6.
-- Two recovery levels only: chip reset and CPU hold; no per-peripheral reset -- 7.3.
+- One recovery level: chip reset; no per-peripheral reset -- 7.3.
 - APB guard per gateable slave: an access to a stopped peripheral ends in
   `PSLVERR` instead of hanging the bus -- 7.7.
-- CPU held in reset by `SYSDBG`; `SYSDBG` reset by power-on only -- 7.8.
+- `SYSDBG` reset by power-on only, and never gated -- 7.8.
 
 # 3. Block diagram
 
@@ -132,7 +133,6 @@ their own domain.
 | `i_clk_pad` | in | 1 | `CLKIN` pad, dedicated, not through IO MUX. Root clock |
 | `i_rst_n_pad` | in | 1 | `PORSTN` pad, dedicated. Power-on reset, asynchronous -- 7.2 |
 | `i_wdt_rst_req` | in | 1 | WDT `aon_timer_rst_req_o`. Active high, sticky, WDT domain -- 7.3 |
-| `i_dbg_cpu_hold` | in | 1 | `SYSDBG` `o_dbg_cpu_hold`. 1 holds the CPU in reset -- 7.8 |
 | `i_bus_apb_psel`, `i_bus_apb_penable`, `i_bus_apb_pwrite` | in | 1 | `P_BUS` `APB_M0` control |
 | `i_bus_apb_paddr` | in | 12 | Offset in the window (contract `meta.apb_paddr_width`) |
 | `i_bus_apb_pwdata` | in | 32 | Write data |
@@ -282,18 +282,18 @@ while the clock is stopped completes when the clock runs again.
 
 : What each reset clears
 
-| Logic | POR | WDT, SW | CPU hold |
-|---|---|---|---|
-| `RRC`, `o_rst_n_por`, `SYSCSR` | yes | no | no |
-| `sysdbg` (synchroniser input `w_rst_n_por`) | yes | no | no |
-| `MCPU`, WFs, APB BUS, `SCRC CSR` | yes | yes | no |
-| `cpu` (input `RST_REL[31]` AND NOT `i_dbg_cpu_hold`) | yes | yes | yes |
-| `sbus`, `pbus`, `rom`, `ram` | yes | yes | no |
-| `wdt`, 11 gateable domains | yes | yes | no |
+| Logic | POR | WDT, SW |
+|---|---|---|
+| `RRC`, `o_rst_n_por`, `SYSCSR` | yes | no |
+| `sysdbg` (synchroniser input `w_rst_n_por`) | yes | no |
+| `MCPU`, WFs, APB BUS, `SCRC CSR` | yes | yes |
+| `cpu` (input `RST_REL[31]`) | yes | yes |
+| `sbus`, `pbus`, `rom`, `ram` | yes | yes |
+| `wdt`, 11 gateable domains | yes | yes |
 
 There is no per-peripheral reset. No IP can report that it is hung, so a hang is
-recovered by a chip reset: the watchdog bite, or firmware writing `SW_RST`. The
-only partial reset is the CPU hold, from `SYSDBG` (7.8).
+recovered by a chip reset: the watchdog bite, or firmware writing `SW_RST`. There is
+no partial reset.
 
 ## 7.4 Register access
 
@@ -368,15 +368,16 @@ applied. Only the last value written matters, so Ibex may write it back to back.
 The error reaches Ibex as a load or store access fault, through `P_BUS`
 `PSLVERR` and AXI2APB `SLVERR`. There is no automatic clock restart and no retry.
 
-## 7.8 CPU hold and `SYSDBG`
+## 7.8 `SYSDBG`
 
-- `cpu` synchroniser input = `RST_REL[31]` AND NOT `i_dbg_cpu_hold`. The hold is
-  not a reset source and sets no cause bit.
+- `cpu` synchroniser input = `RST_REL[31]`. Nothing else holds the CPU in reset:
+  `SYSDBG` does not hold it, and a debug boot is the ROM code waiting on
+  `SYSCSR.DBG_EN` (`QNSC_BOOT_SPEC` 4.1).
 - `sysdbg` synchroniser input = `w_rst_n_por`; its clock never stops.
 - `o_rst_n_sbus` also resets `SYSDBG`'s bus side, so a WDT or SW reset leaves no
   half-finished `SYSDBG` bus handshake.
 
-What `SYSDBG` does with the hold: `QNSC_SYSDBG_MAS` 7.1.
+What `SYSDBG` does in the boot flow: `QNSC_SYSDBG_MAS` 7.1.
 
 ## 7.9 Timing summary
 
@@ -440,8 +441,8 @@ The eleven guards: `timer_0`, `timer_1`, `uart_0`, `uart_1`, `gpio_0`,
 | Function | Where it lives |
 |---|---|
 | `RESET_CAUSE`, `DOMAIN_RST_STATUS`, `CHIP_ID_REV` | `SYSCSR`, `APB_M1`, RTL in `design/scrc` |
-| `DBG_EN` capture, `o_dbg_cpu_hold` | `QNSC_SYSDBG_MAS` 7.1 |
-| Ibex `boot_addr_i` mux, `fetch_enable_i` tie | CPU owner, `QNSC_SYSDBG_MAS` 11 |
+| The debug gate `DBG_EN` | `SYSCSR` (`DBG_BOOT`), `QNSC_BOOT_SPEC` 4.1 |
+| Ibex `boot_addr_i` tie, `fetch_enable_i` tie | CPU owner, `QNSC_CPU_MAS` 7.4 |
 | Decode error on an unmapped address | `S_BUS`, `P_BUS` |
 | Masking interrupts, PWM safe stop, DMA idle before gating | firmware, 7.10 |
 | Boot download, image format | `QNSC_BOOT_SPEC` |
@@ -515,7 +516,6 @@ Accepted limits:
 5. `SCRC_RST_002` Each domain reset releases 2 domain-clock edges after its input rises.
 6. `SCRC_RST_003` All non-CPU domains release in the same cycle; the CPU releases
    >= 16 cycles later and after `APB_BLK` is written.
-7. `SCRC_RST_004` With `i_dbg_cpu_hold` = 1, `o_rst_n_cpu` stays 0 for any `RST_REL[31]`.
 8. `SCRC_RST_005` WDT and SW resets do not change `RRC`, `o_rst_n_por` or `o_rst_n_sysdbg`.
 9. `SCRC_RST_007` Before the CPU reset releases, `APB_BLK` = NOT `CLK_EN` on the
     gateable bits; the boot ROM's first `UART0` access completes without `PSLVERR`.
@@ -538,8 +538,6 @@ Accepted limits:
 18. `SCRC_BUS_002` A change of `APB_BLK` during a transfer does not change its response.
 19. `SCRC_BUS_003` With an IP holding `PREADY` low for *N* cycles, its clock stops only
     after the transfer completes, for any *N*.
-20. `SCRC_DBG_001` With `DBG_EN` = 0 the CPU releases as without `SYSDBG`; with
-    `DBG_EN` = 1 it stays in reset until `CPUHOLD` = 0.
 21. `SCRC_IMP_001` No `o_clk_<d>` path contains a cell other than the root buffer and
     one library ICG (netlist check), and no `RRC` flip-flop has a reset other than
     `w_rst_n_por`.
@@ -570,8 +568,8 @@ Accepted limits:
 | Item | Reviewer | Response |
 |---|---|---|
 | Release all domains together, CPU last | Quan (mentor) | 7.5 |
-| Per-peripheral soft reset | Quan (mentor) | first allowed, then removed in a later lesson: no IP can report a hang, so recovery is chip reset or CPU hold, 7.3 |
-| `SYSDBG` survives WDT/SW, never gated; CPU holdable | `SYSDBG` owner | 7.3, 7.8 |
+| Per-peripheral soft reset | Quan (mentor) | first allowed, then removed in a later lesson: no IP can report a hang, so recovery is chip reset, 7.3 |
+| `SYSDBG` survives WDT/SW, never gated | `SYSDBG` owner | 7.3, 7.8 |
 | `TIMER0` runs after reset, `TIMER1` may start gated | TIMER owner | 6 |
 | PWM stopped before its clock is gated | PWM owner | 7.10 |
 | CPU release raced the guard opening | review, V2.3 | 7.5 step 5 before 6 |

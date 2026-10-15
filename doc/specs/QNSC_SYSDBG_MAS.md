@@ -1,6 +1,6 @@
 ---
 title: "SYSDBG"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.2"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -13,6 +13,7 @@ The reasoning behind each change, and every version before V3.0, is in
 |---|---|---|---|---|
 | V3.0 | 2026-09-23 | Nghia VT | -- | Rewritten after the teacher's reference design: JTAG data registers, native AXI4 manager, 4-phase handshake. Adds the `DBG_EN` pin and CPU hold |
 | V3.1 | 2026-09-25 | Nghia VT | -- | Port names to `QNSC_RTL_Design_Naming_Rule` V1.0: `o_dbg_req`, `o_dbg_cpu_hold`, AXI named per channel (`o_bus_axi_ar_valid`, ...). No change in behaviour |
+| V3.2 | 2026-10-15 | Sinh | -- | New boot flow (`QNSC_BOOT_SPEC` V3.1): `SYSDBG` no longer captures `DBG_EN`, holds the CPU or selects the boot address. Removed `i_dbg_en`, `o_dbg_en`, `o_dbg_cpu_hold` and the `CPUHOLD` register. Debug window layout updated |
 
 # 1. Overview
 
@@ -20,15 +21,14 @@ The reasoning behind each change, and every version before V3.0, is in
 manager on `AXI_S0` reads and writes memory. A 4-phase handshake links the two. It
 also drives the Ibex `debug_req` input.
 
-One external pin, `DBG_EN`, decides who starts the CPU after power-on:
+`SYSDBG` has no part in starting the CPU. The CPU always runs the ROM code from
+`0x0000_0080` (`QNSC_BOOT_SPEC`). For a debug boot the ROM code waits in a polling
+loop while `SYSCSR.DBG_EN` is 1. During that wait the host may use `SYSDBG` to raise
+the Ibex debug request, and to clear the wait by writing `SYSCSR.DBG_EN_MASK` over the
+bus (7.1).
 
-- `DBG_EN = 0`, **normal boot**: `SCRC` releases the CPU, which runs the ROM
-  bootloader. The debugger can attach later.
-- `DBG_EN = 1`, **debug boot**: the CPU stays in reset until the host has loaded the
-  debug window and the program into `ISRAM` over JTAG, and then released it.
-
-`SYSDBG` does **not** reset the chip, gate a clock, or hold a debug ROM. It has no
-memory-mapped registers: everything is reached through JTAG.
+`SYSDBG` does **not** reset the chip, hold the CPU, gate a clock, or hold a debug
+ROM. It has no memory-mapped registers: everything is reached through JTAG.
 
 Block directory `design/sysdbg`, module `m_qnsc_sysdbg`, owner Nghia Van Trong.
 
@@ -39,7 +39,8 @@ Block directory `design/sysdbg`, module `m_qnsc_sysdbg`, owner Nghia Van Trong.
   while the CPU runs**. One transaction at a time.
 - 4-phase request/acknowledge handshake between the TCK and AXI clock domains.
 - Halt through `debug_req`, set and cleared by the host.
-- Debug boot: `DBG_EN` pin; CPU held in reset until the host clears `CPUHOLD`.
+- Debug boot support: raise the debug request during the ROM wait, and write
+  `SYSCSR.DBG_EN_MASK` through the AXI manager -- 7.1.
 
 # 3. Block diagram
 
@@ -74,9 +75,6 @@ In house. Nothing is instantiated.
 | `i_jtag_trst_n` | in | 1 | JTAG reset |
 | `o_jtag_tdo` | out | 1 | Changes on falling `TCK` |
 | `o_jtag_tdo_oe` | out | 1 | 1 in Shift-IR and Shift-DR only |
-| `i_dbg_en` | in | 1 | From the `DBG_EN` pad. Asynchronous, captured once -- 7.1 |
-| `o_dbg_en` | out | 1 | Captured `DBG_EN`. Selects the Ibex boot address and forces the JTAG pins |
-| `o_dbg_cpu_hold` | out | 1 | 1 holds the CPU in reset. From a flip-flop, reset 1. Into the `SCRC` CPU reset synchroniser |
 | `o_dbg_req` | out | 1 | To Ibex `debug_req_i`. Level, from a flip-flop |
 | `o_bus_axi_ar_valid`, `i_bus_axi_ar_ready` | out, in | 1 | AR handshake |
 | `o_bus_axi_ar_addr` | out | 32 | Read address, `[1:0]` = 0 |
@@ -112,7 +110,6 @@ selected by the IR and shifted LSB first.
 | `0101` | `DATA` | 32 | `rdata_hold`, the last read data | Load `wdata_reg`. If `addr_reg[32]` = 1 and not busy: start a write | 0 |
 | `0110` | `STATUS` | 3 | {`busy`, `resp[1:0]`} | Nothing | 0 |
 | `0111` | `CPUDBG` | 1 | `dbgreq` | Load `dbgreq` | 0 |
-| `1000` | `CPUHOLD` | 1 | `cpu_hold` | Load `cpu_hold` | 1 |
 | `1110` | `IDCODE` | 32 | `IdcodeValue` | Nothing | -- |
 | `1111` | `BYPASS` | 1 | 0 | Nothing | -- |
 | others | as `BYPASS` | 1 | 0 | Nothing | -- |
@@ -124,58 +121,33 @@ selected by the IR and shifted LSB first.
 
 # 7. Functional behaviour
 
-## 7.1 Debug enable and CPU hold
+## 7.1 Role in the boot flow
 
-The system domain synchronises `i_dbg_en` and captures it **once**, `SyncStages` + 1
-cycles after `i_rst_n_por` releases.
-The captured value is `o_dbg_en`. It holds until the next power-on reset. The
-`cpu_hold` data register reaches the system domain through a synchroniser whose
-reset value is 1.
+`SYSDBG` takes no part in reset release or in choosing the boot address. The CPU
+starts in the ROM on every reset (`QNSC_BOOT_SPEC` 4). The debug boot works like this:
 
-```
-captured   = 0 from i_rst_n_por, 1 once DBG_EN has been captured
-o_dbg_cpu_hold = !captured | (o_dbg_en & cpu_hold_sync)      -- registered, reset 1
-```
+1. The ROM code downloads the image over `UART0`. If `DEBUG_PROG` = `0x55` this
+   includes the 4 KiB debug program, written to `0x2000_0000` (7.8).
+2. The ROM code reads `SYSCSR.DBG_EN`. If it is 1, the CPU stays in a ROM polling
+   loop. It is not held in reset.
+3. The host may raise `CPUDBG`. `o_dbg_req` goes high and the CPU enters debug mode
+   and jumps to the debug program at `0x2000_0800` (7.7). After `dret` the CPU returns
+   to the polling loop and reads `SYSCSR.DBG_EN` again: debug mode pauses the wait, it
+   does not end it.
+4. To let the user program run, the host writes `SYSCSR.DBG_EN_MASK` = 1 through the
+   AXI manager (`AXI_S0`, `S_BUS`, `P_BUS`, `SYSCSR`; 7.4). `SYSCSR.DBG_EN` then reads
+   0 and the ROM code jumps to `0x2000_1080`.
+5. JTAG can only clear the debug state. It cannot set `SYSCSR.DBG_EN` to 1.
 
-- Until the capture, `o_dbg_cpu_hold = 1`.
-- **`DBG_EN = 0`:** after the capture, `o_dbg_cpu_hold = 0` permanently. `CPUHOLD` has
-  no effect.
-- **`DBG_EN = 1`:** `o_dbg_cpu_hold` follows `CPUHOLD`, which is 1 at reset. The host
-  writes 0 to start the CPU. Writing 1 puts it back in reset, with `ISRAM` untouched.
+With `DEBUG_PROG` = `0xAA` there is no debug program in the window. The host must not
+raise `CPUDBG`, because there is no dispatch loop at `0x2000_0800`; it may still write
+`DBG_EN_MASK` = 1. With `DEBUG_PROG` = `0x55` the host may raise `CPUDBG` at any time,
+including while the user program runs.
 
-`o_dbg_cpu_hold` holds the CPU **only**. It is not a reset source and sets no bit in
-`RESET_CAUSE`.
+`CPUDBG` is not gated by `DBG_EN_MASK`: `o_dbg_req` goes straight to Ibex `debug_req_i`.
 
-## 7.2 Boot flows
-
-![Debug boot wiring](../figures/img/fig_sysdbg_boot_wiring.png){width=6.0in}
-
-: Effect of `DBG_EN`
-
-| | `DBG_EN = 0`, normal boot | `DBG_EN = 1`, debug boot |
-|---|---|---|
-| CPU leaves reset | When `SCRC` releases it | When `SCRC` releases it **and** `CPUHOLD = 0` |
-| Ibex `boot_addr_i` | `0x0000_0000`, ROM | `0x2000_1000`, `ISRAM` |
-| First instruction | `0x0000_0080`, bootloader | `0x2000_1080`, loaded image |
-| JTAG pads (`TCK`, `TMS`, `TDI`, `TDO`, `TRST_N`) | IO MUX register, default JTAG | Forced to JTAG |
-
-**Normal boot.** To attach, the host writes the debug window (7.8) while the CPU
-runs, then halts it (7.7).
-
-**Debug boot.** The host takes these steps, in order:
-
-1. Power on. `SCRC` releases the bus, ROM, RAM and peripherals. The CPU stays in reset.
-2. Write the debug window, `0x2000_0000`--`0x2000_0FFF` (7.8).
-3. Write the program image from `0x2000_1000`.
-4. Optional: `CPUDBG = 1`. The core then halts before its first instruction, with
-   `dpc = 0x2000_1080`.
-5. `CPUHOLD = 0`. The CPU starts.
-6. Halt, resume, single-step, `ebreak` in RAM, read and write.
-7. To run again: `CPUHOLD = 1`, change the image, `CPUHOLD = 0`.
-
-To debug the ROM bootloader from its first instruction: debug boot, halt before
-the first instruction (step 4), write `dpc = 0x0000_0080` with a sequence, then
-single-step (`dcsr.step`) or resume. No hardware trigger is needed.
+To debug the ROM code, raise `CPUDBG` while the CPU runs it, but only after a debug
+program is in the window.
 
 ## 7.3 Reset behaviour
 
@@ -183,9 +155,9 @@ single-step (`dcsr.step`) or resume. No hardware trigger is needed.
 
 | Event | TCK domain | AXI domain | System domain | CPU |
 |---|---|---|---|---|
-| Power-on | Reset | Reset | Reset | Reset, then 7.1 |
-| Watchdog bite, software reset | -- | Reset. A request still held is issued again on release | -- | Per `SCRC`, then 7.1 |
-| `i_jtag_trst_n` | Reset: `dbgreq` = 0, `cpu_hold` = 1 | -- | -- | Held again in debug boot |
+| Power-on | Reset | Reset | Reset | Per `SCRC` |
+| Watchdog bite, software reset | -- | Reset. A request still held is issued again on release | -- | Per `SCRC` |
+| `i_jtag_trst_n` | Reset: `dbgreq` = 0 | -- | -- | Unaffected |
 
 ## 7.4 Reading and writing memory
 
@@ -250,38 +222,39 @@ Each transaction is one 4-phase handshake:
 | `read_ack`, `write_ack` | AXI to TCK | `SyncStages` flip-flops, then one delay flip-flop for the edge | the same, one `TCK` period |
 | `addr_reg`, `wdata_reg` | TCK to AXI | No synchroniser. Stable from `req` rising until `ack` falls | `set_max_delay -datapath_only`, one `i_clk_cpu` period |
 | `rdata_reg`, `resp_reg` | AXI to TCK | No synchroniser. Stable from `ack` rising until the next `req` | `set_max_delay -datapath_only`, one `TCK` period |
-| `dbgreq`, `cpu_hold` | TCK to system | `SyncStages` flip-flops | `set_max_delay -datapath_only`, one `i_clk_cpu` period, to the first flip-flop |
+| `dbgreq` | TCK to system | `SyncStages` flip-flops | `set_max_delay -datapath_only`, one `i_clk_cpu` period, to the first flip-flop |
 
 ## 7.7 Halt and resume
 
 - **Halt.** `CPUDBG = 1` drives `o_dbg_req` high. Ibex saves the PC in `dpc`
   and jumps to `DmHaltAddr` = `0x2000_0800`. The window code sets `HALTED` = 1; the
   host reads it to confirm the halt.
-- **Halt before starting.** `CPUDBG = 1` while the CPU is held, or across a watchdog
-  reset, makes the core halt
-  before its first instruction.
+- **Halt across a reset.** `CPUDBG = 1` held across a watchdog reset makes the core
+  halt before its first instruction.
 - **Resume.** The host writes `CPUDBG = 0` **first**, then `RESUME` = 1 in the debug
   window. The loop executes `dret`. If `debug_req` were still high, the core would
   halt again at the next instruction.
 
 ## 7.8 Debug window
 
-The first 4 KiB of `ISRAM`. **The host writes all of it through `SYSDBG`**:
-- in debug boot, while the CPU is held (7.2 step 2);
-- in normal boot, at any time before the first halt.
-
-Firmware places nothing here.
+The first 4 KiB of `ISRAM`. The debug program is written by the ROM code from
+`DEBUG_PAYLOAD` (`QNSC_BOOT_SPEC` 6), at `0x2000_0000`. The host can also read and write
+the window through the AXI manager at any time. Firmware places nothing here.
 
 : Debug window layout
 
 | Address | Content |
 |---|---|
-| `0x2000_0000`--`0x2000_07FF` | Command sequences and flags (`RESUME`, `HALTED`), written and read by the host |
-| `0x2000_0800` | `DmHaltAddr`: entry on every halt |
-| `0x2000_0810` | `DmExceptionAddr`: entry on an exception in Debug Mode |
-| `0x2000_0820`--`0x2000_0FFF` | Dispatch loop |
+| `0x2000_0000`--`0x2000_07FF` | Sequence area |
+| `0x2000_0800` | Dispatch loop, `DmHaltAddr`: entry on every halt |
+| `0x2000_0810` | Exception handler, `DmExceptionAddr`: entry on an exception in Debug Mode |
+| `0x2000_0F00` | Result |
+| `0x2000_0F08` | Command word |
+| `0x2000_0F0C` | Resume flag (`RESUME`) |
 
-The exact layout and code are host software, in `_DECISIONS`, "Debug window code".
+The layout is the one of `QNSC_BOOT_SPEC` 9. The entry of the debug program is at
+offset `0x800` inside `DEBUG_PAYLOAD`. The address of the `HALTED` flag used in 7.7 is
+not given by the new flow and is to be confirmed (section 11).
 
 # 8. Instances
 
@@ -293,7 +266,7 @@ One, in `design/top`, with the default parameters.
 
 | Function | Where it lives |
 |---|---|
-| Reset of the chip or of any domain | Nowhere. `o_dbg_cpu_hold` holds the CPU only |
+| Reset of the chip or of any domain, holding the CPU | Nowhere. `SYSDBG` does not reset or hold the CPU |
 | CPU clock control | Not needed. The `cpu` cluster is never gated |
 | Byte and halfword access, bursts | Nowhere. Word only; the host does read-modify-write |
 | Debug ROM, program buffer | Nowhere. The debug window in `ISRAM`, 7.8 |
@@ -320,23 +293,22 @@ One, in `design/top`, with the default parameters.
 
 | Item | Owner | What it blocks |
 |---|---|---|
-| `DBG_EN` on a dedicated input pad, pull-down on the board. If no pad is free, it may share a pad whose IO MUX default is an input, since it is sampled only after power-on | Top, pad owner | Debug boot |
-| `i_rst_n_por` from power-on only, not from the watchdog | `SCRC` | `DBG_EN` capture and hold surviving a watchdog bite |
-| CPU reset = `SCRC` CPU reset OR `o_dbg_cpu_hold`, through the CPU reset synchroniser | `SCRC` | Debug boot |
-| `boot_addr_i = o_dbg_en ? 0x2000_1000 : 0x0000_0000` | CPU owner | Debug boot running the loaded image |
+| `DBG_EN` on a dedicated input pad with a pull-down, read through `SYSCSR` (`DBG_BOOT` at `0x8000_400C`), not by `SYSDBG` | Top, pad owner, `SYSCSR` owner | The ROM debug gate |
+| `SYSCSR.DBG_EN_MASK` writable over the bus from `AXI_S0` | `SYSCSR` owner | 7.1 step 4 |
 | `DmHaltAddr = 0x2000_0800`, `DmExceptionAddr = 0x2000_0810`. `DmBaseAddr`/`DmAddrMask` act only with PMP, which is off | CPU owner | 7.8 |
-| `fetch_enable_i` tied to `IbexMuBiOn`. The CPU is held by reset (`o_dbg_cpu_hold`), not by fetch enable | CPU owner | Debug boot; a second hold would need its own release |
+| `fetch_enable_i` tied to `IbexMuBiOn` | CPU owner | The CPU running from reset release |
 | `AXI_S0` connected to `SYSDBG` directly, AXI4, ID width `AxiIdWidth`. No `axi_from_mem` | Bus owner | Every bus access |
 | Remove the `0xF000_0000` `SYSDBG` register region from HAS Table 7-1 (already gone from `qsoc_contract.yml`) | HAS owner | Consistency. There are no memory-mapped registers |
-| The five JTAG pads forced to JTAG while `o_dbg_en = 1` | IO MUX owner | Debug boot with firmware that remaps pins |
+| The five JTAG pads kept on JTAG while a debug boot is in progress. `o_dbg_en` no longer exists; the IO MUX owner decides the condition (for example `SYSCSR.DBG_EN`) | IO MUX owner | Debug boot with firmware that remaps pins |
 | `ISRAM` array has no reset and no clear-on-reset | RAM owner | Image surviving a watchdog or software reset |
-| Image linked at `0x2000_1000`, reset entry `0x2000_1080`; bootloader jumps to `0x2000_1080` | Firmware owner | The same image in both boot modes |
+| Image linked at `0x2000_1000`, reset entry `0x2000_1080`; the bootloader jumps to `0x2000_1080` | Firmware owner | The user program starting after the ROM |
+| Address of the `HALTED` flag in the debug window, and the debug program built to the layout of 7.8 | Debug program owner | 7.7 |
 
 **Accepted limits:**
 
 1. No timeout: a slave that never answers keeps `busy` = 1 until an `S_BUS` reset
    or power-on.
-2. In normal boot, firmware can take the JTAG pins. Use debug boot.
+2. Once the user program runs, it can take the JTAG pins unless the IO MUX owner prevents it (section 11).
 
 # 12. Verification
 
@@ -354,16 +326,17 @@ One, in `design/top`, with the default parameters.
    table cross.
 8. `i_rst_n_sysbus` asserted during a transaction: the transaction is issued
    again after release, and completes.
-9. `DBG_EN`: `o_dbg_cpu_hold` = 1 until the capture, then 0 for `DBG_EN = 0`, or
-   `CPUHOLD` for `DBG_EN = 1`. Toggling the pad afterwards changes nothing.
-   `o_dbg_cpu_hold` never glitches (it is a flip-flop output).
-10. With Ibex, debug boot: load the window and image, `CPUDBG = 1`, `CPUHOLD = 0`.
-    `HALTED` = 1 and `dpc = 0x2000_1080`. `CPUDBG = 0`, `RESUME` = 1: `HALTED` = 0
-    and the core runs without halting again.
-11. With Ibex, normal boot: attach while running, halt, resume.
+9. With Ibex, debug boot (`DEBUG_PROG` = `0x55`, `SYSCSR.DBG_EN` = 1): `CPUDBG` = 1
+   sends the CPU to `0x2000_0800`. `CPUDBG` = 0 and `RESUME` = 1: the core executes
+   `dret`, returns to the ROM polling loop and reads `DBG_EN` again.
+10. Writing `SYSCSR.DBG_EN_MASK` = 1 through the AXI manager makes `DBG_EN` read 0 and
+    the CPU leave the loop for `0x2000_1080`.
+11. With Ibex running the user program and `DEBUG_PROG` = `0x55`: attach, halt,
+    resume.
 
-**Acceptance:** in debug boot, load an image that toggles a GPIO, release the CPU,
-halt it, read `dpc`, resume it, and see the GPIO toggle again.
+**Acceptance:** in debug boot, load an image that toggles a GPIO, halt the CPU in the
+polling loop, read `dpc`, resume it, write `DBG_EN_MASK` = 1, and see the GPIO
+toggle.
 
 # Appendix A. Acronyms
 
@@ -387,8 +360,8 @@ halt it, read `dpc`, resume it, and see the GPIO toggle again.
 |---|---|---|
 | The block diagram does not show where the FSM and the CDC are | Teacher, 2026-09-23 | Section 3 separates the three domains. 7.6 gives the handshake, its signals and its constraints |
 | Too long, and the repetition causes errors | Teacher, 2026-09-23 | Rewritten as V3.0. The reasoning moved to `_DECISIONS` |
-| Who loads the 4 KiB debug program, and when? | Teacher, 2026-09-23 | The host, over JTAG. In debug boot, while the CPU is held; in normal boot, before the first halt -- 7.2, 7.8 |
-| The debugger must control the CPU reset, selected by an external pin | Teacher, 2026-09-23 | `DBG_EN` and `CPUHOLD` -- 7.1 |
+| Who loads the 4 KiB debug program, and when? | Teacher, 2026-09-23 | V3.0: the host, over JTAG. V3.2: the ROM code, from `DEBUG_PAYLOAD` over `UART0`; the host can still read and write it -- 7.8 |
+| The debugger must control the CPU reset, selected by an external pin | Teacher, 2026-09-23 | Done in V3.0 with `DBG_EN` and `CPUHOLD`. Dropped in V3.2: the boot flow of 2026-10-12 starts the CPU in ROM and gates the user program with `SYSCSR.DBG_EN` -- 7.1 |
 | Reference design `VLSI_SYSDBG.drawio` | Teacher, 2026-09-23 | Used as the pattern and adapted to QSOC -- `_DECISIONS` D18 |
-| CPU clock under debugger control | Teacher, 2026-09-23 | Not needed: the `cpu` cluster is never gated, and holding reset stops the CPU |
+| CPU clock under debugger control | Teacher, 2026-09-23 | Not needed: the `cpu` cluster is never gated |
 | IP list names `axi_from_mem` for the debugger | Owner, 2026-09-25 | An early pick from the V1.x memory-style port. The block is self-designed, as the teacher asks: its own AXI4 manager (7.5) connects to `AXI_S0` directly, and no IP is instantiated -- `_DECISIONS` D21 |

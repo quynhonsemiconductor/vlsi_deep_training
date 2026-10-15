@@ -14,6 +14,22 @@ Nothing here was deleted from the specification without being kept here first.
 
 ---
 
+# V3.2 decisions (2026-10-15)
+
+The boot flow was redecided on 2026-10-12 (`QNSC_BOOT_SPEC` V3.1). The CPU always
+starts in ROM, so `SYSDBG` no longer takes part in starting it.
+
+| Change | Why |
+|---|---|
+| Removed `i_dbg_en`, `o_dbg_en`, `o_dbg_cpu_hold` and the `CPUHOLD` data register (IR `1000`, now as `BYPASS`) | Nothing holds the CPU in reset any more, and there is no boot-address mux to drive. `DBG_EN` is read by `SYSCSR` (`DBG_BOOT`) and polled by the ROM code |
+| Section 7.1 rewritten as the role of `SYSDBG` in the boot flow | The host raises `CPUDBG` during the ROM wait and writes `SYSCSR.DBG_EN_MASK` through the AXI manager to end it |
+| Debug window layout follows `QNSC_BOOT_SPEC` 9; the debug program is written by the ROM code | The debug program is the `DEBUG_PAYLOAD` of the UART frame. The host can still write the window through the AXI manager |
+| `CPUDBG` is not gated by `DBG_EN_MASK` | `o_dbg_req` goes straight to Ibex `debug_req_i` |
+
+Open in V3.2: the address of the `HALTED` flag, and the condition that keeps the JTAG
+pads on JTAG (it was `o_dbg_en`). The V3.0 and V3.1 text below, and D-numbers that
+speak of `DBG_EN` capture and `CPUHOLD`, describe the old flow and are kept as record.
+
 # V3.1 decisions (2026-09-25)
 
 | # | Decision | Why |

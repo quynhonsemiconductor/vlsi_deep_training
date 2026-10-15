@@ -32,10 +32,9 @@ unmodified upstream IP.
 [`cpu.f`](./cpu.f), never copied into `rtl/`. Reading this one directory answers
 what is ours and what is borrowed.
 
-The block's outward boundary is `rtl/emacs/m_qnsc_wrap_cpu.sv`, generated via
-Emacs `verilog-mode` AUTOINST/AUTO_TEMPLATE from `m_qnsc_wrap_cpu.src.sv` (see
-`rtl/emacs/Makefile`; `make cpu` regenerates it and applies the same
-tool-limitation fixups every time, not by hand). It directly instantiates
+The block's outward boundary is `rtl/m_qnsc_wrap_cpu.sv`, generated via
+Emacs `verilog-mode` AUTOINST/AUTO_TEMPLATE from `rtl/emacs/m_qnsc_wrap_cpu.src.sv`
+by the shared flow (`make wrap BLOCK=cpu`, `flow/emacs/wrap.mk`), never edited by hand. It directly instantiates
 `ibex_top` and `m_qnsc_cpu2axi`, connected to each other in this one file --
 the core's two memory-style ports wire straight to the bridge's own ports
 (leader review 2026-09-28: connect the core to the bridge first, then wrap
@@ -50,13 +49,14 @@ convention natively.
 | Port | Direction | Note |
 |---|---|---|
 | `i_clk_cpu`, `i_rst_n_cpu` | in | CPU clock domain |
-| `i_cfg_boot_addr[31:0]` | in | `cpu` is IP, so it takes the resolved boot address as a value, not a mux driven from `qnsc_pkg` internally (design/README.md, "Shared numbers"). `design/top` ties it: `i_dbg_en ? qnsc_pkg::C_ISRAM_BASE : 32'h0` |
 | `i_cfg_hart_id[31:0]` | in | `design/top` ties this; `32'h0` while QSOC has one core |
 | `i_dbg_req` | in | from SYSDBG |
 | `i_int_fast[10:0]` | in | 11 real fast-IRQ sources; padded to Ibex's 15 internally |
 | `i_int_nm` | in | WDT bark (NMI), from INTMAP |
 | `i_dft_test_en` | in | DFT scan bypass |
 | `o_pwr_sleep` | out | core has stopped its own clock (WFI) |
+| `o_crash_dump[159:0]` | out | to SYSCSR; `crash_dump_t` flattened (current_pc, next_pc, last_data_addr, exception_pc, exception_addr) |
+| `o_double_fault_seen` | out | to SYSCSR; one-cycle pulse |
 | `i_bus_axi_*` / `o_bus_axi_*` | in/out | flattened AXI4 master port toward S_BUS `AXI_S1` |
 
 ## Instances

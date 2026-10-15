@@ -16,12 +16,9 @@ input logic             i_rst_n_cpu,            // To u_ibex_top of ibex_top.v, 
 //---------------------------------------------------------------
 // Config -- tied by design/top from qnsc_pkg (cpu is IP, no
 // qnsc_pkg import here).
-// i_cfg_boot_addr = i_dbg_en ? C_ISRAM_BASE : 0. Must be C_ISRAM_BASE,
-// not C_ISRAM_DBG_BASE (see DmBaseAddr below) -- see DECISIONS.
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_cfg")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
-input logic [31:0]      i_cfg_boot_addr,        // To u_ibex_top of ibex_top.v
 input logic [31:0]      i_cfg_hart_id,          // To u_ibex_top of ibex_top.v
 // End of automatics
 
@@ -180,7 +177,7 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
 /* ibex_top AUTO_TEMPLATE(
     .clk_i                    (i_clk_cpu),
     .rst_ni                   (i_rst_n_cpu),
-    .boot_addr_i              (i_cfg_boot_addr[]),
+    .boot_addr_i              (32'h0000_0000),  // contract: memory_map.rom.base
     .debug_req_i              (i_dbg_req),
     .irq_software_i           (1'b0),
     .irq_timer_i              (1'b0),
@@ -316,7 +313,7 @@ ibex_top #(
              .ram_cfg_icache_tag_i      ('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}), // Templated
              .ram_cfg_icache_data_i     ('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}), // Templated
              .hart_id_i                 (i_cfg_hart_id[31:0]),   // Templated
-             .boot_addr_i               (i_cfg_boot_addr[31:0]), // Templated
+             .boot_addr_i               (32'h0000_0000),         // Templated
              .trvk_heap_base_addr_i     ('0),                    // Templated
              .instr_gnt_i               (w_ibex_bridge_instr_gnt), // Templated
              .instr_rvalid_i            (w_ibex_bridge_instr_rvalid), // Templated
