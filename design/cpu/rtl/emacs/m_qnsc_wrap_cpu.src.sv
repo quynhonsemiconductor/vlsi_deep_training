@@ -3,8 +3,6 @@
 // m_qnsc_wrap_cpu -- ibex_top + m_qnsc_cpu2axi in one module.
 // See doc/specs/QNSC_CPU_DECISIONS.md.
 module m_qnsc_wrap_cpu
-#(
-)
 (
 //---------------------------------------------------------------
 // Clock/Reset
@@ -14,27 +12,25 @@ module m_qnsc_wrap_cpu
 //---------------------------------------------------------------
 // Config -- tied by design/top from qnsc_pkg (cpu is IP, no
 // qnsc_pkg import here).
+// i_cfg_boot_addr = i_dbg_en ? C_ISRAM_BASE : 0. Must be C_ISRAM_BASE,
+// not C_ISRAM_DBG_BASE (see DmBaseAddr below) -- see DECISIONS.
 //---------------------------------------------------------------
-// i_dbg_en ? C_ISRAM_BASE : 0. Must be C_ISRAM_BASE, not
-// C_ISRAM_DBG_BASE (see DmBaseAddr below) -- see DECISIONS.
-input  logic [31:0] i_cfg_boot_addr,
-input  logic [31:0] i_cfg_hart_id,
+/*AUTOINPUT("^i_cfg")*/
 
 //---------------------------------------------------------------
 // Boot / Debug
 //---------------------------------------------------------------
-input  logic i_dbg_req,
+/*AUTOINPUT("^i_dbg")*/
 
 //---------------------------------------------------------------
-// Interrupt
+// Interrupt (i_int_fast is padded to ibex's 15 inside)
 //---------------------------------------------------------------
-input  logic [10:0] i_int_fast,  // padded to ibex's 15 internally
-input  logic         i_int_nm,   // WDT bark (NMI)
+/*AUTOINPUT("^i_int")*/
 
 //---------------------------------------------------------------
 // DFT
 //---------------------------------------------------------------
-input  logic i_dft_test_en,
+/*AUTOINPUT("^i_dft")*/
 
 //---------------------------------------------------------------
 // Power
@@ -42,8 +38,31 @@ input  logic i_dft_test_en,
 /*AUTOOUTPUT("^o_pwr")*/
 
 //---------------------------------------------------------------
-// AXI4 master bus, flattened (no packed structs on the boundary).
+// Diagnostics, to SYSCSR (o_crash_dump is in the hand-written group below)
 //---------------------------------------------------------------
+// o_double_fault_seen is a one-cycle pulse; SYSCSR needs a sticky bit.
+/*AUTOOUTPUT("^o_double")*/
+
+//---------------------------------------------------------------
+// Others -- must stay empty once the template below is complete
+//---------------------------------------------------------------
+/*AUTOINOUT*/
+/*AUTOINPUT*/
+/*AUTOOUTPUT*/
+
+//---------------------------------------------------------------
+// Ports emacs cannot derive, written by hand. Keep this group last (the
+// final port has no trailing comma).
+//  - o_crash_dump: ibex_top's port is package-typed (ibex_pkg::crash_dump_t),
+//    which verilog-mode does not declare (see flow/emacs/fix_pkg_ports.py).
+//    Flattened MSB..LSB: current_pc, next_pc, last_data_addr, exception_pc,
+//    exception_addr. Only the last two hold their value, so SYSCSR captures
+//    on o_double_fault_seen or an NMI/reset.
+//  - AXI4 master bus to S_BUS AXI_S1: the bridge speaks a packed struct, and
+//    the flat ports come from the pack/unpack assigns below.
+//---------------------------------------------------------------
+output logic [$bits(ibex_pkg::crash_dump_t)-1:0] o_crash_dump,
+
 input  logic                    i_bus_axi_aw_ready,
 output logic [qnsc_cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_aw_id,
 output logic [31:0]             o_bus_axi_aw_addr,
@@ -111,6 +130,7 @@ logic [31:0] w_ibex_bridge_data_addr;
 logic [31:0] w_ibex_bridge_data_wdata;
 logic [31:0] w_ibex_bridge_data_rdata;
 logic        w_ibex_bridge_data_err;
+ibex_pkg::crash_dump_t w_ibex_crash_dump;
 
 qnsc_cpu2axi_pkg::axi_s_1_req_t  w_bridge_axi_req;
 qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
@@ -119,14 +139,16 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
 
 /*AUTO_LISP(setq verilog-auto-input-ignore-regexp
   (concat
-  "unuse_input"
+  "^w_"
+  "\\|unuse_input"
   "\\|rvfi_"
   ))
 */
 
 /*AUTO_LISP(setq verilog-auto-output-ignore-regexp
   (concat
-  "unuse_output"
+  "^w_"
+  "\\|unuse_output"
   "\\|rvfi_"
   ))
 */
@@ -139,7 +161,7 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
     .irq_software_i           (1'b0),
     .irq_timer_i              (1'b0),
     .irq_external_i           (1'b0),
-    .irq_fast_i               ({4'b0, i_int_fast}),
+    .irq_fast_i               ({4'b0, i_int_fast[10:0]}),
     .irq_nm_i                 (i_int_nm),
     .core_sleep_o             (o_pwr_sleep),
     .test_en_i                (i_dft_test_en),
@@ -188,8 +210,8 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
     .scramble_key_i           ('0),
     .scramble_nonce_i         ('0),
     .scramble_req_o           (),
-    .crash_dump_o             (),
-    .double_fault_seen_o      (),
+    .crash_dump_o             (w_ibex_crash_dump),
+    .double_fault_seen_o      (o_double_fault_seen),
     .alert_minor_o            (),
     .alert_major_internal_o   (),
     .alert_major_bus_o        (),
@@ -217,8 +239,8 @@ ibex_top #(
     .ICache           (1'b0),
     .ICacheECC        (1'b0),
     .BranchPredictor  (1'b0),
-    .DbgTriggerEn     (1'b1),  // leader review: HW trigger CSRs on
-    .DbgHwBreakNum    (2),     // leader review: 2 HW breakpoints
+    .DbgTriggerEn     (1'b1),
+    .DbgHwBreakNum    (2),
     .SecureIbex       (1'b0),
     .LockstepOffset   (1),
     .ICacheScramble   (1'b0),
@@ -227,7 +249,7 @@ ibex_top #(
     .DmHaltAddr       (32'h2000_0000 + 32'h0000_0800),     // contract: memory_map.isram_dbg.base
     .DmExceptionAddr  (32'h2000_0000 + 32'h0000_0810),     // contract: memory_map.isram_dbg.base
     .CsrMvendorId     (32'h0),
-    .CsrMimpId        (32'h1)  // leader review: implementation/revision id
+    .CsrMimpId        (32'h1)
 ) u_ibex_top(/*AUTOINST*/);
 
 /* m_qnsc_cpu2axi AUTO_TEMPLATE(
@@ -253,6 +275,8 @@ ibex_top #(
 );
 */
 m_qnsc_cpu2axi u_m_qnsc_cpu2axi(/*AUTOINST*/);
+
+assign o_crash_dump = w_ibex_crash_dump;
 
 // Pack/unpack: struct <-> flat AXI4 (hand-written, not AUTOINST).
 assign o_bus_axi_aw_id     = w_bridge_axi_req.aw.id;
@@ -311,5 +335,7 @@ endmodule
 // verilog-library-flags:("-f filelist_emacs.f" "-f filelist_emacs_bridge.f")
 // verilog-library-extensions:(".v" ".sv")
 // verilog-auto-star-expand: nil
-// verilog-auto-inst-param-value: nil
+// verilog-auto-inst-param-value: t
+// indent-tabs-mode: nil
+// eval: (setq large-file-warning-threshold nil)
 // End:
