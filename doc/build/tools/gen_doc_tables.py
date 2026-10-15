@@ -200,7 +200,33 @@ def memory_map(c, ports=None):
                  align="llllll", caption=caption)
 
 
+def debug_window(c):
+    """The layout of the 4 KiB debug window, in address order. Offsets and addresses come
+    from the contract; the prose on the code area is the only thing written here."""
+    w = c["debug_window"]
+    base, size = int(w["base"]), int(w["mask"]) + 1
+    halt, exc = int(w["halt_addr"]), int(w["exception_addr"])
+    first_mbx = min(int(m["offset"]) for m in w["mailbox"])
+    seq = int(w["sequence_size"])
+
+    def row(start, length, name, what):
+        return ["`0x%03X`--`0x%03X`" % (start, start + length - 1) if length > 4 else "`0x%03X`" % start,
+                "`0x%08X`" % (base + start), "%d B" % length, name, what]
+
+    rows = [row(0, seq, "sequence area", "Instruction sequences, written by the host through `SYSDBG`")]
+    rows.append(row(halt - base, 0x10, "`DmHaltAddr`", "Dispatch loop entry: Ibex enters here on every halt"))
+    rows.append(row(exc - base, 0x10, "`DmExceptionAddr`", "Exception handler: a fault in Debug Mode"))
+    rows.append(row(exc - base + 0x10, first_mbx - (exc - base + 0x10), "code", "Rest of the dispatch loop"))
+    for m in sorted(w["mailbox"], key=lambda x: int(x["offset"])):
+        rows.append(row(int(m["offset"]), 4, "`%s`" % m["name"], m["what"]))
+    last = max(int(m["offset"]) for m in w["mailbox"]) + 4
+    rows.append(row(last, size - last, "reserved", "Scratch, unused"))
+    return table(["Offset", "Address", "Size", "Name", "Contents"], rows, align="lllll",
+                 caption="Debug window, the first 4 KiB of `ISRAM`")
+
+
 GENERATORS = {
+    "debug_window": debug_window,
     "interrupt_lines": interrupt_lines,
     "interrupt_totals": interrupt_totals,
     "core_tie_offs": core_tie_offs,
