@@ -19,6 +19,7 @@ not isolated further). Blocking assignments 1 ns after the edge do not have the 
 Every handshake wait now has a limit and the whole run a watchdog, so a hang is a failure.
 
 **What the tests have found.** `RAM_012` found that a 256-beat burst is dropped by the
-controller unless `PARA_LEN_WD` is 9 (QNSC_RAM_MAS 7.2). Mutations the tests catch: `o_mem_be`
+controller unless `PARA_LEN_WD` is 9 (QNSC_RAM_MAS 7.2). `RAM_013` states the other finding:
+the write-response FIFO drops a ninth pending response (7.1). Mutations the tests catch: `o_mem_be`
 not gated by the strobe, the strobe FIFO popped by a read, `o_mem_addr` one bit off, and
 `PARA_LEN_WD` back at 8.

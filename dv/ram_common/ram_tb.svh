@@ -254,6 +254,7 @@
   `include "tests/ram_008.svh"
   `include "tests/ram_009.svh"
   `include "tests/ram_012.svh"
+  `include "tests/ram_013.svh"
 
   string test_sel = "all";
   function automatic bit run(input string n);
@@ -286,6 +287,7 @@
     if (run("ram_008")) ram_008();
     if (run("ram_009")) ram_009();
     if (run("ram_012")) ram_012();
+    if (run("ram_013")) ram_013();
     if (occ_err != 0)  $fatal(1, "STRBFIFO and WFIFO occupancy differed in %0d cycle(s)", occ_err);
     if (resp_err != 0) $fatal(1, "%0d response(s) other than OKAY", resp_err);
     $display("PASS (%s)", test_sel);

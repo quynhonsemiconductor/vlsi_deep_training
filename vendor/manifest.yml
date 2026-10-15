@@ -213,7 +213,7 @@ upstreams:
   - design/rom
   notes: 'Licence: no LICENSE file upstream, but this is the course mentor''s own repository (nguyenquanicd),
     provided for use in this training. Recorded as MentorProvided-QNSC-Course rather than left undefined.
-    Also used by ROM. Known findings to report to the mentor: WRAP is declared and not implemented; with PARA_LEN_WD = 8 an AxLEN of 255 (a 256-beat burst) is dropped, because the beat counter loads AxLEN + 1 and wraps to 0 (the RAM wrappers set 9, found in simulation, QNSC_RAM_MAS 7.2). The
+    Also used by ROM. Known findings to report to the mentor: WRAP is declared and not implemented; with PARA_LEN_WD = 8 an AxLEN of 255 (a 256-beat burst) is dropped, because the beat counter loads AxLEN + 1 and wraps to 0 (the RAM wrappers set 9, found in simulation, QNSC_RAM_MAS 7.2); a ninth pending write response is dropped when BREADY is held low, because the write grant does not look at the response FIFO (accepted limit, QNSC_RAM_MAS 7.1). The
     controller has no WSTRB path, which QSOC adds in the RAM wrapper.
 
     '

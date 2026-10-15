@@ -10,7 +10,7 @@ task automatic ram_008();
   rd_burst(32'h0000_0810, 8'd15, 2'b01, 7'h52, d);
   rd_burst(32'h0000_0850, 8'd7, 2'b00, 7'h53, d);
   rd_burst(32'h0000_0810, 8'd3, 2'b11, 7'h54, d);              // the reserved burst code
-  rd_burst(32'h0000_0FFC, 8'd3, 2'b01, 7'h55, d);              // a burst across the end of a 4 KiB page
+  rd_burst(32'h0000_0FFC, 8'd3, 2'b01, 7'h55, d);              // not legal AXI (no burst crosses 4 KiB, A3.4.1); the RAM must neither hang nor err
   if (resp_err != n_resp0) $fatal(1, "RAM_008: %0d response(s) other than OKAY", resp_err - n_resp0);
   $display("RAM_008 ok: BRESP and RRESP are 00 for every access, RLAST on the last beat only");
 endtask

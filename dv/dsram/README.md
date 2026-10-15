@@ -21,6 +21,7 @@ make sim BLOCK=dsram TEST=ram_005    # one test
 | `RAM_008` | 8 | `BRESP` and `RRESP` are `00`; `RLAST` on the last beat only |
 | `RAM_009` | 9 | reset values; contents survive a reset pulse; an in-flight read is dropped |
 | `RAM_012` | added | INCR of 1 to 256 beats, FIXED of 1 to 16, 300 random bursts against a reference memory, `B`/`R` stalled at random |
+| `RAM_013` | added | 8 held write responses are all delivered; a ninth is dropped (accepted limit) |
 
 Not simulated: item 3 (a C program on the CPU), item 10 (macro pins; the testbench has a
 model, not the macro), item 11 (the vendored files, checked by CI).

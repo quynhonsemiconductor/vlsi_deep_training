@@ -15,7 +15,7 @@ The reasoning behind each change is in [`QNSC_RAM_DECISIONS.md`](QNSC_RAM_DECISI
 | V2.2 | 2026-09-24 | Nghia VT | -- | Wrapper interface, strobe FIFO, timing, reset and tie-offs specified; figure and macro address corrected |
 | V2.3 | 2026-09-25 | Nghia VT | -- | Port names to `QNSC_RTL_Design_Naming_Rule` V1.0: AXI named per channel (`i_bus_axi_aw_valid`, ...), macro port `o_mem_*` / `i_mem_rdata` (was `o_sram_*`, `o_sram_bwe` is `o_mem_be`). No change in behaviour |
 | V2.4 | 2026-09-28 | Nghia VT | -- | Two blocks, two wrappers, per Naming Rule V1.1 rule 2.1: `m_qnsc_wrap_isram` in `design/isram`, `m_qnsc_wrap_dsram` in `design/dsram` (was one `m_qnsc_wrap_axi4_sram` in `design/ram`). No change in behaviour |
-| V2.5 | 2026-10-15 | Nghia VT | -- | Wrappers written and simulated. `PARA_LEN_WD` is 9, not 8: with 8, a 256-beat burst (`AxLEN` = 255) is dropped with no response (found in simulation, 7.2). Section 12 carries test IDs `RAM_001` to `RAM_012` and says which items are not simulated; the timing table of 7.1 is confirmed as written |
+| V2.5 | 2026-10-15 | Nghia VT | -- | Wrappers written and simulated. `PARA_LEN_WD` is 9, not 8: with 8, a 256-beat burst (`AxLEN` = 255) is dropped with no response (found in simulation, 7.2). Section 12 carries test IDs `RAM_001` to `RAM_012` and says which items are not simulated; the timing table of 7.1 is confirmed as written. 7.1 and 11: the write-response FIFO drops a response beyond 8 pending (accepted limit, found in simulation) |
 
 # 1. Overview
 
@@ -136,6 +136,14 @@ and the data is pushed into `RFIFO` in the next.
 
 `B` and `R` responses return in the order their addresses were accepted, each with
 the ID of its request.
+
+**`BFIFO` has no back-pressure.** A write is granted whether or not `BFIFO` has room, so
+with `BREADY` low the first 8 responses wait in the FIFO and a ninth is dropped, although
+its data is written. The master then waits for a `B` that never comes (`RAM_013`). Reads are
+protected: a read is issued only while `RFIFO` is not full. `S_BUS` is configured for two
+transactions in flight per port (`Cfg.MaxMstTrans` = `MaxSlvTrans` = 2, S_BUS configuration
+sheet), which should keep the pending responses far below 8; this is not verified on the
+bus.
 
 : Timing at the block ports, no contention, FIFOs empty
 
@@ -260,6 +268,10 @@ size, so every routed address selects exactly one word.
 | First 4 KiB of `ISRAM` reserved, main image linked at `0x20001000` | firmware owner | The `SYSDBG` debug window |
 | Macro pins tied as section 10 | physical design | Silicon function |
 
+**Accepted limits:**
+
+1. A ninth pending `B` response is dropped -- 7.1.
+
 **Open:** timing and area of both instances after synthesis.
 
 # 12. Verification
@@ -293,6 +305,9 @@ against a macro model with byte enables and no reset; `make sim BLOCK=isram` and
     (`Vendor tree unmodified`), not by simulation.
 12. `RAM_012` (added) INCR bursts of 1, 2, 3, 16, 17 and 256 beats, FIXED of 1 to 16, and
     300 random bursts against a reference memory with `B` and `R` stalled at random -- 7.2.
+13. `RAM_013` (added) 8 write responses held back by `BREADY` are all delivered; of 10 writes,
+    8 responses return and 2 are dropped -- 7.1. The test states the accepted limit, so a
+    change in it is a decision.
 
 # Appendix A. Acronyms
 
