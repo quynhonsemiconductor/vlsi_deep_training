@@ -181,6 +181,41 @@ memory_map:
     note: Register interface of the DMA. Its data path is an AXI master on AXI_S2.
 
 # -----------------------------------------------------------------------------
+# Debug window: the first 4 KiB of ISRAM (memory_map: isram_dbg). The boot ROM
+# loads the 4 KiB debug program into it over UART0 when the frame header has
+# DEBUG_PROG = 0x55 (QNSC_BOOT_SPEC 6); Ibex enters it at halt_addr; SYSDBG
+# writes only the sequence area, at run time.
+#
+# Four of these numbers are compile-time parameters of ibex_top, and all of them
+# are also addresses inside the debug program, the ROM and SYSDBG. One number in
+# several documents is the defect this file exists to prevent, and it happened:
+# the mailbox was 0x700 in one document and 0xF00 in another.
+# Source: QNSC_BOOT_SPEC V3.4 Table 9-1, QNSC_SYSDBG_MAS 7.8.
+# -----------------------------------------------------------------------------
+debug_window:
+  base: 0x20000000            # Ibex DmBaseAddr; equal to isram_dbg.base
+  mask: 0x00000FFF            # Ibex DmAddrMask; equal to isram_dbg.size - 1
+  sequence_size: 0x800        # base .. base + 0x7FF: instruction sequences, written by the host
+  halt_addr: 0x20000800       # Ibex DmHaltAddr: the dispatch loop; equal to base + sequence_size
+  exception_addr: 0x20000810  # Ibex DmExceptionAddr: halt_addr + 0x10, as riscv-dbg lays it out
+  mailbox:                    # words, offsets from base; in the data area after the code
+    - name: data
+      offset: 0xF00
+      what: Result word, the value a sequence was sent to fetch
+    - name: exc
+      offset: 0xF04
+      what: Exception flag, 1 after a fault in Debug Mode
+    - name: cmd
+      offset: 0xF08
+      what: Command word, non-zero when a sequence is ready at the base; the sequence clears it
+    - name: resume
+      offset: 0xF0C
+      what: Resume flag, non-zero tells the dispatch loop to execute dret; the loop clears it first
+    - name: halted
+      offset: 0xF10
+      what: Halted flag, 1 while the core is in Debug Mode
+
+# -----------------------------------------------------------------------------
 # Interrupts. Source: QNSC_Interrupt_Map_MAS section 7.2 -- and that is now the
 # ONLY prose source. QSOC_HAS_Report_EN_v4_final carries a '# Interrupt map'
 # heading with nothing under it: Table 8-1 (fast line assignment) and Table 8-2
