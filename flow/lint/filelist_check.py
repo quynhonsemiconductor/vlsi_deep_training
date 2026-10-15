@@ -31,6 +31,12 @@ CI = bool(os.environ.get("GITHUB_ACTIONS"))
 NO_PATH_PREFIXES = ("+define+", "+libext+", "-Wno-", "-W", "--", "-D", "-I")
 PATH_OPTIONS = ("-f", "-F", "-v", "-y")
 
+# Options whose next token is a name, not a path -- e.g. --top-module
+# m_qnsc_wrap_cpu (Verilator has no single-token form for this: --top=NAME and
+# --top-module=NAME are both rejected, "Invalid option"). Unlike PATH_OPTIONS,
+# this argument is never checked for existence.
+NAME_ARG_OPTIONS = ("--top-module", "--top")
+
 
 def paths_in(line: str) -> list[str]:
     """The paths named on one filelist line."""
@@ -43,6 +49,8 @@ def paths_in(line: str) -> list[str]:
             out += [p for p in tok[len("+incdir+"):].split("+") if p]
         elif tok in PATH_OPTIONS and i + 1 < len(tokens):
             out.append(tokens[i + 1])
+            i += 1
+        elif tok in NAME_ARG_OPTIONS and i + 1 < len(tokens):
             i += 1
         elif not tok.startswith(NO_PATH_PREFIXES) and not tok.startswith("+"):
             out.append(tok)
