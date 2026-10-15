@@ -20,7 +20,7 @@ The reasoning behind each change is in
 | V2.6 | 2026-09-30 | Nghia VT | -- | Section 12: every check carries an ID (`PWM_NNN`), for traceability to tests. No change in behaviour |
 | V2.7 | 2026-10-09 | Nghia VT | -- | `pulp_clock_gating` maps onto `qnsc_clk_gate`, the chip's one clock gate (4). Word writes only: the IP has no `PSTRB` or `PPROT` (7.6). No dead time, complementary output or break input (11). No change in behaviour |
 | V2.8 | 2026-10-15 | Nghia VT | -- | `i_bus_apb_paddr` is 14 bits, was 12: the contract `meta.apb_paddr_width` changed in #77 because the windows are 16 KiB. The requirement on the bus owner no longer says that `P_BUS` subtracts the base (nothing does; the window is aligned to its size). The decode is unchanged: `PADDR[9:2]`, so the 1 KiB map repeats every `0x400` across the window |
-| V2.9 | 2026-10-12 | Nghia VT | -- | 7.2: with `SAW` = 1, `RSTSET` is high `TH` + 1 cycles per period and `SETRST` is its complement. New 7.8: when a new value takes effect, measured by `PWM_011`. Section 11: pad functions and their state after reset. Section 12: `PWM_011` states what it checks |
+| V2.9 | 2026-10-15 | Nghia VT | -- | 7.2: with `SAW` = 1, `RSTSET` is high `TH` + 1 cycles per period and `SETRST` is its complement. New 7.8: when a new value takes effect, measured by `PWM_011`. Section 11: pad functions and their state after reset. Section 12: `PWM_011` states what it checks |
 
 # 1. Overview
 
@@ -296,7 +296,7 @@ both the old and the new value.
 
 # 8. Instances
 
-One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
+One, on `APB_M12`, with `APB_ADDR_WIDTH` = 14, `EXTSIG_NUM` = 32 and
 `TIMER_NBITS` = 16. The four timer modules are internal to the IP.
 
 # 9. What is not provided here, and who provides it
