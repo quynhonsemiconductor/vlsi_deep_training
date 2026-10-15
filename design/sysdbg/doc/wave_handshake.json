@@ -1,0 +1,84 @@
+{
+ "signal": [
+  {
+   "name": "i_jtag_tck",
+   "wave": "p.........",
+   "period": 4
+  },
+  {
+   "name": "Update-DR (ADDR)",
+   "wave": "1...0..................................."
+  },
+  {
+   "name": "read_req",
+   "wave": "0...1...................0..............."
+  },
+  {
+   "name": "read_ack sync (TCK)",
+   "wave": "0...................1...........0......."
+  },
+  {
+   "name": "capture rdata_hold, resp",
+   "wave": "0...................1...0..............."
+  },
+  {
+   "name": "busy",
+   "wave": "0...1...........................0......."
+  },
+  {},
+  {
+   "name": "i_clk_cpu",
+   "wave": "p......................................."
+  },
+  {
+   "name": "read_req sync",
+   "wave": "0.....1...................0............."
+  },
+  {
+   "name": "read_req dly",
+   "wave": "0......1...................0............"
+  },
+  {
+   "name": "set_ar = sync & !dly",
+   "wave": "0.....10................................"
+  },
+  {
+   "name": "o_bus_axi_ar_valid",
+   "wave": "0......1.0.............................."
+  },
+  {
+   "name": "i_bus_axi_ar_ready",
+   "wave": "0.......10.............................."
+  },
+  {
+   "name": "o_bus_axi_r_ready",
+   "wave": "0......1...0............................"
+  },
+  {
+   "name": "i_bus_axi_r_valid",
+   "wave": "0.........10............................"
+  },
+  {
+   "name": "rdata_reg, resp_reg",
+   "wave": "x..........=............................",
+   "data": [
+    "rdata, rresp"
+   ]
+  },
+  {
+   "name": "read_ack = dly & !rready",
+   "wave": "0...........1...............0..........."
+  }
+ ],
+ "head": {
+  "text": "SYSDBG read: 4-phase handshake TCK <-> i_clk_cpu (QNSC_SYSDBG_MAS 7.4-7.6)",
+  "tick": 0,
+  "every": 4
+ },
+ "foot": {
+  "text": "1 req up (4) \u00b7 2 AXI read \u00b7 3 ack up (12) \u00b7 4 TCK sees ack, captures, req down (24) \u00b7 5 ack down (28) \u00b7 6 busy = 0 (32). SyncStages = 2, then the delay flop."
+ },
+ "config": {
+  "hscale": 1
+ }
+}
