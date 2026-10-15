@@ -63,6 +63,19 @@ package qnsc_pkg;
   localparam logic [C_ADDR_WIDTH-1:0] C_DMA_CFG_BASE = 32'h80034000;
   localparam int unsigned             C_DMA_CFG_SIZE = 16384;  // 16 KiB
 
+  // ---- debug window --------------------------------------------------------
+  // The first 4 KiB of ISRAM. Ibex DmBaseAddr/DmAddrMask/DmHaltAddr/DmExceptionAddr,
+  // and the addresses the debug program and SYSDBG use. QNSC_BOOT_SPEC Table 9-1.
+  localparam logic [C_ADDR_WIDTH-1:0] C_DM_BASE           = 32'h20000000;
+  localparam logic [C_ADDR_WIDTH-1:0] C_DM_MASK           = 32'h00000FFF;
+  localparam logic [C_ADDR_WIDTH-1:0] C_DM_HALT_ADDR      = 32'h20000800;
+  localparam logic [C_ADDR_WIDTH-1:0] C_DM_EXCEPTION_ADDR = 32'h20000810;
+  localparam logic [C_ADDR_WIDTH-1:0] C_DM_MBX_DATA_ADDR  = 32'h20000F00;
+  localparam logic [C_ADDR_WIDTH-1:0] C_DM_MBX_EXC_ADDR   = 32'h20000F04;
+  localparam logic [C_ADDR_WIDTH-1:0] C_DM_MBX_CMD_ADDR   = 32'h20000F08;
+  localparam logic [C_ADDR_WIDTH-1:0] C_DM_MBX_RESUME_ADDR = 32'h20000F0C;
+  localparam logic [C_ADDR_WIDTH-1:0] C_DM_MBX_HALTED_ADDR = 32'h20000F10;
+
   // ---- interrupt lines -----------------------------------------------------
   // Source: QSOC_HAS Table 8-1. The line index IS the priority: Ibex resolves
   // the lowest index first, so this order is the default priority order and

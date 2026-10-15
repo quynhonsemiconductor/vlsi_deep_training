@@ -14,6 +14,23 @@ Nothing here was deleted from the specification without being kept here first.
 
 ---
 
+# V4.0 decisions (2026-10-15)
+
+The mentor's boot flow of 12/10, with his change of 14/10, is in `QNSC_BOOT_SPEC` V3.4:
+the CPU is never held, the ROM runs after every reset, and the ROM loads the debug
+program too. Reading V3.1 of this block against it turned up things to remove, one
+error and one disagreement between two documents.
+
+| # | Decision | Why |
+|---|---|---|
+| D23 | **The CPU is never held. `CPUHOLD` (IR `1000`), `o_dbg_cpu_hold` and the boot address mux are removed.** Supersedes D2, D4, D17 and D20 | With the ROM loading the debug program itself, nothing is left for a hold or a mux to do: the CPU always starts at the ROM, and `ISRAM` is filled by the time anyone needs it. `SCRC` loses `i_dbg_cpu_hold` and the OR in front of the CPU reset synchroniser; the CPU wrapper ties `boot_addr_i` to the ROM base. IR `1000` acts as `BYPASS`. **Open:** the chip's recovery levels were "chip reset and CPU hold" (the mentor's rule); with no hold only the chip reset is left, and the mentor should confirm that |
+| D24 | **`DBG_EN` is still captured once here, to keep the JTAG pads on JTAG (`o_dbg_en`), and for nothing else** | The IO MUX owner expects it (`IOPAD_Pin_Summary`, `Pin References`, `PIN_9`: "`o_dbg_en` can force the debug pins to b00"). `SYSCSR` cannot stand in for it: its `dbg_en` is the pin through two flip-flops, forced to 0 by `dbg_en_mask`, so it drops when the host ends the wait, which is when the pads must stay on JTAG. The pad goes to two blocks and the top wires both |
+| D25 | **The debug window layout is the numbers of `QNSC_BOOT_SPEC` Table 9-1, held in the contract (`debug_window`)**: result `0xF00`, exception flag `0xF04`, command `0xF08`, resume `0xF0C`, halted `0xF10` | Two layouts existed. D7 moved the mailbox to `0x700` in V3.0, but section 4.11 kept the V2.0 table, the boot owner copied `0xF00`, `0xF08` and `0xF0C` from 4.11 into Table 9-1, and the mentor approved it. Redoing an approved table costs more than moving this one: the V3.x mailbox shifts by `0x800`. D7's cause (a) stays solved because the code keeps a base register, now `s0` = window + `0x800`, so every offset is below `0x800`. The sequence area is back to the full 2 KiB. The numbers go into the contract because the same numbers are Ibex's `Dm*` parameters, the ROM's and the debug program's, and one number in several documents is how this happened. Supersedes the addresses of D7 |
+| D26 | **`DbgTriggerEn` = 1 and `DbgHwBreakNum` = 2** | Section 5.2 item 1 of this file and the HAS already said yes: the ROM cannot be patched, so a hardware trigger is the only breakpoint in it. The leader review of 28/09 set two (`QNSC_CPU_DECISIONS`). MAS V3.0 and V3.1 section 9 said `DbgTriggerEn = 0`, an error from the V3.0 rewrite. The new flow adds a use: a breakpoint at `0x2000_1080` stops the application on its first instruction (`QNSC_BOOT_SPEC` 7.5) |
+| D27 | **A halt needs a debug program in the window, and `SYSDBG` does not check that one is there** | The ROM fills the window, after `ACKD`. The host sees the token on `UART0`; `SYSDBG` has no view of the ROM's state, and giving it one means a new signal from the ROM. An accepted limit, stated in MAS 7.7 and 11 |
+| D28 | **Halt on reset survives only after a watchdog or software reset** | The HAS marked halt-on-reset mandatory and 5.2 item 2 of this file signed it off. With the CPU never held, the only way left is `debug_req` already high when `SCRC` releases the core, and that works only while the debug program is still in `ISRAM`, which no reset clears. After a power-on reset it does not: `CPUDBG` is cleared and the window is empty. The mentor's flow gives up halting before the first ROM instruction after power-on. Not yet simulated |
+| D29 | **The host can still write the window itself; the flow does not use it and the MAS does not promise it** | `SYSDBG` writes any address, so it could load a debug program when the frame has none. Not specified, because the approved flow has the ROM do it |
+
 # V3.1 decisions (2026-09-25)
 
 | # | Decision | Why |
@@ -31,12 +48,12 @@ turned up four defects. Each row gives the decision and the reason for it.
 | # | Decision | Why |
 |---|---|---|
 | D1 | **`DBG_EN` pin**, captured once after power-on | Which mode the chip is in has to be known before the first JTAG edge, because `SCRC` releases the CPU a few microseconds after power-on and the host connects much later. A `SYSDBG` register cannot carry that information: reset to "hold", the chip never boots without a probe; reset to "run", the CPU has already run before the host can write it. Only a static input from outside the chip is known at t = 0. This is the same idea as a boot-mode strap (STM32 `BOOT0`) or the probe's `nSRST` |
-| D2 | **`CTRL.cpu_hold`**, effective only while `DBG_EN = 1`, OR-ed into the CPU reset **inside `SCRC`, ahead of its synchroniser** | This is the teacher's requirement. It holds the CPU only, so the Day005 decision (no debug reset, three reset sources) still stands. An OR placed after the synchroniser could glitch when `SCRC` releases the reset in the same cycle that the host sets the hold |
+| D2 | **`CTRL.cpu_hold`**, effective only while `DBG_EN = 1`, OR-ed into the CPU reset **inside `SCRC`, ahead of its synchroniser** | This is the teacher's requirement. It holds the CPU only, so the Day005 decision (no debug reset, three reset sources) still stands. An OR placed after the synchroniser could glitch when `SCRC` releases the reset in the same cycle that the host sets the hold **Superseded by D23 (V4.0): there is no hold.** |
 | D3 | **No CPU clock control** | HAS Table 4-1: the `cpu` cluster is hardwired on. Holding the CPU in reset stops it just as well, with one mechanism instead of two |
-| D4 | **Boot address mux on `o_dbg_en`**: ROM `0x0000_0000` or `ISRAM` `0x2000_1000` | Without it, a CPU released in debug boot runs the ROM bootloader, which waits on UART0 and never reaches the image the host loaded. As a side effect it satisfies the HAS line "the debug interface is the second load path when the ROM is faulty" |
+| D4 | **Boot address mux on `o_dbg_en`**: ROM `0x0000_0000` or `ISRAM` `0x2000_1000` | Without it, a CPU released in debug boot runs the ROM bootloader, which waits on UART0 and never reaches the image the host loaded. As a side effect it satisfies the HAS line "the debug interface is the second load path when the ROM is faulty" **Superseded by D23 (V4.0): there is no boot address mux.** |
 | D5 | **IO MUX forces the JTAG pins while `DBG_EN = 1`** | Replaces V2.0's three-option table. One gate, and debug boot can no longer be broken by firmware remapping the pins |
 | D6 | **`haltreq` clears itself when `i_cpu_debug_mode` rises; `resumereq` removed** | Fixes a V2.0 defect. V2.0 7.7 set the resume flag first and lowered `debug_req` second. That is the wrong order: after `dret`, Ibex re-enters Debug Mode whenever `debug_req_i` is still high, because `enter_debug_mode` is qualified only by `!debug_mode_q`. V1.8 of this file already had the right order, so the two documents disagreed. Clearing the request in hardware removes the ordering rule altogether |
-| D7 | **Debug window re-laid out**: mailbox at `0x700`--`0x70C`, `TRAP` at `0x810`, and the entry, trap and loop code fixed | Fixes three V2.0 defects. (a) `sw t1, 0xF00(t0)` does not assemble: the offset is beyond the 12-bit signed immediate (maximum `0x7FF`). (b) The sequence used `dscratch0` and `dscratch1`, but the dispatch loop also needs a register, and Ibex has only those two scratch CSRs. The loop now owns `s0` and `s1`. (c) `DmExceptionAddr = 0x2000_0810` from the HAS had no code behind it |
+| D7 | **Debug window re-laid out**: mailbox at `0x700`--`0x70C`, `TRAP` at `0x810`, and the entry, trap and loop code fixed | Fixes three V2.0 defects. (a) `sw t1, 0xF00(t0)` does not assemble: the offset is beyond the 12-bit signed immediate (maximum `0x7FF`). (b) The sequence used `dscratch0` and `dscratch1`, but the dispatch loop also needs a register, and Ibex has only those two scratch CSRs. The loop now owns `s0` and `s1`. (c) `DmExceptionAddr = 0x2000_0810` from the HAS had no code behind it **Addresses superseded by D25 (V4.0): the mailbox is at `0xF00`; cause (a) stays solved by a base register.** |
 | D8 | **Scan status gains `TIMEOUT`; `STATUS.busy`, `error` and `bus_timeout` removed** | Fixes a V2.0 defect. V2.0 said a host would diagnose a stuck slave by reading `STATUS`. But that read is itself a command, and the FSM is stuck in `BUS`, so it would never have run. The scan status is produced on the `TCK` side, so it answers even while the FSM is stuck |
 | D9 | **Bus command aborted while `i_rst_n_sysbus = 0`** | A watchdog or software reset resets `axi_from_mem` with the bus. V2.0's "keep waiting" would then have waited forever for a response that can no longer come |
 | D10 | **CDC reduced to `cmd_req`, `cmd_ack`, `timeout`** | V2.0 named four toggles and then said only two cross. The response rides on `cmd_ack`, so a separate `rsp_req`/`rsp_ack` pair is not needed. The `TCK`-side handshake is reset by power-on only, so a JTAG reset cannot break a command in flight |
@@ -46,10 +63,10 @@ turned up four defects. Each row gives the decision and the reason for it.
 | D14 | **4-phase handshake**, separate `read_req`/`read_ack` and `write_req`/`write_ack`, data buses crossing under `set_max_delay` | Supersedes D10. `busy` is simply "handshake not back to idle", and Update-DR is ignored while busy, which is what keeps `addr_reg` and `wdata_reg` stable for the unsynchronised crossing |
 | D15 | **No bus timeout. The AXI domain is reset by the `S_BUS` reset, and a request still held is re-issued on release** | Supersedes D8 and D9. `S_BUS` answers `DECERR` for unmapped addresses and `SCRC` answers for gated peripherals, so every access gets a response. The one case that loses a response, a bus reset, is covered by the re-issue, which is harmless for a single-word read or write |
 | D16 | **`CPUDBG` is a host-set level; the host clears it before resume** | Supersedes D6. Clearing it automatically would need a cross-domain write into the TCK register. The ordering rule comes back, and the MAS states it (7.7) |
-| D17 | **`CPUHOLD` data register, IR `1000`**, reset 1 by TRST and POR | Replaces `CTRL.cpu_hold` (D2) in the data-register style. A JTAG reset re-holds the CPU in debug boot, and has no effect in normal boot |
+| D17 | **`CPUHOLD` data register, IR `1000`**, reset 1 by TRST and POR | Replaces `CTRL.cpu_hold` (D2) in the data-register style. A JTAG reset re-holds the CPU in debug boot, and has no effect in normal boot **Superseded by D23 (V4.0): IR `1000` acts as `BYPASS`.** |
 | D18 | **Five choices where the teacher's example, drawn for a different SoC, is adapted to QSOC**: `CPUDBG` at `0111` (the example reuses `1110`, the `IDCODE` code); unused codes act as `BYPASS`, not X (IEEE 1149.1); a read starts at Update-DR of `ADDR` (the example's `update_ir` cannot start a bus access, and its write page uses `update_dr`); `AxiIdWidth` = 5, the HAS `S_BUS` slave-port width (the example shows 4); `STATUS` = {`busy`, `resp[1:0]`} (the example gives only the width) | Each one is either a clash, a rule from a standard, or a QSOC fact from the HAS. None needs the teacher's ruling |
 | D19 | **`HALTED` flag in the debug window instead of an `i_cpu_debug_mode` port** | `ibex_top` does not export `debug_mode`; only `rvfi_ext_debug_mode` exists, and only when RVFI is compiled in. Bringing it out would mean patching vendored RTL, which the repository rule forbids. The window code already runs on every halt, so it can report the halt itself. The teacher's drawing has no halted signal either |
-| D20 | **`o_cpu_hold` (now `o_dbg_cpu_hold`, D22) is a flip-flop output** | It is the OR of three terms that change in the same cycle at `DBG_EN` capture. As a combinational output it could glitch low, which would briefly release the CPU reset |
+| D20 | **`o_cpu_hold` (now `o_dbg_cpu_hold`, D22) is a flip-flop output** | It is the OR of three terms that change in the same cycle at `DBG_EN` capture. As a combinational output it could glitch low, which would briefly release the CPU reset **Superseded by D23 (V4.0): there is no `o_dbg_cpu_hold`.** |
 
 The reset table of 7.3 also answers a question raised in review: during a
 debug-boot load the CPU is held and the watchdog is disabled, so no reset except
@@ -61,23 +78,34 @@ HAS also gives the breakpoint count as 1 in Features and 2 in Table 6-4.
 
 ## Debug window code
 
-This is host software, not `SYSDBG` RTL, so it lives here rather than in the MAS.
-The addresses are those of MAS 7.8. The fixed part is written once per session:
+This is host software, not `SYSDBG` RTL, so it lives here rather than in the MAS. The
+addresses are those of MAS 7.8, which are the contract's `debug_window`. Since V4.0
+the fixed part below is part of the 4096-byte debug program that the boot ROM writes
+to `0x2000_0000` (D25, D29); before, the host wrote it at the start of a session.
+
+`s0` and `s1` belong to the loop. `s0` holds window + `0x800`, so that the mailbox,
+at `0xF00` to `0xF10` from the window base, is at `0x700` to `0x710` from `s0`: inside
+the 12-bit signed offset of a load or a store (D7 cause (a), D25).
+
+**Not yet assembled.** The listing is checked by hand for sizes and ranges, not by an
+assembler: there is no RISC-V toolchain in the document flow yet. It is assembled and
+run on Ibex when the debug program is built.
 
 ```asm
-0x800  ENTRY: csrw  dscratch0, s0
-              csrw  dscratch1, s1
-              lui   s0, 0x20000           # s0 = window base
+0x800  ENTRY: csrw  dscratch0, s0         # 12 bytes: the exception entry at 0x810
+              csrw  dscratch1, s1         #   must not be overrun
               j     PARK
 0x810  TRAP:  addi  s1, zero, 1
-              sw    s1, 0x704(s0)         # EXC = 1
-              sw    zero, 0x708(s0)       # CMD = 0
+              sw    s1, 0x704(s0)         # EXC = 1       (0x2000_0F04)
+              sw    zero, 0x708(s0)       # CMD = 0       (0x2000_0F08)
               j     LOOP
-0x820  PARK:  addi  s1, zero, 1
-              sw    s1, 0x710(s0)         # HALTED = 1
-0x828  LOOP:  lw    s1, 0x708(s0)
-              bnez  s1, 0x20000000        # CMD != 0: run SEQ
-              lw    s1, 0x70C(s0)
+0x820  PARK:  lui   s0, 0x20001           # s0 = 0x2000_1000
+              addi  s0, s0, -2048         # s0 = 0x2000_0800
+              addi  s1, zero, 1
+              sw    s1, 0x710(s0)         # HALTED = 1    (0x2000_0F10)
+0x830  LOOP:  lw    s1, 0x708(s0)         # CMD
+              bnez  s1, SEQ               # CMD != 0: run the sequence at 0x2000_0000
+              lw    s1, 0x70C(s0)         # RESUME
               beqz  s1, LOOP
               sw    zero, 0x70C(s0)       # RESUME = 0
               sw    zero, 0x710(s0)       # HALTED = 0
@@ -86,6 +114,9 @@ The addresses are those of MAS 7.8. The fixed part is written once per session:
               dret
 ```
 
+`TRAP` is entered only after `PARK` has set `s0`, so it uses `s0` as it is. `SEQ` is
+`0x2000_0000`, `0x834` bytes before the `bnez` (which sits at `0x834`), within the 4 KiB reach of a branch.
+
 **A sequence** may change `s1` and the register it was asked to write, and nothing
 else. It reads the program's `s0` and `s1` from `dscratch0` and `dscratch1`. It ends
 by writing `DATA` if it has a result, then `CMD` = 0, then `j LOOP`, in that order.
@@ -93,10 +124,15 @@ It uses no `ebreak`. Reading `dpc`:
 
 ```asm
        csrr  s1, dpc
-       sw    s1, 0x700(s0)       # DATA first
+       sw    s1, 0x700(s0)       # DATA first   (0x2000_0F00)
        sw    zero, 0x708(s0)     # then CMD = 0
-       j     0x20000828          # LOOP
+       j     0x20000830          # LOOP
 ```
+
+**Setting a breakpoint** is a sequence too. A hardware one writes `tselect` (`0x7a0`),
+`tdata1` (`0x7a1`) and `tdata2` (`0x7a2`); it works in the ROM. A software one writes
+an `ebreak` over the instruction through the bus master, and needs `dcsr.ebreakm` = 1,
+which one sequence sets and which then stays (`dcsr` keeps its value across resumes).
 
 **The host runs a sequence** as follows:
 
@@ -681,7 +717,9 @@ uses inside the region (the debug ROM begins at `0x800`).
 | `DmHaltAddr` | `0x2000_0800` | base + `dm_pkg::HaltAddress` |
 | `DmExceptionAddr` | **`0x2000_0810`** | base + `dm_pkg::ExceptionAddress`, which is `HaltAddress + 16` |
 
-Inside those 4 KiB the layout is fixed:
+Inside those 4 KiB the layout is fixed, and since V4.0 it is held in the contract
+(`debug_window`, D25), where the table of MAS 7.8 is generated from it. This table keeps the
+reasoning:
 
 | Offset | Address | Size | Contents |
 |---|---|---|---|
@@ -689,10 +727,11 @@ Inside those 4 KiB the layout is fixed:
 | `0x800` | `0x2000_0800` | -- | **`DmHaltAddr`**, the **dispatch loop** of section 4.12 |
 | `0x810` | `0x2000_0810` | -- | **`DmExceptionAddr`.** A fault raised while in Debug Mode lands here; it records the fault and re-enters the dispatch loop |
 | `0x820` -- `0xEFF` | `0x2000_0820` | ~1.7 KiB | Free |
-| `0xF00` -- `0xF07` | `0x2000_0F00` | 8 B | **Result words**, where a sequence writes the value it was sent to fetch |
+| `0xF00` -- `0xF07` | `0x2000_0F00` | 8 B | **Result words**: `DATA` at `0xF00`, where a sequence writes the value it was sent to fetch, and the exception flag `EXC` at `0xF04` |
 | `0xF08` | `0x2000_0F08` | 4 B | **Command word.** Non-zero means a sequence is ready at `0x2000_0000`; the sequence clears it when finished |
 | `0xF0C` | `0x2000_0F0C` | 4 B | **Resume flag.** Non-zero tells the dispatch loop to execute `dret`; the loop clears it first |
-| `0xF10` -- `0xFFF` | `0x2000_0F10` | 240 B | Reserved scratch |
+| `0xF10` | `0x2000_0F10` | 4 B | **Halted flag.** The loop sets it on entry and clears it before `dret` (D19) |
+| `0xF14` -- `0xFFF` | `0x2000_0F14` | 236 B | Reserved scratch |
 
 **The window is part of `ISRAM`, not a port on this block and not a block of its
 own.** The instructor's ruling was to keep the debug program inside a RAM rather
@@ -728,6 +767,13 @@ four parameters explicitly rather than relying on the defaults, and QSOC must do
 the same.
 
 ## 4.12 Reading a CPU register
+
+> **V4.0.** This section is the V1.x reasoning and keeps its words. Three things in it
+> are overtaken. The addresses are the contract's, and its mailbox is the one of 4.11
+> (D25). The register discipline and the code below are the V1.x sketch: the working code
+> is "Debug window code" at the top of this file, where the loop owns `s0` and `s1`
+> (D7). And "Why `SYSDBG` also writes the dispatch loop itself" is no longer true: the
+> boot ROM writes it (D23, D29).
 
 ![What one bus port can and cannot reach](../figures/img/fig_sysdbg_ports.png){width=6.2in}
 
@@ -797,7 +843,8 @@ bus master; write the command word non-zero; poll the command word until it read
 zero; read the result from `0x2000_0F00`. Four ordinary bus accesses, each one JTAG
 scan, using only the master port.
 
-**Why `SYSDBG` also writes the dispatch loop itself.** `ISRAM` is volatile, so after
+**Why `SYSDBG` also wrote the dispatch loop itself (V1.x to V3.1; since V4.0 the boot ROM
+does, D23).** `ISRAM` is volatile, so after
 power-on the window holds garbage and **something valid has to be at `DmHaltAddr`
 before the first halt**. `SYSDBG` writes it over JTAG as the first thing a session
 does, which depends on nobody: not on the ROM bootloader having run, not on reset
@@ -952,7 +999,9 @@ They are grouped by who has to answer.
    without halt-on-reset the core has already run into it before the debugger can
    attach. This is the same premise that makes the hardware trigger necessary,
    section 4.11. **What remains is sequencing, and it belongs to the `SCRC`
-   owner**, not to this block.
+   owner**, not to this block. **Superseded 2026-10-15 (D28):** the boot flow of V3.4
+   never holds the CPU and the window is empty until the ROM loads it, so halt on
+   reset survives only after a watchdog or software reset.
 
 **For the instructor, or the project:**
 

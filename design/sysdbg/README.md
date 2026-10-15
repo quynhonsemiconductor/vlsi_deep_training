@@ -6,9 +6,11 @@
 
 **Self-designed.** SYSDBG is written in house. It is a JTAG TAP (TCK domain) and a
 single-beat AXI4 manager on `AXI_S0` (system clock), linked by a 4-phase
-handshake. It also drives the Ibex `debug_req`, and it holds the CPU in reset in
-debug boot (`DBG_EN` pin). No vendored IP is instantiated here: everything in
-`rtl/` is ours.
+handshake. It also drives the Ibex `debug_req`, and through its bus master it ends
+the boot ROM's debug wait (a write to `SYSCSR` `DBG_BOOT`). It does not hold the CPU:
+the boot ROM runs after every reset and loads the debug program
+(`QNSC_BOOT_SPEC`). No vendored IP is instantiated here: everything in `rtl/` is
+ours.
 
 ## Reference (read, not instantiated)
 
@@ -22,5 +24,5 @@ debug boot (`DBG_EN` pin). No vendored IP is instantiated here: everything in
 ## Fabric note
 
 SYSDBG speaks AXI4 natively, so `AXI_S0` needs no adapter. Its manager reaches
-ROM, both RAMs and the peripheral window, because `axi_xbar` (see the `bus` block)
-is fully connected.
+ROM, both RAMs and the peripheral window (`SYSCSR` included), because `axi_xbar` (see
+the `bus` block) is fully connected.

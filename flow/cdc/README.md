@@ -34,7 +34,7 @@ mechanically.
 
 | Block | Crossing | Where it is specified |
 |---|---|---|
-| SYSDBG | `tck` ↔ `clk_cpu`: `read/write_req`, `read/write_ack`, `dbgreq`, `cpu_hold`, address and data buses | `QNSC_SYSDBG_MAS` 7.6, Table 7-4 |
+| SYSDBG | `tck` ↔ `clk_cpu`: `read/write_req`, `read/write_ack`, `dbgreq`, address and data buses | `QNSC_SYSDBG_MAS` 7.6, Table 7-4 |
 | SYSDBG | `DBG_EN` pad (asynchronous) → `clk_cpu` | `QNSC_SYSDBG_MAS` 7.1 |
 | PWM | `TIM_EXT` pads (asynchronous) → `clk_peri`, two flops in the wrapper | `QNSC_PWM_MAS` Table 5-1 |
 | GPIO, UART, I2C, SPI | pad inputs (asynchronous) → `clk_peri`, synchronised inside the vendored IP | each IP's MAS |
