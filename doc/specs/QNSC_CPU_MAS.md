@@ -78,7 +78,6 @@ pre-rename commit rather than a current release.
 |---|---|---|---|
 | `i_clk_cpu` | in | 1 | CPU clock domain, always-on |
 | `i_rst_n_cpu` | in | 1 | Active-low reset, already released together with the other domains by SCRC |
-| `i_cfg_hart_id` | in | 32 | Tied by `design/top`; `32'h0` while QSOC has one core |
 | `i_dbg_req` | in | 1 | From SYSDBG; requests debug mode |
 | `i_int_fast` | in | 11 | From INTMAP, `mcause` 16-26; padded to Ibex's 15-bit port internally |
 | `i_int_nm` | in | 1 | Watchdog bark (NMI), from INTMAP |
@@ -225,8 +224,9 @@ One. `design/top` instantiates `m_qnsc_wrap_cpu` once; QSOC has a single core.
 | Port | Tied to | Why |
 |---|---|---|
 | `i_cheriot_enable` | `ibex_pkg::IbexMuBiOff` | `BaseIsa = BaseIsaRV32I`; CHERIoT is not used |
-| `i_fetch_enable`, `i_mcounteren_writable` | `ibex_pkg::IbexMuBiOn` | Core is held by SCRC's own reset/hold, not by fetch enable; performance-counter access left writable |
-| `i_hart_id` | `32'h0` | Single core; value only needs to be unique among cores |
+| `i_fetch_enable`, `i_mcounteren_writable` | `ibex_pkg::IbexMuBiOn` | Core is held by SCRC's reset, not by fetch enable; performance-counter access left writable |
+| `hart_id_i` | `32'h0` | Single core; value only needs to be unique among cores. Tied inside the wrapper, not a port |
+| `boot_addr_i` | `32'h0` (`// contract: memory_map.rom.base`) | The CPU always starts in ROM (7.4). Tied inside the wrapper, not a port |
 | `i_trvk_*`, `o_trvk_*` (CHERIoT revocation bitmap) | `'0` / open | `BaseIsa = BaseIsaRV32I`; CHERIoT ports unused |
 | `i_scramble_*`, `o_scramble_req` | `1'b0` / `'0` / open | `ICacheScramble = 1'b0`; no icache to scramble |
 | `i_mem_icache_*_cfg`, `o_mem_icache_*_cfg` | `'{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}` / open | `ICache = 1'b0` |

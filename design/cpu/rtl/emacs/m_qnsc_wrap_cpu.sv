@@ -18,9 +18,6 @@ input logic             i_rst_n_cpu,            // To u_ibex_top of ibex_top.v, 
 // qnsc_pkg import here).
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_cfg")*/
-// Beginning of automatic inputs (from unused autoinst inputs)
-input logic [31:0]      i_cfg_hart_id,          // To u_ibex_top of ibex_top.v
-// End of automatics
 
 //---------------------------------------------------------------
 // Boot / Debug
@@ -215,7 +212,7 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
     .data_addr_shadow_o       (),
     .data_wdata_shadow_o      (),
     .data_wdata_intg_shadow_o (),
-    .hart_id_i                (i_cfg_hart_id[]),
+    .hart_id_i                (32'h0000_0000),  // one core in QSOC
     .fetch_enable_i           (4'b0101),
     .mcounteren_writable_i    (4'b0101),
     .cheriot_enable_i         (4'b1010),
@@ -312,7 +309,7 @@ ibex_top #(
              .test_en_i                 (i_dft_test_en),         // Templated
              .ram_cfg_icache_tag_i      ('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}), // Templated
              .ram_cfg_icache_data_i     ('{default: prim_ram_1p_pkg::RAM_1P_CFG_REQ_DEFAULT}), // Templated
-             .hart_id_i                 (i_cfg_hart_id[31:0]),   // Templated
+             .hart_id_i                 (32'h0000_0000),         // Templated
              .boot_addr_i               (32'h0000_0000),         // Templated
              .trvk_heap_base_addr_i     ('0),                    // Templated
              .instr_gnt_i               (w_ibex_bridge_instr_gnt), // Templated

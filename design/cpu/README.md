@@ -49,7 +49,6 @@ convention natively.
 | Port | Direction | Note |
 |---|---|---|
 | `i_clk_cpu`, `i_rst_n_cpu` | in | CPU clock domain |
-| `i_cfg_hart_id[31:0]` | in | `design/top` ties this; `32'h0` while QSOC has one core |
 | `i_dbg_req` | in | from SYSDBG |
 | `i_int_fast[10:0]` | in | 11 real fast-IRQ sources; padded to Ibex's 15 internally |
 | `i_int_nm` | in | WDT bark (NMI), from INTMAP |

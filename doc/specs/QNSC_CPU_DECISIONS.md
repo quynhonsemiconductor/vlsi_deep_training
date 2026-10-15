@@ -173,5 +173,13 @@ when `i_dbg_en` was set. That is the older flow. Under the boot flow decided on
 `32'h0`, Ibex starts at `0x0000_0080`, and debug boot is done by the ROM code
 (UART download, then a poll of `SYSCSR.DBG_EN`). Since the value never changes, the
 `i_cfg_boot_addr` port is removed and `boot_addr_i` is tied inside the wrapper to
-`32'h0000_0000`, tagged `// contract: memory_map.rom.base`; the wrapper has 55
-ports. `QNSC_CPU_MAS` Section 7.4 has the current wording.
+`32'h0000_0000`, tagged `// contract: memory_map.rom.base`. `i_cfg_hart_id` is
+removed the same way: `hart_id_i` is tied to `32'h0`, since QSOC has one core. The
+wrapper has 54 ports.
+
+This departs from `design/README.md` ("Instances are decided in `design/top`"), which
+makes a boot address and a hart id `i_cfg_*` ports tied by `design/top`. The reason
+for the departure: in this SoC the CPU wrapper can be treated as the top file of the
+cpu subsystem, so the two values are fixed where it is written (owner's decision,
+2026-10-15). If a second core is added, `hart_id_i` has to become a port again.
+`QNSC_CPU_MAS` Section 7.4 has the current wording.
