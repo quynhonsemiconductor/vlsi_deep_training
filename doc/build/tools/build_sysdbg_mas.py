@@ -1,4 +1,4 @@
-"""Figures for QNSC_SYSDBG_MAS V3.0.
+"""Figures for QNSC_SYSDBG_MAS V4.0.
 
     python3 doc/build/tools/build_sysdbg_mas.py
 
@@ -31,14 +31,14 @@ blk = [
     N("ctl", 400, 100, 170, 60, "control signals\ncapture  shift  update", "box", 10),
     N("ir", 210, 190, 170, 50, "IR  4 bit", "purple", 10),
     N("drs", 210, 270, 360, 80,
-      "ADDR 33  ·  DATA 32  ·  STATUS 3\nCPUDBG 1  ·  CPUHOLD 1\nIDCODE 32  ·  BYPASS 1",
+      "ADDR 33  ·  DATA 32  ·  STATUS 3\nCPUDBG 1\nIDCODE 32  ·  BYPASS 1",
       "green", 10),
     N("tdo", 210, 390, 170, 60, "TDO mux\nfalling-edge flop", "box", 10),
     N("hs", 400, 390, 170, 60, "read_req  ·  write_req\nbusy", "red", 10),
 
     N("cdc", 620, 160, 130, 320,
       "CDC\n\nread_req  ->\n<-  read_ack\nwrite_req  ->\n<-  write_ack\n"
-      "dbgreq  ->\ncpu_hold  ->\n2FF each\n\naddr  wdata  ->\n<-  rdata  resp\nset_max_delay",
+      "dbgreq  ->\n2FF\n\naddr  wdata  ->\n<-  rdata  resp\nset_max_delay",
       "red", 10, True),
 
     N("zaxi", 780, 60, 420, 250, "AXI domain  ·  i_clk_cpu  ·  i_rst_n_sysbus",
@@ -49,13 +49,13 @@ blk = [
 
     N("zpor", 780, 350, 420, 200, "system domain  ·  i_clk_cpu  ·  i_rst_n_por",
       "group", 11, True, "top"),
-    N("sync", 800, 390, 180, 60, "dbgreq  ·  cpu_hold\n2FF", "box", 10),
+    N("sync", 800, 390, 180, 60, "dbgreq\n2FF", "box", 10),
     N("dben", 800, 470, 180, 60, "DBG_EN\n2FF + capture", "box", 10),
-    N("outs", 1000, 430, 180, 60, "o_dbg_req\no_dbg_en  ·  o_dbg_cpu_hold", "box", 10),
+    N("outs", 1000, 430, 180, 60, "o_dbg_req\no_dbg_en", "box", 10),
 
     N("sbus", 1250, 100, 150, 70, "S_BUS  AXI_S0", "yellow", 10),
     N("cpu", 1250, 230, 150, 90, "Ibex CPU", "blue", 11, True),
-    N("top", 1250, 430, 150, 60, "SCRC  ·  boot mux\nIO MUX", "box", 10),
+    N("top", 1250, 430, 150, 60, "IO MUX\nJTAG pads", "box", 10),
 ]
 blk_e = [
     E("jpad", "r@0.2", "tap", "l", "TMS"),
@@ -118,35 +118,6 @@ hsk_e = [
     E("t5", "r", "a6", "l", "set_max_delay 1 AXI clock"),
 ]
 
-# --------------------------------------------------------------- 3. debug boot wiring
-wire = [
-    N("dpad", 20, 40, 150, 50, "DBG_EN pad", "blue", 11, True),
-    N("jpad", 20, 160, 150, 60, "JTAG pads", "blue", 11),
-    N("dbg", 260, 80, 220, 200, "SYSDBG", "red", 13, True),
-    N("scrc", 600, 440, 170, 60, "SCRC sequencer", "box", 11, True),
-    N("iomux", 600, 50, 170, 70, "IO MUX\nJTAG pads = JTAG", "box", 10),
-    N("mux", 600, 165, 170, 90, "boot_addr mux\n0: 0x0000_0000\n1: 0x2000_1000", "box", 10),
-    N("gate", 600, 285, 170, 90, "SCRC: CPU reset\nsynchroniser\nhold OR cpu reset", "box", 10),
-    N("cpu", 900, 150, 170, 240, "Ibex CPU", "blue", 13, True),
-    N("sbus", 900, 560, 170, 60, "S_BUS\nAXI_S0", "yellow", 12),
-    N("isram", 900, 670, 170, 60, "ISRAM", "green", 12),
-]
-wire_e = [
-    E("dpad", "r", "dbg", "l@0.1", "i_dbg_en"),
-    E("jpad", "r", "dbg", "l@0.5", "JTAG"),
-    E("dbg", "r@0.1", "iomux", "l", "o_dbg_en"),
-    E("dbg", "r@0.45", "mux", "l", "o_dbg_en"),
-    E("dbg", "r@0.85", "gate", "l@0.3", "o_dbg_cpu_hold"),
-    E("scrc", "t", "gate", "b"),
-    E("mux", "r", "cpu", "l@0.25", "boot_addr_i"),
-    E("gate", "r", "cpu", "l@0.75", "rst_ni"),
-    E("dbg", "t", "cpu", "t", "debug_req", False, False, 22),
-    E("dbg", "b@0.8", "sbus", "l", "AXI4"),
-    E("cpu", "b", "sbus", "t"),
-    E("sbus", "b", "isram", "t"),
-]
-
 emit([("fig_sysdbg_block", "SYSDBG block diagram", blk, blk_e),
-      ("fig_sysdbg_handshake", "Read handshake", hsk, hsk_e),
-      ("fig_sysdbg_boot_wiring", "Debug boot wiring", wire, wire_e)],
+      ("fig_sysdbg_handshake", "Read handshake", hsk, hsk_e)],
      DRAWIO, IMG)

@@ -61,7 +61,7 @@ committed ones.
 | `build_ram_block.py` | `fig_ram_simple` | RAM MAS |
 | `build_intr_map.py` | `fig_intr_map`, `fig_intr_levels` | Interrupt Map MAS, DECISIONS |
 | `build_timer_pwm.py` | `fig_timer_block`, `fig_timer_inside`, `fig_pwm_block` | TIMER, PWM MAS |
-| `build_sysdbg_mas.py` | `fig_sysdbg_block`, `fig_sysdbg_handshake`, `fig_sysdbg_boot_wiring` | SYSDBG MAS |
+| `build_sysdbg_mas.py` | `fig_sysdbg_block`, `fig_sysdbg_handshake` | SYSDBG MAS |
 | `build_sysdbg_design.py`, `build_sysdbg_ports.py` | the V1.x SYSDBG figures | SYSDBG DECISIONS |
 | `build_qsoc_mem.py` | `fig_qsoc_mem` | RAM and SYSDBG DECISIONS |
 | `build_scrc.py` | `fig_scrc_*` (7 figures), `wave_scrc_*` (4 timing diagrams) | SCRC MAS |
