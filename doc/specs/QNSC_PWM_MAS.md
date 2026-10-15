@@ -268,7 +268,7 @@ Two gates are in series: `SCRC` `CLK_EN[15]` gates `i_clk_peri` for the whole bl
 
 # 8. Instances
 
-One, on `APB_M12`, with `APB_ADDR_WIDTH` = 12, `EXTSIG_NUM` = 32 and
+One, on `APB_M12`, with `APB_ADDR_WIDTH` = 14, `EXTSIG_NUM` = 32 and
 `TIMER_NBITS` = 16. The four timer modules are internal to the IP.
 
 # 9. What is not provided here, and who provides it
