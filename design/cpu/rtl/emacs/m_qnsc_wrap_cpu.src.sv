@@ -192,7 +192,7 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
     .data_addr_shadow_o       (),
     .data_wdata_shadow_o      (),
     .data_wdata_intg_shadow_o (),
-    .hart_id_i                (i_cfg_hart_id[]),
+    .hart_id_i                (32'h0000_0000),  // one core in QSOC
     .fetch_enable_i           (ibex_pkg::IbexMuBiOn),
     .mcounteren_writable_i    (ibex_pkg::IbexMuBiOn),
     .cheriot_enable_i         (ibex_pkg::IbexMuBiOff),
