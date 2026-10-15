@@ -1,0 +1,6 @@
+boot.elf
+boot.bin
+boot.map
+boot.dis
+__pycache__/
+rom_image.hex
