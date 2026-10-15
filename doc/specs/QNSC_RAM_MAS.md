@@ -1,6 +1,6 @@
 ---
 title: "RAM"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.4"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.5"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -15,6 +15,7 @@ The reasoning behind each change is in [`QNSC_RAM_DECISIONS.md`](QNSC_RAM_DECISI
 | V2.2 | 2026-09-24 | Nghia VT | -- | Wrapper interface, strobe FIFO, timing, reset and tie-offs specified; figure and macro address corrected |
 | V2.3 | 2026-09-25 | Nghia VT | -- | Port names to `QNSC_RTL_Design_Naming_Rule` V1.0: AXI named per channel (`i_bus_axi_aw_valid`, ...), macro port `o_mem_*` / `i_mem_rdata` (was `o_sram_*`, `o_sram_bwe` is `o_mem_be`). No change in behaviour |
 | V2.4 | 2026-09-28 | Nghia VT | -- | Two blocks, two wrappers, per Naming Rule V1.1 rule 2.1: `m_qnsc_wrap_isram` in `design/isram`, `m_qnsc_wrap_dsram` in `design/dsram` (was one `m_qnsc_wrap_axi4_sram` in `design/ram`). No change in behaviour |
+| V2.5 | 2026-10-15 | Nghia VT | -- | Wrappers written and simulated. `PARA_LEN_WD` is 9, not 8: with 8, a 256-beat burst (`AxLEN` = 255) is dropped with no response (found in simulation, 7.2). Section 12 carries test IDs `RAM_001` to `RAM_012` and says which items are not simulated; the timing table of 7.1 is confirmed as written |
 
 # 1. Overview
 
@@ -101,7 +102,7 @@ never gated; the reset is asserted by power-on, watchdog and software reset.
 | `PARA_DATA_WD` | 32 | 32 | Data width in bits |
 | `PARA_ADDR_WD` | 32 | 32 | AXI address width |
 | `PARA_ID_WD` | 7 | 7 | AXI ID width, the `S_BUS` master-port ID width of HAS Table 5-1 |
-| `PARA_LEN_WD` | 8 | 8 | `AxLEN` width |
+| `PARA_LEN_WD` | 9 | 9 | Width of the controller's beat counter, which holds `AxLEN` + 1: 9 bits, bit 8 of `AxLEN` tied 0. At 8, a 256-beat burst is dropped -- 7.2 |
 | `PARA_FIFO_DEPTH` | 8 | 8 | Depth of all six FIFOs, a power of two |
 | `PARA_SRAM_DEPTH` | 16384 | 8192 | Macro depth in words; sets the `o_mem_addr` width to `$clog2(PARA_SRAM_DEPTH)` |
 
@@ -158,6 +159,12 @@ the ID of its request.
 
 The first beat uses `AxADDR` as given; the increment is 4 bytes whatever `AxSIZE`.
 The last beat is flagged by a counter loaded from `AxLEN`; `WLAST` is not used.
+
+The counter is loaded with `AxLEN` + 1 and is `PARA_LEN_WD` bits wide. With the IP's
+default of 8 bits, `AxLEN` = 255 loads 0: the burst is finished before it starts, no
+beat reaches the FIFOs and no response comes back, and a write leaves the write-data FIFO
+full. The wrappers therefore set `PARA_LEN_WD` = 9 and tie bit 8 of `AxLEN` to 0, which
+the controller accepts unmodified. Found in simulation (`RAM_012`).
 
 The macro word address is IP address bits `[$clog2(PARA_SRAM_DEPTH)+1:2]`. Bits
 `[1:0]` never reach the macro, so a single-beat access at an unaligned address
@@ -264,19 +271,28 @@ The IP's regression runs unchanged against the controller alone:
 has no byte enables and resets its array; the checks below use a model with byte
 enables and no reset.
 
-Checks QSOC adds:
+Checks QSOC adds. `dv/isram` and `dv/dsram` run the same tests, in `dv/ram_common`,
+against a macro model with byte enables and no reset; `make sim BLOCK=isram` and
+`make sim BLOCK=dsram`. Both blocks pass all of them.
 
-1. Each of the 15 non-zero `wstrb` patterns writes only its bytes; `0000` none -- 7.3.
-2. Assertion: `STRBFIFO` and `WFIFO` occupancy are equal in every cycle -- 7.3.
+1. `RAM_001` Each of the 15 non-zero `wstrb` patterns writes only its bytes; `0000` none -- 7.3.
+2. `RAM_002` Assertion: `STRBFIFO` and `WFIFO` occupancy are equal in every cycle -- 7.3.
+   The assertion runs in every cycle of every test; the test fills the FIFOs on purpose.
 3. A C program writing `uint8_t` and `uint16_t` data leaves neighbours intact -- 7.3.
-4. Every value of the timing table of 7.1, measured at the block ports.
-5. `B` and `R` return in acceptance order, each with its request's ID -- 7.1.
-6. Against an independent address model, aligned WRAP gives INCR addresses -- 7.4.
-7. `o_mem_addr` is `[15:2]` / `[14:2]`; an unaligned single beat hits its word -- 7.2.
-8. `BRESP` and `RRESP` are `00` for every access -- 7.5.
-9. Reset values of 7.6; a pattern survives an `i_rst_n_mem` pulse -- 7.6.
-10. Macro pin tie-offs match the databook -- section 10.
-11. The vendored `rtl/` files match commit `503d7cd` -- section 4.
+   **Not simulated:** it needs the CPU and `CPU2AXI`. `RAM_001` covers the same bytes at
+   the port.
+4. `RAM_004` Every value of the timing table of 7.1, measured at the block ports.
+5. `RAM_005` `B` and `R` return in acceptance order, each with its request's ID -- 7.1.
+6. `RAM_006` Against an independent address model, aligned WRAP gives INCR addresses -- 7.4.
+7. `RAM_007` `o_mem_addr` is `[15:2]` / `[14:2]`; an unaligned single beat hits its word -- 7.2.
+8. `RAM_008` `BRESP` and `RRESP` are `00` for every access -- 7.5.
+9. `RAM_009` Reset values of 7.6; a pattern survives an `i_rst_n_mem` pulse -- 7.6.
+10. Macro pin tie-offs match the databook -- section 10. **Not simulated:** the
+    testbench has a behavioural model, not the macro. It belongs to physical design.
+11. The vendored `rtl/` files match commit `503d7cd` -- section 4. Checked by CI
+    (`Vendor tree unmodified`), not by simulation.
+12. `RAM_012` (added) INCR bursts of 1, 2, 3, 16, 17 and 256 beats, FIXED of 1 to 16, and
+    300 random bursts against a reference memory with `B` and `R` stalled at random -- 7.2.
 
 # Appendix A. Acronyms
 
