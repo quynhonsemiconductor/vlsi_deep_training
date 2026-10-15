@@ -399,7 +399,7 @@ later. The position recorded here is therefore narrower and is meant to be revis
 | What must happen if DFT is added | this input needs a real source, and the tie-off in the PWM wrapper is one of the places that must change |
 | Why it is worth recording | the tie is **harmless in simulation and only wrong on the tester** -- the same class of defect as the SRAM non-functional pins in `QNSC_RAM_MAS` |
 
-The same applies to the four GPIO instances, which have the same input. Keeping the
+The same applies to the three GPIO instances, which have the same input. Keeping the
 requirement visible costs one row in Table 13 and saves rediscovering it during a DFT
 pass.
 

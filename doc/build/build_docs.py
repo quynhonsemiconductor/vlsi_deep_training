@@ -43,6 +43,7 @@ DOCS = [
     ("QNSC_UART_MAS", "UART"),
     ("QNSC_I2C_MAS", "I2C"),
     ("QNSC_WDT_MAS", "WDT"),
+    ("QNSC_GPIO_MAS", "GPIO"),
 ]
 HEADINGS = ["Heading%d" % i for i in range(1, 7)]
 
