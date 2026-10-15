@@ -1,6 +1,6 @@
 ---
 title: "UART"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -12,6 +12,7 @@ built on, are in [`QNSC_UART_DECISIONS.md`](QNSC_UART_DECISIONS.md).
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Ong Bao Vinh | -- | Specification written from the research report (V2.x): addresses and interrupt lines from the contract, wrapper `m_qnsc_wrap_uart` around upstream `apb_uart` unmodified, no DMA request ports, no parameter |
+| V3.1 | 2026-10-15 | Nghia VT (lead), for Ong Bao Vinh | -- | `i_bus_apb_paddr` is 14 bits, was 12: the contract `meta.apb_paddr_width` changed in #77 because the windows are 16 KiB. No change in behaviour |
 
 # 1. Overview
 
@@ -102,7 +103,7 @@ Facts this specification relies on, read at those commits:
 |---|---|---:|---|
 | `i_clk_peri`, `i_rst_n_peri` | in | 1 | `SCRC` `o_clk_uart_<n>`, `o_rst_n_uart_<n>` |
 | `i_bus_apb_psel`, `i_bus_apb_penable`, `i_bus_apb_pwrite` | in | 1 | `P_BUS` `APB_M8` / `APB_M9` |
-| `i_bus_apb_paddr` | in | 12 | Offset in the window (contract `meta.apb_paddr_width`); bits 4:2 used |
+| `i_bus_apb_paddr` | in | 14 | Offset in the window (contract `meta.apb_paddr_width`); bits 4:2 used |
 | `i_bus_apb_pwdata` | in | 32 | Bits 7:0 used |
 | `i_bus_apb_pstrb`, `i_bus_apb_pprot` | in | 4, 3 | Not used |
 | `o_bus_apb_prdata`, `o_bus_apb_pready`, `o_bus_apb_pslverr` | out | 32, 1, 1 | Bits 31:8 read 0 |

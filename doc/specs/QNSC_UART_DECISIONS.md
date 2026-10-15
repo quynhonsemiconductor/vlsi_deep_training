@@ -17,7 +17,7 @@ reproduced.
 | DMA request ports and the patch `0001-add-dma-request-lines` dropped | `QNSC_DMA_MAS` V3.0: the DMA has no hardware request (report F9 already left them open) |
 | `P_STRICT_DECODE` and the other parameters dropped; the 32-byte alias accepted | `design/README.md`, "Shared numbers": a wrapper declares no parameter. Aliasing across the window is how the other APB IP behaves (TIMER, PWM, SCRC) and is stated, not decoded away |
 | `APB_M8`/`APB_M9` at `0x8002_0000`/`0x8002_4000`, `INTMAP` lines 4/5 | The report used HAS v1.3 (`APB_M9`/`APB_M10`, PLIC); the contract moved the slots when `GPIO3` was dropped, and QSOC has no PLIC |
-| `i_bus_apb_paddr` 12 bits | Contract `meta.apb_paddr_width`; the report used 18 |
+| `i_bus_apb_paddr` 12 bits | Contract `meta.apb_paddr_width`; the report used 18. **Superseded 2026-10-14:** 14 bits (#77), the width of the 16 KiB window |
 | Pad ports `i_pad_uart_rx`, `o_pad_uart_tx`; no `o_uart_tx_oe` | Naming Rule pad prefix; the TX pin is always an output, and direction is the IO MUX's |
 | Line-status interrupt not used | Report F4: the source may last one cycle and `INTMAP` does not latch; firmware reads `LSR` per character instead |
 | Stop-bit (F3), SPR and `ISR[7:6]` (F7) | F3 kept as `UART_007`; F7 stated in the register table |

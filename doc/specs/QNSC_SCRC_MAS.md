@@ -1,6 +1,6 @@
 ---
 title: "SCRC"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.2"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.3"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -14,6 +14,7 @@ The reasoning behind each change, the V1.0--V2.3 history and the V2.3 text are i
 | V3.0 | 2026-09-27 | Nghia VT (lead), for Nguyen Hao Nam | -- | V2.3 moved onto the MAS template; Naming Rule ports; `APB_M0`/`APB_M1`; one SPI domain (bit 13 reserved); per-peripheral soft reset removed; WDT never gated; monochrome figures after the mentor's `VLSI_SCRC.drawio`; timing diagrams; deviations from the HAS listed |
 | V3.1 | 2026-09-28 | Nghia VT (lead), for Nguyen Hao Nam | -- | Owner decisions on the two proposals: no stretch after POR, adopted (7.3, `SCRC_RST_001`); two CSRs, rejected, the mentor's APB BUS and WFs stay. Open item on the APB BUS name narrowed to renaming the generated module |
 | V3.2 | 2026-09-29 | Nghia VT (lead) | -- | 7.10: before gating `dma`, wait for `DONE_ID`, not idle (`QNSC_DMA_MAS` V3.2) |
+| V3.3 | 2026-10-15 | Nghia VT (lead) | -- | `i_bus_apb_paddr` is 14 bits, was 12: the contract `meta.apb_paddr_width` changed in #77 because the windows are 16 KiB. No change in behaviour |
 
 # 1. Overview
 
@@ -134,7 +135,7 @@ their own domain.
 | `i_wdt_rst_req` | in | 1 | WDT `aon_timer_rst_req_o`. Active high, sticky, WDT domain -- 7.3 |
 | `i_dbg_cpu_hold` | in | 1 | `SYSDBG` `o_dbg_cpu_hold`. 1 holds the CPU in reset -- 7.8 |
 | `i_bus_apb_psel`, `i_bus_apb_penable`, `i_bus_apb_pwrite` | in | 1 | `P_BUS` `APB_M0` control |
-| `i_bus_apb_paddr` | in | 12 | Offset in the window (contract `meta.apb_paddr_width`) |
+| `i_bus_apb_paddr` | in | 14 | Offset in the window (contract `meta.apb_paddr_width`) |
 | `i_bus_apb_pwdata` | in | 32 | Write data |
 | `i_bus_apb_pstrb`, `i_bus_apb_pprot` | in | 4, 3 | APB4 strobe, protection |
 | `o_bus_apb_prdata`, `o_bus_apb_pready`, `o_bus_apb_pslverr` | out | 32, 1, 1 | APB response -- 7.4 |

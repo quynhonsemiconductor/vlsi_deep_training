@@ -1,6 +1,6 @@
 ---
 title: "TIMER"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.5"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V2.6"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -17,6 +17,7 @@ The reasoning behind each change is in
 | V2.3 | 2026-09-25 | Nghia VT | -- | Ports and addresses moved up one slot after GPIO3 was dropped: `TIMER0` on `APB_M6` at `0x8001_8000`, `TIMER1` on `APB_M7` at `0x8001_C000` |
 | V2.4 | 2026-09-28 | Nghia VT | -- | `SCRC` bits from `QNSC_SCRC_MAS` V3.0: `CLK_EN[3]`, `CLK_EN[4]`; the error response is the `SCRC` APB guard; two requirements on `SCRC` closed |
 | V2.5 | 2026-09-28 | Nghia VT | -- | Wrapper `m_qnsc_wrap_timer` (Naming Rule V1.1 rule 2.1; was `m_qnsc_wrap_apb_timer_unit`). No change in behaviour |
+| V2.6 | 2026-10-15 | Nghia VT | -- | `i_bus_apb_paddr` is 14 bits, was 12: the contract `meta.apb_paddr_width` changed in #77 because the windows are 16 KiB; the requirement on the bus owner no longer says that `P_BUS` subtracts the base (nothing does; the window is aligned to its size). The decode is unchanged: `PADDR[5:0]` |
 
 # 1. Overview
 
@@ -72,7 +73,7 @@ is named in the description.
 |---|---|---:|---|
 | `i_clk_peri` | in | 1 | gated `peri` clock, to `HCLK` |
 | `i_rst_n_peri` | in | 1 | asynchronous active-low reset from `o_rst_n_timer_0` / `o_rst_n_timer_1`, to `HRESETn` |
-| `i_bus_apb_paddr` | in | 12 | to `PADDR`; only `[5:0]` decoded -- 7.6 |
+| `i_bus_apb_paddr` | in | 14 | to `PADDR`; only `[5:0]` decoded -- 7.6 |
 | `i_bus_apb_pwdata` | in | 32 | to `PWDATA` |
 | `i_bus_apb_pwrite`, `i_bus_apb_psel`, `i_bus_apb_penable` | in | 1 each | to `PWRITE`, `PSEL`, `PENABLE` |
 | `i_bus_apb_pstrb` | in | 4 | not connected; every write stores all 32 bits |
@@ -248,7 +249,7 @@ as written by firmware, the clock gate reset state and the `INTMAP` line -- sect
 
 | Item | Owner | What it blocks |
 |---|---|---|
-| `i_bus_apb_paddr[11:0]` = the low 12 bits of the offset (`P_BUS` subtracts the base; offset bits 13:12 are not used) | bus owner | register decode |
+| `i_bus_apb_paddr[13:0]` = the offset inside the 16 KiB window, the low 14 bits of the address (the window is aligned to its size); offset bits 13:6 are not decoded | bus owner | register decode |
 
 Accepted limits and firmware rules:
 

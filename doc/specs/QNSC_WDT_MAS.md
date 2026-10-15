@@ -1,6 +1,6 @@
 ---
 title: "WDT"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V1.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V1.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -12,6 +12,7 @@ built on, are in [`QNSC_WDT_DECISIONS.md`](QNSC_WDT_DECISIONS.md).
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V1.0 | 2026-09-28 | Nghia VT (lead), for Vu Bui Minh Hieu | -- | Specification written from Quach Huynh Huu Tai's research draft V0.1: upstream `aon_timer` unmodified, one 20 MHz clock, bark to the NMI and bite to `SCRC`, APB bridge on the upstream `tlul_adapter_host`, tie-offs, missing OpenTitan packages |
+| V1.1 | 2026-10-15 | Nghia VT (lead), for Vu Bui Minh Hieu | -- | `i_bus_apb_paddr` is 14 bits, was 12: the contract `meta.apb_paddr_width` changed in #77 because the windows are 16 KiB. No change in behaviour |
 
 # 1. Overview
 
@@ -97,7 +98,7 @@ simulation of this configuration (Verilator 5):
 |---|---|---:|---|
 | `i_clk_wdt`, `i_rst_n_wdt` | in | 1 | `SCRC` `o_clk_wdt`, `o_rst_n_wdt`. Drive `clk_i`, `clk_aon_i`, `rst_ni`, `rst_aon_ni` |
 | `i_bus_apb_psel`, `i_bus_apb_penable`, `i_bus_apb_pwrite` | in | 1 | `P_BUS` `APB_M2` |
-| `i_bus_apb_paddr` | in | 12 | Offset in the window (contract `meta.apb_paddr_width`); bits 5:2 used |
+| `i_bus_apb_paddr` | in | 14 | Offset in the window (contract `meta.apb_paddr_width`); bits 5:2 used |
 | `i_bus_apb_pwdata` | in | 32 | Write data |
 | `i_bus_apb_pstrb` | in | 4 | Byte enables, to the TL-UL mask |
 | `i_bus_apb_pprot` | in | 3 | Not used |

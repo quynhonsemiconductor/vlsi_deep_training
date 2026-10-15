@@ -625,4 +625,4 @@ it made to the record above, are listed here.
 
 ## Decided 2026-09-24
 
-- `paddr` is 12 bits at the wrapper; the IP decodes `[5:0]`. `P_BUS` supplies the offset within the region.
+- `paddr` is 12 bits at the wrapper; the IP decodes `[5:0]`. `P_BUS` supplies the offset within the region. **Superseded 2026-10-14:** 14 bits, contract `meta.apb_paddr_width` (#77); the decode is unchanged.

@@ -1,6 +1,6 @@
 ---
 title: "I2C"
-subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.0"
+subtitle: "MICRO-ARCHITECTURE SPECIFICATION -- V3.1"
 author: "QUY NHON SEMICONDUCTORS -- QNSC"
 ---
 
@@ -12,6 +12,7 @@ built on, are in [`QNSC_I2C_DECISIONS.md`](QNSC_I2C_DECISIONS.md).
 | Version | Date | Author | Reviewer | Description of change |
 |---|---|---|---|---|
 | V3.0 | 2026-09-28 | Nghia VT (lead), for Ong Bao Vinh | -- | Specification written from the research report: upstream `apb_i2c` unmodified (the DMA registers `TXCMD`/`RXCMD` dropped), wrapper `m_qnsc_wrap_i2c`, open-drain as output enables to the IO MUX, 20 MHz prescaler values |
+| V3.1 | 2026-10-15 | Nghia VT (lead), for Ong Bao Vinh | -- | `i_bus_apb_paddr` is 14 bits, was 12: the contract `meta.apb_paddr_width` changed in #77 because the windows are 16 KiB. No change in behaviour |
 
 # 1. Overview
 
@@ -86,7 +87,7 @@ Facts this specification relies on, read in the vendored source:
 |---|---|---:|---|
 | `i_clk_peri`, `i_rst_n_peri` | in | 1 | `SCRC` `o_clk_i2c`, `o_rst_n_i2c` |
 | `i_bus_apb_psel`, `i_bus_apb_penable`, `i_bus_apb_pwrite` | in | 1 | `P_BUS` `APB_M11` |
-| `i_bus_apb_paddr` | in | 12 | Offset in the window (contract `meta.apb_paddr_width`) |
+| `i_bus_apb_paddr` | in | 14 | Offset in the window (contract `meta.apb_paddr_width`) |
 | `i_bus_apb_pwdata` | in | 32 | Write data |
 | `i_bus_apb_pstrb`, `i_bus_apb_pprot` | in | 4, 3 | Not used |
 | `o_bus_apb_prdata`, `o_bus_apb_pready`, `o_bus_apb_pslverr` | out | 32, 1, 1 | `pready` = 1, `pslverr` = 0 |
