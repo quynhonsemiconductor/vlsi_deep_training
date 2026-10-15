@@ -178,7 +178,7 @@ serious limitation for a timebase, which is why the timebase is a different IP.
 |---|---|---:|---|
 | `HCLK` | in | 1 | domain clock, section 5.3 |
 | `HRESETn` | in | 1 | active low |
-| `PADDR` | in | 12 | decoded as a register index, section 4.7 |
+| `PADDR` | in | 12 | decoded as a register index, section 4.7. **Superseded 2026-10-14:** 14 bits, contract `meta.apb_paddr_width` (#77) |
 | `PWDATA` | in | 32 | |
 | `PWRITE`, `PSEL`, `PENABLE` | in | 1 each | |
 | `PRDATA` | out | 32 | |
@@ -331,6 +331,8 @@ Taken from `QSOC_HAS` and not changed by this document.
 Sixteen channels exist; eight leave the chip. The pad assignment is fixed by
 `QSOC_HAS` and every one of the eight is shared with a GPIO function.
 
+> **Superseded 2026-10-09.** The pin numbers in this table are those of the earlier pad list. The 40-pin pad list puts `PWM_0`..`PWM_7` on `PIN_23`--`26`, `29`, `30`, `39`, `40` (alternate function of `GPIO1_1`, `GPIO1_0`, `GPIO2_7`..`GPIO2_2`) and `TIM_EXT0`..`3` on `PIN_31`--`34` (`TIM_EXT0`, `1` alternate of `GPIO2_1`, `GPIO2_0`; `TIM_EXT2`, `3` their own pads; there is no `GPIO3`). The pad list is the reference; the PWM MAS names no pin.
+
 **Table 9 -- Channel outputs against pads**
 
 | Pad name | Pin | Shared with |
@@ -422,6 +424,8 @@ The handler must know which channel it selected into which event slot; the block
 cannot tell it, section 4.6.
 
 ## 5.6 External triggers
+
+> **Superseded 2026-10-09.** The pin numbers in this table are those of the earlier pad list. The 40-pin pad list puts `PWM_0`..`PWM_7` on `PIN_23`--`26`, `29`, `30`, `39`, `40` (alternate function of `GPIO1_1`, `GPIO1_0`, `GPIO2_7`..`GPIO2_2`) and `TIM_EXT0`..`3` on `PIN_31`--`34` (`TIM_EXT0`, `1` alternate of `GPIO2_1`, `GPIO2_0`; `TIM_EXT2`, `3` their own pads; there is no `GPIO3`). The pad list is the reference; the PWM MAS names no pin.
 
 `ext_sig_i` is 32 bits wide. **Four of them reach pads**, confirmed by the team's
 `IOPAD_Pin_Summary`: `TIM_EXT0` to `TIM_EXT3` on `PIN_37` to `PIN_40`, each sharing its
@@ -692,4 +696,4 @@ the correction holds.
 
 - `i_tim_ext` gets a two-flop synchroniser inside the PWM wrapper, so it does not depend on the IO MUX.
 - `pulp_clock_gating` is a local wrapper of OpenTitan `prim_clock_gating`, which has the same ports and is already used by Ibex. Synthesis then maps one cell to the library ICG.
-- `paddr` is 12 bits at the wrapper; the IP decodes `[9:2]`.
+- `paddr` is 12 bits at the wrapper; the IP decodes `[9:2]`. **Superseded 2026-10-14:** 14 bits (#77); the decode is unchanged.
