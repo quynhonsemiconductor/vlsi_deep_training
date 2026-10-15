@@ -21,7 +21,7 @@
 module m_qnsc_wrap_isram
 (
 //---------------------------------------------------------------
-// Clock/Reset: SCRC o_clk_mem, o_rst_n_mem (mem cluster, never gated)
+// Clock/Reset: SCRC o_clk_ram, o_rst_n_ram (domain ram, mem cluster, never gated)
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_clk\|^i_rst")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
