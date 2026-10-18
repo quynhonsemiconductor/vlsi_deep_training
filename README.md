@@ -38,9 +38,9 @@ Honest status, so nobody has to guess:
 | | |
 |---|---|
 | Architecture and memory map | **agreed** — one contract file, checked by CI |
-| Specifications | **in `doc/specs/`:** RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA, UART, I2C, WDT. CPU, BUS and GPIO in their open pull requests; SPI and IO MUX not yet. DMA is being rewritten for a new IP |
+| Specifications | **in `doc/specs/`:** RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA, UART, I2C, WDT, GPIO. CPU and BUS in their open pull requests; SPI and IO MUX not yet. DMA is being rewritten for a new IP |
 | RTL | **started.** Scaffold, naming rules and CI in place; wrappers under review as pull requests (PWM, INTMAP, CPU, BUS, GPIO, ROM, SYSCSR, UART) |
-| Verification | **started.** CI runs the self-checking tests of every block that has a testbench (`dv/`); the first is PWM, under review |
+| Verification | **started.** CI runs the self-checking tests of every block that has a testbench (`dv/`); the first are PWM and GPIO, under review |
 | Physical design | not started |
 | Per-IP status | the teacher's assistant's tracker; directory, owner and specification of every block in [`doc/BLOCKS.md`](doc/BLOCKS.md) |
 
