@@ -15,11 +15,13 @@
 # =============================================================================
 
 # ---- include directories ----------------------------------------------------
-# +incdir+../../vendor/<upstream>/<path>
+# none: self-designed, no upstream IP
+
+# ---- shared contract package ------------------------------------------------
+../top/rtl/qnsc_pkg.sv
 
 # ---- upstream IP, in compile order -----------------------------------------
-# ../../vendor/<upstream>/rtl/<leaf>.sv
-# ../../vendor/<upstream>/rtl/<top_of_ip>.sv
+# none
 
 # ---- ours -------------------------------------------------------------------
-# rtl/<wrapper>.sv
+rtl/m_qnsc_intmap.sv
