@@ -57,6 +57,8 @@ added in the same PR once S_BUS/AXI2APB were verified clean -- see "P_BUS
 router: decoder only, not APB-BUS-Generator" below for which tool actually
 produced it, which is not the tool this section originally named.
 
+Superseded on 2026-10-19: the router is no longer in the wrapper -- see "P_BUS's router leaves the wrapper" at the end of this file.
+
 ## Reference material found, and why it was not used as-is
 
 A prior sandbox session (evidenced by a `BUS_CONFIG_GUIDE.md`, a partially
@@ -274,3 +276,75 @@ address-map arrays are built by an `automatic` function with plain
 field-by-field assignment instead, which Verilator does not treat as a
 concatenation at all. Confirmed clean by re-running the same lint after the
 change.
+
+## The wrapper on the emacs flow, and what the flow cannot derive (2026-10-16)
+
+`m_qnsc_wrap_bus` was hand-written, with ports named `i_axi_s_0_*`, `o_apb_<periph>_*`
+and widths written as `P_SLV_ID_W`. It now follows the shared flow
+(`design/README.md`, "Writing a wrapper with emacs verilog-mode"): the source is
+`rtl/emacs/m_qnsc_wrap_bus.src.sv`, `make wrap BLOCK=bus` writes `rtl/m_qnsc_wrap_bus.sv`,
+CI regenerates and compares. Before the change `naming_check` reported 397 findings
+(396 port names, one package name) and `module_rules` 56 (flat-port widths named by a
+package constant); both are clean.
+
+What emacs derives here, and what it does not, was measured, not assumed:
+
+- It derives the clock and reset ports (from the `clk_i`/`rst_ni` pins of the three
+  AXI IP modules), the pin connections of all four instances, and the 14 APB4
+  peripheral port groups, from the router's own ports. The router names its ports by
+  peripheral (`o_paddr_gpio_0`); the contract names them by index (`APB_M3`); an
+  `AUTO_LISP` list in the source holds the index of each peripheral, in contract order,
+  and the template turns `o_paddr_gpio_0` into `o_bus_apb_m_3_paddr`.
+- It cannot derive the flat AXI4 ports. `axi_xbar` speaks packed structs, and
+  verilog-mode does not decompose a struct. Those ports and the pack/unpack assigns are
+  in the `.src.sv`, produced from one channel table, so a port and its assign cannot
+  disagree. They carry numeric widths, as the flat-port rule asks; elaboration checks
+  in the wrapper fail if a width differs from `qnsc_s_bus_pkg`, which keeps the numbers
+  from drifting.
+- A struct-typed port makes verilog-mode read the type name as a pin of its own, and put
+  it in the "Others" port group. `verilog-typedef-regexp` does not reach the module
+  files it reads for pins. The templates connect those pins to `()`, and
+  `flow/emacs/fix_pkg_ports.py` drops the lines, so no flow file was changed.
+
+The package was renamed `s_bus_pkg` to `qnsc_s_bus_pkg` (Naming Rule 2.1, the example
+in the decisions table of `design/README.md`).
+
+## P_BUS router aligned with the contract (2026-10-16)
+
+`util/qsoc_contract.yml` changed on main after this block was written: an APB slave
+gets 14 address bits (`apb_paddr_width`, was 12; spi_device has buffers from offset
+0x1000 and a device at 0x2000 inside its window) and P_BUS takes 18 (`pbus_paddr_width`,
+the offset inside the 256 KiB AXI2APB window). The router workbook still said 32 bits
+at the input (absolute address) and 12 per slave. The workbook is now edited from the
+contract (`PBUS_APB_DEC.xlsx`: width 18, slaves 14, offsets relative to
+`apb_window_base`) and `m_qnsc_p_bus_dec` regenerated; the generator's body is unchanged,
+only the widths and ranges differ.
+
+This also answers who cuts the address: the AXI2APB bridge inside this wrapper hands
+the router the low 18 bits of the AXI address (`C_PBUS_PADDR_WIDTH`). Nothing subtracts
+a base, since the windows are aligned to their size (the contract's own note).
+
+## P_BUS's router leaves the wrapper (2026-10-19)
+
+`m_qnsc_wrap_bus` is now `S_BUS` plus the `AXI2APB` bridge, and nothing else. The owner's
+intent for this wrapper is exactly that pair; the router that fans the bridge's one APB4
+port out to the peripherals (`m_qnsc_p_bus_dec`, added in `3a6fc83`) was in the wrapper
+only because the first version of the block was written that way, and the router is the
+`P_BUS` half of the bus pair, not the crossbar or its bridge.
+
+What changed in the wrapper: the `u_m_qnsc_p_bus_dec` instance, its `w_pbus_*` wires and
+the `AUTO_LISP` list of peripheral indexes are gone, the 14 APB4 port groups
+(`*_bus_apb_m_<n>_*`) with them, and `bus.f` and `filelist_emacs.f` no longer list the
+router file. The bridge's APB4 master port is now the block's APB boundary, written in
+the `.src.sv` as `o_bus_apb_m_0_*`/`i_bus_apb_m_0_*`: `paddr` is 18 bits (the offset
+inside the AXI2APB window, `meta.pbus_paddr_width`), the rest are the usual 32-bit data,
+4-bit strobe and one-bit controls. The port count falls from 400 to 283. Two elaboration
+checks keep `paddr` and `pwdata` equal to `qnsc_pkg`. `pprot` is still dropped.
+
+What was not changed: `util/gen/p_bus_apb_dec/` (the workbook, the generated decoder and
+its JSON, aligned with the contract on 2026-10-16) stays in the repository, now unused by
+this wrapper. `NoApbSlaves = 1` stays: the decision not to repeat the peripheral map in
+two places still holds, wherever the 14-way split ends up.
+
+Not settled here: which block instantiates the router, and who owns it. `doc/BLOCKS.md`
+lists `P_BUS` as its own row, with the same owner and the same directory as `S_BUS`.
