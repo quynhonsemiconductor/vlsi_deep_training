@@ -1,120 +1,120 @@
 {
   "module_name": "m_qnsc_p_bus_dec",
-  "address_width": 32,
+  "address_width": 18,
   "data_width": 32,
   "write_strobe": 4,
   "pslverr_on_unmapped": 1,
   "slaves": [
     {
       "name": "scrc",
-      "address_width": 12,
-      "offset": "0x80000000",
+      "address_width": 14,
+      "offset": "0x00000",
       "size": "16 KB",
-      "end_address": "0x80003FFF",
+      "end_address": "0x03FFF",
       "description": "System clock and reset control registers"
     },
     {
       "name": "syscsr",
-      "address_width": 12,
-      "offset": "0x80004000",
+      "address_width": 14,
+      "offset": "0x04000",
       "size": "16 KB",
-      "end_address": "0x80007FFF",
+      "end_address": "0x07FFF",
       "description": "System control/status registers"
     },
     {
       "name": "wdt",
-      "address_width": 12,
-      "offset": "0x80008000",
+      "address_width": 14,
+      "offset": "0x08000",
       "size": "16 KB",
-      "end_address": "0x8000BFFF",
+      "end_address": "0x0BFFF",
       "description": "Watchdog timer"
     },
     {
       "name": "gpio_0",
-      "address_width": 12,
-      "offset": "0x8000C000",
+      "address_width": 14,
+      "offset": "0x0C000",
       "size": "16 KB",
-      "end_address": "0x8000FFFF",
+      "end_address": "0x0FFFF",
       "description": "GPIO bank 0"
     },
     {
       "name": "gpio_1",
-      "address_width": 12,
-      "offset": "0x80010000",
+      "address_width": 14,
+      "offset": "0x10000",
       "size": "16 KB",
-      "end_address": "0x80013FFF",
+      "end_address": "0x13FFF",
       "description": "GPIO bank 1"
     },
     {
       "name": "gpio_2",
-      "address_width": 12,
-      "offset": "0x80014000",
+      "address_width": 14,
+      "offset": "0x14000",
       "size": "16 KB",
-      "end_address": "0x80017FFF",
+      "end_address": "0x17FFF",
       "description": "GPIO bank 2"
     },
     {
       "name": "timer_0",
-      "address_width": 12,
-      "offset": "0x80018000",
+      "address_width": 14,
+      "offset": "0x18000",
       "size": "16 KB",
-      "end_address": "0x8001BFFF",
+      "end_address": "0x1BFFF",
       "description": "apb_timer_unit, 64-bit mode (QSOC timebase)"
     },
     {
       "name": "timer_1",
-      "address_width": 12,
-      "offset": "0x8001C000",
+      "address_width": 14,
+      "offset": "0x1C000",
       "size": "16 KB",
-      "end_address": "0x8001FFFF",
+      "end_address": "0x1FFFF",
       "description": "apb_timer_unit, two independent 32-bit timers"
     },
     {
       "name": "uart_0",
-      "address_width": 12,
-      "offset": "0x80020000",
+      "address_width": 14,
+      "offset": "0x20000",
       "size": "16 KB",
-      "end_address": "0x80023FFF",
+      "end_address": "0x23FFF",
       "description": "UART 0 (carries the boot download)"
     },
     {
       "name": "uart_1",
-      "address_width": 12,
-      "offset": "0x80024000",
+      "address_width": 14,
+      "offset": "0x24000",
       "size": "16 KB",
-      "end_address": "0x80027FFF",
+      "end_address": "0x27FFF",
       "description": "UART 1"
     },
     {
       "name": "spi",
-      "address_width": 12,
-      "offset": "0x80028000",
+      "address_width": 14,
+      "offset": "0x28000",
       "size": "16 KB",
-      "end_address": "0x8002BFFF",
+      "end_address": "0x2BFFF",
       "description": "SPI host + device (one APB4 slave for both)"
     },
     {
       "name": "i2c",
-      "address_width": 12,
-      "offset": "0x8002C000",
+      "address_width": 14,
+      "offset": "0x2C000",
       "size": "16 KB",
-      "end_address": "0x8002FFFF",
+      "end_address": "0x2FFFF",
       "description": "I2C"
     },
     {
       "name": "pwm",
-      "address_width": 12,
-      "offset": "0x80030000",
+      "address_width": 14,
+      "offset": "0x30000",
       "size": "16 KB",
-      "end_address": "0x80033FFF",
+      "end_address": "0x33FFF",
       "description": "PWM (apb_adv_timer)"
     },
     {
       "name": "dma_cfg",
-      "address_width": 12,
-      "offset": "0x80034000",
+      "address_width": 14,
+      "offset": "0x34000",
       "size": "16 KB",
-      "end_address": "0x80037FFF",
+      "end_address": "0x37FFF",
       "description": "DMA register interface (data path is AXI_S2, not here)"
     }
   ]
