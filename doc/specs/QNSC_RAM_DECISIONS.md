@@ -12,6 +12,21 @@ Nothing here was deleted from the specification without being kept here first.
 
 ---
 
+# V2.5 decisions (2026-10-15)
+
+The wrappers are written and simulated for the first time (`dv/ram_common`). Simulation
+settled one question the specification could only argue, and found one defect.
+
+| # | Decision | Why |
+|---|---|---|
+| D1 | **`PARA_LEN_WD` = 9, bit 8 of `AxLEN` tied 0** | The controller loads its beat counter with `AxLEN` + 1 (`m_vlsi_axfsm`, `reg_cnt_addr <= i_axlen + 1`). At 8 bits, `AxLEN` = 255 loads 0: the burst is finished before it starts, no beat is pushed, `B` and `R` never come, and a write leaves the write-data FIFO full. MAS 2 and 7.2 promised 256-beat bursts, and the table of 4.8 below said "8 gives 256 beats", which is the AXI field width, not the counter's. Found by `RAM_012`, which hung until it was given a timeout. A parameter value inside the IP's range fixes it and the vendored RTL stays as it is. **To report to the mentor** with the `WRAP` finding; the ROM wrapper (#51) sets 8 and has the same limit, which a 2 KiB ROM read in short fetches is unlikely to meet. A DMA command of up to 1023 bytes (`dma_axi32`, Vinh's MAS V0.3) could be a 256-beat burst into RAM; not verified |
+| D2 | **The macro is not in the wrapper** | MAS 5 ends the wrapper at the macro's pins, and a technology macro cannot be written portably. `design/top` places it; the testbench uses a behavioural model with byte enables and no reset (`dv/ram_common/tb_sram_model.sv`, `dv/README.md` rule 3) |
+| D3 | **`o_mem_we` and `o_mem_be` are the two ports declared by hand** | The wrapper reads both inside (the strobe FIFO pop, the gate of `o_mem_be`), and `AUTOOUTPUT` does not declare a signal the module itself uses as an input. Every other port comes from the AUTOs |
+| D4 | **One set of tests for both blocks** | The wrappers differ only in the width of `o_mem_addr`. `dv/ram_common` holds the body and the tests, `tb_isram` and `tb_dsram` set the depth |
+| D5 | **A ninth pending write response is dropped, and the wrapper does not prevent it** | Found by a scratch test that held `BREADY` low while 12 single-beat writes completed: 8 responses came back. `m_vlsi_sram_misc` pushes `BFIFO` on the write grant (`o_bfifo_push = i_arb_write_en & last`), and `m_vlsi_fifo` ignores a push when full; the grant does not look at `BFIFO`. A guard needs the grant to wait for room, which is inside the vendored controller, or a counter of pending responses in front of AW and W, which is new logic for a case the bus should not produce (`S_BUS` allows 2 transactions in flight per port). The data is written in every case. Recorded as an accepted limit in the MAS and stated by `RAM_013`. **To report to the mentor** with the other two findings |
+
+---
+
 # Reversion and History
 
 | Version | Date       | Author/Owner | Description of Change |
@@ -378,7 +393,7 @@ what `m_vlsi_sram_misc` pushes in, so the RAM can never report a `SLVERR` or a
 | `PARA_DATA_WD` | 32 | Data width in bits | 32 | 32 |
 | `PARA_ADDR_WD` | 32 | Address width in bits | 32 | 32 |
 | `PARA_ID_WD` | 4 | AXI ID width -- set by the `S_BUS` interconnect, which widens master IDs to keep them unique | same | same |
-| `PARA_LEN_WD` | 8 | `AxLEN` width, 8 gives 256 beats | 8 | 8 |
+| `PARA_LEN_WD` | 8 | `AxLEN` width, 8 gives 256 beats | 8 | 8 | **Superseded by V2.5 D1: 9.** The counter holds `AxLEN` + 1, so 256 beats need 9 bits |
 | `PARA_FIFO_DEPTH` | 8 | Depth of all five FIFOs, a power of two | 8 | 8 |
 | `PARA_SRAM_DEPTH` | 1024 | **Not a controller parameter** -- it belongs to the SRAM macro, `sim/vcs/env/m_vlsi_sram_sp.sv` line 13. It is the only thing that sets how much memory is present | 16384 words, 64 KiB | 8192 words, 32 KiB |
 

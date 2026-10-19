@@ -14,6 +14,10 @@ dv/<block>/
   README.md          which MAS verification items are covered, and which are not yet
 ```
 
+Two blocks that differ little can share a testbench: `dv/ram_common` is the body of
+`tb_isram` and `tb_dsram`, included by both. It is not a block (no `design/` twin), and a
+change to it runs both in CI.
+
 The design under test is built from `design/<block>/<block>.f`, the same filelist the
 LINT stage uses. Never keep a second list of design files here.
 

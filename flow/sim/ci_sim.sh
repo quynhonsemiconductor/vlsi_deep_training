@@ -26,6 +26,8 @@ if [ -n "$shared" ]; then
   why="every block with a testbench, because this pull request changes $(echo "$shared" | sed 's/.*/`&`/' | paste -sd, - | sed 's/,/, /g'), which every block compiles"
 else
   blocks=$(echo "$changed" | awk -F/ '($1=="design"||$1=="dv") && NF>2 {print $2}' | sort -u)
+  # dv/ram_common is the body of tb_isram and tb_dsram: it is not a block, it touches both.
+  echo "$blocks" | grep -qx ram_common && blocks=$(printf '%s\n' $blocks isram dsram | grep -vx ram_common | sort -u)
   why="the blocks this pull request changes"
 fi
 
