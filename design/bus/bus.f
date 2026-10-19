@@ -13,15 +13,13 @@
 #   - Anything under rtl/ is code written here. Anything under ../../vendor/ is
 #     not ours -- see vendor/manifest.yml for its pinned commit and licence.
 #
-# --top-module is REQUIRED here, not optional. pulp-platform/axi/src/axi_mux.sv
-# (pulled in transitively by axi_xbar) bundles both the struct-based axi_mux we
-# actually use and an interface-based axi_mux_intf sibling in the same file;
-# without an explicit top, Verilator elaborates every parentless module as its
-# own root, and axi_mux_intf's AXI_BUS/AXI_LITE interface ports are only valid
-# with the parameter context a real instantiation provides. Same issue, same
-# fix, as design/cpu/cpu.f.
-# =============================================================================
---top-module m_qnsc_wrap_bus
+# A filelist is shared by every tool, so it carries no tool option: the top is
+# named by the flow instead (flow/vcs/run_vcs and flow/lint/lint_all.sh derive
+# m_qnsc_wrap_<block> from the wrapper listed last here). Worth knowing when a tool
+# needs it spelled out: pulp-platform/axi/src/axi_mux.sv (pulled in by axi_xbar)
+# bundles the struct-based axi_mux we use with an interface-based axi_mux_intf
+# sibling, and a tool that elaborates every module rather than one top hits a
+# V3Width Internal Error on the sibling. Same as design/cpu/cpu.f.
 
 # ---- include directories ----------------------------------------------------
 +incdir+../../vendor/pulp-platform/axi/include
@@ -68,10 +66,5 @@
 ../../vendor/pulp-platform/axi/src/axi_lite_to_apb.sv
 
 # ---- ours -------------------------------------------------------------------
-rtl/s_bus_pkg.sv
-# P_BUS's router: generated (nguyenquanicd/APB-DEC-Generator), committed
-# alongside its spreadsheet input in util/gen/p_bus_apb_dec/ -- see
-# vendor/manifest.yml. Plain module, no package/import, so it has no
-# ordering requirement beyond "before the wrapper that instantiates it".
-../../util/gen/p_bus_apb_dec/m_qnsc_p_bus_dec.sv
+rtl/qnsc_s_bus_pkg.sv
 rtl/m_qnsc_wrap_bus.sv

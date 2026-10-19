@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns/1ps
 //==============================================================================
-// Module      : s_bus_pkg
+// Module      : qnsc_s_bus_pkg
 // Description : AXI4 struct typedefs, axi_xbar Cfg and address map for S_BUS.
 //               bus is an integration block (design/README.md, "Shared numbers:
 //               who may use qnsc_pkg"), so this package imports qnsc_pkg
@@ -10,7 +10,7 @@
 //==============================================================================
 `include "axi/typedef.svh"
 
-package s_bus_pkg;
+package qnsc_s_bus_pkg;
 
   import qnsc_pkg::C_ADDR_WIDTH;
   import qnsc_pkg::C_DATA_WIDTH;
@@ -169,5 +169,5 @@ package s_bus_pkg;
   endfunction
   localparam rule_t [P_NO_APB_RULES-1:0] P_APB_ADDR_MAP = apb_addr_map_f();
 
-endpackage : s_bus_pkg
+endpackage : qnsc_s_bus_pkg
 `default_nettype wire
