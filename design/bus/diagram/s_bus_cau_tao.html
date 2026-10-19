@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S_BUS được tạo từ những gì</title>
+<style>
+  :root { --bg:#ffffff; --fg:#111111; --muted:#555555; --line:#111111; --soft:#f2f2f2; --warn:#fff7d6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#161616; --fg:#eeeeee; --muted:#aaaaaa; --line:#eeeeee; --soft:#262626; --warn:#3a3317; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 21px; margin: 40px 0 10px; border-bottom: 2px solid var(--line); padding-bottom: 4px; }
+  p, li { max-width: 78ch; }
+  .sub { color: var(--muted); margin: 0 0 8px; }
+  code { font: 14px/1.4 ui-monospace, Consolas, monospace; background: var(--soft); padding: 1px 5px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; margin: 12px 0; }
+  th, td { border: 1.5px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--soft); }
+  .tag { display:inline-block; border:1.5px solid var(--line); padding:0 8px; font-size:13px; font-weight:600; }
+  .tag.sinh { border-style: dashed; }
+  .tag.tu { background: var(--fg); color: var(--bg); }
+  .note { background: var(--warn); border: 1.5px solid var(--line); padding: 10px 14px; margin: 14px 0; }
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps li { counter-increment: s; border: 1.5px solid var(--line); padding: 8px 12px 8px 46px; margin: 8px 0; position: relative; }
+  .steps li::before { content: counter(s); position:absolute; left:12px; top:8px; font-weight:700; border:1.5px solid var(--line); width:24px; height:24px; text-align:center; line-height:21px; border-radius:50%; }
+  figure { margin: 12px 0; overflow-x: auto; }
+  svg { display:block; width:100%; height:auto; min-width: 760px; }
+  svg text { fill: var(--fg); font-family: system-ui, "Segoe UI", sans-serif; }
+  svg .b { fill: var(--bg); stroke: var(--line); stroke-width: 2; }
+  svg .d { fill: var(--bg); stroke: var(--line); stroke-width: 2; stroke-dasharray: 6 4; }
+  svg .s { fill: var(--fg); stroke: var(--line); stroke-width: 2; }
+  svg .st text, svg text.st { fill: var(--bg); }
+  svg .l { stroke: var(--line); stroke-width: 2; fill: none; marker-end: url(#ar); }
+  svg .r { fill: none; stroke: var(--line); stroke-width: 2; stroke-dasharray: 10 6; }
+  svg .sm { font-size: 12px; }
+  svg .md { font-size: 14px; }
+  svg .lg { font-size: 16px; font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>S_BUS được tạo từ những gì</h1>
+<p class="sub">Trả lời câu hỏi: có file top sẵn rồi làm tiếp, hay tự code? Cả hai: lõi là IP có sẵn, phần nối dây và cấu hình là tự viết. Wrapper chỉ gồm crossbar và cầu AXI2APB, không có router P_BUS.</p>
+
+<h2>1. Ba loại file</h2>
+<p>Mỗi file của S_BUS thuộc một trong ba loại. Biết loại file thì biết có được sửa hay không.</p>
+<table>
+  <tr><th>Loại</th><th>Ý nghĩa</th><th>Có sửa được không</th></tr>
+  <tr><td><span class="tag">Có sẵn</span></td><td>IP của người khác, nằm trong <code>vendor/</code>. Repo chỉ liệt kê trong <code>bus.f</code>, không copy.</td><td>Không</td></tr>
+  <tr><td><span class="tag sinh">Sinh ra</span></td><td>Do công cụ tạo từ một file nguồn. Đầu file có ghi "GENERATED, DO NOT EDIT" hoặc nằm cạnh file nguồn.</td><td>Không sửa file này, sửa file nguồn rồi sinh lại</td></tr>
+  <tr><td><span class="tag tu">Tự viết</span></td><td>Code của nhóm mình.</td><td>Có</td></tr>
+</table>
+
+<h2>2. Bức tranh tổng thể</h2>
+<figure>
+<svg viewBox="0 0 1040 430" role="img" aria-label="Các file tạo nên S_BUS và quan hệ giữa chúng">
+  <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="fill:var(--line)"/></marker></defs>
+
+  <text class="lg" x="20" y="26">Nguồn đầu vào</text>
+
+  <rect class="b" x="20" y="40" width="250" height="70"/>
+  <text class="md" x="145" y="68" text-anchor="middle" font-weight="700">qsoc_contract.yml</text>
+  <text class="sm" x="145" y="90" text-anchor="middle">bản đồ địa chỉ, số dùng chung</text>
+
+  <rect class="d" x="20" y="150" width="250" height="70"/>
+  <text class="md" x="145" y="178" text-anchor="middle" font-weight="700">qnsc_pkg.sv</text>
+  <text class="sm" x="145" y="200" text-anchor="middle">sinh ra từ contract</text>
+
+  <rect class="s" x="20" y="260" width="250" height="70"/>
+  <text class="md st" x="145" y="288" text-anchor="middle" font-weight="700" style="fill:var(--bg)">qnsc_s_bus_pkg.sv</text>
+  <text class="sm" x="145" y="310" text-anchor="middle" style="fill:var(--bg)">tự viết: cấu hình Cfg, ID, bảng địa chỉ</text>
+
+  <path class="l" d="M145,110 L145,150"/>
+  <path class="l" d="M145,220 L145,260"/>
+
+  <text class="lg" x="340" y="26">Các khối bên trong m_qnsc_wrap_bus</text>
+  <rect class="r" x="340" y="40" width="520" height="380"/>
+
+  <rect class="s" x="360" y="64" width="480" height="64"/>
+  <text class="md" x="600" y="92" text-anchor="middle" font-weight="700" style="fill:var(--bg)">Lớp nối dây: các assign</text>
+  <text class="sm" x="600" y="112" text-anchor="middle" style="fill:var(--bg)">port phẳng ⇄ struct của axi_xbar</text>
+
+  <rect class="b" x="360" y="160" width="480" height="96"/>
+  <text class="md" x="600" y="190" text-anchor="middle" font-weight="700">u_axi_xbar : axi_xbar</text>
+  <text class="sm" x="600" y="212" text-anchor="middle">crossbar 3 master × 4 slave, có sẵn của pulp-platform</text>
+  <text class="sm" x="600" y="232" text-anchor="middle">gồm axi_demux, axi_mux, decode lỗi bên trong</text>
+
+  <rect class="b" x="360" y="290" width="480" height="90"/>
+  <text class="md" x="600" y="318" text-anchor="middle" font-weight="700">AXI2APB</text>
+  <text class="sm" x="600" y="340" text-anchor="middle">u_axi_to_axi_lite → u_axi_lite_to_apb</text>
+  <text class="sm" x="600" y="360" text-anchor="middle">hai khối có sẵn của pulp-platform</text>
+
+  <path class="l" d="M600,128 L600,160"/>
+  <path class="l" d="M600,256 L600,290"/>
+
+  <path class="l" d="M270,295 L340,295"/>
+
+  <text class="lg" x="900" y="26">Đầu ra</text>
+  <rect class="b" x="900" y="70" width="120" height="60"/>
+  <text class="md" x="960" y="106" text-anchor="middle">3 master AXI</text>
+  <text class="sm" x="960" y="152" text-anchor="middle">ROM, ISRAM, DSRAM</text>
+  <rect class="b" x="900" y="320" width="120" height="60"/>
+  <text class="md" x="960" y="356" text-anchor="middle">1 cổng APB</text>
+  <text class="sm" x="960" y="402" text-anchor="middle">tới P_BUS (ngoài wrapper)</text>
+  <path class="l" d="M840,208 L900,100"/>
+  <path class="l" d="M840,335 L900,350"/>
+</svg>
+</figure>
+<p>Nét liền đậm là file tự viết, nét đứt là file sinh ra, khung thường là IP có sẵn. Khung nét đứt dài bao quanh các khối là wrapper <code>m_qnsc_wrap_bus</code>. Router P_BUS (chia cổng APB ra các ngoại vi) không nằm trong wrapper này.</p>
+
+<h2>3. Từng file nằm ở đâu và ai viết</h2>
+<table>
+  <tr><th>File</th><th>Loại</th><th>Vai trò</th></tr>
+  <tr><td><code>vendor/pulp-platform/axi/src/axi_xbar.sv</code></td><td><span class="tag">Có sẵn</span></td><td>Crossbar. Nhận lệnh từ 3 master và chọn slave theo địa chỉ. Kéo theo <code>axi_demux</code>, <code>axi_mux</code>, <code>axi_err_slv</code>.</td></tr>
+  <tr><td><code>axi_to_axi_lite</code>, <code>axi_lite_to_apb</code></td><td><span class="tag">Có sẵn</span></td><td>Đổi AXI4 sang AXI-Lite rồi sang APB4 cho nhánh ngoại vi.</td></tr>
+  <tr><td><code>design/top/rtl/qnsc_pkg.sv</code></td><td><span class="tag sinh">Sinh ra</span></td><td>Số dùng chung của cả chip, sinh từ <code>util/qsoc_contract.yml</code>.</td></tr>
+  <tr><td><code>design/bus/rtl/qnsc_s_bus_pkg.sv</code></td><td><span class="tag tu">Tự viết</span></td><td>173 dòng. Số cổng, độ rộng ID, các giá trị <code>Cfg</code> của crossbar, bảng địa chỉ lấy từ contract.</td></tr>
+  <tr><td><code>design/bus/rtl/emacs/m_qnsc_wrap_bus.src.sv</code></td><td><span class="tag tu">Tự viết</span></td><td>844 dòng. File nguồn của wrapper. Đây là file duy nhất bạn sửa khi muốn đổi cách nối.</td></tr>
+  <tr><td><code>design/bus/rtl/m_qnsc_wrap_bus.sv</code></td><td><span class="tag sinh">Sinh ra</span></td><td>880 dòng. Do emacs sinh từ <code>.src.sv</code>. Đây là file RTL thật được build và lint.</td></tr>
+  <tr><td><code>design/bus/bus.f</code></td><td><span class="tag tu">Tự viết</span></td><td>Danh sách file build, thứ tự quan trọng: package trước, IP, rồi wrapper ở cuối.</td></tr>
+</table>
+
+<h2>4. Cách ra được file wrapper</h2>
+<ol class="steps">
+  <li>Bạn sửa <code>m_qnsc_wrap_bus.src.sv</code>. Trong file có các comment đặc biệt như <code>/*AUTOINST*/</code> (tự điền chân của instance) và <code>/*AUTOINPUT*/</code>, <code>/*AUTOOUTPUT*/</code> (tự điền port lặp lại).</li>
+  <li>Chạy <code>make wrap</code> trong <code>design/bus/rtl/emacs/</code>. Makefile gọi emacs <code>verilog-mode</code> mở rộng các comment đặc biệt đó.</li>
+  <li>Kết quả ghi ra <code>design/bus/rtl/m_qnsc_wrap_bus.sv</code>. Chạy lại lần nữa phải ra đúng file giống hệt (không đổi gì).</li>
+  <li>Lint và mô phỏng đọc <code>bus.f</code>, rồi build đúng file <code>.sv</code> này chứ không đọc file <code>.src.sv</code>.</li>
+</ol>
+<div class="note"><b>Đừng sửa tay file <code>m_qnsc_wrap_bus.sv</code>.</b> Lần <code>make wrap</code> sau sẽ ghi đè và mất thay đổi. Sửa ở <code>.src.sv</code>.</div>
+
+<h2>5. Trong file .src.sv có gì</h2>
+<table>
+  <tr><th>Phần</th><th>Dòng (xấp xỉ)</th><th>Nội dung</th></tr>
+  <tr><td>Port phẳng</td><td>đầu file</td><td>Clock/reset do emacs điền. Cổng APB và các cổng AXI viết tay, vì emacs không tách được struct.</td></tr>
+  <tr><td>Kiểm tra lúc elaboration</td><td>346</td><td>Độ rộng ID, USER, <code>paddr</code>, <code>pwdata</code> phải bằng package.</td></tr>
+  <tr><td>Instance <code>axi_xbar</code></td><td>436 đến 454</td><td>Truyền <code>Cfg</code> và kiểu struct, <code>ATOPs = 0</code>, <code>Connectivity = '1</code>.</td></tr>
+  <tr><td>Instance <code>axi_to_axi_lite</code></td><td>470 đến 482</td><td>Phần đầu của AXI2APB.</td></tr>
+  <tr><td>Instance <code>axi_lite_to_apb</code></td><td>496 đến 508</td><td>Phần sau của AXI2APB.</td></tr>
+  <tr><td>Nối cầu với cổng APB</td><td>từ 511</td><td>Các <code>assign</code> nối struct APB của cầu với cổng APB của wrapper.</td></tr>
+  <tr><td>Nối port phẳng với struct AXI</td><td>từ 525</td><td>Các <code>assign</code> thuần nối dây, không có logic.</td></tr>
+</table>
+
+<h2>6. Dữ liệu đi qua như thế nào</h2>
+<p>Một lệnh đọc từ CPU đi như sau.</p>
+<ol class="steps">
+  <li>Master đưa tín hiệu ra các port phẳng, ví dụ <code>i_bus_axi_s_1_ar_addr</code>.</li>
+  <li>Lớp <code>assign</code> gộp các port phẳng thành struct request 183 bit.</li>
+  <li><code>axi_xbar</code> so địa chỉ với bảng 4 dòng để chọn slave. Địa chỉ không khớp dòng nào thì trả DECERR.</li>
+  <li>Nếu đích là ROM, ISRAM hoặc DSRAM, struct 187 bit (ID rộng thêm 2 bit) được tách ra port phẳng và đi ra ngoài.</li>
+  <li>Nếu đích là vùng ngoại vi 0x8000_0000, lệnh đi vào AXI2APB rồi ra cổng APB duy nhất của wrapper.</li>
+  <li>Phản hồi đi ngược lại đúng đường đó.</li>
+</ol>
+
+<h2>7. Điều chưa chắc</h2>
+<p>Các thông tin trên mình đọc từ file hiện có, không dò lịch sử git để biết ai viết từng phần. Số dòng ở mục 5 là xấp xỉ, sẽ lệch khi file đổi.</p>
+
+</main>
+</body>
+</html>
