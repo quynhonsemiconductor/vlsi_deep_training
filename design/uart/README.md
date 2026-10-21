@@ -1,6 +1,6 @@
 # `uart` — serial ports
 
-**Owner:** @Vinh-OngBao   **Spec:** [`QNSC_UART_MAS.md`](../../doc/specs/QNSC_UART_MAS.md)   **DV:** [`../../dv/uart`](../../dv/uart)
+**Owner:** @Vinh-OngBao   **Spec:** `QNSC_UART_MAS.md` on the team SharePoint   **DV:** [`../../dv/uart`](../../dv/uart)
 
 ## What this block is
 

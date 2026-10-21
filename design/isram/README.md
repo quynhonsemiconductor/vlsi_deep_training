@@ -1,6 +1,6 @@
 # `isram` — instruction SRAM (AXI_M1)
 
-**Owner:** @Nghia-VanTrong   **Spec:** [`doc/specs/QNSC_RAM_MAS.md`](../../doc/specs/QNSC_RAM_MAS.md) (build to .docx via `doc/build/build_docs.py`)   **DV:** [`../../dv/isram`](../../dv/isram)
+**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS.md` on the team SharePoint   **DV:** [`../../dv/isram`](../../dv/isram)
 
 ## What this block is
 

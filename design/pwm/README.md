@@ -1,6 +1,6 @@
 # `pwm` — PWM / advanced timer
 
-**Owner:** @Nghia-VanTrong   **Spec:** [`doc/specs/QNSC_PWM_MAS.md`](../../doc/specs/QNSC_PWM_MAS.md) (build to .docx via `doc/build/build_docs.py`)   **DV:** [`../../dv/pwm`](../../dv/pwm)
+**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_PWM_MAS.md` on the team SharePoint   **DV:** [`../../dv/pwm`](../../dv/pwm)
 
 ## What this block is
 

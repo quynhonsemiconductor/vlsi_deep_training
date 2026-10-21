@@ -1,6 +1,6 @@
 # `dma` — DMA engine
 
-**Owner:** @Nghia-VanTrong   **Spec:** [`QNSC_DMA_MAS.md`](../../doc/specs/QNSC_DMA_MAS.md)   **DV:** [`../../dv/dma`](../../dv/dma)
+**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_DMA_MAS.md` on the team SharePoint   **DV:** [`../../dv/dma`](../../dv/dma)
 
 ## What this block is
 

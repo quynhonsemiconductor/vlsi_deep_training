@@ -13,7 +13,7 @@ copy of each rule rather than two that drift apart.
 | [`design/README.md`](design/README.md) | The per-block convention: directory shape, why the filelist is not optional, the naming table, how to import the contract |
 | [`doc/rules/`](doc/rules) | **Mandatory** Naming Rule (CI enforces it) and the EMACS quick guide |
 | [`util/qsoc_contract.yml`](util/qsoc_contract.yml) | Every number shared between blocks, and where each came from |
-| Your block's MAS under [`doc/specs/`](doc/specs) | What your block must do |
+| Your block's MAS, on the team SharePoint (`QNSC_<BLOCK>_MAS`) | What your block must do |
 | [`doc/BLOCKS.md`](doc/BLOCKS.md) | Every block: directory, owner, specification. Status is in the teacher's assistant's tracker, not here |
 
 ## Writing a block — five steps
@@ -72,13 +72,13 @@ make help                   # the full list
 
 Every CI step calls the same `make` target. `make check` runs the checks marked
 **local** in the table under step 5, so a green `make check` is a green CI for those;
-Connectivity, Simulation, the document build and the title run in CI only.
+Connectivity, Simulation and the title run in CI only.
 
 ### 5. Open the pull request
 
 - Title follows **Conventional Commits** — `feat(uart): add the APB wrapper`
-- The block `README.md` names the **owner** and links the **spec**. Until the MAS is
-  in `doc/specs/`, link wherever it lives. `_TBD_` is not accepted
+- The block `README.md` names the **owner** and the **specification** (`QNSC_<BLOCK>_MAS`,
+  on the team SharePoint). `_TBD_` is not accepted
 - To catch up with `main`, **rebase** your branch (`git fetch && git rebase
   origin/main`); do not merge `main` into it. The repository accepts only squash
   and rebase merges ([`POLICY.md`](.github/POLICY.md)), so a merge commit on the
@@ -118,7 +118,6 @@ Connectivity, Simulation, the document build and the title run in CI only.
 | `Contract tags` | a line tagged `// contract: <key>` no longer holds the contract value | local |
 | `Inter-block contract` | `qnsc_pkg.sv` no longer matches the contract | local |
 | `Vendor tree unmodified` | `vendor/` changed without `vendor/manifest.yml` | local |
-| `Specifications build and check` | the specifications no longer build | CI; `make docs` |
 | `actions-security / Workflow lint (actionlint)` | a workflow file is malformed | CI |
 | `actions-security / Actions security (zizmor)` | a workflow has a security finding | CI |
 
@@ -154,7 +153,6 @@ quietly.
 ```bash
 vim util/qsoc_contract.yml         # edit the source
 make pkg                           # regenerate the package
-make tables                        # the specification tables that restate it
 git add util/qsoc_contract.yml design/top/rtl/qnsc_pkg.sv   # commit BOTH
 ```
 
@@ -226,6 +224,10 @@ Repository policy, CI and the rulesets are described in
 
 ## Specifications
 
-Markdown under [`doc/specs/`](doc/specs) is the source of truth; the `.docx` are built
-from it with `make docs`. Rebuild before committing if you
-changed the markdown — see [`doc/README.md`](doc/README.md).
+Specifications (`QNSC_<BLOCK>_MAS`, `_DECISIONS`) live on the team SharePoint: that
+is where the team writes and reads them. This repository keeps the contract
+([`util/qsoc_contract.yml`](util/qsoc_contract.yml)), which every number in a
+specification must agree with — the SharePoint document is checked against it in
+review, by hand. The Markdown sources that used to live in `doc/specs/` were
+removed from the repository; they remain in the git history, and a copy should be
+kept on the SharePoint.

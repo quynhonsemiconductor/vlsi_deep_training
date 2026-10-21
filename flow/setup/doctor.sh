@@ -13,11 +13,10 @@ missing=0
 # name | test command | needed for | required by make check | brew | apt
 tools=(
   "python3|command -v python3|every check|yes|python|python3"
-  "PyYAML|python3 -c 'import yaml'|contract, hardcode, docs|yes|pip: python3 -m pip install --user pyyaml|python3-yaml"
+  "PyYAML|python3 -c 'import yaml'|contract, hardcode|yes|pip: python3 -m pip install --user pyyaml|python3-yaml"
   "verilator|command -v verilator|lint, sim|yes|verilator|verilator"
   "emacs|command -v emacs|emacs wrappers|yes|emacs|emacs-nox"
-  "pandoc|command -v pandoc|make docs|no|pandoc|pandoc"
-  "rsvg-convert|command -v rsvg-convert|doc diagrams|no|librsvg|librsvg2-bin"
+  "rsvg-convert|command -v rsvg-convert|root README block diagram (optional)|no|librsvg|librsvg2-bin"
   "yosys|command -v yosys|make syn (later)|no|yosys|yosys"
   "sta|command -v sta|make gca (later)|no|build OpenSTA: github.com/parallaxsw/OpenSTA|build OpenSTA: github.com/parallaxsw/OpenSTA"
   "vcs|command -v vcs|make vcs (server only)|no|licensed, on the server|licensed, on the server"

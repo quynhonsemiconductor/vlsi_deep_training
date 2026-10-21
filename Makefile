@@ -5,7 +5,7 @@
 # util/ and doc/; this file only names it.
 #
 #   make check                 the CI checks that run locally, before every push
-#                              (CI also runs connectivity, sim, docs: CONTRIBUTING.md)
+#                              (CI also runs connectivity, sim: CONTRIBUTING.md)
 #   make lint BLOCK=pwm        one block; omit BLOCK for all
 #   make wrap BLOCK=pwm        regenerate an emacs wrapper
 #   make doctor                which tools this machine has, and how to get the rest
@@ -18,14 +18,14 @@ BASE  ?= origin/main
 
 SCOPE = $(if $(BLOCK),design/$(BLOCK))
 
-.PHONY: help check filelists lint naming hardcode module-rules contract-tags pkg pkg-check tables docs \
+.PHONY: help check filelists lint naming hardcode module-rules contract-tags pkg pkg-check \
         vendor-guard new-wrap wrap wrap-check gen gen-check connectivity server-setup vcs vcs-branch vcs-post verdi sim syn gca hooks doctor ide
 
 help:
 	@echo "make doctor         which tools are here, and how to install the rest"
 	@echo "make ide            editor lint search paths (.vscode/verilator.f)"
 	@echo "make hooks          once per clone: make check before push, editor paths after pull"
-	@echo "make check          the CI checks that run locally: filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check gen-check vendor-guard"
+	@echo "make check          the CI checks that run locally: filelists lint naming hardcode module-rules contract-tags pkg-check wrap-check gen-check vendor-guard"
 	@echo "make filelists      paths in every .f are relative and exist"
 	@echo "make lint           Verilator lint through <block>.f      [BLOCK=]"
 	@echo "make naming         QNSC_RTL_Design_Naming_Rule           [BLOCK=]"
@@ -34,8 +34,6 @@ help:
 	@echo "make contract-tags  every // contract: <key> number equals the contract   [BLOCK=]"
 	@echo "make pkg            regenerate qnsc_pkg.sv from the contract"
 	@echo "make pkg-check      qnsc_pkg.sv matches the contract"
-	@echo "make tables         specification tables match the contract"
-	@echo "make docs           build every .docx from doc/specs"
 	@echo "make vendor-guard   vendor/ unedited since BASE             [BASE=origin/main]"
 	@echo "make new-wrap       scaffold rtl/emacs for a new wrapper   BLOCK= IP=<ip top .sv>"
 	@echo "make wrap           regenerate one emacs wrapper           BLOCK="
@@ -63,7 +61,7 @@ hooks:
 	@echo "hooks on: git push runs make check (skip once with --no-verify);"
 	@echo "          git pull and branch switches refresh the editor lint paths"
 
-check: ide filelists lint naming hardcode module-rules contract-tags pkg-check tables wrap-check gen-check vendor-guard
+check: ide filelists lint naming hardcode module-rules contract-tags pkg-check wrap-check gen-check vendor-guard
 
 filelists:
 	python3 flow/lint/filelist_check.py
@@ -90,12 +88,6 @@ pkg:
 
 pkg-check:
 	python3 util/gen_qnsc_pkg.py --check
-
-tables:
-	python3 doc/build/tools/gen_doc_tables.py --check
-
-docs:
-	python3 doc/build/build_docs.py
 
 vendor-guard:
 	bash flow/lint/vendor_guard.sh $(BASE)

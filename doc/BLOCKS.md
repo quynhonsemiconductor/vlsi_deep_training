@@ -11,26 +11,26 @@ and work in progress is visible as an open pull request.
 | No | IP | Repo directory | Owner | Specification |
 |---:|---|---|---|---|
 | 1 | CPU | `design/cpu` | Truong Sinh | -- |
-| 2 | SYSDBG | `design/sysdbg` | Trong Nghia | [`QNSC_SYSDBG_MAS`](specs/QNSC_SYSDBG_MAS.md) |
-| 3 | ROM | `design/rom` | Hao Nam | [`QNSC_ROM_MAS`](specs/QNSC_ROM_MAS.md), [`QNSC_BOOT_SPEC`](specs/QNSC_BOOT_SPEC.md) |
-| 4 | SRAM | `design/isram`, `design/dsram` | Trong Nghia | [`QNSC_RAM_MAS`](specs/QNSC_RAM_MAS.md) |
+| 2 | SYSDBG | `design/sysdbg` | Trong Nghia | -- |
+| 3 | ROM | `design/rom` | Hao Nam | -- |
+| 4 | SRAM | `design/isram`, `design/dsram` | Trong Nghia | -- |
 | 5 | S_BUS | `design/bus` | Truong Sinh | -- |
 | 6 | P_BUS | `design/bus` | Truong Sinh | -- |
-| 7 | DMA | `design/dma` | Trong Nghia (from Bao Vinh) | [`QNSC_DMA_MAS`](specs/QNSC_DMA_MAS.md) |
-| 8 | PWM | `design/pwm` | Trong Nghia | [`QNSC_PWM_MAS`](specs/QNSC_PWM_MAS.md) |
-| 9 | TIMER | `design/timer` | Trong Nghia | [`QNSC_TIMER_MAS`](specs/QNSC_TIMER_MAS.md) |
-| 10 | I2C | `design/i2c` | Bao Vinh | [`QNSC_I2C_MAS`](specs/QNSC_I2C_MAS.md) |
+| 7 | DMA | `design/dma` | Trong Nghia (from Bao Vinh) | -- |
+| 8 | PWM | `design/pwm` | Trong Nghia | -- |
+| 9 | TIMER | `design/timer` | Trong Nghia | -- |
+| 10 | I2C | `design/i2c` | Bao Vinh | -- |
 | 11 | SPI | `design/spi` | Bui Hieu | -- |
-| 12 | UART | `design/uart` | Bao Vinh | [`QNSC_UART_MAS`](specs/QNSC_UART_MAS.md) |
+| 12 | UART | `design/uart` | Bao Vinh | -- |
 | 13 | GPIO | `design/gpio` | Bui Hieu | -- |
-| 14 | WDT | `design/wdt` | Bui Hieu | [`QNSC_WDT_MAS`](specs/QNSC_WDT_MAS.md) |
-| 15 | SYSCSR | `design/scrc` | Hao Nam | [`QNSC_SYSCSR_MAS`](specs/QNSC_SYSCSR_MAS.md) |
-| 16 | SCRC | `design/scrc` | Hao Nam | [`QNSC_SCRC_MAS`](specs/QNSC_SCRC_MAS.md) |
-| 17 | INTMAP | `design/intmap` | Trong Nghia | [`QNSC_Interrupt_Map_MAS`](specs/QNSC_Interrupt_Map_MAS.md) |
+| 14 | WDT | `design/wdt` | Bui Hieu | -- |
+| 15 | SYSCSR | `design/scrc` | Hao Nam | -- |
+| 16 | SCRC | `design/scrc` | Hao Nam | -- |
+| 17 | INTMAP | `design/intmap` | Trong Nghia | -- |
 | 18 | IO MUX | `design/iomux` | Bui Hieu | -- |
 | 19 | TOP | `design/top` | Trong Nghia (lead) | -- |
 
-A `--` is a block whose specification is not in the repository yet.
+Every specification (`QNSC_<BLOCK>_MAS`) lives on the team SharePoint; the column stays for the tracker. It was removed from this repository, together with `doc/specs/`.
 
 ## Names that differ between the tracker and the repository
 

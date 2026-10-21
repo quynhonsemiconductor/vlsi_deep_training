@@ -1,6 +1,6 @@
 # `sysdbg` — system debug
 
-**Owner:** @Nghia-VanTrong   **Spec:** [`doc/specs/QNSC_SYSDBG_MAS.md`](../../doc/specs/QNSC_SYSDBG_MAS.md) (build to .docx via `doc/build/build_docs.py`)   **DV:** [`../../dv/sysdbg`](../../dv/sysdbg)
+**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_SYSDBG_MAS.md` on the team SharePoint   **DV:** [`../../dv/sysdbg`](../../dv/sysdbg)
 
 ## What this block is
 

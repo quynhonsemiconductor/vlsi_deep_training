@@ -1,6 +1,6 @@
 # `rom` — boot ROM
 
-**Owner:** @Nam-HaoNguyen   **Spec:** [`QNSC_ROM_MAS.md`](../../doc/specs/QNSC_ROM_MAS.md)   **DV:** [`../../dv/rom`](../../dv/rom)
+**Owner:** @Nam-HaoNguyen   **Spec:** `QNSC_ROM_MAS.md` on the team SharePoint   **DV:** [`../../dv/rom`](../../dv/rom)
 
 ## What this block is
 
