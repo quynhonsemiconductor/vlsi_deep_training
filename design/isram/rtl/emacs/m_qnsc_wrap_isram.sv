@@ -151,7 +151,7 @@ logic                   w_strb_push;
 m_vlsi_axi4_sram #(  // naming-check: ignore -- vendored module name
   .PARA_DATA_WD    (32), // contract: meta.data_width
   .PARA_ADDR_WD    (32), // contract: meta.addr_width
-  .PARA_ID_WD      (7),  // the S_BUS master-port ID width, QNSC_RAM_MAS Table 5-2
+  .PARA_ID_WD      (7),  // contract: meta.sbus_master_port_id_width
   .PARA_LEN_WD     (9),  // 9, not 8: see the note above the instance
   .PARA_FIFO_DEPTH (8)
 ) u_sram_ctrl (/*AUTOINST*/

@@ -48,6 +48,16 @@ meta:
   # 0x53 'S', 0x4F 'O', 0x43 'C'. Read by firmware, and by host tools through
   # SYSDBG, to check they run on a QSOC. Mistyped once already ('QCOS').
   chip_id: 0x51534F43
+  # AXI4 ID widths of S_BUS (pulp axi_xbar, QNSC_IP_INFO_s_bus.xlsx v1.0 of
+  # 2026-10-16, and QSOC_HAS Table 5-1). The master-facing ports ("slave ports"
+  # of the crossbar) are 5 bits -- chosen for the CPU: Ibex 4 bits plus one
+  # CPU2AXI mux bit, and AxiIdUsedSlvPorts = 5, so every master must issue
+  # at most 5 ID bits. The crossbar appends a 2-bit master index (3 masters:
+  # SYSDBG, CPU, DMA), so every slave-facing port ("master port") is 7 bits:
+  # 5 + clog2(3). A fourth master makes it 8, and RAM, ROM and SYSDBG widths
+  # move with it. Users: PARA_ID_WD of RAM and ROM, SYSDBG AxiIdWidth.
+  sbus_slave_port_id_width: 5
+  sbus_master_port_id_width: 7
 
 # -----------------------------------------------------------------------------
 # Memory map. Source: QSOC_HAS Table 7-1, cross-checked against QNSC_RAM_MAS
@@ -403,6 +413,13 @@ clock_domains:
 reset_sources: [power_on, watchdog, software]
 
 # -----------------------------------------------------------------------------
-# Not yet agreed. Named so the gap is visible.
+# Not yet agreed. Named so the gap is visible. Each names the owner who is to
+# supply it.
 # -----------------------------------------------------------------------------
-tbd: []
+tbd:
+  - name: dma_axi_id_bits
+    owner: Bao Vinh
+    note: >
+      The DMA's own AXI ID width. It must fit AxiIdUsedSlvPorts = 5 of the
+      crossbar (QNSC_IP_INFO_s_bus.xlsx), or sbus_slave_port_id_width grows and
+      every ID width moves with it. Pending the DMA rewrite (QNSC_DMA_MAS V4).
