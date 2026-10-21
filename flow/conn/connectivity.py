@@ -40,7 +40,11 @@ ROOT = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=Tr
 
 # ---------------------------------------------------------------- elaboration
 def pick_top(block, flist):
-    text = open(flist).read()
+    # '#' starts a comment, and the filelist syntax has no strings, so this is
+    # exact. Without it a commented-out 'rtl/m_qnsc_wrap_rom.sv' placeholder in
+    # rom.f looked like a real top and verilator ran with no input file at all.
+    text = "\n".join(line.split("#", 1)[0]
+                     for line in open(flist).read().splitlines())
     if re.search(rf"(^|/)m_qnsc_wrap_{block}\.sv\s*$", text, re.M):
         return f"m_qnsc_wrap_{block}"
     hits = re.findall(r"rtl/([A-Za-z0-9_]+)\.sv", text)
