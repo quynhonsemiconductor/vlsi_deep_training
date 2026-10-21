@@ -23,7 +23,7 @@ through a wrapper.
 | **System bus** | AXI4 crossbar, fully connected, decode error on an unmapped address |
 | **Peripheral bus** | APB4 router, 14 slave ports (`APB_M0`--`APB_M13`) — GPIO3 was dropped with the 40-pin package |
 | **Peripherals** | 2× UART · SPI host + device · I²C · 3× GPIO · 2× timer · PWM · watchdog · DMA · clock/reset control (SCRC) |
-| **Interrupts** | 27 sources → 11 of the 15 fast lines + 1 NMI, through a combinational OR tree |
+| **Interrupts** | 26 sources → 11 of the 15 fast lines + 1 NMI, through a combinational OR tree |
 | **Debug** | JTAG, in-house: halt, resume, and memory access without the CPU |
 | **Boot** | serial download into RAM, header + payload + CRC32, then jump |
 
