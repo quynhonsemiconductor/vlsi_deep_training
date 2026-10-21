@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 // QNSC wrapper of @IP_MODULE@: the QSoC @BLOCK_UPPER@.
-// Spec: doc/specs/QNSC_@BLOCK_UPPER@_MAS.md.
+// Spec: QNSC_@BLOCK_UPPER@_MAS, on the team SharePoint.
 //
 // Edit this .src.sv, then `make wrap BLOCK=@BLOCK@`: emacs verilog-mode expands
 // the AUTO comments and writes rtl/@DESIGN@.sv, the file @BLOCK@.f compiles.
