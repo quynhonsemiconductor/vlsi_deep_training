@@ -1,6 +1,6 @@
 # `wdt` — watchdog timer
 
-**Owner:** @hieu-vubuiminh   **Spec:** [`QNSC_WDT_MAS.md`](../../doc/specs/QNSC_WDT_MAS.md)   **DV:** [`../../dv/wdt`](../../dv/wdt)
+**Owner:** @hieu-vubuiminh   **Spec:** `QNSC_WDT_MAS.md` on the team SharePoint   **DV:** [`../../dv/wdt`](../../dv/wdt)
 
 ## What this block is
 

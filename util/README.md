@@ -7,8 +7,5 @@
 | `gen/<ip>/` | Output of an upstream generator (IP that ships templates and a generator rather than RTL), committed with its recipe: `gen.sh` and pinned `requirements.txt`. Never edited by hand | `make gen IP=<ip>`, checked by `make gen-check` |
 | `vendor_ip.py` | Copies an upstream IP into `vendor/` at the commit pinned in `vendor/manifest.yml`, applies `vendor/patches/`, and records the SHA in `vendor/vendor.lock.yml` | `python3 util/vendor_ip.py --list` |
 
-The specification tables that restate the contract are generated from it too,
-by [`doc/build/tools/gen_doc_tables.py`](../doc/build/tools/gen_doc_tables.py) (`make tables`).
-
 How to change a shared number is in
 [`CONTRIBUTING.md`, "Changing a shared number"](../CONTRIBUTING.md#changing-a-shared-number).

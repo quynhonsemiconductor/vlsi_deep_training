@@ -1,6 +1,6 @@
 # `i2c` — I2C controller
 
-**Owner:** @Vinh-OngBao   **Spec:** [`QNSC_I2C_MAS.md`](../../doc/specs/QNSC_I2C_MAS.md)   **DV:** [`../../dv/i2c`](../../dv/i2c)
+**Owner:** @Vinh-OngBao   **Spec:** `QNSC_I2C_MAS.md` on the team SharePoint   **DV:** [`../../dv/i2c`](../../dv/i2c)
 
 ## What this block is
 

@@ -38,7 +38,7 @@ Honest status, so nobody has to guess:
 | | |
 |---|---|
 | Architecture and memory map | **agreed** — one contract file, checked by CI |
-| Specifications | **in `doc/specs/`:** RAM, SYSDBG, INTMAP, TIMER, PWM, SCRC, SYSCSR, ROM, DMA, UART, I2C, WDT. CPU, BUS and GPIO in their open pull requests; SPI and IO MUX not yet. DMA is being rewritten for a new IP |
+| Specifications | **on the team SharePoint** (`QNSC_<BLOCK>_MAS`); removed from this repository — the reasoning is in the PR that removed them |
 | RTL | **started.** Scaffold, naming rules and CI in place; wrappers under review as pull requests (PWM, INTMAP, CPU, BUS, GPIO, ROM, SYSCSR, UART) |
 | Verification | **started.** CI runs the self-checking tests of every block that has a testbench (`dv/`); the first is PWM, under review |
 | Physical design | not started |
@@ -49,7 +49,7 @@ Honest status, so nobody has to guess:
 | Path | Contents |
 |------|----------|
 | `design/` | RTL, one directory per block — see [`design/README.md`](design/README.md) |
-| `doc/` | Specifications and the toolchain that builds them — see [`doc/README.md`](doc/README.md) |
+| `doc/` | Guides, rules and reference material — see [`doc/README.md`](doc/README.md) |
 | `vendor/` | Upstream IP, copied in at a pinned commit, never edited |
 | `util/` | The inter-block contract, its generator, and the vendoring tool |
 | `flow/` | Scripts for every sign-off stage: lint, sim, syn, STA/SDC, and the CDC/RDC rules |
@@ -69,8 +69,7 @@ Install these once. `make doctor` then says what is still missing.
 | Docker | `make connectivity` when the local Verilator is older than 5.022 (`VERILATOR_IMAGE=`, see `flow/conn/connectivity.py`) | Docker Desktop | `apt install docker.io` |
 | Surfer or GTKWave | viewing `make sim ... WAVES=1` waveforms (optional) | Surfer VS Code extension | `apt install gtkwave` |
 | emacs | emacs wrappers | `brew install emacs` | `apt install emacs-nox` |
-| pandoc | `make docs` | `brew install pandoc` | `apt install pandoc` |
-| rsvg-convert | doc diagrams (optional) | `brew install librsvg` | `apt install librsvg2-bin` |
+| rsvg-convert | the root README block diagram (optional) | `brew install librsvg` | `apt install librsvg2-bin` |
 | Yosys, OpenSTA | later stages | `make doctor` shows how | `make doctor` shows how |
 | VCS, Verdi | compile check and schematic, on the training server | not installable: Synopsys licence, Linux server only | same |
 
@@ -84,7 +83,6 @@ make doctor                            # once: what is missing on this machine
 make hooks                             # once per clone: make check before push; editor paths after pull
 make check                             # every check CI runs
 make help                              # each check on its own, per block
-make docs                              # build the specifications
 python3 util/vendor_ip.py --list       # which upstream IP is pinned, and at what commit
 ```
 

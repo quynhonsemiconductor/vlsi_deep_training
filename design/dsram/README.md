@@ -1,6 +1,6 @@
 # `dsram` — data SRAM (AXI_M2)
 
-**Owner:** @Nghia-VanTrong   **Spec:** [`doc/specs/QNSC_RAM_MAS.md`](../../doc/specs/QNSC_RAM_MAS.md) (build to .docx via `doc/build/build_docs.py`)   **DV:** [`../../dv/dsram`](../../dv/dsram)
+**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS.md` on the team SharePoint   **DV:** [`../../dv/dsram`](../../dv/dsram)
 
 ## What this block is
 

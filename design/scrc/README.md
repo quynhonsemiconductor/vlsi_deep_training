@@ -1,6 +1,6 @@
 # `scrc` — system clock and reset control
 
-**Owner:** @Nam-HaoNguyen   **Spec:** [`QNSC_SCRC_MAS.md`](../../doc/specs/QNSC_SCRC_MAS.md), [`QNSC_SYSCSR_MAS.md`](../../doc/specs/QNSC_SYSCSR_MAS.md)   **DV:** [`../../dv/scrc`](../../dv/scrc)
+**Owner:** @Nam-HaoNguyen   **Spec:** `QNSC_SCRC_MAS.md` on the team SharePoint, `QNSC_SYSCSR_MAS.md` on the team SharePoint   **DV:** [`../../dv/scrc`](../../dv/scrc)
 
 ## What this block is
 
