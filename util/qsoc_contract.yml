@@ -241,10 +241,15 @@ interrupts:
   lines:
     - line: 0
       peripheral: dma
-      ports: [o_int_dma]
-      sources: 1
+      ports: ["INT[1:0]"]
+      sources: 2
       shape: level
-      note: 1 while the DMA is idle; iDMA has no interrupt of its own. Idle is not done -- QNSC_DMA_MAS 7.4.
+      note: >
+        One bit per channel of the PR200 (freecores/dma_axi), a level held until
+        firmware clears it with an INT_CLEAR write (TRM 5.6). The old iDMA idle
+        line is gone with that IP; idle stays a port for the power-down sequence
+        only. The wrapper maps INT[1:0] onto i_int_dma. ID width 1 (ID_BITS), so
+        the DMA fits AxiIdUsedSlvPorts = 5.
     - line: 1
       peripheral: spi_device
       ports: [intr_upload_cmdfifo_not_empty_o, intr_upload_payload_not_empty_o,

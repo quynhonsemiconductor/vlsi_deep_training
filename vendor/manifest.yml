@@ -80,8 +80,8 @@ upstreams:
     is self-contained and buildable. All three blocks are TL-UL and need an APB-to-TL-UL wrapper. aon_timer
     connects intr_wkup_timer_expired_o and nmi_wdog_timer_bark_o; alert_*, racl_* and lc_escalate_en_i
     are tied off in the wrapper (lc_escalate_en_i = lc_ctrl_pkg::Off). Still to add: hw/ip/lc_ctrl/rtl/lc_ctrl_pkg.sv,
-    lc_ctrl_state_pkg.sv, lc_ctrl_reg_pkg.sv and hw/top_earlgrey/rtl/top_pkg.sv, autogen/top_racl_pkg.sv, which aon_timer,
-    spi_* and tlul_adapter_host import (QNSC_WDT_MAS 4).'
+    lc_ctrl_state_pkg.sv, lc_ctrl_reg_pkg.sv and hw/top_earlgrey/rtl/top_pkg.sv, autogen/top_racl_pkg.sv,
+    which aon_timer, spi_* and tlul_adapter_host import (QNSC_WDT_MAS 4).'
 - name: pulp-platform/timer_unit
   url: https://github.com/pulp-platform/timer_unit
   commit: 4c69615c89db9397a9747d6f6d6a36727854f0bc
@@ -95,7 +95,8 @@ upstreams:
   notes: 'The repository is named timer_unit; the module QSOC instantiates is apb_timer_unit. Searching
     for a repo named after the module returns nothing. Two instances: TIMER0 with MODE_64 = 1, TIMER1
     with MODE_64 = 0. The comparator is registered and NOT gated by the counter enable, so one-shot mode
-    yields a held level with a prescaler or ref clock, and a one-cycle pulse without (QNSC_TIMER_MAS 7.3). Compare is on equality, not greater-or-equal.
+    yields a held level with a prescaler or ref clock, and a one-cycle pulse without (QNSC_TIMER_MAS 7.3).
+    Compare is on equality, not greater-or-equal.
 
     '
 - name: pulp-platform/apb_adv_timer
@@ -119,11 +120,11 @@ upstreams:
   license: SHL-0.51
   used_by:
   - design/bus
-  ownership_note: >
-    The BUS owner's. SYSDBG does not instantiate from it: since QNSC_SYSDBG_MAS
-    V3.0 its own AXI4 manager drives AXI_S0 directly, following the teacher's
-    reference design, and the block is fully self-designed
-    (QNSC_SYSDBG_DECISIONS D21).
+  ownership_note: 'The BUS owner''s. SYSDBG does not instantiate from it: since QNSC_SYSDBG_MAS V3.0 its
+    own AXI4 manager drives AXI_S0 directly, following the teacher''s reference design, and the block
+    is fully self-designed (QNSC_SYSDBG_DECISIONS D21).
+
+    '
   files:
   - src/axi_xbar.sv
   - src/axi_to_axi_lite.sv
@@ -133,8 +134,8 @@ upstreams:
   - src/axi_lite_to_axi.sv
   notes: 'axi_xbar is fully connected -- every slave port reaches every master port through one shared
     address map -- which is what lets SYSDBG''s master read ROM. Each slave port has a private decode-error
-    slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi; not used by
-    SYSDBG since its V3.0.
+    slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi; not used by SYSDBG
+    since its V3.0.
 
     '
 - name: pulp-platform/riscv-dbg
@@ -153,28 +154,33 @@ upstreams:
   - src/**
   - debug_rom/**
   - LICENSE*
-- name: pulp-platform/idma
-  url: https://github.com/pulp-platform/idma
-  commit: 2e0b0fe53b6f8823319e2428e2e9abc2db149b7d
-  license: SHL-0.51
+- name: freecores/dma_axi
+  url: https://github.com/freecores/dma_axi
+  commit: bdd0b77559c6410b0a48799026453e3a9fd7b0d3
+  license: LGPL-2.1
   used_by:
   - design/dma
-  notes: 'Used unmodified (QNSC_DMA_MAS V3.0): frontend reg32_2d generated with --cpuif apb4-flat, idma_nd_midend,
-    idma_transfer_id_gen, backend rw_axi generated with gen_idma.py. Generated files and their commands go in
-    util/gen/idma. Needs common_cells cc_stream_* modules and apb typedef.svh. No hardware request from peripherals; the wrapper drives o_int_dma = idle.
-
-    '
+  notes: 'Provartec PR200, released to OpenCores/freecores. The team switched to it from pulp-platform/idma
+    on 2026-10-21 (lead decision; QNSC_DMA_MAS V3.3 described iDMA). Licence: no LICENSE file in the repo;
+    every source header carries LGPL-2.1 (as with the I2C IP, the headers are the record). Only the 32-bit
+    variant src/dma_axi32/ is vendored; the 64-bit one and doc/PR200_trm_rev1.6.pdf are not build inputs
+    (the TRM is the register reference for QNSC_DMA_MAS V4). The master port is AXI3 (WID, 4-bit AxLEN,
+    1-bit AWLOCK; ID_BITS = 1), so the wrapper adapts it to the AXI4 S_BUS: WID dropped, AxLEN zero-extended,
+    BID/RID stripped of the 2-bit master index. APB3 register interface, paddr 13 bits, no PSTRB (word
+    writes only). pclken tied 1 (one clock). INT[1:0] are levels, cleared by an INT_CLEAR write (TRM 5.6);
+    idle follows the TRM power-down sequence.'
   files:
-  - src/**
-  - LICENSE*
+  - README.txt
+  - src/dma_axi32/**
 - name: pulp-platform/apb_uart
   url: https://github.com/pulp-platform/apb_uart
   commit: 8182a85d234417db46fe833533f8536644d3bee3
   license: SHL-0.51
   used_by:
   - design/uart
-  notes: 'Instantiated unmodified by m_qnsc_wrap_uart (QNSC_UART_MAS V3.0). Needs obi_peripherals (obi_uart), apb,
-    obi and common_cells at the versions apb_uart pins; they are still to be vendored. No DMA request lines.
+  notes: 'Instantiated unmodified by m_qnsc_wrap_uart (QNSC_UART_MAS V3.0). Needs obi_peripherals (obi_uart),
+    apb, obi and common_cells at the versions apb_uart pins; they are still to be vendored. No DMA request
+    lines.
 
     '
   files:
@@ -230,10 +236,10 @@ upstreams:
   generator: true
   notes: 'Produces m_vlsi_apb_router from a spreadsheet. Genuinely multi-master with per-slave round-robin
     arbitration. Used twice: P_BUS, and the private 2-master bus inside SCRC (MRV-CPU and the APB_M0 port,
-    one slave: SCRC CSR; QNSC_SCRC_MAS 3). The top and leaf module names are hard-coded, so the two
-    outputs collide and fail Naming Rule 2.1 -- open item in QNSC_SCRC_MAS 11. Generated RTL is committed
-    alongside its spreadsheet input in util/gen -- committing only one of the two loses either
-    reproducibility or the source of truth.
+    one slave: SCRC CSR; QNSC_SCRC_MAS 3). The top and leaf module names are hard-coded, so the two outputs
+    collide and fail Naming Rule 2.1 -- open item in QNSC_SCRC_MAS 11. Generated RTL is committed alongside
+    its spreadsheet input in util/gen -- committing only one of the two loses either reproducibility or
+    the source of truth.
 
     '
   files:
@@ -269,7 +275,8 @@ upstreams:
     and reset release instead of a hand-written FSM. It has its own instruction memory port, so its RESET_VECTOR
     of 0x0000_1000 is in its private space and not in the QSOC memory map. It is an APB master with no
     PSTRB, PPROT or PSLVERR port. i_interrupt is tied 0: SCRC polls CLK_EN and SOFT_RST_CTRL instead,
-    because the interrupt is an unmasked edge that can be lost during a BIU stall (QNSC_SCRC_DECISIONS 2).
+    because the interrupt is an unmasked edge that can be lost during a BIU stall (QNSC_SCRC_DECISIONS
+    2).
 
     '
   files:
