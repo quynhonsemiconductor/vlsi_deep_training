@@ -1,5 +1,5 @@
 # =============================================================================
-# Filelist for the isram block.
+# Filelist for the isram block (QNSC_RAM_MAS V2.5).
 #
 # This is the single place that says which files build this block, and in what
 # order. CI lints the block through this file, so a file not listed here is not
@@ -12,14 +12,17 @@
 #     the modules that instantiate them, then our wrapper last.
 #   - Anything under rtl/ is code written here. Anything under ../../vendor/ is
 #     not ours -- see vendor/manifest.yml for its pinned commit and licence.
+#
+# ISRAM, 64 KiB on AXI_M1. The same controller as DSRAM and ROM
+# (nguyenquanicd/AXI4-SRAM-CONTROLLER); the memory macro is not in the wrapper.
 # =============================================================================
 
-# ---- include directories ----------------------------------------------------
-# +incdir+../../vendor/<upstream>/<path>
-
 # ---- upstream IP, in compile order -----------------------------------------
-# ../../vendor/<upstream>/rtl/<leaf>.sv
-# ../../vendor/<upstream>/rtl/<top_of_ip>.sv
+../../vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER/rtl/m_vlsi_axfsm.sv
+../../vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER/rtl/m_vlsi_fifo.sv
+../../vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER/rtl/m_vlsi_arbiter.sv
+../../vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER/rtl/m_vlsi_sram_misc.sv
+../../vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER/rtl/m_vlsi_axi4_sram.sv
 
 # ---- ours -------------------------------------------------------------------
-# rtl/<wrapper>.sv
+rtl/m_qnsc_wrap_isram.sv
