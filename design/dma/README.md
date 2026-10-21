@@ -5,8 +5,8 @@
 ## What this block is
 
 Copies blocks of data between any two addresses without a CPU load and store per
-word. Configured on `APB_M13`, moves data as an AXI master on `AXI_S2`; two
-channel interrupts (`INT[1:0]`, levels cleared by `INT_CLEAR`) on fast line 0
+word. Configured on `APB_M13`, moves data as an AXI master on `AXI_S2`; one
+interrupt (`INT`, a level cleared by an `INT_CLEAR` write) on fast line 0
 (the contract, `interrupts`). Every job is started by software.
 
 > **The IP is `freecores/dma_axi` (Provartec PR200), vendored 2026-10-21; the
