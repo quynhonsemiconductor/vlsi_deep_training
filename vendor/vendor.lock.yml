@@ -3,6 +3,9 @@
 # vendored tree was imported from, so the import is reproducible. Commit
 # this together with the vendored files and vendor/manifest.yml.
 
+freecores/dma_axi:
+  commit: bdd0b77559c6410b0a48799026453e3a9fd7b0d3
+  url: https://github.com/freecores/dma_axi
 lowRISC/ibex:
   commit: e9f55342edbd27e9e17a0e41b1c95a81abb5eac8
   url: https://github.com/lowRISC/ibex

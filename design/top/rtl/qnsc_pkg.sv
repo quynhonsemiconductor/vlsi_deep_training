@@ -86,10 +86,10 @@ package qnsc_pkg;
   // above are platform-use space in the privileged specification.
   localparam int unsigned C_INT_FAST_LINES_AVAILABLE = 15;
   localparam int unsigned C_INT_FAST_LINES_USED      = 11;
-  localparam int unsigned C_INT_SOURCES_AGGREGATED   = 25;  // through INTMAP
-  localparam int unsigned C_INT_SOURCES_TOTAL        = 26;  // including the NMI
+  localparam int unsigned C_INT_SOURCES_AGGREGATED   = 26;  // through INTMAP
+  localparam int unsigned C_INT_SOURCES_TOTAL        = 27;  // including the NMI
 
-  localparam int unsigned C_INT_LINE_DMA          = 0;   // mcause 16, 1 source(s), level
+  localparam int unsigned C_INT_LINE_DMA          = 0;   // mcause 16, 2 source(s), level
   localparam int unsigned C_INT_LINE_SPI_DEVICE   = 1;   // mcause 17, 8 source(s), level
   localparam int unsigned C_INT_LINE_SPI_HOST     = 2;   // mcause 18, 2 source(s), level
   localparam int unsigned C_INT_LINE_I2C          = 3;   // mcause 19, 1 source(s), level
