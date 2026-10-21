@@ -4,7 +4,7 @@
 // timer module (enable CH_EN[i], test enable dft_cg_enable_i) but does not ship
 // it. Mapped onto qnsc_clk_gate, the one clock gate of QSOC (Naming Rule 2.8,
 // design/common/tech/README.md), so TECH= selects the same cell here as in every
-// other block. Spec: doc/specs/QNSC_PWM_MAS.md, section 4.
+// other block. Spec: QNSC_PWM_MAS (team SharePoint), section 4.
 //
 // The module and port names are fixed by the vendored instantiation, so they keep
 // the upstream convention instead of the QNSC naming rule.
