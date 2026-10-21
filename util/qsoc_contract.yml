@@ -422,4 +422,6 @@ tbd:
     note: >
       The DMA's own AXI ID width. It must fit AxiIdUsedSlvPorts = 5 of the
       crossbar (QNSC_IP_INFO_s_bus.xlsx), or sbus_slave_port_id_width grows and
-      every ID width moves with it. Pending the DMA rewrite (QNSC_DMA_MAS V4).
+      every ID width moves with it. Answer expected to be 1: the vendored
+      dma_axi (PR200) defines ID_BITS = 1 (vendor/freecores/dma_axi, #85);
+      stays open only until the owner confirms it in QNSC_DMA_MAS V4.
