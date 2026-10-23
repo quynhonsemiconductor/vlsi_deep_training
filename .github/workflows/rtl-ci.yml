@@ -79,7 +79,10 @@ jobs:
   wrappers:
     name: Generated wrappers
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The azure mirror has twice crawled past 10 minutes just downloading emacs
+    # (#69 and #26 reruns, 2026-10-23: 54 MB over ~10 min, canceled at Get:5).
+    # The download does complete; the job simply needs the headroom.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -88,7 +91,7 @@ jobs:
       - name: Install emacs
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends emacs-nox
+          sudo apt-get install -y --no-install-recommends -o Acquire::Retries=5 emacs-nox
           emacs --version | head -1
 
       # rtl/<wrapper>.sv is generated from rtl/emacs/<wrapper>.src.sv by emacs
