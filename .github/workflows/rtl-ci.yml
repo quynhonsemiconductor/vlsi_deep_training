@@ -93,13 +93,17 @@ jobs:
           # The azure geo-mirror has had whole days at ~50 KB/s (#69, #26, #84
           # on 2026-10-23: 9 packages, 20 minutes, still canceled mid-download).
           # Point apt at the canonical archive and let retries ride a fast path.
-          # noble keeps its sources in DEB822 files ending in .sources, so the
-          # first attempt (*.list only) rewrote nothing and stayed on azure.
+          # Noble reaches the mirror through an indirection: sources.list.d
+          # holds 'URIs: mirror+file:/etc/apt/apt-mirrors.txt', and THAT file
+          # names azure. Rewriting only the sources files (v1, v2 of this PR)
+          # changed nothing -- v2's green run is azure recovering, not the fix.
+          # Rewrite the mirror list itself, then say which hosts remain.
           sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' \
             /etc/apt/sources.list \
             /etc/apt/sources.list.d/*.list \
-            /etc/apt/sources.list.d/*.sources 2>/dev/null || true
-          grep -rh '^URIs\?:' /etc/apt/sources.list /etc/apt/sources.list.d/ 2>/dev/null | sort -u
+            /etc/apt/sources.list.d/*.sources \
+            /etc/apt/apt-mirrors.txt 2>/dev/null || true
+          grep -hE '^[Uh][Rr][Ii]' /etc/apt/sources.list /etc/apt/sources.list.d/* /etc/apt/apt-mirrors.txt 2>/dev/null | sort -u
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends -o Acquire::Retries=5 emacs-nox
           emacs --version | head -1
