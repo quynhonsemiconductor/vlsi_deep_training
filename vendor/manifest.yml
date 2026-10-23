@@ -228,7 +228,7 @@ upstreams:
     1-bit AWLOCK; ID_BITS = 1), so the wrapper adapts it to the AXI4 S_BUS: WID dropped, AxLEN zero-extended,
     BID/RID stripped of the 2-bit master index. APB3 register interface, paddr 13 bits, no PSTRB (word
     writes only). pclken tied 1 (one clock). INT is a single level (the 32-bit
-    build's port is 1 bit, dma_axi32.v:47), cleared by an INT_CLEAR write (TRM 5.6);
+    build''s port is 1 bit, dma_axi32.v:47), cleared by an INT_CLEAR write (TRM 5.6);
     idle follows the TRM power-down sequence.'
   files:
   - README.txt
