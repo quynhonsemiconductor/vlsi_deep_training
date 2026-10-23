@@ -90,6 +90,11 @@ jobs:
 
       - name: Install emacs
         run: |
+          # The azure geo-mirror has had whole days at ~50 KB/s (#69, #26, #84
+          # on 2026-10-23: 9 packages, 20 minutes, still canceled mid-download).
+          # Point apt at the canonical archive and let retries ride a fast path.
+          sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' \
+            /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null || true
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends -o Acquire::Retries=5 emacs-nox
           emacs --version | head -1
