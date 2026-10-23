@@ -1,6 +1,6 @@
 `verilator_config
 // =============================================================================
-// Lint waivers owned by the rom block (QNSC_ROM_MAS V3.1). Checked against
+// Lint waivers owned by the rom block (QNSC_ROM_MAS V3.2). Checked against
 // the Ubuntu 24.04 package, 5.020, the version CI installs.
 // =============================================================================
 

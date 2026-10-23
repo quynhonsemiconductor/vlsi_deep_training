@@ -1,5 +1,5 @@
 # =============================================================================
-# Filelist for the rom block (QNSC_ROM_MAS V3.1).
+# Filelist for the rom block (QNSC_ROM_MAS V3.2).
 #
 # This is the single place that says which files build this block, and in what
 # order. CI lints the block through this file, so a file not listed here is not

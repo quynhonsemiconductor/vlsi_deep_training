@@ -1,6 +1,6 @@
 # `rom/boot` — serial bootloader burned into the boot ROM
 
-**Owner:** Nam Nguyen Hao · **Spec:** [`QNSC_BOOT_SPEC.md`](../../../doc/specs/QNSC_BOOT_SPEC.md) V3.4
+**Owner:** Nam Nguyen Hao · **Spec:** `QNSC_BOOT_SPEC` V3.4 on the team SharePoint
 
 Software, not RTL: its only output consumed by the hardware is `rom_image.hex`,
 which `make rtl` copies to `util/gen/rom/` and turns into the constant module

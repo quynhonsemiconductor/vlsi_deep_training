@@ -2,7 +2,7 @@
 
 // QNSC wrapper of m_vlsi_axi4_sram: the QSoC ROM, 2 KiB at 0x0000_0000 on
 // S_BUS AXI_M0.
-// Spec: doc/specs/QNSC_ROM_MAS.md.
+// Spec: `QNSC_ROM_MAS` V3.2 on the team SharePoint.
 //
 // Edit this .src.sv, then `make wrap BLOCK=rom`: emacs verilog-mode expands
 // the AUTO comments and writes rtl/m_qnsc_wrap_rom.sv, the file rom.f compiles.
