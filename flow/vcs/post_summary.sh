@@ -27,8 +27,8 @@ result=PASS
 grep -qE '^FAIL|^Error-: [1-9]' <<< "$summary" && result=FAIL
 title="**VCS compile on the training server**"
 branch=$(gh pr view "$pr" --json headRefName --jq .headRefName)
-body=$(printf '%s: %s\n\nReproduce on the server: `make vcs-branch BLOCK=%s BRANCH=%s`\n\n```\n%s\n```\n' \
-       "$title" "$result" "$block" "$branch" "$summary")
+body=$(printf '%s: %s\n\nReproduce on the server: `make vcs-branch BLOCK=%s BRANCH=%s`\nSchematic, on the server: after reproducing, `make verdi BLOCK=%s` (or open simv.daidir in the scratch clone).\n\n```\n%s\n```\n' \
+       "$title" "$result" "$block" "$branch" "$block" "$summary")
 [ -n "${DRY:-}" ] && { printf '%s\n' "$body"; exit 0; }
 
 # One summary comment per PR: update yours if it exists, so the PR shows the latest
