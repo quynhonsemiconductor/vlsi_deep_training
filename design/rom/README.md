@@ -17,12 +17,33 @@ an application into RAM.
 
 Read-only is achieved in the wrapper: the controller's write channel is tied idle
 and a small responder answers every write with `SLVERR`. The contents are a
-generated constant module, `m_qnsc_rom_image`, not a `$readmemh` array.
+generated constant module, `m_qnsc_rom_image`, not a `$readmemh` array:
+
+```bash
+make -C design/rom/boot rtl      # boot.bin -> rom_image.hex -> util/gen/rom/{rom_image.hex, m_qnsc_rom_image.sv}
+make gen-check                   # ROM_006, in CI: util/gen/rom/gen.sh regenerates the module from the hex
+```
+
+`util/gen/rom/rom_image.hex` is the built bootloader (`QNSC_BOOT_SPEC` V3.4,
+xPack riscv-none-elf-gcc 15.2.0): 734 B image, 606 B of code after the vector
+table. Rebuilding `design/rom/boot` gives the same hex byte for byte.
+Verification (`dv/rom`) comes with the DV stage.
 
 ## The wrapper is the boundary
 
 `rtl/` holds **only code written here**. Upstream IP is listed in
 [`rom.f`](./rom.f), never copied into `rtl/`.
+
+| File | Written by | What |
+|---|---|---|
+| `rtl/emacs/m_qnsc_wrap_rom.src.sv` | hand | Wrapper source: port groups, `AUTO_TEMPLATE`s, instances |
+| `rtl/m_qnsc_wrap_rom.sv` | emacs, `make wrap BLOCK=rom` | The wrapper `rom.f` compiles; never edited by hand |
+| `rtl/m_qnsc_rom_wr_resp.sv` | hand | Write-error responder (MAS 7.3), an FSM, so not generated |
+
+Inside the wrapper: the controller (write channel tied idle, MAS Table 10-1),
+the generated image on its memory port, and the responder on AW/W/B. The
+responder's ports carry the wrapper's names, so its `AUTOINST` needs no
+template.
 
 ## What the layout is forced by
 
