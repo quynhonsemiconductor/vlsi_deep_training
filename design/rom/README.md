@@ -21,12 +21,13 @@ generated constant module, `m_qnsc_rom_image`, not a `$readmemh` array:
 
 ```bash
 make -C design/rom/boot rtl      # boot.bin -> rom_image.hex -> util/gen/rom/{rom_image.hex, m_qnsc_rom_image.sv}
-python3 util/gen_rom.py util/gen/rom/rom_image.hex util/gen/rom/m_qnsc_rom_image.sv --check   # ROM_006: image matches the hex
+make gen-check                   # ROM_006, in CI: util/gen/rom/gen.sh regenerates the module from the hex
 ```
 
-`util/gen/rom/rom_image.hex` is the built bootloader (xPack riscv-none-elf-gcc
-15.2.0, 2026-09-29): 712 B image, 584 B of code after the vector table.
-Verification (`dv/rom`) comes in a later pull request.
+`util/gen/rom/rom_image.hex` is the built bootloader (`QNSC_BOOT_SPEC` V3.4,
+xPack riscv-none-elf-gcc 15.2.0): 734 B image, 606 B of code after the vector
+table. Rebuilding `design/rom/boot` gives the same hex byte for byte.
+Verification (`dv/rom`) comes with the DV stage.
 
 ## The wrapper is the boundary
 
