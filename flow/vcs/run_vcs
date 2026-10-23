@@ -55,6 +55,7 @@ ver=$(grep -m1 -oE 'Version [^ ]+' "$log" | cut -d' ' -f2 || true)
 nerr=$(grep -cE '^Error-' "$log" || true)
 {
   echo "VCS ${ver:-?} | block $block | top $top | commit $(git rev-parse --short HEAD 2>/dev/null || echo ?)"
+  echo "Compiled: $(date '+%Y-%m-%d %H:%M %Z')"
   echo "Error-: $nerr"
   # each message is "Lint-[TAG] text" followed by "path, line"
   awk '/^Lint-\[/ { tag=$1; getline f; sub(/, [0-9]+$/, "", f)
