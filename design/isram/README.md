@@ -1,6 +1,6 @@
 # `isram` — instruction SRAM (AXI_M1)
 
-**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS.md` on the team SharePoint   **DV:** [`../../dv/isram`](../../dv/isram)
+**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS` (V2.5) on the team SharePoint   **DV:** [`../../dv/isram`](../../dv/isram)
 
 ## What this block is
 
@@ -29,6 +29,24 @@ Findings from reading the RTL, handled in our wrapper:
 
 ## The wrapper is the boundary
 
-`rtl/m_qnsc_wrap_isram.sv` (module `m_qnsc_wrap_isram`, around the IP's
-`m_vlsi_axi4_sram`) instantiates the vendored controller unmodified and adds the
-WSTRB logic. Generated with emacs from `rtl/emacs/` ([`design/README.md`](../README.md#writing-a-wrapper-with-emacs-verilog-mode)). Ours in `rtl/`, borrowed in `vendor/`.
+`rtl/` holds **only code written here**. Upstream IP is listed in
+[`isram.f`](./isram.f), never copied into `rtl/`.
+
+| File | Written by | What |
+|---|---|---|
+| `rtl/emacs/m_qnsc_wrap_isram.src.sv` | hand | Wrapper source: ports, `AUTO_TEMPLATE`s, the two instances |
+| `rtl/m_qnsc_wrap_isram.sv` | emacs, `make wrap BLOCK=isram` | The wrapper `isram.f` compiles; never edited by hand |
+| `waivers.vlt` | hand | Lint waivers, each with its reason |
+
+Inside the wrapper: the vendored controller `m_vlsi_axi4_sram` (parameters fixed at
+the instance, MAS Table 5-2), and `u_strbfifo`, a vendored `m_vlsi_fifo` that holds
+`WSTRB` beside the controller's write-data FIFO (MAS 7.3). `o_mem_be` is the FIFO head
+while `o_mem_we` is high and zero otherwise.
+
+**The macro is not in the wrapper.** It ends at the macro's pins: `o_mem_addr` (the
+controller's byte address `[15:2]`, 16384 words), `o_mem_wdata`, `o_mem_we`, `o_mem_be`,
+`o_mem_oe`, `i_mem_rdata`. `design/top` places the 64 KiB single-port macro there; the
+testbench, in a later pull request, uses a behavioural model with byte enables.
+
+`o_mem_we` and `o_mem_be` are the two ports declared by hand in the `.src.sv`: the wrapper
+reads both inside, and `AUTOOUTPUT` does not declare a signal the module itself uses.
