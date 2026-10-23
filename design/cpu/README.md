@@ -1,7 +1,6 @@
 # `cpu` — CPU and its bus adapter (CPU2AXI)
 
-**Owner:** @SinhHPT   **Spec:** [`doc/specs/QNSC_CPU_MAS.md`](../../doc/specs/QNSC_CPU_MAS.md) (build to
-`.docx` via `doc/build/build_docs.py`)   **DV:** [`../../dv/cpu`](../../dv/cpu)
+**Owner:** @SinhHPT   **Spec:** `QNSC_CPU_MAS` on the team SharePoint   **DV:** [`../../dv/cpu`](../../dv/cpu)
 
 ## What this block is
 
@@ -38,8 +37,7 @@ by the shared flow (`make wrap BLOCK=cpu`, `flow/emacs/wrap.mk`), never edited b
 `ibex_top` and `m_qnsc_cpu2axi`, connected to each other in this one file --
 the core's two memory-style ports wire straight to the bridge's own ports
 (leader review 2026-09-28: connect the core to the bridge first, then wrap
-the pair in one module, not two sub-wrapper modules composed by a third; see
-`doc/specs/QNSC_CPU_DECISIONS.md`) -- and flattens the bridge's AXI4 master
+the pair in one module, not two sub-wrapper modules composed by a third) -- and flattens the bridge's AXI4 master
 port to `i_bus_axi_*`/`o_bus_axi_*` per the naming rule at this same
 boundary, since neither `ibex_top` nor the pulp-platform AXI IP speak that
 convention natively.
@@ -54,8 +52,8 @@ convention natively.
 | `i_int_nm` | in | WDT bark (NMI), from INTMAP |
 | `i_dft_test_en` | in | DFT scan bypass |
 | `o_pwr_sleep` | out | core has stopped its own clock (WFI) |
-| `o_crash_dump[159:0]` | out | to SYSCSR; `crash_dump_t` flattened (current_pc, next_pc, last_data_addr, exception_pc, exception_addr) |
-| `o_double_fault_seen` | out | to SYSCSR; one-cycle pulse |
+| `o_crash_dump[159:0]` | out | to SYSCSR; `ibex_pkg::crash_dump_t` flattened, 5 x 32 bits (current_pc, next_pc, last_data_addr, exception_pc, exception_addr). Declared with `$bits(ibex_pkg::crash_dump_t)`, so it follows the struct. Only the last two keep their value: SYSCSR captures on `o_double_fault_seen` or an NMI/reset |
+| `o_double_fault_seen` | out | to SYSCSR; one-cycle pulse, so SYSCSR needs a sticky bit |
 | `i_bus_axi_*` / `o_bus_axi_*` | in/out | flattened AXI4 master port toward S_BUS `AXI_S1` |
 
 ## Instances

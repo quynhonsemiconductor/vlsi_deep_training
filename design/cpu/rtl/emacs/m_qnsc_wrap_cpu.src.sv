@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns/1ps
 // m_qnsc_wrap_cpu -- ibex_top + m_qnsc_cpu2axi in one module.
-// See doc/specs/QNSC_CPU_DECISIONS.md.
+// Specification: QNSC_CPU_MAS on the team SharePoint; the constants below are tagged against util/qsoc_contract.yml.
 module m_qnsc_wrap_cpu
 (
 //---------------------------------------------------------------
@@ -59,10 +59,10 @@ module m_qnsc_wrap_cpu
 //  - AXI4 master bus to S_BUS AXI_S1: the bridge speaks a packed struct, and
 //    the flat ports come from the pack/unpack assigns below.
 //---------------------------------------------------------------
-output logic [$bits(ibex_pkg::crash_dump_t)-1:0] o_crash_dump,
+output logic [$bits(ibex_pkg::crash_dump_t)-1:0] o_crash_dump, // module-rules: ignore -- kept as the ibex package struct, 5 x 32 bits
 
 input  logic                    i_bus_axi_aw_ready,
-output logic [qnsc_cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_aw_id,
+output logic [4:0]                           o_bus_axi_aw_id,
 output logic [31:0]             o_bus_axi_aw_addr,
 output logic [7:0]              o_bus_axi_aw_len,
 output logic [2:0]              o_bus_axi_aw_size,
@@ -73,24 +73,24 @@ output logic [2:0]              o_bus_axi_aw_prot,
 output logic [3:0]              o_bus_axi_aw_qos,
 output logic [3:0]              o_bus_axi_aw_region,
 output logic [5:0]              o_bus_axi_aw_atop,
-output logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_aw_user,
+output logic [0:0]                           o_bus_axi_aw_user,
 output logic                    o_bus_axi_aw_valid,
 
 input  logic                    i_bus_axi_w_ready,
 output logic [31:0]             o_bus_axi_w_data,
 output logic [3:0]              o_bus_axi_w_strb,
 output logic                    o_bus_axi_w_last,
-output logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_w_user,
+output logic [0:0]                           o_bus_axi_w_user,
 output logic                    o_bus_axi_w_valid,
 
 output logic                    o_bus_axi_b_ready,
-input  logic [qnsc_cpu2axi_pkg::P_MST_ID_W-1:0]  i_bus_axi_b_id,
+input  logic [4:0]                           i_bus_axi_b_id,
 input  logic [1:0]              i_bus_axi_b_resp,
-input  logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_b_user,
+input  logic [0:0]                           i_bus_axi_b_user,
 input  logic                    i_bus_axi_b_valid,
 
 input  logic                    i_bus_axi_ar_ready,
-output logic [qnsc_cpu2axi_pkg::P_MST_ID_W-1:0]  o_bus_axi_ar_id,
+output logic [4:0]                           o_bus_axi_ar_id,
 output logic [31:0]             o_bus_axi_ar_addr,
 output logic [7:0]              o_bus_axi_ar_len,
 output logic [2:0]              o_bus_axi_ar_size,
@@ -100,17 +100,25 @@ output logic [3:0]              o_bus_axi_ar_cache,
 output logic [2:0]              o_bus_axi_ar_prot,
 output logic [3:0]              o_bus_axi_ar_qos,
 output logic [3:0]              o_bus_axi_ar_region,
-output logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] o_bus_axi_ar_user,
+output logic [0:0]                           o_bus_axi_ar_user,
 output logic                    o_bus_axi_ar_valid,
 
 output logic                    o_bus_axi_r_ready,
-input  logic [qnsc_cpu2axi_pkg::P_MST_ID_W-1:0]  i_bus_axi_r_id,
+input  logic [4:0]                           i_bus_axi_r_id,
 input  logic [31:0]             i_bus_axi_r_data,
 input  logic [1:0]              i_bus_axi_r_resp,
 input  logic                    i_bus_axi_r_last,
-input  logic [qnsc_cpu2axi_pkg::P_AXI_USER_W-1:0] i_bus_axi_r_user,
+input  logic [0:0]                           i_bus_axi_r_user,
 input  logic                    i_bus_axi_r_valid
 );
+
+// The flat AXI ports carry numeric widths; these checks tie them to the bridge package.
+if ($bits(o_bus_axi_aw_id) != $bits(qnsc_cpu2axi_pkg::axi_s_1_id_t)) begin : g_chk_id_w
+  $error("AXI ID port width differs from qnsc_cpu2axi_pkg::axi_s_1_id_t");
+end
+if ($bits(o_bus_axi_aw_user) != $bits(qnsc_cpu2axi_pkg::user_t)) begin : g_chk_user_w
+  $error("AXI USER port width differs from qnsc_cpu2axi_pkg::user_t");
+end
 
 // ibex_top <-> m_qnsc_cpu2axi, pre-declared for explicit width.
 logic        w_ibex_bridge_instr_req;
@@ -242,10 +250,10 @@ ibex_top #(
     .SecureIbex       (1'b0),
     .LockstepOffset   (1),
     .ICacheScramble   (1'b0),
-    .DmBaseAddr       (32'h2000_0000),                    // contract: memory_map.isram_dbg.base
-    .DmAddrMask       (32'h0000_0FFF),
-    .DmHaltAddr       (32'h2000_0000 + 32'h0000_0800),     // contract: memory_map.isram_dbg.base
-    .DmExceptionAddr  (32'h2000_0000 + 32'h0000_0810),     // contract: memory_map.isram_dbg.base
+    .DmBaseAddr       (32'h2000_0000),                    // contract: debug_window.base
+    .DmAddrMask       (32'h0000_0FFF),                    // contract: debug_window.mask
+    .DmHaltAddr       (32'h2000_0800),                    // contract: debug_window.halt_addr
+    .DmExceptionAddr  (32'h2000_0810),                    // contract: debug_window.exception_addr
     .CsrMvendorId     (32'h0),
     .CsrMimpId        (32'h1)
 ) u_ibex_top(/*AUTOINST*/);

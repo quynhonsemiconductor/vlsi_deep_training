@@ -9,7 +9,7 @@
 // Parent      : m_qnsc_wrap_cpu (flattens the AXI4 port to i_bus_axi_*/
 //               o_bus_axi_* at the wrapper boundary; this module keeps the
 //               packed-struct port the vendor IP itself speaks)
-// Spec ref    : doc/specs/QNSC_CPU_MAS.md
+// Spec ref    : QNSC_CPU_MAS (team SharePoint)
 //==============================================================================
 module m_qnsc_cpu2axi
   import qnsc_cpu2axi_pkg::*;
