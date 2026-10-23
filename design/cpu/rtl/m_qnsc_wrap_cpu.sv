@@ -82,7 +82,7 @@ output logic            o_double_fault_seen,    // From u_ibex_top of ibex_top.v
 output logic [$bits(ibex_pkg::crash_dump_t)-1:0] o_crash_dump, // module-rules: ignore -- kept as the ibex package struct, 5 x 32 bits
 
 input  logic                    i_bus_axi_aw_ready,
-output logic [4:0]                           o_bus_axi_aw_id,
+output logic [1:0]                           o_bus_axi_aw_id,
 output logic [31:0]             o_bus_axi_aw_addr,
 output logic [7:0]              o_bus_axi_aw_len,
 output logic [2:0]              o_bus_axi_aw_size,
@@ -104,13 +104,13 @@ output logic [0:0]                           o_bus_axi_w_user,
 output logic                    o_bus_axi_w_valid,
 
 output logic                    o_bus_axi_b_ready,
-input  logic [4:0]                           i_bus_axi_b_id,
+input  logic [1:0]                           i_bus_axi_b_id,
 input  logic [1:0]              i_bus_axi_b_resp,
 input  logic [0:0]                           i_bus_axi_b_user,
 input  logic                    i_bus_axi_b_valid,
 
 input  logic                    i_bus_axi_ar_ready,
-output logic [4:0]                           o_bus_axi_ar_id,
+output logic [1:0]                           o_bus_axi_ar_id,
 output logic [31:0]             o_bus_axi_ar_addr,
 output logic [7:0]              o_bus_axi_ar_len,
 output logic [2:0]              o_bus_axi_ar_size,
@@ -124,7 +124,7 @@ output logic [0:0]                           o_bus_axi_ar_user,
 output logic                    o_bus_axi_ar_valid,
 
 output logic                    o_bus_axi_r_ready,
-input  logic [4:0]                           i_bus_axi_r_id,
+input  logic [1:0]                           i_bus_axi_r_id,
 input  logic [31:0]             i_bus_axi_r_data,
 input  logic [1:0]              i_bus_axi_r_resp,
 input  logic                    i_bus_axi_r_last,

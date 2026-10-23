@@ -56,6 +56,16 @@ convention natively.
 | `o_double_fault_seen` | out | to SYSCSR; one-cycle pulse, so SYSCSR needs a sticky bit |
 | `i_bus_axi_*` / `o_bus_axi_*` | in/out | flattened AXI4 master port toward S_BUS `AXI_S1` |
 
+**AXI ID width: 2 bits (was 5).** `axi_lite_to_axi` drives every leaf ID to 0, so the four
+low bits of the old 5-bit ID never carried anything. `P_LEAF_ID_W` is now 1 (the narrowest an
+AXI ID type can be) and `axi_mux` adds the port bit above it, giving a 2-bit ID on
+`o_bus_axi_*_id` / `i_bus_axi_*_id`: bit 1 is 0 for the instruction port and 1 for the data
+port, bit 0 is always 0. **Not yet followed elsewhere:** S_BUS still has a 5-bit slave-port
+ID (`P_SLV_ID_W`, `AxiIdUsedSlvPorts`) and 7-bit master ports, and ROM, ISRAM, DSRAM take
+7 bits. When S_BUS is reworked, set its slave-port ID to 2 bits and `AxiIdUsedSlvPorts` to 2
+(master ports 4 bits), and bring ROM, ISRAM, DSRAM and SYSDBG to the same width. Until
+then the CPU does not connect to the current S_BUS as is.
+
 ## Instances
 
 One. `design/top` instantiates `m_qnsc_wrap_cpu` once; QSOC has a single core.
