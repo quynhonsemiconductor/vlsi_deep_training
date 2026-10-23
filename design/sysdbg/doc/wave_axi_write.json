@@ -1,0 +1,68 @@
+{
+ "signal": [
+  {
+   "name": "i_clk_cpu",
+   "wave": "p..............."
+  },
+  {
+   "name": "set_aw",
+   "wave": "010............."
+  },
+  {
+   "name": "o_bus_axi_aw_valid",
+   "wave": "0.1.0..........."
+  },
+  {
+   "name": "i_bus_axi_aw_ready",
+   "wave": "0..10..........."
+  },
+  {
+   "name": "o_bus_axi_aw_addr",
+   "wave": "x.=.............",
+   "data": [
+    "addr_reg (held)"
+   ]
+  },
+  {
+   "name": "o_bus_axi_w_valid",
+   "wave": "0.1....0........"
+  },
+  {
+   "name": "i_bus_axi_w_ready",
+   "wave": "0.....10........"
+  },
+  {
+   "name": "o_bus_axi_w_data",
+   "wave": "x.=.............",
+   "data": [
+    "wdata_reg (held)"
+   ]
+  },
+  {
+   "name": "o_bus_axi_b_ready",
+   "wave": "0.1.......0....."
+  },
+  {
+   "name": "i_bus_axi_b_valid",
+   "wave": "0........10....."
+  },
+  {
+   "name": "resp_reg",
+   "wave": "x.........=.....",
+   "data": [
+    "bresp"
+   ]
+  },
+  {
+   "name": "write_ack = dly & !bready",
+   "wave": "0..........1...."
+  }
+ ],
+ "head": {
+  "text": "SYSDBG write on AXI: AW and W accepted in different cycles (QNSC_SYSDBG_MAS 7.5)",
+  "tick": 0
+ },
+ "foot": {
+  "text": "Each valid drops on its own handshake; write_ack rises after B."
+ }
+}
