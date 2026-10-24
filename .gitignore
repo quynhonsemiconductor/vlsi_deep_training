@@ -15,6 +15,15 @@ doc/present/
 doc/build/template/QNSC_Reference_NoAutoNum.docx
 __pycache__/
 
+# VCS compile output inside design/<block>/vcs/ (filelist.f and run_vcs stay tracked)
+design/*/vcs/csrc/
+design/*/vcs/simv
+design/*/vcs/simv.daidir/
+design/*/vcs/comp.log
+design/*/vcs/vc_hdrs.h
+design/*/vcs/.vcs_lib_lock
+design/*/vcs/AN.DB/
+
 # EDA tool droppings, if a tool is ever run from the repository root
 verdiLog/
 novas*.rc
