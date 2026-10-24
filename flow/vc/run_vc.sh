@@ -66,4 +66,9 @@ fi
     echo "PASS"
   fi
 } | tee "$out/summary.txt"
+# an empty report means the design never loaded: fail loudly, not PASS
+if [ -f "$rpt" ] && grep -qE 'TopLevelModule: *$' "$rpt"; then
+  echo "FAIL: report is empty -- design did not load (check $out/logs/screen.log)"
+  [ "$ours" -eq 0 ] && exit 2
+fi
 [ "$ours" -eq 0 ]

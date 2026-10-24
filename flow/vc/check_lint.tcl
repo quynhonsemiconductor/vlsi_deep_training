@@ -12,7 +12,7 @@ if {[info exists LINT_RULESETUP] && $LINT_RULESETUP ne ""} {
     source $LINT_RULESETUP
 }
 
-analyze -format sverilog -vcs "-f $RTL_FILELIST" -define "$RTL_DEFINES -timescale=1ns/1ps"
+analyze -format sverilog -vcs "-F $RTL_FILELIST" -define "$RTL_DEFINES -timescale=1ns/1ps"
 elaborate $TOP_MODULE
 check_lint
 save_session -session ${SESSION_DIR}/${SESSION_NAME}
