@@ -66,6 +66,13 @@ ID (`P_SLV_ID_W`, `AxiIdUsedSlvPorts`) and 7-bit master ports, and ROM, ISRAM, D
 (master ports 4 bits), and bring ROM, ISRAM, DSRAM and SYSDBG to the same width. Until
 then the CPU does not connect to the current S_BUS as is.
 
+## VCS compile
+
+`vcs/` holds the compile of this block, as the mentor's `design/gpio/vcs` sample: `filelist.f`
+(points to `../cpu.f`) and `run_vcs` (tcsh). On a compute node of the training server:
+`cd design/cpu/vcs ; ./run_vcs`. The result is `comp.log`; read `Error-` (must be 0) and every `Lint-`
+on our files. Last run, commit `df5cd98`: Error 0, Lint 0 on our files, 531 on `vendor/`.
+
 ## Instances
 
 One. `design/top` instantiates `m_qnsc_wrap_cpu` once; QSOC has a single core.
