@@ -1,0 +1,15 @@
+../../../../vendor/pulp-platform/axi/src/axi_pkg.sv
+../../../../vendor/pulp-platform/common_cells/src/cc_pkg.sv
+../../../../vendor/pulp-platform/common_cells/src/cc_lzc.sv
+../../../../vendor/pulp-platform/common_cells/src/cc_fifo.sv
+../../../../vendor/pulp-platform/common_cells/src/cc_spill_register_flushable.sv
+../../../../vendor/pulp-platform/common_cells/src/cc_rr_arb_tree.sv
+../../../../vendor/pulp-platform/common_cells/src/cc_spill_register.sv
+../../../../vendor/pulp-platform/axi/src/axi_id_prepend.sv
+../../../../vendor/pulp-platform/axi/src/axi_intf.sv
+../../../../vendor/pulp-platform/axi/src/axi_lite_from_mem.sv
+../../../../vendor/pulp-platform/axi/src/axi_lite_to_axi.sv
+../../../../vendor/pulp-platform/axi/src/axi_from_mem.sv
+../../../../vendor/pulp-platform/axi/src/axi_mux.sv
+../qnsc_cpu2axi_pkg.sv
+../m_qnsc_cpu2axi.sv
