@@ -44,6 +44,7 @@ help:
 	@echo "make server-setup   once: your repository copy on the server  QSOC_SERVER=<ssh alias>"
 	@echo "make vcs            compile the checked-out copy with VCS, on the server BLOCK="
 	@echo "make vcs-branch     compile a branch in a scratch clone, on the server BLOCK= BRANCH="
+	@echo "make vc-lint        VC Static LINT on the server, one command from here BLOCK= BRANCH="
 	@echo "make vcs-post       post that summary on a PR, from your machine BLOCK= PR="
 	@echo "make verdi          open the VCS compile in Verdi (schematic) BLOCK="
 	@echo "make sim            self-checking tests of dv/<block> (CI: Simulation) BLOCK= [TEST=] [WAVES=1]"
@@ -124,6 +125,14 @@ server-setup:
 vcs-branch:
 	@test -n "$(BLOCK)" -a -n "$(BRANCH)" || { echo "usage: make vcs-branch BLOCK=<block> BRANCH=<branch>"; exit 1; }
 	bash flow/vcs/run_vcs_branch $(BLOCK) $(BRANCH)
+
+vc-lint vc-cdc vc-rdc syn-dc sta-pt:
+	@test -n "$(BLOCK)" -a -n "$(BRANCH)" || { echo "usage: QSOC_SERVER=<alias> make $@ BLOCK=<block> BRANCH=<branch>"; exit 1; }
+	TOOL=$@ BLOCK=$(BLOCK) BRANCH=$(BRANCH) bash flow/signoff.sh
+
+vc-lint-post vc-cdc-post vc-rdc-post syn-dc-post sta-pt-post:
+	@test -n "$(BLOCK)" -a -n "$(PR)" || { echo "usage: QSOC_SERVER=<alias> make $@ BLOCK=<block> PR=<number>"; exit 1; }
+	@tool=$(subst -post,,$@); QSOC_SERVER=$(QSOC_SERVER) bash flow/post_signoff.sh $(BLOCK) $(PR) $$tool
 
 vcs-post:
 	@test -n "$(BLOCK)" -a -n "$(PR)" || { echo "usage: make vcs-post BLOCK=<block> PR=<number> [DRY=1]"; exit 1; }
