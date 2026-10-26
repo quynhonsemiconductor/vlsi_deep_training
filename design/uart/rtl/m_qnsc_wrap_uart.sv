@@ -175,7 +175,7 @@ endmodule
 // verilog-library-flags:("-f filelist_emacs.f")
 // verilog-library-extensions:(".v" ".sv")
 // verilog-auto-star-expand: nil
-// verilog-auto-inst-param-value: t
+// verilog-auto-inst-param-value: 
 // indent-tabs-mode: nil
 // eval: (setq large-file-warning-threshold nil)
 // End:
