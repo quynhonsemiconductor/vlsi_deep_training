@@ -19,6 +19,7 @@ module apb_uart(
   output logic        PREADY,
   output logic        PSLVERR,
   output logic        INT,
+  output logic        DMA_RX_REQ, // QSOC: LSR.data_ready level, DMA RX request
   output logic        OUT1N,
   output logic        OUT2N,
   output logic        RTSN,
@@ -58,6 +59,7 @@ module apb_uart(
     .apb_req_i ( apb_req ),
     .apb_rsp_o ( apb_rsp ),
     .intr_o    ( INT     ),
+    .dma_rx_req_o ( DMA_RX_REQ ),
     .out1_no   ( OUT1N   ),
     .out2_no   ( OUT2N   ),
     .rts_no    ( RTSN    ),

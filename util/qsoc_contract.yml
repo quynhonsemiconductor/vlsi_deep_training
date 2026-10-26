@@ -405,4 +405,11 @@ reset_sources: [power_on, watchdog, software]
 # -----------------------------------------------------------------------------
 # Not yet agreed. Named so the gap is visible.
 # -----------------------------------------------------------------------------
-tbd: []
+tbd:
+  - item: DMA request line of each UART (dma_axi32 periph_tx_req / periph_rx_req index)
+    owner: DMA owner
+    note: >
+      UART0 and UART1 give the DMA an RX request (o_dma_rx_req = LSR.data_ready, a level)
+      and use the interrupt line (o_int_uart) as the TX request. Which bit of
+      periph_tx_req / periph_rx_req each UART takes, and the matching STATIC_LINE4
+      PERIPH_NUM, is not set. The RX channel needs PERIPH_DELAY >= 1.

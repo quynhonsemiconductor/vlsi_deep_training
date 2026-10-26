@@ -21,6 +21,7 @@ module apb_uart_wrap #(
 
   // Physical interface
   output logic intr_o,
+  output logic dma_rx_req_o, // QSOC: LSR.data_ready level, DMA RX request
   output logic out1_no,
   output logic out2_no,
   output logic rts_no,
@@ -70,6 +71,7 @@ module apb_uart_wrap #(
     .obi_rsp_o ( obi_rsp ),
     .irq_o     ( intr_o  ),
     .irq_no    (         ),
+    .dma_rx_req_o ( dma_rx_req_o ),
     .rxd_i     ( sin_i   ),
     .txd_o     ( sout_o  ),
     .cts_ni    ( cts_ni  ),
