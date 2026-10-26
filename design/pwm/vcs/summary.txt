@@ -1,0 +1,5 @@
+VCS W-2024.09-SP1_Full64 | block pwm | top m_qnsc_wrap_pwm | commit 322f091
+Compiled: 2026-10-26
+Error-: 0
+Lint-: 0 on our files, 133 on vendor/ (upstream, not edited)
+Verdi KDB: generated
