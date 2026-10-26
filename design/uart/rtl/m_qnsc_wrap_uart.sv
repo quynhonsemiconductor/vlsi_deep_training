@@ -40,8 +40,8 @@ module m_qnsc_wrap_uart
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_clk\|^i_rst")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
-input logic             i_clk_peri,             // To u_apb_uart of apb_uart.v
-input logic             i_rst_n_peri,           // To u_apb_uart of apb_uart.v
+input                   i_clk_peri,             // To u_apb_uart of apb_uart.v
+input                   i_rst_n_peri,           // To u_apb_uart of apb_uart.v
 // End of automatics
 
 //---------------------------------------------------------------
@@ -49,10 +49,10 @@ input logic             i_rst_n_peri,           // To u_apb_uart of apb_uart.v
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_bus_apb")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
-input logic             i_bus_apb_penable,      // To u_apb_uart of apb_uart.v
-input logic             i_bus_apb_psel,         // To u_apb_uart of apb_uart.v
-input logic [31:0]      i_bus_apb_pwdata,       // To u_apb_uart of apb_uart.v
-input logic             i_bus_apb_pwrite,       // To u_apb_uart of apb_uart.v
+input                   i_bus_apb_penable,      // To u_apb_uart of apb_uart.v
+input                   i_bus_apb_psel,         // To u_apb_uart of apb_uart.v
+input [31:0]            i_bus_apb_pwdata,       // To u_apb_uart of apb_uart.v
+input                   i_bus_apb_pwrite,       // To u_apb_uart of apb_uart.v
 // End of automatics
 /*AUTOOUTPUT("^o_bus_apb")*/
 // Beginning of automatic outputs (from unused autoinst outputs)
@@ -66,7 +66,7 @@ output logic            o_bus_apb_pslverr,      // From u_apb_uart of apb_uart.v
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_pad")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
-input logic             i_pad_uart_rx,          // To u_apb_uart of apb_uart.v
+input                   i_pad_uart_rx,          // To u_apb_uart of apb_uart.v
 // End of automatics
 /*AUTOOUTPUT("^o_pad")*/
 // Beginning of automatic outputs (from unused autoinst outputs)
@@ -145,37 +145,37 @@ input  logic [2:0]      i_bus_apb_pprot         // not used
 );
 */
 apb_uart u_apb_uart (/*AUTOINST*/
-                      // Outputs
-                      .PRDATA           (o_bus_apb_prdata[31:0]), // Templated
-                      .PREADY           (o_bus_apb_pready),      // Templated
-                      .PSLVERR          (o_bus_apb_pslverr),     // Templated
-                      .INT              (o_int_uart),            // Templated
-                      .DMA_RX_REQ       (o_dma_rx_req),          // Templated
-                      .OUT1N            (),                      // Templated
-                      .OUT2N            (),                      // Templated
-                      .RTSN             (),                      // Templated
-                      .DTRN             (),                      // Templated
-                      .SOUT             (o_pad_uart_tx),         // Templated
-                      // Inputs
-                      .CLK              (i_clk_peri),            // Templated
-                      .RSTN             (i_rst_n_peri),          // Templated
-                      .PSEL             (i_bus_apb_psel),        // Templated
-                      .PENABLE          (i_bus_apb_penable),     // Templated
-                      .PWRITE           (i_bus_apb_pwrite),      // Templated
-                      .PADDR            (i_bus_apb_paddr[4:2]),  // Templated
-                      .PWDATA           (i_bus_apb_pwdata[31:0]), // Templated
-                      .CTSN             (1'b1),                  // Templated
-                      .DSRN             (1'b1),                  // Templated
-                      .DCDN             (1'b1),                  // Templated
-                      .RIN              (1'b1),                  // Templated
-                      .SIN              (i_pad_uart_rx));        // Templated
+                     // Outputs
+                     .PRDATA            (o_bus_apb_prdata[31:0]), // Templated
+                     .PREADY            (o_bus_apb_pready),      // Templated
+                     .PSLVERR           (o_bus_apb_pslverr),     // Templated
+                     .INT               (o_int_uart),            // Templated
+                     .DMA_RX_REQ        (o_dma_rx_req),          // Templated
+                     .OUT1N             (),                      // Templated
+                     .OUT2N             (),                      // Templated
+                     .RTSN              (),                      // Templated
+                     .DTRN              (),                      // Templated
+                     .SOUT              (o_pad_uart_tx),         // Templated
+                     // Inputs
+                     .CLK               (i_clk_peri),            // Templated
+                     .RSTN              (i_rst_n_peri),          // Templated
+                     .PSEL              (i_bus_apb_psel),        // Templated
+                     .PENABLE           (i_bus_apb_penable),     // Templated
+                     .PWRITE            (i_bus_apb_pwrite),      // Templated
+                     .PADDR             (i_bus_apb_paddr[4:2]),  // Templated
+                     .PWDATA            (i_bus_apb_pwdata[31:0]), // Templated
+                     .CTSN              (1'b1),                  // Templated
+                     .DSRN              (1'b1),                  // Templated
+                     .DCDN              (1'b1),                  // Templated
+                     .RIN               (1'b1),                  // Templated
+                     .SIN               (i_pad_uart_rx));         // Templated
 
 endmodule
 // Local Variables:
 // verilog-library-flags:("-f filelist_emacs.f")
 // verilog-library-extensions:(".v" ".sv")
 // verilog-auto-star-expand: nil
-// verilog-auto-inst-param-value: 
+// verilog-auto-inst-param-value: t
 // indent-tabs-mode: nil
 // eval: (setq large-file-warning-threshold nil)
 // End:
