@@ -102,6 +102,12 @@ make sim BLOCK=<block>      # if dv/<block>/ has a testbench: CI runs it on ever
 `make check` does not run Connectivity, Simulation or the full document build; CI
 does. [`CONTRIBUTING.md`](../../CONTRIBUTING.md) marks which check runs where.
 
+### Sign-off tools on the server
+
+Every licensed check — VCS, VC Static LINT, CDC, RDC, synthesis, timing — is
+one command from your machine. The full guide with prerequisites, step-by-step
+usage, and troubleshooting is [`doc/guides/SIGNOFF_TOOLS.md`](SIGNOFF_TOOLS.md).
+
 ### On the training server: compile with VCS, look at the schematic
 
 Everything above runs on your own machine. VCS and Verdi are licensed and run only
