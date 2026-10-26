@@ -201,6 +201,11 @@ reason.
 | **SYN** | Yosys, with the `yosys-slang` front end | none extra | `make syn BLOCK=<block>` | Synthesises with no latch and no multi-driven net. The cell count is stated in the pull request |
 | **GCA** | OpenSTA `check_setup` | the block SDC | `make gca BLOCK=<block>` | `check_setup` reports no unconstrained clock, input, output or loop |
 
+The licensed stages (RTL integration's VCS compile, LINT's VC Static, CDC, RDC,
+SYN with Design Compiler, STA with PrimeTime) run on the training server through
+one command each — see [`doc/guides/SIGNOFF_TOOLS.md`](doc/guides/SIGNOFF_TOOLS.md)
+for the full walkthrough, prerequisites and troubleshooting.
+
 CDC and RDC have no mature open-source checker, so their evidence is the MAS table plus
 the review. That is why every crossing must go through a **named shared cell**: it
 makes a crossing findable with `grep` instead of by reading every line.
