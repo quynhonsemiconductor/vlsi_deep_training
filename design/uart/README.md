@@ -1,6 +1,6 @@
 # `uart` — serial ports
 
-**Owner:** @Vinh-OngBao   **Spec:** [`QNSC_UART_MAS.md`](../../doc/specs/QNSC_UART_MAS.md)   **DV:** [`../../dv/uart`](../../dv/uart)
+**Owner:** @Vinh-OngBao   **Spec:** `QNSC_UART_MAS.md` on the team SharePoint   **DV:** [`../../dv/uart`](../../dv/uart)
 
 ## What this block is
 
@@ -12,6 +12,9 @@ boot download. Upstream `apb_uart` wrapped by `m_qnsc_wrap_uart`. `o_dma_rx_req`
 | From | Module | Recorded in |
 |------|--------|-------------|
 | `pulp-platform/apb_uart`, `pulp-platform/obi_peripherals`, `apb`, `obi`, `common_cells` | `apb_uart` around `obi_uart` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
+
+`apb_uart/src/reg_uart_wrap.sv` (Regbus) is vendored with `src/**` for reference only, not compiled.
+The patches that add the DMA request are under "DMA request" below.
 
 ## The wrapper is the boundary
 

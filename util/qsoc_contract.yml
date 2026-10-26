@@ -439,3 +439,10 @@ tbd:
       every ID width moves with it. Answer expected to be 1: the vendored
       dma_axi (PR200) defines ID_BITS = 1 (vendor/freecores/dma_axi, #85);
       stays open only until the owner confirms it in QNSC_DMA_MAS V4.
+  - item: DMA request line of each UART (dma_axi32 periph_tx_req / periph_rx_req index)
+    owner: DMA owner
+    note: >
+      UART0 and UART1 give the DMA an RX request (o_dma_rx_req = LSR.data_ready, a level)
+      and use the interrupt line (o_int_uart) as the TX request. Which bit of
+      periph_tx_req / periph_rx_req each UART takes, and the matching STATIC_LINE4
+      PERIPH_NUM, is not set. The RX channel needs PERIPH_DELAY >= 1.
