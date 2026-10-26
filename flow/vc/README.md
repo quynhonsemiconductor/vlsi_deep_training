@@ -24,3 +24,27 @@ QSOC_SERVER=doelab-red make vc-post BLOCK=pwm PR=26
 
 CDC and RDC use the same shell with their own configs (`goal cdc`, `rdc`
 rule decks) — the harness is the pattern, only the config and the parser grow.
+
+## Design: one command per stage, one harness for all
+
+The sign-off tracker closes stage by stage, and stages unlock at different
+times — CDC needs an SDC no block has yet, SYN needs the technology library.
+So there is no single "run everything" command, and that is deliberate: a
+mega-command would either skip stages (many commands wearing a coat) or wait
+for all of them (today's LINT could not have run).
+
+Instead, every stage gets its own command with the same shape —
+`make <tool> BLOCK=x BRANCH=y` then `make <tool>-post BLOCK=x PR=n` — all
+riding one harness:
+
+| Tracker stage | Command | Status |
+|---|---|---|
+| RTL integration | `make vcs-branch` + `make vcs-post` | ready (`flow/vcs`) |
+| SIM | CI (`make sim`) | ready |
+| LINT | `make vc-lint` + `make vc-post` | this PR |
+| CDC / RDC | `make cdc-vc` / `make rdc-vc` | same shell, other rule decks — next |
+| SYN | `make syn-dc` | needs the DC module + tech libs |
+| STA/GCA | `make sta-pt` | needs block SDCs |
+
+Adding a stage means adding its rule deck and parser to this directory; the
+pipeline (push, Slurm, generated config, summary, PR comment) does not change.
