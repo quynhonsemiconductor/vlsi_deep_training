@@ -1,0 +1,4 @@
+VC_STATIC LINT | block isram | top m_qnsc_wrap_isram | commit 0ac89c2
+Compiled: 2026-10-26 23:42 +07
+Lint-: 0 on our files, 0 inside waived vendor IPs
+PASS

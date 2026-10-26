@@ -1,4 +1,6 @@
 build/
+# Per-block sign-off evidence (summary.txt only): design/<block>/{vcs,lint,cdc,rdc,syn,sta}/
+# The full logs and binaries stay in build/ (ignored) and on the server.
 
 # macOS Finder metadata
 .DS_Store
@@ -12,6 +14,8 @@ doc/present/
 
 # doc/build holds source: build scripts and figure generators (build/ above would hide new ones)
 !doc/build/
+# Per-block sign-off evidence (summary.txt only): design/<block>/{vcs,lint,cdc,rdc,syn,sta}/
+# The full logs and binaries stay in build/ (ignored) and on the server.
 doc/build/template/QNSC_Reference_NoAutoNum.docx
 __pycache__/
 
