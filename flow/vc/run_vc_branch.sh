@@ -10,23 +10,23 @@ url=$(git -C "$here" remote get-url origin)
 case "$url" in /*) url="file://$url";; esac
 
 case "$mode" in
-  lint|cdc|rdc) dir_name="vc_${mode}"; runner="bash $here/flow/vc/run_vc.sh '$block' '$here/flow/vc' '$mode'" ;;
-  dc)           dir_name="dc";        runner="bash $here/flow/dc/run_dc.sh '$block' '$here/flow/dc'" ;;
-  pt)           dir_name="pt";        runner="bash $here/flow/pt/run_pt.sh '$block' '$here/flow/pt'" ;;
+  lint|cdc|rdc) out_path="vc/$mode";        runner="bash $here/flow/vc/run_vc.sh '$block' '$here/flow/vc' '$mode'" ;;
+  dc)           out_path="dc";               runner="bash $here/flow/dc/run_dc.sh '$block' '$here/flow/dc'" ;;
+  pt)           out_path="pt";               runner="bash $here/flow/pt/run_pt.sh '$block' '$here/flow/pt'" ;;
   *) echo "unknown mode: $mode"; exit 1 ;;
 esac
 
-dir="${QSOC_SCRATCH:-${TMPDIR:-/tmp}}/qsoc_${dir_name}_${USER:-me}/$block"
+dir="${QSOC_SCRATCH:-${TMPDIR:-/tmp}}/qsoc_$(echo ${out_path} | tr / _)_${USER:-me}/$block"
 rm -rf "$dir"
 git clone -q --depth 1 --branch "$branch" "$url" "$dir"
 rc=0
 (cd "$dir" && eval "$runner") || rc=$?
-mkdir -p "$here/build/$dir_name/$block"
+mkdir -p "$here/build/$out_path/$block"
 for f in summary.txt; do
-  cp "$dir/build/$dir_name/$block/$f" "$here/build/$dir_name/$block/" 2>/dev/null || true
+  cp "$dir/build/$out_path/$block/$f" "$here/build/$out_path/$block/" 2>/dev/null || true
 done
 for d in reports results; do
-  cp -r "$dir/build/$dir_name/$block/$d" "$here/build/$dir_name/$block/" 2>/dev/null || true
+  cp -r "$dir/build/$out_path/$block/$d" "$here/build/$out_path/$block/" 2>/dev/null || true
 done
 [ "$rc" -eq 0 ] && echo "PR comment: make ${mode}-post BLOCK=$block PR=<n>"
 exit $rc
