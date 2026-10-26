@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
-# Compile-free LINT with Synopsys VC Static, on a compute node. Run INSIDE the
-# scratch clone that run_vc_branch.sh makes: the block's own filelist drives
-# everything, the vendor list is waived by IP automatically (each /vendor/ file
-# in the filelist names a module that is upstream and never edited).
-#
-#   bash flow/vc/run_vc.sh <block> <scripts-dir>
+# VC Static (LINT / CDC / RDC), on a compute node, inside the scratch clone
+# that run_vc_branch.sh makes. Config is generated from the block filelist.
+#   bash run_vc.sh <block> <scripts-dir> <lint|cdc|rdc>
 set -euo pipefail
 block=${1:?block}
-sdir=${2:?scripts dir, the working copy flow/vc}
+sdir=${2:?scripts dir}
+mode=${3:?lint|cdc|rdc}
 flist="design/${block}/${block}.f"
 [ -f "$flist" ] || { echo "no $flist"; exit 1; }
 command -v vc_static_shell >/dev/null || { echo "load module synopsys/vc_static first"; exit 1; }
@@ -21,7 +19,7 @@ fi
 # vendor modules in the filelist -> IP waiver list
 ips=$(grep '/vendor/' "$flist" | grep -oE '[A-Za-z0-9_]+\.sv' | sed 's/\.sv$//' | sort -u | tr '\n' ' ')
 
-out="build/vc/${block}"
+out="build/vc/${mode}/${block}"
 mkdir -p "$out/logs" "$out/session" "$out/reports"
 
 GW=""
@@ -29,24 +27,47 @@ for g in /tools/eda/synopsys/vc_static/*/auxx/monet/tcl/GuideWare/block/initial_
   [ -f "$g" ] && GW="$g" && break
 done
 
-cat > lint_config.tcl <<CFG
+# block SDC + CDC reset declarations (the documented convention)
+sdc="design/${block}/constraints/${block}.sdc"
+cdc_add="design/${block}/constraints/cdc_resets.tcl"
+sdc_val=""; [ -f "$sdc" ] && sdc_val="$PWD/$sdc"
+add_val=""; [ -f "$cdc_add" ] && add_val="$PWD/$cdc_add"
+
+if [ "$mode" != "lint" ]; then
+  if [ -z "$sdc_val" ]; then
+    echo "FAIL: $mode needs design/${block}/constraints/${block}.sdc — none found."
+    echo "      Write the SDC first (CONTRIBUTING sign-off SDC stage)."
+    exit 2
+  fi
+fi
+
+cfg="lint_config.tcl"
+[ "$mode" = "cdc" ] && cfg="cdc_config.tcl"
+[ "$mode" = "rdc" ] && cfg="rdc_config.tcl"
+
+cat > "$cfg" <<CFG
 set TOP_MODULE              "$top"
 set RTL_FILELIST            "$PWD/$flist"
 set RTL_DEFINES             ""
 set SESSION_DIR             "$out/session"
-set SESSION_NAME            "${top}_lint"
+set SESSION_NAME            "${top}_${mode}"
 set REPORT_DIR              "$out/reports"
 set WAIVER_IP_LIST          [list ${ips}]
 set LINT_RULESETUP          "$GW"
+set SDC_FILE                "$sdc_val"
+set ADD_SDC_FILE            "$add_val"
 CFG
 
-echo "== VC Static LINT: $block (top $top), vendor IPs waived: ${ips:-none}"
+tcl="check_lint.tcl"
+[ "$mode" = "cdc" ] && tcl="check_cdc.tcl"
+[ "$mode" = "rdc" ] && tcl="check_rdc.tcl"
+
+echo "== VC Static ${mode^^}: $block (top $top), vendor IPs waived: ${ips:-none}"
 vc_static_shell -no_init -batch -mode64 -lic_wait 300 \
-    -f "$sdir/check_lint.tcl" \
+    -f "$sdir/$tcl" \
     -output_log_file "$out/logs/screen.log" || true
 
-# Summary: ours vs vendor from the violation report paths, like the VCS lint split.
-rpt="$out/reports/lint_full.rpt"
+rpt="$out/reports/${mode}_full.rpt"
 ours=0; vendor=0
 if [ -f "$rpt" ]; then
   while IFS= read -r line; do
@@ -57,18 +78,17 @@ if [ -f "$rpt" ]; then
   done < <(grep -E '^\s*/|Source:' "$rpt" 2>/dev/null | grep -E 'design/|vendor/')
 fi
 {
-  echo "VC_STATIC | block $block | top $top | commit $(git rev-parse --short HEAD 2>/dev/null || echo ?)"
-  printf 'Compiled: %s\n' "$(date '+%Y-%m-%d %H:%M %Z')"
-  echo "Lint-: $ours on our files, $vendor inside waived vendor IPs"
+  echo "VC_STATIC ${mode^^} | block $block | top $top | commit $(git rev-parse --short HEAD 2>/dev/null || echo ?)"
+  echo "Compiled: $(date '+%Y-%m-%d %H:%M %Z')"
+  echo "${mode^}-: $ours on our files, $vendor inside waived vendor IPs"
+  if [ -f "$rpt" ] && grep -qE 'TopLevelModule: *$' "$rpt"; then
+    echo "FAIL: report is empty -- design did not load (check $out/logs/screen.log)"
+    exit 1
+  fi
   if [ "$ours" -gt 0 ]; then
     echo "FAIL: $ours violations on our files (full report: $rpt)"
   else
     echo "PASS"
   fi
 } | tee "$out/summary.txt"
-# an empty report means the design never loaded: fail loudly, not PASS
-if [ -f "$rpt" ] && grep -qE 'TopLevelModule: *$' "$rpt"; then
-  echo "FAIL: report is empty -- design did not load (check $out/logs/screen.log)"
-  [ "$ours" -eq 0 ] && exit 2
-fi
 [ "$ours" -eq 0 ]

@@ -126,13 +126,13 @@ vcs-branch:
 	@test -n "$(BLOCK)" -a -n "$(BRANCH)" || { echo "usage: make vcs-branch BLOCK=<block> BRANCH=<branch>"; exit 1; }
 	bash flow/vcs/run_vcs_branch $(BLOCK) $(BRANCH)
 
-vc-lint:
-	@test -n "$(BLOCK)" -a -n "$(BRANCH)" || { echo "usage: QSOC_SERVER=<alias> make vc-lint BLOCK=<block> BRANCH=<branch>"; exit 1; }
-	BLOCK=$(BLOCK) BRANCH=$(BRANCH) bash flow/vc/lint.sh
+vc-lint vc-cdc vc-rdc syn-dc sta-pt:
+	@test -n "$(BLOCK)" -a -n "$(BRANCH)" || { echo "usage: QSOC_SERVER=<alias> make $@ BLOCK=<block> BRANCH=<branch>"; exit 1; }
+	TOOL=$@ BLOCK=$(BLOCK) BRANCH=$(BRANCH) bash flow/signoff.sh
 
-vc-post:
-	@test -n "$(BLOCK)" -a -n "$(PR)" || { echo "usage: QSOC_SERVER=<alias> make vc-post BLOCK=<block> PR=<number>"; exit 1; }
-	QSOC_SERVER=$(QSOC_SERVER) bash flow/vc/post_vc.sh $(BLOCK) $(PR)
+vc-lint-post vc-cdc-post vc-rdc-post syn-dc-post sta-pt-post:
+	@test -n "$(BLOCK)" -a -n "$(PR)" || { echo "usage: QSOC_SERVER=<alias> make $@ BLOCK=<block> PR=<number>"; exit 1; }
+	@tool=$(subst -post,,$@); QSOC_SERVER=$(QSOC_SERVER) bash flow/post_signoff.sh $(BLOCK) $(PR) $$tool
 
 vcs-post:
 	@test -n "$(BLOCK)" -a -n "$(PR)" || { echo "usage: make vcs-post BLOCK=<block> PR=<number> [DRY=1]"; exit 1; }
