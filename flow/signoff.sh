@@ -32,3 +32,16 @@ ssh -o BatchMode=yes "$server" "
     module load $module
     $runner\"
 " 2>&1 | grep -v 'WARNING\|post-quantum\|upgraded\|^\*\*'
+
+# Evidence: pull summary from server into design/<block>/<stage>/
+stage=${tool#vc-}
+[ "$stage" = "$tool" ] && stage=$tool
+[ "$tool" = syn-dc ] && stage=syn
+[ "$tool" = sta-pt ] && stage=sta
+evdir="design/${block}/${stage}"
+mkdir -p "$evdir"
+sp="build/vc/${stage}/${block}/summary.txt"
+[ "$tool" = syn-dc ] && sp="build/dc/${block}/summary.txt"
+[ "$tool" = sta-pt ] && sp="build/pt/${block}/summary.txt"
+ssh -o BatchMode=yes "$server" "cat ~/${QSOC_SERVER_REPO:-vlsi_deep_training}/$sp 2>/dev/null" 2>/dev/null > "$evdir/summary.txt" || true
+[ -s "$evdir/summary.txt" ] && echo "evidence: $evdir/summary.txt" || { rm -f "$evdir/summary.txt"; echo "no summary found on server"; }

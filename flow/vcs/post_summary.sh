@@ -42,3 +42,9 @@ if [ -n "$id" ]; then
 else
   gh pr comment "$pr" --body "$body"
 fi
+
+# Evidence: write into the block directory
+evdir="$(git rev-parse --show-toplevel 2>/dev/null || .)/design/$block/vcs"
+mkdir -p "$evdir"
+printf '%s\n' "$summary" > "$evdir/summary.txt"
+echo "evidence: $evdir/summary.txt"
