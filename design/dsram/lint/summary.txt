@@ -1,4 +1,4 @@
-VC_STATIC LINT | block dsram | top m_qnsc_wrap_dsram | commit 0ac89c2
+VC_STATIC LINT | block dsram | top m_qnsc_wrap_dsram | commit 061c76d
 Compiled: 2026-10-26
 Lint-: 0 on our files, 0 inside waived vendor IPs
 PASS
