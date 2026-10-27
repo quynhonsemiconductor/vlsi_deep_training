@@ -32,3 +32,11 @@ id=$(gh api "repos/$repo_slug/issues/$pr/comments" --paginate \
       --jq ".[] | select(.user.login == \"$me\" and (.body | startswith(\"$title\"))) | .id" | tail -1)
 if [ -n "$id" ]; then gh api -X PATCH "repos/$repo_slug/issues/comments/$id" -f body="$body" --jq .html_url
 else gh pr comment "$pr" --body "$body"; fi
+
+stage=${tool#vc-}; [ "$stage" = "$tool" ] && stage=$tool
+[ "$tool" = syn-dc ] && stage=syn
+[ "$tool" = sta-pt ] && stage=sta
+evdir="$(git rev-parse --show-toplevel 2>/dev/null || .)/design/$block/$stage"
+mkdir -p "$evdir"
+printf '%s\n' "$summary" > "$evdir/summary.txt"
+echo "evidence: $evdir/summary.txt"
