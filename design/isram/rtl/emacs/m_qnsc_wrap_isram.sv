@@ -12,8 +12,8 @@
 // the byte enables. u_strbfifo, a vendored m_vlsi_fifo of the controller's own depth,
 // holds WSTRB beside the controller's write-data FIFO.
 //
-// The memory macro is not in the wrapper. The wrapper ends at o_mem_* / i_mem_rdata,
-// the macro's pins (MAS 5); design/top puts the macro there.
+// The macro IS in the wrapper: qnsc_sram_sp from design/common/tech/.
+// The controller's macro-side ports are internal wires, not module ports.
 //
 // A wrapper is IP (design/README.md, "Shared numbers: who may use qnsc_pkg"):
 // no import, no parameter. The IP's configuration is fixed at the instances below.
@@ -63,27 +63,14 @@ output logic [6:0]      o_bus_axi_r_id,         // From u_sram_ctrl of m_vlsi_ax
 output logic            o_bus_axi_r_last,       // From u_sram_ctrl of m_vlsi_axi4_sram.v
 output logic [1:0]      o_bus_axi_r_resp,       // From u_sram_ctrl of m_vlsi_axi4_sram.v
 output logic            o_bus_axi_r_valid,      // From u_sram_ctrl of m_vlsi_axi4_sram.v
-output logic            o_bus_axi_w_ready,      // From u_sram_ctrl of m_vlsi_axi4_sram.v
+output logic            o_bus_axi_w_ready      // From u_sram_ctrl of m_vlsi_axi4_sram.v
 // End of automatics
 
 //---------------------------------------------------------------
 // Memory macro, 16384 words x 32 bits. The macro's pins.
-// o_mem_we and o_mem_be are declared by hand: the wrapper reads both inside (the
-// strobe path below), and AUTOOUTPUT does not declare a signal the wrapper itself
-// uses as an input. The other ports come from the controller.
+// All mem-side signals are internal wires (AUTOWIRE + hand declarations below).
+// The macro qnsc_sram_sp is instantiated inside this wrapper.
 //---------------------------------------------------------------
-/*AUTOINPUT("^i_mem")*/
-// Beginning of automatic inputs (from unused autoinst inputs)
-input logic [31:0]      i_mem_rdata,            // To u_sram_ctrl of m_vlsi_axi4_sram.v
-// End of automatics
-/*AUTOOUTPUT("^o_mem")*/
-// Beginning of automatic outputs (from unused autoinst outputs)
-output logic [13:0]     o_mem_addr,             // From u_sram_ctrl of m_vlsi_axi4_sram.v
-output logic            o_mem_oe,               // From u_sram_ctrl of m_vlsi_axi4_sram.v
-output logic [31:0]     o_mem_wdata,            // From u_sram_ctrl of m_vlsi_axi4_sram.v
-// End of automatics
-output logic            o_mem_we,
-output logic [3:0]      o_mem_be
 
 //---------------------------------------------------------------
 // Others -- must stay empty once the templates below are complete
@@ -95,10 +82,18 @@ output logic [3:0]      o_mem_be
 
 /*AUTOWIRE*/
 // Beginning of automatic wires (for undeclared instantiated-module outputs)
+logic [13:0]            w_mem_addr;             // From u_sram_ctrl of m_vlsi_axi4_sram.v
 logic [31:16]           w_mem_addr_hi;          // From u_sram_ctrl of m_vlsi_axi4_sram.v
 logic [1:0]             w_mem_addr_lo;          // From u_sram_ctrl of m_vlsi_axi4_sram.v
+logic                   w_mem_oe;               // From u_sram_ctrl of m_vlsi_axi4_sram.v
+logic [31:0]            w_mem_wdata;            // From u_sram_ctrl of m_vlsi_axi4_sram.v
 logic [3:0]             w_strb_head;            // From u_strbfifo of m_vlsi_fifo.v
 // End of automatics
+// w_mem_we / w_mem_be: hand-declared internal wires (wrapper reads both,
+// AUTOOUTPUT will not declare a signal the module itself uses)
+logic                   w_mem_we;
+logic [3:0]             w_mem_be;
+logic [31:0]            w_mem_rdata;
 
 logic                   w_strb_push;
 
@@ -112,6 +107,7 @@ logic                   w_strb_push;
 /*AUTO_LISP(setq verilog-auto-input-ignore-regexp
   (concat
   "^w_"
+  "\\|^i_mem"
   "\\|unuse_input"
   ))
 */
@@ -119,6 +115,7 @@ logic                   w_strb_push;
 /*AUTO_LISP(setq verilog-auto-output-ignore-regexp
   (concat
   "^w_"
+  "\\|^o_mem"
   "\\|unuse_output"
   ))
 */
@@ -136,11 +133,11 @@ logic                   w_strb_push;
     .i_aw\(len\)           ({1'b0, i_bus_axi_aw_len[7:0]}),
     .i_ar\(len\)           ({1'b0, i_bus_axi_ar_len[7:0]}),
     .\(i\|o\)_\(aw\|ar\|w\|b\|r\)\(addr\|valid\|ready\|burst\|len\|id\|data\|last\|resp\) (\1_bus_axi_\2_\3[]),
-    .o_sram_addr            ({w_mem_addr_hi[31:16], o_mem_addr[13:0], w_mem_addr_lo[1:0]}),
-    .o_sram_wdata           (o_mem_wdata[]),
-    .o_sram_we              (o_mem_we),
-    .o_sram_oe              (o_mem_oe),
-    .i_sram_rdata           (i_mem_rdata[]),
+    .o_sram_addr            ({w_mem_addr_hi[31:16], w_mem_addr[13:0], w_mem_addr_lo[1:0]}),
+    .o_sram_wdata           (w_mem_wdata[]),
+    .o_sram_we              (w_mem_we),
+    .o_sram_oe              (w_mem_oe),
+    .i_sram_rdata           (w_mem_rdata[]),
 );
 */
 // AxLEN is 8 bits on the bus and PARA_LEN_WD is 9. The controller's address FSM loads
@@ -167,10 +164,10 @@ m_vlsi_axi4_sram #(  // naming-check: ignore -- vendored module name
                .o_rresp                 (o_bus_axi_r_resp[1:0]), // Templated
                .o_rvalid                (o_bus_axi_r_valid),     // Templated
                .o_rlast                 (o_bus_axi_r_last),      // Templated
-               .o_sram_addr             ({w_mem_addr_hi[31:16], o_mem_addr[13:0], w_mem_addr_lo[1:0]}), // Templated
-               .o_sram_wdata            (o_mem_wdata[31:0]),     // Templated
-               .o_sram_we               (o_mem_we),              // Templated
-               .o_sram_oe               (o_mem_oe),              // Templated
+               .o_sram_addr             ({w_mem_addr_hi[31:16], w_mem_addr[13:0], w_mem_addr_lo[1:0]}), // Templated
+               .o_sram_wdata            (w_mem_wdata[31:0]),     // Templated
+               .o_sram_we               (w_mem_we),              // Templated
+               .o_sram_oe               (w_mem_oe),              // Templated
                // Inputs
                .i_clk                   (i_clk_mem),             // Templated
                .i_rst_n                 (i_rst_n_mem),           // Templated
@@ -189,13 +186,13 @@ m_vlsi_axi4_sram #(  // naming-check: ignore -- vendored module name
                .i_arlen                 ({1'b0, i_bus_axi_ar_len[7:0]}), // Templated
                .i_arid                  (i_bus_axi_ar_id[6:0]),  // Templated
                .i_rready                (i_bus_axi_r_ready),     // Templated
-               .i_sram_rdata            (i_mem_rdata[31:0]));    // Templated
+               .i_sram_rdata            (w_mem_rdata[31:0]));    // Templated
 
 //---------------------------------------------------------------
 // Byte enables (QNSC_RAM_MAS 7.3)
 //---------------------------------------------------------------
 // The controller has no WSTRB. u_strbfifo is pushed with the controller's own
-// write-data push (wvalid & wready) and popped with its write grant (o_mem_we), so
+// write-data push (wvalid & wready) and popped with its write grant (w_mem_we), so
 // it holds the same number of entries as the write-data FIFO in every cycle and its
 // head is the strobe of the beat being written. Depth 2**3 = PARA_FIFO_DEPTH.
 /* m_vlsi_fifo AUTO_TEMPLATE(
@@ -203,7 +200,7 @@ m_vlsi_axi4_sram #(  // naming-check: ignore -- vendored module name
     .i_rst_n                (i_rst_n_mem),
     .i_data                 (i_bus_axi_w_strb[]),
     .i_push                 (w_strb_push),
-    .i_pop                  (o_mem_we),
+    .i_pop                  (w_mem_we),
     .o_data_out             (w_strb_head[]),
     .o_empty                (),
     .o_full                 (),
@@ -222,10 +219,26 @@ m_vlsi_fifo #(  // naming-check: ignore -- vendored module name
               .i_rst_n                  (i_rst_n_mem),           // Templated
               .i_data                   (i_bus_axi_w_strb[3:0]), // Templated
               .i_push                   (w_strb_push),           // Templated
-              .i_pop                    (o_mem_we));             // Templated
+              .i_pop                    (w_mem_we));             // Templated
 
 assign w_strb_push = i_bus_axi_w_valid & o_bus_axi_w_ready;
-assign o_mem_be    = o_mem_we ? w_strb_head : 4'b0000;
+assign w_mem_be    = w_mem_we ? w_strb_head : 4'b0000;
+
+//---------------------------------------------------------------
+// Memory macro: qnsc_sram_sp (design/common/tech, Naming Rule 2.8)
+//---------------------------------------------------------------
+qnsc_sram_sp #(
+  .P_DEPTH   (16384),   // hardcode-check: ignore -- block SRAM depth, not a contract number
+  .P_DATA_WD (32)
+) u_sram_mem (
+  .i_clk     (i_clk_mem),
+  .i_addr    (w_mem_addr),
+  .i_wdata   (w_mem_wdata),
+  .i_we      (w_mem_we),
+  .i_be      (w_mem_be),
+  .i_oe      (w_mem_oe),
+  .o_rdata   (w_mem_rdata)
+);
 
 endmodule
 // Local Variables:
