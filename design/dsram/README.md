@@ -34,19 +34,23 @@ Findings from reading the RTL, handled in our wrapper:
 
 | File | Written by | What |
 |---|---|---|
-| `rtl/emacs/m_qnsc_wrap_dsram.src.sv` | hand | Wrapper source: ports, `AUTO_TEMPLATE`s, the two instances |
+| `rtl/emacs/m_qnsc_wrap_dsram.src.sv` | hand | Wrapper source: ports, `AUTO_TEMPLATE`s, the three instances |
 | `rtl/m_qnsc_wrap_dsram.sv` | emacs, `make wrap BLOCK=dsram` | The wrapper `dsram.f` compiles; never edited by hand |
 | `waivers.vlt` | hand | Lint waivers, each with its reason |
 
-Inside the wrapper: the vendored controller `m_vlsi_axi4_sram` (parameters fixed at
-the instance, MAS Table 5-2), and `u_strbfifo`, a vendored `m_vlsi_fifo` that holds
-`WSTRB` beside the controller's write-data FIFO (MAS 7.3). `o_mem_be` is the FIFO head
-while `o_mem_we` is high and zero otherwise.
+Inside the wrapper, three instances: the vendored controller `u_sram_ctrl`
+(`m_vlsi_axi4_sram`, parameters fixed at the instance, MAS section 5), `u_strbfifo`, a
+vendored `m_vlsi_fifo` that holds `WSTRB` beside the controller's write-data FIFO
+(MAS 7.3), and the macro `u_sram_mem` (`qnsc_sram_sp`, 8192 words, from
+`design/common/tech/<TECH>/`). `w_mem_be` is the FIFO head while `w_mem_we` is high and
+zero otherwise.
 
-**The macro is not in the wrapper.** It ends at the macro's pins: `o_mem_addr` (the
-controller's byte address `[14:2]`, 8192 words), `o_mem_wdata`, `o_mem_we`, `o_mem_be`,
-`o_mem_oe`, `i_mem_rdata`. `design/top` places the 32 KiB single-port macro there; the
-testbench, in a later pull request, uses a behavioural model with byte enables.
+**The macro is in the wrapper** (review, PR #84). The controller's macro side is
+internal wires, not ports: `w_mem_addr` (the controller's byte address `[14:2]`, 8192
+words), `w_mem_wdata`, `w_mem_we`, `w_mem_be`, `w_mem_oe`, `w_mem_rdata`. `design/top`
+instantiates this one module and nothing else for the 32 KiB RAM. With `TECH` =
+`generic` the macro is a behavioural model with byte enables and no reset; the SMIC
+28 nm cell ties the macro's margin and test pins inside (MAS section 10).
 
-`o_mem_we` and `o_mem_be` are the two ports declared by hand in the `.src.sv`: the wrapper
-reads both inside, and `AUTOOUTPUT` does not declare a signal the module itself uses.
+`w_mem_we`, `w_mem_be` and `w_mem_rdata` are declared by hand in the `.src.sv`: the
+wrapper reads them inside, and the AUTOs do not declare a signal the module itself uses.
