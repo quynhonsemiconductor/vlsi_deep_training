@@ -1,0 +1,20 @@
+`verilator_config
+// =============================================================================
+// Lint waivers owned by the dsram block (QNSC_RAM_MAS V2.5). Every line carries its
+// reason (CONTRIBUTING.md, LINT stage).
+// =============================================================================
+
+// u_strbfifo is as deep as the controller's write-data FIFO and moves with it
+// entry for entry (MAS 7.3), so its own full and empty flags carry nothing the
+// controller does not already use: wready is the write-data FIFO's flag.
+lint_off -rule PINCONNECTEMPTY -file "*design/dsram/rtl/m_qnsc_wrap_dsram.sv" -match "*'o_empty'*"
+lint_off -rule PINCONNECTEMPTY -file "*design/dsram/rtl/m_qnsc_wrap_dsram.sv" -match "*'o_full'*"
+
+// The controller's byte address is 32 bits; only the word index reaches the macro
+// (MAS 7.2). The bits above it and the two below it are not used.
+lint_off -rule UNUSEDSIGNAL -file "*design/dsram/rtl/m_qnsc_wrap_dsram.sv" -match "*w_mem_addr_hi*"
+lint_off -rule UNUSEDSIGNAL -file "*design/dsram/rtl/m_qnsc_wrap_dsram.sv" -match "*w_mem_addr_lo*"
+
+// Vendored controller (not edited): i_wlast, which it declares and does not use
+// (the last beat comes from AxLEN, MAS 10), and an internal flag.
+lint_off -rule UNUSEDSIGNAL -file "*vendor/nguyenquanicd/AXI4-SRAM-CONTROLLER/*"

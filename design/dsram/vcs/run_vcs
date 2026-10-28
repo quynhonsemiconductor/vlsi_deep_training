@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# VCS compile for dsram
+# On the server: cd ~/vlsi_deep_training && make vcs-branch BLOCK=dsram BRANCH=<branch>
+module load synopsys/vcs/W-2024.09-SP1
+make vcs-branch BLOCK=dsram BRANCH=${1:-feat/ram-wrappers-only}

@@ -1,6 +1,6 @@
 # `isram` — instruction SRAM (AXI_M1)
 
-**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS.md` on the team SharePoint   **DV:** [`../../dv/isram`](../../dv/isram)
+**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS` (V2.5) on the team SharePoint   **DV:** [`../../dv/isram`](../../dv/isram)
 
 ## What this block is
 
@@ -29,6 +29,28 @@ Findings from reading the RTL, handled in our wrapper:
 
 ## The wrapper is the boundary
 
-`rtl/m_qnsc_wrap_isram.sv` (module `m_qnsc_wrap_isram`, around the IP's
-`m_vlsi_axi4_sram`) instantiates the vendored controller unmodified and adds the
-WSTRB logic. Generated with emacs from `rtl/emacs/` ([`design/README.md`](../README.md#writing-a-wrapper-with-emacs-verilog-mode)). Ours in `rtl/`, borrowed in `vendor/`.
+`rtl/` holds **only code written here**. Upstream IP is listed in
+[`isram.f`](./isram.f), never copied into `rtl/`.
+
+| File | Written by | What |
+|---|---|---|
+| `rtl/emacs/m_qnsc_wrap_isram.src.sv` | hand | Wrapper source: ports, `AUTO_TEMPLATE`s, the three instances |
+| `rtl/m_qnsc_wrap_isram.sv` | emacs, `make wrap BLOCK=isram` | The wrapper `isram.f` compiles; never edited by hand |
+| `waivers.vlt` | hand | Lint waivers, each with its reason |
+
+Inside the wrapper, three instances: the vendored controller `u_sram_ctrl`
+(`m_vlsi_axi4_sram`, parameters fixed at the instance, MAS section 5), `u_strbfifo`, a
+vendored `m_vlsi_fifo` that holds `WSTRB` beside the controller's write-data FIFO
+(MAS 7.3), and the macro `u_sram_mem` (`qnsc_sram_sp`, 16384 words, from
+`design/common/tech/<TECH>/`). `w_mem_be` is the FIFO head while `w_mem_we` is high and
+zero otherwise.
+
+**The macro is in the wrapper** (review, PR #84). The controller's macro side is
+internal wires, not ports: `w_mem_addr` (the controller's byte address `[15:2]`, 16384
+words), `w_mem_wdata`, `w_mem_we`, `w_mem_be`, `w_mem_oe`, `w_mem_rdata`. `design/top`
+instantiates this one module and nothing else for the 64 KiB RAM. With `TECH` =
+`generic` the macro is a behavioural model with byte enables and no reset; the SMIC
+28 nm cell ties the macro's margin and test pins inside (MAS section 10).
+
+`w_mem_we`, `w_mem_be` and `w_mem_rdata` are declared by hand in the `.src.sv`: the
+wrapper reads them inside, and the AUTOs do not declare a signal the module itself uses.
