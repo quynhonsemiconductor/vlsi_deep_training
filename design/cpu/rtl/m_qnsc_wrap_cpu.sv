@@ -45,12 +45,12 @@ output logic            o_pwr_sleep,            // From u_ibex_top of ibex_top.v
 // End of automatics
 
 //---------------------------------------------------------------
-// Diagnostics, to SYSCSR (o_crash_dump is in the hand-written group below)
+// Diagnostics, to SYSCSR (o_csr_cpu_crash_dump is in the hand-written group below)
 //---------------------------------------------------------------
-// o_double_fault_seen is a one-cycle pulse; SYSCSR needs a sticky bit.
-/*AUTOOUTPUT("^o_double")*/
+// o_csr_cpu_double_fault_seen is a one-cycle pulse; SYSCSR needs a sticky bit.
+/*AUTOOUTPUT("^o_csr_cpu_double")*/
 // Beginning of automatic outputs (from unused autoinst outputs)
-output logic            o_double_fault_seen,    // From u_ibex_top of ibex_top.v
+output logic            o_csr_cpu_double_fault_seen,// From u_ibex_top of ibex_top.v
 // End of automatics
 
 //---------------------------------------------------------------
@@ -63,15 +63,15 @@ output logic            o_double_fault_seen,    // From u_ibex_top of ibex_top.v
 //---------------------------------------------------------------
 // Ports emacs cannot derive, written by hand. Keep this group last (the
 // final port has no trailing comma).
-//  - o_crash_dump: ibex_top's port is package-typed (ibex_pkg::crash_dump_t),
+//  - o_csr_cpu_crash_dump: ibex_top's port is package-typed (ibex_pkg::crash_dump_t),
 //    which verilog-mode does not declare (see flow/emacs/fix_pkg_ports.py).
 //    Flattened MSB..LSB: current_pc, next_pc, last_data_addr, exception_pc,
 //    exception_addr. Only the last two hold their value, so SYSCSR captures
-//    on o_double_fault_seen or an NMI/reset.
+//    on o_csr_cpu_double_fault_seen or an NMI/reset.
 //  - AXI4 master bus to S_BUS AXI_S1: the bridge speaks a packed struct, and
 //    the flat ports come from the pack/unpack assigns below.
 //---------------------------------------------------------------
-output logic [$bits(ibex_pkg::crash_dump_t)-1:0] o_crash_dump, // module-rules: ignore -- kept as the ibex package struct, 5 x 32 bits
+output logic [$bits(ibex_pkg::crash_dump_t)-1:0] o_csr_cpu_crash_dump, // module-rules: ignore -- kept as the ibex package struct, 5 x 32 bits
 
 input  logic                    i_bus_axi_aw_ready,
 output logic [0:0]                           o_bus_axi_aw_id,
@@ -229,7 +229,7 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
     .scramble_nonce_i         ('0),
     .scramble_req_o           (),
     .crash_dump_o             (w_ibex_crash_dump),
-    .double_fault_seen_o      (o_double_fault_seen),
+    .double_fault_seen_o      (o_csr_cpu_double_fault_seen),
     .alert_minor_o            (),
     .alert_major_internal_o   (),
     .alert_major_bus_o        (),
@@ -290,7 +290,7 @@ ibex_top #(
              .trvk_revbm_req_o          (),                      // Templated
              .trvk_revbm_addr_o         (),                      // Templated
              .scramble_req_o            (),                      // Templated
-             .double_fault_seen_o       (o_double_fault_seen),   // Templated
+             .double_fault_seen_o       (o_csr_cpu_double_fault_seen), // Templated
              .alert_minor_o             (),                      // Templated
              .alert_major_internal_o    (),                      // Templated
              .alert_major_bus_o         (),                      // Templated
@@ -385,7 +385,7 @@ m_qnsc_cpu2axi u_m_qnsc_cpu2axi(/*AUTOINST*/
                                 .i_data_addr    (w_ibex_bridge_data_addr[31:0]), // Templated
                                 .i_data_wdata   (w_ibex_bridge_data_wdata[31:0])); // Templated
 
-assign o_crash_dump = w_ibex_crash_dump;
+assign o_csr_cpu_crash_dump = w_ibex_crash_dump;
 
 // Pack/unpack: struct <-> flat AXI4 (hand-written, not AUTOINST).
 // The ID on the ports is only the port bit axi_mux adds (instruction 0, data 1): the leaf
