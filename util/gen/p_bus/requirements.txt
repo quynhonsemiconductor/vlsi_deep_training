@@ -1,0 +1,5 @@
+# APB-BUS-Generator reads the workbook with openpyxl (apb_bus_generator.py:1).
+# The upstream has no lock file; these are the versions the workbook was built
+# and the RTL generated with.
+openpyxl==3.1.5
+et-xmlfile==2.0.0
