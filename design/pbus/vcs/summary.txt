@@ -1,0 +1,18 @@
+VCS W-2024.09-SP1_Full64 | block pbus | top m_qnsc_wrap_pbus | commit 01104de
+Error-: 0
+Lint-: 28 on our files, 0 on vendor/ (upstream, not edited)
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_dma_cfg.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_spi.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_timer_1.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_uart_0.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_gpio_1.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_pwm.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_uart_1.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_gpio_2.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_wdt.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_i2c.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_timer_0.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_syscsr.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_scrc.sv
+    2  Lint-[UI] design/pbus/../../util/gen/p_bus/m_qnsc_p_bus_arb_gpio_0.sv
+Verdi KDB: generated
