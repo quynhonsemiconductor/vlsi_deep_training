@@ -168,7 +168,7 @@ upstreams:
     1-bit AWLOCK; ID_BITS = 1), so the wrapper adapts it to the AXI4 S_BUS: WID dropped, AxLEN zero-extended,
     BID/RID stripped of the 2-bit master index. APB3 register interface, paddr 13 bits, no PSTRB (word
     writes only). pclken tied 1 (one clock). INT is a single level (the 32-bit
-    build's port is 1 bit, dma_axi32.v:47), cleared by an INT_CLEAR write (TRM 5.6);
+    build''s port is 1 bit, dma_axi32.v:47), cleared by an INT_CLEAR write (TRM 5.6);
     idle follows the TRM power-down sequence.'
   files:
   - README.txt
@@ -233,6 +233,7 @@ upstreams:
   license: MentorProvided-QNSC-Course
   used_by:
   - design/bus
+  - design/pbus
   - design/scrc
   generator: true
   notes: 'Produces m_vlsi_apb_router from a spreadsheet. Genuinely multi-master with per-slave round-robin
@@ -240,11 +241,13 @@ upstreams:
     one slave: SCRC CSR; QNSC_SCRC_MAS 3). The top and leaf module names are hard-coded, so the two outputs
     collide and fail Naming Rule 2.1 -- open item in QNSC_SCRC_MAS 11. Generated RTL is committed alongside
     its spreadsheet input in util/gen -- committing only one of the two loses either reproducibility or
-    the source of truth.
+    the source of truth. Sample/Template/ holds the decoder and arbiter templates the script reads from
+    its own directory; without them the vendored generator cannot run (util/gen/p_bus/gen.sh).
 
     '
   files:
   - RTL/**
+  - Sample/Template/**
   - '*.py'
   - '*.xlsx'
   - README.md

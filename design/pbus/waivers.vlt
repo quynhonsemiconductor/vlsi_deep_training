@@ -1,0 +1,16 @@
+`verilator_config
+// Lint waivers of the pbus block. Each line has its reason.
+
+// APB-BUS-Generator gives every arbiter i_clk/i_rstn. With one master (AXI2APB)
+// it emits the 1-to-1 template: plain assignments, no flip-flop, so the two
+// inputs are read by nothing. The wrapper ties them (1'b0, 1'b1). The files are
+// generated (util/gen/p_bus), so the waiver names the signals, not a line.
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/p_bus/m_qnsc_p_bus_arb_*.sv" -match "*'i_clk'*"
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/p_bus/m_qnsc_p_bus_arb_*.sv" -match "*'i_rstn'*"
+
+// The generator passes three sideband signals to every slave: pprot, protect_en,
+// slverr_en. P_BUS carries no PPROT (QNSC_PBUS_MAS; design/top ties each slave's),
+// and no slave has the other two, so the wrapper leaves those outputs open.
+lint_off -rule PINCONNECTEMPTY -file "*design/pbus/rtl/m_qnsc_wrap_pbus.sv" -match "*'o_pprot_*'"
+lint_off -rule PINCONNECTEMPTY -file "*design/pbus/rtl/m_qnsc_wrap_pbus.sv" -match "*'o_protect_en_*'"
+lint_off -rule PINCONNECTEMPTY -file "*design/pbus/rtl/m_qnsc_wrap_pbus.sv" -match "*'o_slverr_en_*'"
