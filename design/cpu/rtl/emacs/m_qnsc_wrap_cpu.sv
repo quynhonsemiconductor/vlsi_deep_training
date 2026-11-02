@@ -32,7 +32,7 @@ input logic             i_dbg_req,              // To u_ibex_top of ibex_top.v
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_int")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
-input logic [10:0]      i_int_fast,             // To u_ibex_top of ibex_top.v
+input logic [13:0]      i_int_fast,             // To u_ibex_top of ibex_top.v
 input logic             i_int_nm,               // To u_ibex_top of ibex_top.v
 // End of automatics
 
@@ -179,7 +179,7 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
     .irq_software_i           (1'b0),
     .irq_timer_i              (1'b0),
     .irq_external_i           (1'b0),
-    .irq_fast_i               ({4'b0, i_int_fast[10:0]}),
+    .irq_fast_i               ({1'b0, i_int_fast[13:0]}),
     .irq_nm_i                 (i_int_nm),
     .core_sleep_o             (o_pwr_sleep),
     .test_en_i                (1'b0),           // no scan chain: the clock gate is never bypassed
@@ -331,7 +331,7 @@ ibex_top #(
              .irq_software_i            (1'b0),                  // Templated
              .irq_timer_i               (1'b0),                  // Templated
              .irq_external_i            (1'b0),                  // Templated
-             .irq_fast_i                ({4'b0, i_int_fast[10:0]}), // Templated
+             .irq_fast_i                ({1'b0, i_int_fast[13:0]}), // Templated
              .irq_nm_i                  (i_int_nm),              // Templated
              .scramble_key_valid_i      (1'b0),                  // Templated
              .scramble_key_i            ('0),                    // Templated

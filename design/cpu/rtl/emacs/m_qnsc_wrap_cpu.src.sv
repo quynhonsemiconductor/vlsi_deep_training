@@ -162,7 +162,7 @@ qnsc_cpu2axi_pkg::axi_s_1_resp_t w_bridge_axi_resp;
     .irq_software_i           (1'b0),
     .irq_timer_i              (1'b0),
     .irq_external_i           (1'b0),
-    .irq_fast_i               ({4'b0, i_int_fast[10:0]}),
+    .irq_fast_i               ({1'b0, i_int_fast[13:0]}),
     .irq_nm_i                 (i_int_nm),
     .core_sleep_o             (o_pwr_sleep),
     .test_en_i                (1'b0),           // no scan chain: the clock gate is never bypassed

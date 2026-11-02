@@ -48,7 +48,7 @@ convention natively.
 |---|---|---|
 | `i_clk_cpu`, `i_rst_n_cpu` | in | CPU clock domain |
 | `i_dbg_req` | in | from SYSDBG |
-| `i_int_fast[10:0]` | in | 11 real fast-IRQ sources; padded to Ibex's 15 internally |
+| `i_int_fast[13:0]` | in | fast-IRQ lines; 11 carry a source today (contract `interrupts.lines`), `[13:11]` are spare lines for later sources (mcause 27 to 29). Padded to Ibex's 15 internally |
 | `i_int_nm` | in | WDT bark (NMI), from INTMAP |
 | `o_pwr_sleep` | out | core has stopped its own clock (WFI) |
 | `o_csr_cpu_crash_dump[159:0]` | out | to SYSCSR; `ibex_pkg::crash_dump_t` flattened, 5 x 32 bits (current_pc, next_pc, last_data_addr, exception_pc, exception_addr). Declared with `$bits(ibex_pkg::crash_dump_t)`, so it follows the struct. Only the last two keep their value: SYSCSR captures on `o_csr_cpu_double_fault_seen` or an NMI/reset |
