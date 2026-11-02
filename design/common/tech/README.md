@@ -24,11 +24,42 @@ TECH=<tech> make vcs BLOCK=scrc
 | `qnsc_clk_buf` | `i_clk_src`, `o_clk_buf` | wire |
 | `qnsc_clk_inv` | `i_clk_src`, `o_clk_inv` | inverter |
 | `qnsc_clk_and` | `i_clk_src`, `i_en`, `o_clk_and` | AND |
+| `qnsc_dly` | `i_sig`, `o_sig_dly` | 1 ns delay, simulation model only (lint and synthesis ignore it) |
+| `qnsc_rst_sync` | `i_clk_dst`, `i_rst_n_src`, `i_dft_scan_en`, `o_rst_n_dst` | asynchronous assert, release on the second rising edge; scan enable bypasses the flip-flops |
+| `qnsc_sync_cell` | `i_clk_dst`, `i_rst_n_dst`, `i_d`, `o_q` | two flip-flops, cleared asynchronously |
+| `qnsc_rst_filter` | `i_rst_n_raw`, `o_rst_n_filt` | clockless glitch filter: three delay taps, set when all four are 1, clear when all four are 0 |
+
+The last four exist for SCRC (`QNSC_SCRC_MAS` 7.1--7.3): its mentor rule is that the
+clock gates, delays, synchronisers and the filter flip-flop are library cells, never
+inferred. `qnsc_sync_cell` is that rule's synchroniser; a data crossing that needs no
+library cell uses the behavioural `qnsc_sync` of `../rtl`.
 
 No block lists these files. Every flow (lint, VCS, synthesis, GCA, connectivity, sim)
 appends them, and the shared RTL of [`../common.f`](../common.f), with
 `flow/tech/libs.sh` as **library files** (`-v`): a cell is compiled only where a block
 instantiates it, and once when several blocks do.
+
+## `smic28`: SMIC 28HKMG
+
+`smic28/` maps every module onto ARM `sc9mc_base_svt_c31` r1p0 (cell suffix
+`_A9TS_C31`; on the server under
+`/tools/pdk_libraries/SMIC/SMIC28NM/SMIC28HKMG/SMIC-28HKMG-9-Track-c31-Standard-Cell-Library/arm/smic/28hkmg/sc9mc_base_svt_c31/r1p0/`).
+Nine tracks and svt: the chip runs at 20 MHz, so speed is not the constraint; nine
+tracks route more easily than seven and are smaller than twelve.
+
+| Module | Cells |
+|---|---|
+| `qnsc_clk_gate` | `PREICG_X1B` |
+| `qnsc_clk_buf` | `BUFH_X4M` (size to be set by physical design) |
+| `qnsc_clk_inv`, `qnsc_clk_and` | `INV_X1M`, `AND2_X1M` |
+| `qnsc_dly` | `DLY4_X1M` |
+| `qnsc_rst_sync` | `INV_X1M` + `SDFFYRPQ2D_X1M` (D = 1) + `MX2_X1B` |
+| `qnsc_sync_cell` | `INV_X1M` + `SDFFYRPQ2D_X1M` |
+| `qnsc_rst_filter` | 3 x `DLY4_X1M` + `NAND4_X1M` + `OR4_X1M` + `INV_X1M` + `DFFSRPQ_X1M` |
+
+The library has no active-low reset pin, hence the inverter in front of each
+synchroniser's `R`. `TECH=smic28` builds only where the PDK's Verilog model is read as
+well (the training server); CI lints and simulates `generic/`.
 
 ## Adding a technology
 
