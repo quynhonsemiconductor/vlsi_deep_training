@@ -22,7 +22,7 @@
 //     no flow control
 //   - DMA_RX_REQ of apb_uart (LSR.data_ready, a level) -> o_dma_rx_req, the RX request of
 //     dma_axi32. The pin exists only in the patched apb_uart/obi_uart (vendor/patches).
-//     TX has no pin: the DMA uses o_int_uart as its TX request
+//     TX does not use the DMA: the CPU writes THR on o_int_uart (THR-empty)
 //   - PREADY, PSLVERR passed through: no wait state; PSLVERR on the accesses
 //     the MAS 6 table marks
 //

@@ -262,7 +262,7 @@ upstreams:
   notes: 'Tag v0.1.1, the version apb_uart 8182a85 depends on. Holds obi_uart, the actual UART core. Patched
     by vendor/patches/pulp-platform_obi_peripherals/0001-expose-lsr-data-ready-as-dma-rx-req.patch: one
     added output, dma_rx_req_o = LSR.data_ready (a level, 1 while RX data is unread), for the dma_axi32
-    RX request. No existing port or behaviour changes. TX has no request pin and uses the interrupt line.
+    RX request. No existing port or behaviour changes. TX has no request pin and does not use the DMA.
 
     '
 - name: pulp-platform/obi

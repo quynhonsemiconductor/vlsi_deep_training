@@ -11,7 +11,7 @@ It is read only (assign dma_rx_req_o = reg_q.LSR.data_ready). No existing port, 
 behaviour changes. Checked by lock-step co-simulation of the original and the patched module: 30 random
 seeds, 90,000,990 clocks, every APB response, irq, txd and the whole register file identical.
 
-Not covered: the TX direction (LSR.thr_empty stays 1 after the first THR write), so TX keeps using INT.
+Not covered: the TX direction (LSR.thr_empty stays 1 after the first THR write). TX does not use the DMA.
 This is not the earlier patch 0001-add-dma-request-lines, which used rx_fifo_trigger.
 
 Applied by util/vendor_ip.py (git apply -p1 --directory vendor/pulp-platform/obi_peripherals).
