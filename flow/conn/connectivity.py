@@ -207,7 +207,7 @@ def model(tree, top):
 
     def collect(n):
         if isinstance(n, dict):
-            if n.get("type") == "ASSIGNW":
+            if n.get("type") in ("ASSIGNW", "ASSIGN"):
                 lhs, lr = render(n["lhsp"][0])
                 rhs, rr = render(n["rhsp"][0])
                 assigns.append((lhs, rhs, lr, rr))
@@ -219,6 +219,10 @@ def model(tree, top):
                 collect(x)
     collect([s for s in stmts if s["type"] == "ASSIGNW" or
              (s["type"] == "ALWAYS" and s.get("keyword") == "cont_assign")])
+    # Verilator turns `assign <output logic> = <constant>` into a constant
+    # variable plus an INITIAL holding the assignment (no ASSIGNW): read those
+    # assignments too, or every output tied to a constant is "driven by nothing".
+    collect([s for s in stmts if s["type"] == "INITIAL"])
     # procedural logic of the top itself: always_ff / always_comb / always @
     reads, writes = set(), set()
 
