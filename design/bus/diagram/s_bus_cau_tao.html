@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S_BUS được tạo từ những gì</title>
+<style>
+  :root { --bg:#ffffff; --fg:#111111; --muted:#555555; --line:#111111; --soft:#f2f2f2; --warn:#fff7d6; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#161616; --fg:#eeeeee; --muted:#aaaaaa; --line:#eeeeee; --soft:#262626; --warn:#3a3317; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 21px; margin: 40px 0 10px; border-bottom: 2px solid var(--line); padding-bottom: 4px; }
+  p, li { max-width: 78ch; }
+  .sub { color: var(--muted); margin: 0 0 8px; }
+  code { font: 14px/1.4 ui-monospace, Consolas, monospace; background: var(--soft); padding: 1px 5px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; margin: 12px 0; }
+  th, td { border: 1.5px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--soft); }
+  .tag { display:inline-block; border:1.5px solid var(--line); padding:0 8px; font-size:13px; font-weight:600; }
+  .tag.sinh { border-style: dashed; }
+  .tag.tu { background: var(--fg); color: var(--bg); }
+  .note { background: var(--warn); border: 1.5px solid var(--line); padding: 10px 14px; margin: 14px 0; }
+  .steps { counter-reset: s; list-style: none; padding: 0; }
+  .steps li { counter-increment: s; border: 1.5px solid var(--line); padding: 8px 12px 8px 46px; margin: 8px 0; position: relative; }
+  .steps li::before { content: counter(s); position:absolute; left:12px; top:8px; font-weight:700; border:1.5px solid var(--line); width:24px; height:24px; text-align:center; line-height:21px; border-radius:50%; }
+  figure { margin: 12px 0; overflow-x: auto; }
+  svg { display:block; width:100%; height:auto; min-width: 760px; }
+  svg text { fill: var(--fg); font-family: system-ui, "Segoe UI", sans-serif; }
+  svg .b { fill: var(--bg); stroke: var(--line); stroke-width: 2; }
+  svg .d { fill: var(--bg); stroke: var(--line); stroke-width: 2; stroke-dasharray: 6 4; }
+  svg .s { fill: var(--fg); stroke: var(--line); stroke-width: 2; }
+  svg .st text, svg text.st { fill: var(--bg); }
+  svg .l { stroke: var(--line); stroke-width: 2; fill: none; marker-end: url(#ar); }
+  svg .r { fill: none; stroke: var(--line); stroke-width: 2; stroke-dasharray: 10 6; }
+  svg .sm { font-size: 12px; }
+  svg .md { font-size: 14px; }
+  svg .lg { font-size: 16px; font-weight: 700; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>S_BUS được tạo từ những gì</h1>
+<p class="sub">Trả lời câu hỏi: có file top sẵn rồi làm tiếp, hay tự code? Cả hai: lõi là IP có sẵn, phần nối dây và cấu hình là tự viết. Wrapper chỉ gồm crossbar và cầu AXI2APB, không có router P_BUS.</p>
+
+<h2>1. Ba loại file</h2>
+<p>Mỗi file của S_BUS thuộc một trong ba loại. Biết loại file thì biết có được sửa hay không.</p>
+<table>
+  <tr><th>Loại</th><th>Ý nghĩa</th><th>Có sửa được không</th></tr>
+  <tr><td><span class="tag">Có sẵn</span></td><td>IP của người khác, nằm trong <code>vendor/</code>. Repo chỉ liệt kê trong <code>bus.f</code>, không copy.</td><td>Không</td></tr>
+  <tr><td><span class="tag sinh">Sinh ra</span></td><td>Do công cụ tạo từ một file nguồn. Đầu file có ghi "GENERATED, DO NOT EDIT" hoặc nằm cạnh file nguồn.</td><td>Không sửa file này, sửa file nguồn rồi sinh lại</td></tr>
+  <tr><td><span class="tag tu">Tự viết</span></td><td>Code của nhóm mình.</td><td>Có</td></tr>
+</table>
+
+<h2>2. Bức tranh tổng thể</h2>
+<figure>
+<svg viewBox="0 0 1040 430" role="img" aria-label="Các file tạo nên S_BUS và quan hệ giữa chúng">
+  <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="fill:var(--line)"/></marker></defs>
+
+  <text class="lg" x="20" y="26">Nguồn đầu vào</text>
+
+  <rect class="b" x="20" y="40" width="250" height="70"/>
+  <text class="md" x="145" y="68" text-anchor="middle" font-weight="700">qsoc_contract.yml</text>
+  <text class="sm" x="145" y="90" text-anchor="middle">bản đồ địa chỉ, số dùng chung</text>
+
+  <rect class="d" x="20" y="150" width="250" height="70"/>
+  <text class="md" x="145" y="178" text-anchor="middle" font-weight="700">qnsc_pkg.sv</text>
+  <text class="sm" x="145" y="200" text-anchor="middle">sinh ra từ contract</text>
+
+  <rect class="s" x="20" y="260" width="250" height="70"/>
+  <text class="md st" x="145" y="288" text-anchor="middle" font-weight="700" style="fill:var(--bg)">qnsc_s_bus_pkg.sv</text>
+  <text class="sm" x="145" y="310" text-anchor="middle" style="fill:var(--bg)">tự viết: cấu hình Cfg, ID, bảng địa chỉ</text>
+
+  <path class="l" d="M145,110 L145,150"/>
+  <path class="l" d="M145,220 L145,260"/>
+
+  <text class="lg" x="340" y="26">Các khối bên trong m_qnsc_wrap_bus</text>
+  <rect class="r" x="340" y="40" width="520" height="380"/>
+
+  <rect class="s" x="360" y="64" width="480" height="64"/>
+  <text class="md" x="600" y="92" text-anchor="middle" font-weight="700" style="fill:var(--bg)">Port struct nối vào crossbar</text>
+  <text class="sm" x="600" y="112" text-anchor="middle" style="fill:var(--bg)">i/o_bus_axi_*_req, _resp ⇄ mảng của axi_xbar</text>
+
+  <rect class="b" x="360" y="160" width="480" height="96"/>
+  <text class="md" x="600" y="190" text-anchor="middle" font-weight="700">u_axi_xbar : axi_xbar</text>
+  <text class="sm" x="600" y="212" text-anchor="middle">crossbar 3 master × 4 slave, có sẵn của pulp-platform</text>
+  <text class="sm" x="600" y="232" text-anchor="middle">gồm axi_demux, axi_mux, decode lỗi bên trong</text>
+
+  <rect class="b" x="360" y="290" width="480" height="90"/>
+  <text class="md" x="600" y="318" text-anchor="middle" font-weight="700">AXI2APB</text>
+  <text class="sm" x="600" y="340" text-anchor="middle">u_axi_to_axi_lite → u_axi_lite_to_apb</text>
+  <text class="sm" x="600" y="360" text-anchor="middle">hai khối có sẵn của pulp-platform</text>
+
+  <path class="l" d="M600,128 L600,160"/>
+  <path class="l" d="M600,256 L600,290"/>
+
+  <path class="l" d="M270,295 L340,295"/>
+
+  <text class="lg" x="900" y="26">Đầu ra</text>
+  <rect class="b" x="900" y="70" width="120" height="60"/>
+  <text class="md" x="960" y="106" text-anchor="middle">3 master AXI</text>
+  <text class="sm" x="960" y="152" text-anchor="middle">ROM, ISRAM, DSRAM</text>
+  <rect class="b" x="900" y="320" width="120" height="60"/>
+  <text class="md" x="960" y="356" text-anchor="middle">1 cổng APB</text>
+  <text class="sm" x="960" y="402" text-anchor="middle">tới P_BUS (ngoài wrapper)</text>
+  <path class="l" d="M840,208 L900,100"/>
+  <path class="l" d="M840,335 L900,350"/>
+</svg>
+</figure>
+<p>Nét liền đậm là file tự viết, nét đứt là file sinh ra, khung thường là IP có sẵn. Khung nét đứt dài bao quanh các khối là wrapper <code>m_qnsc_wrap_bus</code>. Router P_BUS (chia cổng APB ra các ngoại vi) không nằm trong wrapper này.</p>
+
+<h2>3. Từng file nằm ở đâu và ai viết</h2>
+<table>
+  <tr><th>File</th><th>Loại</th><th>Vai trò</th></tr>
+  <tr><td><code>vendor/pulp-platform/axi/src/axi_xbar.sv</code></td><td><span class="tag">Có sẵn</span></td><td>Crossbar. Nhận lệnh từ 3 master và chọn slave theo địa chỉ. Kéo theo <code>axi_demux</code>, <code>axi_mux</code>, <code>axi_err_slv</code>.</td></tr>
+  <tr><td><code>axi_to_axi_lite</code>, <code>axi_lite_to_apb</code></td><td><span class="tag">Có sẵn</span></td><td>Đổi AXI4 sang AXI-Lite rồi sang APB4 cho nhánh ngoại vi.</td></tr>
+  <tr><td><code>design/top/rtl/qnsc_pkg.sv</code></td><td><span class="tag sinh">Sinh ra</span></td><td>Số dùng chung của cả chip, sinh từ <code>util/qsoc_contract.yml</code>.</td></tr>
+  <tr><td><code>design/bus/rtl/qnsc_s_bus_pkg.sv</code></td><td><span class="tag tu">Tự viết</span></td><td>173 dòng. Số cổng, độ rộng ID, các giá trị <code>Cfg</code> của crossbar, bảng địa chỉ lấy từ contract.</td></tr>
+  <tr><td><code>design/bus/rtl/emacs/m_qnsc_wrap_bus.src.sv</code></td><td><span class="tag tu">Tự viết</span></td><td>278 dòng. File nguồn của wrapper. Đây là file duy nhất bạn sửa khi muốn đổi cách nối.</td></tr>
+  <tr><td><code>design/bus/rtl/m_qnsc_wrap_bus.sv</code></td><td><span class="tag sinh">Sinh ra</span></td><td>312 dòng. Do emacs sinh từ <code>.src.sv</code>. Đây là file RTL thật được build và lint.</td></tr>
+  <tr><td><code>design/bus/bus.f</code></td><td><span class="tag tu">Tự viết</span></td><td>Danh sách file build, thứ tự quan trọng: package trước, IP, rồi wrapper ở cuối.</td></tr>
+</table>
+
+<h2>4. Cách ra được file wrapper</h2>
+<ol class="steps">
+  <li>Bạn sửa <code>m_qnsc_wrap_bus.src.sv</code>. Trong file có các comment đặc biệt như <code>/*AUTOINST*/</code> (tự điền chân của instance) và <code>/*AUTOINPUT*/</code>, <code>/*AUTOOUTPUT*/</code> (tự điền port lặp lại).</li>
+  <li>Chạy <code>make wrap</code> trong <code>design/bus/rtl/emacs/</code>. Makefile gọi emacs <code>verilog-mode</code> mở rộng các comment đặc biệt đó.</li>
+  <li>Kết quả ghi ra <code>design/bus/rtl/m_qnsc_wrap_bus.sv</code>. Chạy lại lần nữa phải ra đúng file giống hệt (không đổi gì).</li>
+  <li>Lint và mô phỏng đọc <code>bus.f</code>, rồi build đúng file <code>.sv</code> này chứ không đọc file <code>.src.sv</code>.</li>
+</ol>
+<div class="note"><b>Đừng sửa tay file <code>m_qnsc_wrap_bus.sv</code>.</b> Lần <code>make wrap</code> sau sẽ ghi đè và mất thay đổi. Sửa ở <code>.src.sv</code>.</div>
+
+<h2>5. Trong file .src.sv có gì</h2>
+<table>
+  <tr><th>Phần</th><th>Dòng (xấp xỉ)</th><th>Nội dung</th></tr>
+  <tr><td>Port</td><td>đầu file</td><td>Clock/reset do emacs điền. 12 port AXI (struct của <code>qnsc_s_bus_pkg</code>) và cổng APB viết tay.</td></tr>
+  <tr><td>Kiểm tra lúc elaboration</td><td>82</td><td>Độ rộng <code>paddr</code> và <code>pwdata</code> của cổng APB phải bằng package.</td></tr>
+  <tr><td>Instance <code>axi_xbar</code></td><td>163 đến 181</td><td>Truyền <code>Cfg</code> và kiểu struct, <code>ATOPs = 0</code>, <code>Connectivity = '1</code>.</td></tr>
+  <tr><td>Instance <code>axi_to_axi_lite</code></td><td>197 đến 209</td><td>Phần đầu của AXI2APB.</td></tr>
+  <tr><td>Instance <code>axi_lite_to_apb</code></td><td>223 đến 235</td><td>Phần sau của AXI2APB.</td></tr>
+  <tr><td>Nối cầu với cổng APB</td><td>từ 238</td><td>Các <code>assign</code> nối struct APB của cầu với cổng APB của wrapper.</td></tr>
+  <tr><td>Nối port AXI với mảng của crossbar</td><td>từ 252</td><td>Các <code>assign</code> thuần nối dây, không có logic.</td></tr>
+</table>
+
+<h2>6. Dữ liệu đi qua như thế nào</h2>
+<p>Một lệnh đọc từ CPU đi như sau.</p>
+<ol class="steps">
+  <li>Master đưa tín hiệu vào struct <code>i_bus_axi_s_1_req</code>, ví dụ trường <code>ar.addr</code>.</li>
+  <li>Struct request 183 bit đi thẳng vào mảng của <code>axi_xbar</code> bằng một câu <code>assign</code>.</li>
+  <li><code>axi_xbar</code> so địa chỉ với bảng 4 dòng để chọn slave. Địa chỉ không khớp dòng nào thì trả DECERR.</li>
+  <li>Nếu đích là ROM, ISRAM hoặc DSRAM, struct 187 bit (ID rộng thêm 2 bit) đi ra port <code>o_bus_axi_m_n_req</code>.</li>
+  <li>Nếu đích là vùng ngoại vi 0x8000_0000, lệnh đi vào AXI2APB rồi ra cổng APB duy nhất của wrapper.</li>
+  <li>Phản hồi đi ngược lại đúng đường đó.</li>
+</ol>
+
+<h2>7. Bên trong crossbar: demux và mux, từng kiểu một</h2>
+<p>Phần này giải thích <code>axi_demux</code> và <code>axi_mux</code> theo ý nghĩa, rồi minh hoạ từng việc chúng làm. Tên module và tên khối con là của thư viện pulp-platform (đã đọc ở <code>axi_xbar.sv</code>, <code>axi_mux.sv</code>, <code>axi_id_prepend.sv</code>). Các ví dụ số liệu mình tự dựng từ bản đồ địa chỉ của QSOC để dễ hình dung.</p>
+
+<h3>7.1 Hình dung như một ngã tư</h3>
+<figure>
+<svg viewBox="0 0 1040 420" role="img" aria-label="Crossbar như một ngã tư"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--line)"/></marker></defs>
+<rect class="b" x="20" y="40" width="140" height="70"/><text class="md" x="90" y="72" text-anchor="middle" font-weight="700">SYSDBG</text><text class="sm" x="90" y="92" text-anchor="middle">AXI_S0</text>
+<path class="l" d="M160,75 L250,75"/>
+<rect class="s" x="250" y="40" width="160" height="70"/><text class="md" x="330" y="70" text-anchor="middle" font-weight="700" style="fill:var(--bg)">axi_demux</text><text class="sm" x="330" y="92" text-anchor="middle" style="fill:var(--bg)">chọn đường</text>
+<rect class="b" x="20" y="150" width="140" height="70"/><text class="md" x="90" y="182" text-anchor="middle" font-weight="700">CPU</text><text class="sm" x="90" y="202" text-anchor="middle">AXI_S1</text>
+<path class="l" d="M160,185 L250,185"/>
+<rect class="s" x="250" y="150" width="160" height="70"/><text class="md" x="330" y="180" text-anchor="middle" font-weight="700" style="fill:var(--bg)">axi_demux</text><text class="sm" x="330" y="202" text-anchor="middle" style="fill:var(--bg)">chọn đường</text>
+<rect class="b" x="20" y="260" width="140" height="70"/><text class="md" x="90" y="292" text-anchor="middle" font-weight="700">DMA</text><text class="sm" x="90" y="312" text-anchor="middle">AXI_S2</text>
+<path class="l" d="M160,295 L250,295"/>
+<rect class="s" x="250" y="260" width="160" height="70"/><text class="md" x="330" y="290" text-anchor="middle" font-weight="700" style="fill:var(--bg)">axi_demux</text><text class="sm" x="330" y="312" text-anchor="middle" style="fill:var(--bg)">chọn đường</text>
+<path d="M410,75 L630,55" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,185 L630,55" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,295 L630,55" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,75 L630,150" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,185 L630,150" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,295 L630,150" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,75 L630,245" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,185 L630,245" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,295 L630,245" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,75 L630,340" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,185 L630,340" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<path d="M410,295 L630,340" style="stroke:var(--line);stroke-width:1.4;opacity:.45;fill:none"/>
+<rect class="b" x="630" y="20" width="160" height="70"/><text class="md" x="710" y="50" text-anchor="middle" font-weight="700">axi_mux</text><text class="sm" x="710" y="72" text-anchor="middle">nhường đường</text>
+<path class="l" d="M790,55 L880,55"/>
+<rect class="b" x="880" y="20" width="140" height="70"/><text class="md" x="950" y="52" text-anchor="middle" font-weight="700">ROM</text><text class="sm" x="950" y="72" text-anchor="middle">AXI_M0</text>
+<rect class="b" x="630" y="115" width="160" height="70"/><text class="md" x="710" y="145" text-anchor="middle" font-weight="700">axi_mux</text><text class="sm" x="710" y="167" text-anchor="middle">nhường đường</text>
+<path class="l" d="M790,150 L880,150"/>
+<rect class="b" x="880" y="115" width="140" height="70"/><text class="md" x="950" y="147" text-anchor="middle" font-weight="700">ISRAM</text><text class="sm" x="950" y="167" text-anchor="middle">AXI_M1</text>
+<rect class="b" x="630" y="210" width="160" height="70"/><text class="md" x="710" y="240" text-anchor="middle" font-weight="700">axi_mux</text><text class="sm" x="710" y="262" text-anchor="middle">nhường đường</text>
+<path class="l" d="M790,245 L880,245"/>
+<rect class="b" x="880" y="210" width="140" height="70"/><text class="md" x="950" y="242" text-anchor="middle" font-weight="700">DSRAM</text><text class="sm" x="950" y="262" text-anchor="middle">AXI_M2</text>
+<rect class="b" x="630" y="305" width="160" height="70"/><text class="md" x="710" y="335" text-anchor="middle" font-weight="700">axi_mux</text><text class="sm" x="710" y="357" text-anchor="middle">nhường đường</text>
+<path class="l" d="M790,340 L880,340"/>
+<rect class="b" x="880" y="305" width="140" height="70"/><text class="md" x="950" y="337" text-anchor="middle" font-weight="700">AXI2APB</text><text class="sm" x="950" y="357" text-anchor="middle">AXI_M3</text>
+<text class="sm" x="330" y="398" text-anchor="middle">3 cái, mỗi master một cái</text><text class="sm" x="710" y="398" text-anchor="middle">4 cái, mỗi slave một cái</text>
+<text class="sm" x="520" y="410" text-anchor="middle" style="opacity:.8">12 đường nối: mỗi demux nối tới cả 4 mux</text>
+</svg>
+</figure>
+<p>Ba master (xe) cùng đến, mỗi xe muốn rẽ vào một trong bốn đường (slave). Mỗi master có <b>một demux</b>: nhìn địa chỉ để chọn đường. Mỗi slave có <b>một mux</b>: nếu nhiều xe cùng muốn vào đường đó thì cho lần lượt đi. Vì mỗi demux nối tới đủ bốn mux nên có 12 đường nối. Chính các đường nối này là "ma trận 3 × 4" trên block diagram.</p>
+
+<h3>7.2 Kiểu 1: chọn đường theo địa chỉ (cc_addr_decode trong demux)</h3>
+<p>Demux so địa chỉ của lệnh với bảng 4 dòng. Địa chỉ khớp dòng nào thì đi tới slave đó. Dòng khớp khi <code>start ≤ địa chỉ &lt; end</code> (điểm cuối không tính). Số liệu bên dưới lấy từ contract.</p>
+<div class="scroll"><table>
+<tr><th>Địa chỉ ví dụ</th><th>So với bảng</th><th>Đi tới</th></tr>
+<tr><td><code>0x0000_0040</code></td><td>nằm trong 0x0000_0000 đến 0x0000_0800</td><td>ROM (<code>AXI_M0</code>)</td></tr>
+<tr><td><code>0x2000_1080</code></td><td>nằm trong 0x2000_0000 đến 0x2001_0000</td><td>ISRAM (<code>AXI_M1</code>)</td></tr>
+<tr><td><code>0x3000_0010</code></td><td>nằm trong 0x3000_0000 đến 0x3000_8000</td><td>DSRAM (<code>AXI_M2</code>)</td></tr>
+<tr><td><code>0x8000_4000</code></td><td>nằm trong 0x8000_0000 đến 0x8003_8000</td><td>AXI2APB (<code>AXI_M3</code>), rồi ra cổng APB</td></tr>
+<tr><td><code>0x4000_0000</code></td><td>không nằm trong dòng nào</td><td>Responder lỗi: master nhận phản hồi lỗi <b>DECERR</b></td></tr>
+</table></div>
+<p>Khối đám mây <code>cc_addr_decode</code> trên block diagram là mạch logic thuần (không có clock), nên được vẽ hình mây theo ký hiệu của thư viện QNSC. Responder lỗi là một slave giả nằm ngay trong demux, chỉ để trả lời DECERR.</p>
+
+<h3>7.3 Kiểu 2: gắn thêm 2 bit vào ID (i_id_prepend trong mux)</h3>
+<p>Slave chỉ biết "ID này", không biết lệnh đến từ master nào. Crossbar giải quyết bằng cách <b>gắn thêm 2 bit chỉ số master vào đầu ID</b> trước khi đưa cho slave. Khi slave trả lời, nó trả lại nguyên ID 7 bit đó, và crossbar đọc 2 bit đầu để biết trả về master nào (rồi bỏ 2 bit này đi).</p>
+<figure>
+<svg viewBox="0 0 1040 330" role="img" aria-label="Thêm 2 bit vào đầu ID"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--line)"/></marker></defs>
+<text class="sm" x="408" y="56" text-anchor="end">ID gốc của CPU, 5 bit</text>
+<rect class="b" x="418" y="30" width="44" height="40"/><text class="md" x="440" y="56" text-anchor="middle" font-weight="700" style="">1</text>
+<rect class="b" x="462" y="30" width="44" height="40"/><text class="md" x="484" y="56" text-anchor="middle" font-weight="700" style="">0</text>
+<rect class="b" x="506" y="30" width="44" height="40"/><text class="md" x="528" y="56" text-anchor="middle" font-weight="700" style="">0</text>
+<rect class="b" x="550" y="30" width="44" height="40"/><text class="md" x="572" y="56" text-anchor="middle" font-weight="700" style="">0</text>
+<rect class="b" x="594" y="30" width="44" height="40"/><text class="md" x="616" y="56" text-anchor="middle" font-weight="700" style="">0</text>
+<text class="sm" x="320" y="146" text-anchor="end">chỉ số master (CPU = cổng s_1), 2 bit</text>
+<rect class="s" x="330" y="120" width="44" height="40"/><text class="md" x="352" y="146" text-anchor="middle" font-weight="700" style="fill:var(--bg)">0</text>
+<rect class="s" x="374" y="120" width="44" height="40"/><text class="md" x="396" y="146" text-anchor="middle" font-weight="700" style="fill:var(--bg)">1</text>
+<text class="sm" x="320" y="256" text-anchor="end">ID ra tới slave, 7 bit</text>
+<rect class="s" x="330" y="230" width="44" height="40"/><text class="md" x="352" y="256" text-anchor="middle" font-weight="700" style="fill:var(--bg)">0</text>
+<rect class="s" x="374" y="230" width="44" height="40"/><text class="md" x="396" y="256" text-anchor="middle" font-weight="700" style="fill:var(--bg)">1</text>
+<rect class="b" x="418" y="230" width="44" height="40"/><text class="md" x="440" y="256" text-anchor="middle" font-weight="700">1</text>
+<rect class="b" x="462" y="230" width="44" height="40"/><text class="md" x="484" y="256" text-anchor="middle" font-weight="700">0</text>
+<rect class="b" x="506" y="230" width="44" height="40"/><text class="md" x="528" y="256" text-anchor="middle" font-weight="700">0</text>
+<rect class="b" x="550" y="230" width="44" height="40"/><text class="md" x="572" y="256" text-anchor="middle" font-weight="700">0</text>
+<rect class="b" x="594" y="230" width="44" height="40"/><text class="md" x="616" y="256" text-anchor="middle" font-weight="700">0</text>
+<path class="l" d="M374,160 L374,222"/><path class="l" d="M528,70 L528,222"/>
+
+</svg>
+</figure>
+<table>
+<tr><th>Master</th><th>Cổng</th><th>2 bit được gắn thêm</th></tr>
+<tr><td>SYSDBG</td><td><code>AXI_S0</code></td><td><code>00</code></td></tr>
+<tr><td>CPU</td><td><code>AXI_S1</code></td><td><code>01</code></td></tr>
+<tr><td>DMA</td><td><code>AXI_S2</code></td><td><code>10</code></td></tr>
+</table>
+<p>Ví dụ trong hình lấy ID gốc 5'b10000 của CPU: bit đầu 1 là cổng dữ liệu của cầu cpu2axi (0 là cổng lệnh), bốn bit sau luôn bằng 0. 2 bit chỉ số master đứng trước, ID gốc giữ nguyên phía sau.</p>
+<p>Số 2 bit tính bằng <code>$clog2(3)</code>, nên ID đi từ 5 bit lên 7 bit. Mình đọc trực tiếp dòng <code>{pre_id_i, id}</code> trong <code>axi_id_prepend.sv</code>: chỉ số là số thứ tự cổng master.</p>
+
+<h3>7.4 Kiểu 3: nhường đường (i_aw_arbiter, i_ar_arbiter trong mux)</h3>
+<p>Nếu hai hay ba master cùng gửi lệnh tới <b>cùng một slave</b> trong cùng một chu kỳ thì chỉ một lệnh qua được. Trọng tài dùng kiểu <b>round-robin</b>: lần lượt từng master, vừa cho ai đi thì lần sau ưu tiên người kế tiếp. Nhờ vậy không master nào bị bỏ đói.</p>
+<div class="scroll"><table>
+<tr><th>Lần</th><th>Ai đang chờ vào ROM</th><th>Trọng tài cho</th></tr>
+<tr><td>1</td><td>SYSDBG, CPU, DMA</td><td>SYSDBG</td></tr>
+<tr><td>2</td><td>CPU, DMA (SYSDBG xong rồi)</td><td>CPU</td></tr>
+<tr><td>3</td><td>DMA</td><td>DMA</td></tr>
+</table></div>
+<p>Đây là ví dụ minh hoạ nguyên tắc. Thứ tự thật tuỳ thuộc trạng thái của trọng tài ở thời điểm đó, nên đừng xem bảng là kết quả mô phỏng. Hai trọng tài riêng cho ghi (<code>i_aw_arbiter</code>) và đọc (<code>i_ar_arbiter</code>), đều là <code>cc_rr_arb_tree</code>.</p>
+
+<h3>7.5 Kiểu 4: lệnh ghi có hai phần đi riêng (w_select và i_w_fifo)</h3>
+<p>Lệnh ghi gồm <b>địa chỉ (AW)</b> và <b>dữ liệu (W)</b> gửi trên hai đường riêng, nên có thể lệch nhau. Crossbar cần đảm bảo dữ liệu đi đúng chỗ mà địa chỉ đã chọn. Cách làm: lúc xử lý địa chỉ thì <b>nhớ lại</b>, rồi dữ liệu đi theo ghi nhớ đó.</p>
+<figure>
+<svg viewBox="0 0 1040 330" role="img" aria-label="Lệnh ghi: địa chỉ và dữ liệu đi riêng"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--line)"/></marker></defs>
+<text class="lg" x="20" y="22">Đường AW (địa chỉ ghi)</text>
+<text class="lg" x="20" y="182">Đường W (dữ liệu ghi)</text>
+<rect class="b" x="20" y="40" width="200" height="80"/><text class="md" x="120" y="74" text-anchor="middle" font-weight="700">CPU</text><text class="sm" x="120" y="98" text-anchor="middle">gửi AW: ghi vào 0x3000_0010</text>
+<path class="l" d="M220,80 L270,80"/>
+<rect class="b" x="270" y="40" width="200" height="80"/><text class="md" x="370" y="74" text-anchor="middle" font-weight="700">cc_addr_decode</text><text class="sm" x="370" y="98" text-anchor="middle">địa chỉ thuộc DSRAM</text>
+<path class="l" d="M470,80 L520,80"/>
+<rect class="b" x="520" y="40" width="200" height="80"/><text class="md" x="620" y="74" text-anchor="middle" font-weight="700">i_aw_arbiter</text><text class="sm" x="620" y="98" text-anchor="middle">cho CPU đi trước</text>
+<path class="l" d="M720,80 L770,80"/>
+<rect class="b" x="770" y="40" width="200" height="80"/><text class="md" x="870" y="74" text-anchor="middle" font-weight="700">DSRAM</text><text class="sm" x="870" y="98" text-anchor="middle">nhận địa chỉ</text>
+<rect class="b" x="20" y="200" width="200" height="80"/><text class="md" x="120" y="234" text-anchor="middle" font-weight="700">CPU</text><text class="sm" x="120" y="258" text-anchor="middle">gửi dữ liệu W</text>
+<path class="l" d="M220,240 L270,240"/>
+<rect class="s" x="270" y="200" width="200" height="80"/><text class="md" x="370" y="234" text-anchor="middle" font-weight="700" style="fill:var(--bg)">w_select</text><text class="sm" x="370" y="258" text-anchor="middle" style="fill:var(--bg)">đã nhớ: đi DSRAM</text>
+<path class="l" d="M470,240 L520,240"/>
+<rect class="s" x="520" y="200" width="200" height="80"/><text class="md" x="620" y="234" text-anchor="middle" font-weight="700" style="fill:var(--bg)">i_w_fifo</text><text class="sm" x="620" y="258" text-anchor="middle" style="fill:var(--bg)">đã nhớ: CPU được chọn</text>
+<path class="l" d="M720,240 L770,240"/>
+<rect class="b" x="770" y="200" width="200" height="80"/><text class="md" x="870" y="234" text-anchor="middle" font-weight="700">DSRAM</text><text class="sm" x="870" y="258" text-anchor="middle">nhận dữ liệu</text>
+<path d="M370,120 L370,200" style="stroke:var(--line);stroke-width:2;stroke-dasharray:6 4;fill:none;marker-end:url(#ar)"/>
+<path d="M620,120 L620,200" style="stroke:var(--line);stroke-width:2;stroke-dasharray:6 4;fill:none;marker-end:url(#ar)"/>
+<text class="sm" x="380" y="165">demux ghi nhớ</text><text class="sm" x="630" y="165">mux ghi nhớ</text>
+<text class="sm" x="20" y="310">Nét đứt: thông tin được nhớ lại ở đường AW để đường W đi theo đúng slave và đúng thứ tự.</text>
+</svg>
+</figure>
+<ul>
+<li>Ở <b>demux</b>: <code>w_select</code> (cùng <code>i_counter_open_w</code>) nhớ "lệnh ghi này đi slave nào", để beat W của master được chuyển vào đúng cổng.</li>
+<li>Ở <b>mux</b>: <code>i_w_fifo</code> nhớ thứ tự mà trọng tài đã cho các lệnh AW đi, để dữ liệu W ra theo đúng thứ tự đó.</li>
+</ul>
+
+<h3>7.6 Kiểu 5: cùng ID mà khác slave thì phải chờ (i_aw_id_counter, i_ar_id_counter)</h3>
+<p>Quy tắc AXI: các lệnh có <b>cùng ID và cùng chiều</b> phải được trả lời <b>đúng thứ tự gửi</b>. Nếu crossbar cho hai lệnh cùng ID đi tới hai slave khác nhau thì slave nhanh có thể trả trước, làm sai thứ tự. Nên các bộ đếm ID nhớ "ID này đang có lệnh đang mở ở slave nào".</p>
+<div class="scroll"><table>
+<tr><th>Bước</th><th>Điều gì xảy ra</th></tr>
+<tr><td>1</td><td>CPU gửi lệnh đọc A, ID = X, tới ROM. Bộ đếm ghi nhớ "ID X đang mở ở ROM".</td></tr>
+<tr><td>2</td><td>CPU gửi tiếp lệnh đọc B, cùng ID X, tới DSRAM (một slave khác).</td></tr>
+<tr><td>3</td><td>Crossbar giữ lệnh B lại, chưa cho đi, vì ID X còn đang mở ở ROM.</td></tr>
+<tr><td>4</td><td>ROM trả xong lệnh A. Bộ đếm về 0. Lệnh B mới được đi.</td></tr>
+</table></div>
+<p>Điều này liên quan trực tiếp tới CPU của QSOC: cầu cpu2axi luôn dùng ID cố định cho mỗi cổng, nên hai lệnh lấy lệnh liên tiếp tới hai vùng nhớ khác nhau sẽ bị giữ như trên. Mình đọc quy tắc từ tài liệu upstream <code>axi_xbar.md</code> và biết ID của CPU từ phần đọc cầu cpu2axi ở phiên trước, chưa đo ảnh hưởng tới tốc độ thật.</p>
+
+<h3>7.7 Kiểu 6: thanh ghi chắn đường (spill register)</h3>
+<p>Thanh ghi chắn (<code>*_spill_reg</code>) giữ tín hiệu lại 1 chu kỳ để đường đi tổ hợp không quá dài, giúp đạt tần số. Trong QSOC cấu hình là <code>CUT_ALL_AX</code>: chỉ chắn hai kênh địa chỉ AW và AR, ở cả demux và mux (xem <code>axi_pkg.sv</code>, <code>CUT_ALL_AX = DemuxAw | DemuxAr | MuxAw | MuxAr</code>).</p>
+<div class="scroll"><table>
+<tr><th>Chu kỳ</th><th>Địa chỉ đọc (AR) đang ở đâu</th></tr>
+<tr><td>0</td><td>Vào demux từ master</td></tr>
+<tr><td>1</td><td>Qua <code>i_ar_spill_reg</code> của demux, đi decode</td></tr>
+<tr><td>2</td><td>Qua <code>i_ar_spill_reg</code> của mux, ra slave</td></tr>
+</table></div>
+<p>Vậy địa chỉ ra khỏi S_BUS trễ 2 chu kỳ so với lúc vào. Các kênh W, B, R không có thanh ghi chắn nên không bị trễ thêm (vẽ nét đứt trên block diagram). Con số 2 chu kỳ khớp với trang timing của <code>s_bus.drawio</code>.</p>
+
+<h3>7.8 Từ điển nhanh</h3>
+<div class="scroll"><table>
+<tr><th>Từ</th><th>Nghĩa ngắn</th></tr>
+<tr><td>demux</td><td>Một vào, nhiều ra. Ở đây là một master, chọn một trong bốn slave.</td></tr>
+<tr><td>mux</td><td>Nhiều vào, một ra. Ở đây là ba master, chỉ một được vào slave mỗi lần.</td></tr>
+<tr><td>trọng tài (arbiter)</td><td>Khối quyết định ai được đi khi nhiều yêu cầu tranh nhau.</td></tr>
+<tr><td>round-robin</td><td>Cách chọn lần lượt, công bằng, vừa chọn ai thì lần sau ưu tiên người kế tiếp.</td></tr>
+<tr><td>ID</td><td>Nhãn của giao dịch, để ghép phản hồi với yêu cầu.</td></tr>
+<tr><td>spill register</td><td>Thanh ghi chắn, giữ tín hiệu 1 chu kỳ để cắt đường tổ hợp dài.</td></tr>
+<tr><td>DECERR</td><td>Phản hồi lỗi "không có slave nào ở địa chỉ này".</td></tr>
+<tr><td>AW, W, B, AR, R</td><td>Năm kênh AXI: địa chỉ ghi, dữ liệu ghi, phản hồi ghi, địa chỉ đọc, dữ liệu đọc.</td></tr>
+</table></div>
+
+<h2>8. Điều chưa chắc</h2>
+<p>Các thông tin trên mình đọc từ file hiện có, không dò lịch sử git để biết ai viết từng phần. Số dòng ở mục 5 là xấp xỉ, sẽ lệch khi file đổi.</p>
+
+</main>
+</body>
+</html>
