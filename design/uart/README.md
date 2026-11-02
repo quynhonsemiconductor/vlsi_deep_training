@@ -43,7 +43,8 @@ open: the boot ROM reads `UART0` by polling `LSR` (QNSC_BOOT_SPEC 5), with no DM
 `PERIPH_DELAY >= 1` for that channel (`STATIC_LINE4[10:8]`).
 
 Only RX uses the DMA. TX is written by the CPU on the THR-empty interrupt (`o_int_uart`, IIR id `001`).
-Firmware must not poll `LSR.thr_empty`: it stays 1 after the first THR write to an idle transmitter.
+After one THR write to an idle transmitter, `LSR.thr_empty` and `LSR.tx_empty` stay 1 while that byte
+is sent, until the next THR write; waiting for `tx_empty` after a single byte does not wait.
 
 The wrapper adds no logic apart from that wiring: `PADDR[2:0]` = `i_bus_apb_paddr[4:2]`, `PSTRB`/`PPROT`
 not used, modem inputs tied 1, modem outputs open (MAS 5, 10).
