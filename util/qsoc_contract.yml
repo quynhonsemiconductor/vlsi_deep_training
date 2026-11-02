@@ -439,10 +439,11 @@ tbd:
       every ID width moves with it. Answer expected to be 1: the vendored
       dma_axi (PR200) defines ID_BITS = 1 (vendor/freecores/dma_axi, #85);
       stays open only until the owner confirms it in QNSC_DMA_MAS V4.
-  - item: DMA request line of each UART (dma_axi32 periph_rx_req index)
+  - item: DMA request line of UART1 (dma_axi32 periph_rx_req index)
     owner: DMA owner
     note: >
-      UART0 and UART1 give the DMA an RX request only (o_dma_rx_req = LSR.data_ready,
-      a level). TX does not use the DMA. Which bit of periph_rx_req each UART takes,
-      and the matching STATIC_LINE4 RD PERIPH_NUM, is not set. Firmware sets
-      PERIPH_DELAY >= 1 (STATIC_LINE4[10:8]) on the RX channel.
+      Agreed: only UART1 RX uses the DMA (o_dma_rx_req = LSR.data_ready, a level).
+      UART0 is read by the boot ROM by polling, so its o_dma_rx_req stays open, and
+      TX does not use the DMA. Which bit of periph_rx_req UART1 takes, and the matching
+      STATIC_LINE4 RD PERIPH_NUM, is not set. Firmware sets PERIPH_DELAY >= 1
+      (STATIC_LINE4[10:8]) on the RX channel.

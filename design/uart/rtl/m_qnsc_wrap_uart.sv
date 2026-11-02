@@ -21,7 +21,8 @@
 //   - modem inputs CTSN, DSRN, DCDN, RIN tied 1 (inactive), modem outputs open:
 //     no flow control
 //   - DMA_RX_REQ of apb_uart (LSR.data_ready, a level) -> o_dma_rx_req, the RX request of
-//     dma_axi32. The pin exists only in the patched apb_uart/obi_uart (vendor/patches).
+//     dma_axi32 (UART1 only; top leaves UART0's open). The pin exists only in the
+//     patched apb_uart/obi_uart (vendor/patches).
 //     TX does not use the DMA: the CPU writes THR on o_int_uart (THR-empty)
 //   - PREADY, PSLVERR passed through: no wait state; PSLVERR on the accesses
 //     the MAS 6 table marks

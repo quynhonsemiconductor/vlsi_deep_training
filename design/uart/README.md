@@ -5,7 +5,8 @@
 ## What this block is
 
 Two 16550A-compatible serial ports on `APB_M8` and `APB_M9`. `UART0` carries the
-boot download. Upstream `apb_uart` wrapped by `m_qnsc_wrap_uart`. `o_dma_rx_req` is the RX request of `dma_axi32` (`periph_rx_req`); TX does not use the DMA.
+boot download. Upstream `apb_uart` wrapped by `m_qnsc_wrap_uart`. Only `UART1` RX uses the DMA:
+its `o_dma_rx_req` is a `periph_rx_req` bit of `dma_axi32`. TX does not use the DMA.
 
 ## Uses (IP)
 
@@ -36,8 +37,10 @@ what is ours and what is borrowed.
 `o_dma_rx_req` = `reg_q.LSR.data_ready` of `obi_uart`: a level, 1 while RX data is unread, falling 2 clock
 after the last RHR read (1 clock with the FIFOs off). It reaches the wrapper through one added output on
 each of `obi_uart`, `apb_uart_wrap` and `apb_uart` (`DMA_RX_REQ`), two patches in
-[`vendor/patches/`](../../vendor/patches/). Nothing existing changes. It goes to `periph_rx_req[n]` of
-`dma_axi32`; firmware sets `PERIPH_DELAY >= 1` for that channel (`STATIC_LINE4[10:8]`).
+[`vendor/patches/`](../../vendor/patches/). Nothing existing changes. Both instances have the pin, as
+they are one module. `design/top` ties `UART1`'s to `periph_rx_req[n]` of `dma_axi32` and leaves `UART0`'s
+open: the boot ROM reads `UART0` by polling `LSR` (QNSC_BOOT_SPEC 5), with no DMA. Firmware sets
+`PERIPH_DELAY >= 1` for that channel (`STATIC_LINE4[10:8]`).
 
 Only RX uses the DMA. TX is written by the CPU on the THR-empty interrupt (`o_int_uart`, IIR id `001`).
 Firmware must not poll `LSR.thr_empty`: it stays 1 after the first THR write to an idle transmitter.
