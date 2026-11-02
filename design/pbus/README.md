@@ -60,6 +60,23 @@ PPROT.
 
 One, in `design/top`, between the AXI2APB bridge and the APB guards of SCRC.
 
+## Compile with VCS
+
+`vcs/` holds what anyone needs to compile this block with VCS on the training
+server, by hand:
+
+```
+module load synopsys/vcs/W-2024.09-SP1
+cd design/pbus/vcs
+./run_vcs                       # writes comp.log, simv, simv.daidir here (git-ignored)
+verdi -dbdir simv.daidir &      # schematic, after module load synopsys/verdi/W-2024.09-SP1
+```
+
+`vcs/filelist.f` only includes `../pbus.f`, so the files and their order stay
+written once. `run_vcs` uses the flags of `flow/vcs/run_vcs`. Expected result:
+`Error-: 0`, and 28 `Lint-[UI]`, all `i_clk`/`i_rstn` of the 14 generated
+arbiters (see above).
+
 ## Sign-off stages
 
 | Stage | Status |
