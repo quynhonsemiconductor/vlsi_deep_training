@@ -1,0 +1,12 @@
+../../../common/tech/generic/qnsc_clk_buf.sv
+../../../common/tech/generic/qnsc_clk_gate.sv
+../../../common/tech/generic/qnsc_rst_filter.sv
+../../../common/tech/generic/qnsc_rst_sync.sv
+../../../../vendor/nguyenquanicd/MRV-CPU/rtl/m_vlsit_mrv_cpu.sv
+../../../../util/gen/crm_rom/m_qnsc_scrc_crm_rom.sv
+../../../../util/gen/scrc_bus/m_qnsc_scrc_apb_bus.sv
+../../../../util/gen/scrc_csr/m_qnsc_scrc_csr.sv
+../m_qnsc_scrc_rrc.sv
+../m_qnsc_scrc_apb_wfilter.sv
+../m_qnsc_scrc_map.sv
+../m_qnsc_scrc_ctrl.sv
