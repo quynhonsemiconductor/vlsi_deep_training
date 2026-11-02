@@ -1,0 +1,15 @@
+#!/bin/tcsh
+# Compile the cpu block with VCS, from this directory, on a compute node of the training server.
+#   cd design/cpu/vcs ; ./run_vcs
+# The result is comp.log. Read "Error-" (must be 0) and every "Lint-" on our own files.
+
+setenv DESIGN m_qnsc_wrap_cpu
+
+vcs -sverilog +vcs+lic+wait \
+    -timescale=1ns/1ps \
+    -F filelist.f \
+    -top $DESIGN \
+    -debug_access -kdb \
+    +error+100 \
+    +lint=all,TFIPC-L \
+    -l comp.log
