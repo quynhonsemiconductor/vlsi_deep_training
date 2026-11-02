@@ -46,8 +46,10 @@ rtl/m_qnsc_scrc_ctrl.sv
 rtl/m_qnsc_scrc_rrc.sv
 rtl/m_qnsc_scrc_apb_wfilter.sv
 rtl/m_qnsc_scrc_map.sv
-rtl/m_qnsc_scrc.sv
 
 # ---- ours: delivered to design/top (instantiated there, not in m_qnsc_scrc) --
 # m_qnsc_scrc_apb_guard: 11 instances, one per gateable APB slave
 rtl/m_qnsc_scrc_apb_guard.sv
+
+# ---- ours: the block top, last (make connectivity takes the last file as top) --
+rtl/m_qnsc_scrc.sv

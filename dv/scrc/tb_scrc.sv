@@ -12,8 +12,9 @@
 // master on APB_M0 and on the uart_0 slot. The pad clock can be stopped.
 //
 // Tests (all run by default; +test=<name> runs one):
-//   rst_001  RRC: POR no stretch; WDT and SW resets exactly 16 cycles; a WDT bite
-//            and SW_RST together give one reset            (SCRC_RST_001, RRC_001, RST_005)
+//   rst_001  RRC: POR no stretch; WDT and SW resets exactly 16 cycles; WDT and SW
+//            requests in one cycle: one reset, both causes; a request after the load
+//            is absorbed                                   (SCRC_RST_001, RRC_001, RST_005)
 //   rst_002  a domain reset releases 2 domain-clock edges after its input; PORSTN
 //            asserts every reset with the clock stopped     (SCRC_RST_002)
 //   rst_003  power-up order: ICG before RST_REL, non-CPU together, guards before CPU,
@@ -25,6 +26,7 @@
 //   seq_001  back-to-back CLK_EN writes end with ICG_EN = last value   (SEQ_001; SEQ_002 is a monitor)
 //   bus_001  guard: blocked access never reaches the IP; gating waits for a slow IP;
 //            recovery by CLK_EN; APB_BLK change mid-transfer        (BUS_001, BUS_002, BUS_003, 7.10)
+//   wf_001   both write filters of the DUT, every offset, read and write (CSR_001, Table 7-2)
 // =============================================================================
 `timescale 1ns/1ps
 
@@ -178,7 +180,7 @@ module tb_scrc;
 
   integer errors = 0;
   task automatic check(input logic ok, input [8*80-1:0] what);
-    if (!ok) begin
+    if (ok !== 1'b1) begin                          // X or Z fails too (4-state simulators)
       $display("FAIL at cycle %0d: %0s", cyc, what);
       $fatal(1, "tb_scrc: check failed");
     end
@@ -306,8 +308,10 @@ module tb_scrc;
       end
 
   // SCRC_BUS_003: the uart_0 clock is never disabled while a forwarded transfer is in flight.
+  // Watched at the IP side (PSEL reaching the IP), not through the guard's own busy output,
+  // so a guard that fails to report busy is caught too.
   always @(posedge clk)
-    if (guard_busy_uart_0 && icg_en[5] === 1'b0) begin
+    if (ip_psel === 1'b1 && icg_en[5] === 1'b0) begin
       $display("FAIL SCRC_BUS_003 at cycle %0d: ICG_EN[5]=0 with a transfer through the guard", cyc);
       $fatal(1, "tb_scrc: clock stopped under a transfer");
     end
@@ -319,6 +323,13 @@ module tb_scrc;
   logic [31:0] d;
   logic e;
   logic [17:0] blk_at_cpu;
+  integer n_both;
+  logic e2;
+
+  // free-running edge counters of two always-on clocks (SCRC_CLK_002)
+  integer edges_wdt = 0, edges_cpu = 0;
+  always @(posedge clk_wdt) edges_wdt = edges_wdt + 1;
+  always @(posedge clk_cpu) edges_cpu = edges_cpu + 1;
 
   // ---- SCRC_RST_001 / RRC_001 / RST_005 -----------------------------------------
   task automatic t_rst_001;
@@ -360,22 +371,62 @@ module tb_scrc;
     check(n_low == 16 && n_cause == 16, "SCRC_RST_001: SW chip reset is exactly 16 cycles");
     wait_cpu_released(400);
 
-    // A WDT bite in the cycle SW_RST is written: one chip reset of 16 cycles, no
-    // second one. The bite reaches RRC through its synchroniser after the SW load,
-    // and the reset it joins clears it; only SOFT is the cause (MAS 7.3: the cause
-    // is captured in the load cycle).
+    // Both requests at RRC in the same cycle (MAS 7.3): one 16-cycle reset, both cause
+    // enables for its whole length. SW_RST is written by Ibex; the synchronised WDT
+    // request is forced for exactly the cycle in which SW_RST reaches RRC, so the
+    // timing does not depend on where MCPU is in its loop.
     fork
+      measure_sys_reset(1'b1, n_low, n_cause);
       wr32(0, 14'h000, 32'h1, e);
-      begin @(posedge m0_penable); @(negedge clk) wdt_bite = 1; @(negedge clk) wdt_bite = 0; end
-      measure_sys_reset(1'b0, n_low, n_cause);
+      begin
+        @(posedge u_dut.u_rrc.i_sw_rst); #1;
+        force u_dut.u_rrc.w_wdt_req = 1'b1;
+        @(posedge clk); #1;
+        release u_dut.u_rrc.w_wdt_req;
+      end
+      begin
+        n_both = 0;
+        @(negedge u_dut.w_rst_n_sys);
+        while (u_dut.w_rst_n_sys !== 1'b1) begin
+          @(negedge clk);
+          if (u_dut.w_rst_n_sys === 1'b0 && cause_we_wdt === 1'b1 && cause_we_sw === 1'b1) n_both = n_both + 1;
+        end
+      end
     join
-    $display("  SW + WDT : w_rst_n_sys low %0d cycles", n_low);
-    check(n_low == 16, "SW_RST and a WDT bite together: one 16-cycle reset");
+    $display("  SW + WDT same cycle: w_rst_n_sys low %0d cycles, both causes %0d cycles", n_low, n_both);
+    check(n_low == 16, "WDT and SW requests in the same cycle: one 16-cycle reset");
+    check(n_both == 16, "WDT and SW requests in the same cycle: both cause enables for the 16 cycles");
     repeat (60) begin
       @(posedge clk);
-      check(u_dut.w_rst_n_sys === 1'b1, "no second chip reset after SW_RST + WDT bite");
+      check(u_dut.w_rst_n_sys === 1'b1, "no second chip reset after a joint request");
     end
-    check(wdt_req === 1'b0, "the joint reset cleared the bite request");
+    wait_cpu_released(400);
+
+    // A WDT request arriving two cycles after an SW load is absorbed by that reset:
+    // still one 16-cycle reset, cause SOFT only (the cause is captured in the load cycle).
+    fork
+      measure_sys_reset(1'b0, n_low, n_cause);
+      wr32(0, 14'h000, 32'h1, e);
+      begin
+        @(negedge u_dut.w_rst_n_sys);               // the SW load
+        repeat (2) @(posedge clk); #1;
+        force u_dut.u_rrc.w_wdt_req = 1'b1;
+        @(posedge clk); #1;
+        release u_dut.u_rrc.w_wdt_req;
+      end
+      begin
+        repeat (40) begin
+          @(posedge clk);
+          check(cause_we_wdt === 1'b0, "a WDT request after the SW load sets no WDT cause");
+        end
+      end
+    join
+    $display("  SW, then WDT 2 cycles later: w_rst_n_sys low %0d cycles", n_low);
+    check(n_low == 16 && n_cause == 16, "a request after the load is absorbed: one 16-cycle reset");
+    repeat (60) begin
+      @(posedge clk);
+      check(u_dut.w_rst_n_sys === 1'b1, "no second chip reset after an absorbed request");
+    end
     wait_cpu_released(400);
     $display("PASS rst_001");
   endtask
@@ -409,11 +460,11 @@ module tb_scrc;
     check(t_cpu - t_non_cpu >= 16, "SCRC_RST_003: CPU released >= 16 cycles after the others");
     check(blk_at_cpu == 18'h00010, "SCRC_RST_007: APB_BLK = NOT CLK_EN (0x10) before the CPU releases");
     check(rst_rel == 32'h8003_9FFF, "step 6: RST_REL = 0x8003_9FFF");
-    fork
-      begin repeat (40) @(posedge clk); end
-      begin repeat (40) begin @(posedge clk_wdt); n_edges_wdt = n_edges_wdt + 1; end end
-      begin repeat (40) begin @(posedge clk_cpu); n_edges_cpu = n_edges_cpu + 1; end end
-    join
+    // 40 root cycles; the edge counters below run freely, so a stopped clock shows as
+    // a count below 39 instead of a wait that never ends.
+    n_edges_wdt = edges_wdt; n_edges_cpu = edges_cpu;
+    repeat (40) @(posedge clk);
+    n_edges_wdt = edges_wdt - n_edges_wdt; n_edges_cpu = edges_cpu - n_edges_cpu;
     check(n_edges_wdt >= 39 && n_edges_cpu >= 39, "SCRC_CLK_002: always-on clocks (wdt, cpu) run");
     check(clk_timer_1 === 1'b0 && rst_n_timer_1 === 1'b0, "SCRC_CLK_003/RST_008: timer_1 gated and in reset");
     // Using TIMER1 (Table 7-5): CLK_EN[4] = 1, done when APB_BLK[4] = 0.
@@ -569,13 +620,16 @@ module tb_scrc;
     rd32(8, 14'h000, d, e);
     check(e === 1'b0 && d == 32'h1234_5678, "forwarded read from uart_0");
 
-    // BUS_003: request the clock stop, then immediately start a slow transfer. Either the
-    // guard blocks it at SETUP, or it is forwarded and the clock stops only after it ends
-    // (always-on monitor above).
-    ip_wait = 30;
-    wr32(0, 14'h004, 32'h0003_87C8, e);             // CLK_EN[5] = 0
-    rd32(8, 14'h000, d, e);
-    $display("  access right after the stop request: err=%0b", e);
+    // BUS_003: a slow transfer (200 wait states) is forwarded, and the clock stop is
+    // requested while it is in flight. The transfer completes normally and the clock
+    // stops only after it (always-on monitor above checks every cycle).
+    ip_wait = 200;                                   // long enough for MCPU to act mid-transfer
+    fork
+      begin rd32(8, 14'h000, d, e); end
+      begin wait (ip_psel === 1'b1); wr32(0, 14'h004, 32'h0003_87C8, e2); end   // CLK_EN[5] = 0
+    join
+    check(e === 1'b0 && d == 32'h1234_5678, "SCRC_BUS_003: the transfer in flight completes normally");
+    check(e2 === 1'b0, "Ibex writes CLK_EN during the transfer");
     wait_applied(32'h0003_87C8, 400);
     check(clk_uart_0 === 1'b0, "uart_0 clock stopped");
 
@@ -612,20 +666,77 @@ module tb_scrc;
     $display("PASS bus_001");
   endtask
 
+  // ---- SCRC_CSR_001, the write-filter rows of Table 7-2 ---------------------------------
+  // Each filter of the DUT, at each of the 8 word offsets of the window, for a write and a
+  // read: forwarded to the APB BUS, or denied with PSLVERR. The filters are combinational:
+  // MCPU's outputs are forced for a moment (the chip is power-cycled afterwards because
+  // MCPU's own bus transfer is disturbed), the Ibex side is the testbench's APB_M0.
+  task automatic wf_check(input logic mcpu, input logic [7:0] deny, input logic [13:0] base);
+    logic [13:0] a;
+    logic        wr, exp_deny;
+    for (int k = 0; k < 8; k++) begin
+      for (int w = 0; w < 2; w++) begin
+        a = base + 14'(4 * k);
+        wr = 1'(w);
+        exp_deny = (base == 14'h0000) && ((k == 7) || (wr && deny[k]));   // 0x1C and the deny mask apply in 0x00-0x1F only
+        if (mcpu) begin
+          force u_dut.w_mcpu_psel = 1'b1;
+          force u_dut.w_mcpu_penable = 1'b0;
+          force u_dut.w_mcpu_pwrite = wr;
+          force u_dut.w_mcpu_paddr = {18'd0, a};
+          #1;
+          check(u_dut.u_wf_mcpu.o_bus_apb_m_0_psel === !exp_deny, "SCRC_CSR_001: MCPU write filter forwards / denies");
+          if (exp_deny)
+            check(u_dut.u_wf_mcpu.o_bus_apb_s_0_pready === 1'b1 && u_dut.u_wf_mcpu.o_bus_apb_s_0_pslverr === 1'b1,
+                  "SCRC_CSR_001: MCPU denied access answered by the filter");
+        end else begin
+          m0_psel = 1'b1; m0_penable = 1'b0; m0_pwrite = wr; m0_paddr = a;   // Ibex side: the TB drives APB_M0
+          #1;
+          check(u_dut.u_wf_ibex.o_bus_apb_m_0_psel === !exp_deny, "SCRC_CSR_001: Ibex write filter forwards / denies");
+          if (exp_deny)
+            check(u_dut.u_wf_ibex.o_bus_apb_s_0_pready === 1'b1 && u_dut.u_wf_ibex.o_bus_apb_s_0_pslverr === 1'b1,
+                  "SCRC_CSR_001: Ibex denied access answered by the filter");
+        end
+      end
+    end
+    release u_dut.w_mcpu_psel;  release u_dut.w_mcpu_penable;
+    release u_dut.w_mcpu_pwrite; release u_dut.w_mcpu_paddr;
+    m0_psel = 1'b0; m0_penable = 1'b0; m0_pwrite = 1'b0; m0_paddr = '0;
+  endtask
+
+  task automatic t_wf_001;
+    power_on();
+    wait_cpu_released(400);
+    @(negedge clk);
+    // MCPU may write ICG_EN, RST_REL, APB_BLK only: writes to 0x00, 0x04, 0x18 denied.
+    wf_check(1'b1, 8'b0100_0011, 14'h0000);
+    // Ibex may write SW_RST, CLK_EN only: writes to 0x0C-0x18 denied.
+    wf_check(1'b0, 8'b0111_1000, 14'h0000);
+    // Above 0x1F the filters forward everything; the APB BUS answers (csr_001).
+    wf_check(1'b1, 8'b0000_0000, 14'h0020);
+    power_on();
+    wait_cpu_released(400);
+    $display("PASS wf_001");
+  endtask
+
   // =============================================================================
   initial begin
     reg [8*16-1:0] name;
     logic all;
+    integer n_run;
     all = !$value$plusargs("test=%s", name);
-    if (all || name == "rst_001") t_rst_001();
-    if (all || name == "rst_003") t_rst_003();
-    if (all || name == "csr_001") t_csr_001();
-    if (all || name == "seq_001") t_seq_001();
-    if (all || name == "bus_001") t_bus_001();
-    if (all || name == "rst_002") t_rst_002();
-    if (all || name == "clk_001") t_clk_001();
-    if (all || name == "flt_001") t_flt_001();
-    $display("PASS tb_scrc (%0d cycles)", cyc);
+    n_run = 0;
+    if (all || name == "rst_001") begin t_rst_001(); n_run = n_run + 1; end
+    if (all || name == "rst_003") begin t_rst_003(); n_run = n_run + 1; end
+    if (all || name == "csr_001") begin t_csr_001(); n_run = n_run + 1; end
+    if (all || name == "seq_001") begin t_seq_001(); n_run = n_run + 1; end
+    if (all || name == "bus_001") begin t_bus_001(); n_run = n_run + 1; end
+    if (all || name == "rst_002") begin t_rst_002(); n_run = n_run + 1; end
+    if (all || name == "clk_001") begin t_clk_001(); n_run = n_run + 1; end
+    if (all || name == "flt_001") begin t_flt_001(); n_run = n_run + 1; end
+    if (all || name == "wf_001")  begin t_wf_001();  n_run = n_run + 1; end
+    if (n_run == 0) $fatal(1, "tb_scrc: no test named %0s", name);
+    $display("PASS tb_scrc (%0d tests, %0d cycles)", n_run, cyc);
     $finish;
   end
 

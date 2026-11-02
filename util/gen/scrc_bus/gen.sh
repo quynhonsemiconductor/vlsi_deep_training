@@ -22,6 +22,7 @@
 #     source_me.sh (absolute paths of the scratch directory), VC_Waiver/, and the
 #     ArbRRBalance cells other than ArbBalanceRR. design/scrc/scrc.f lists the files.
 set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1   # the generator is vendored: write nothing into vendor/
 out=${1:?usage: gen.sh <out_dir>}
 here=util/gen/scrc_bus
 gen=$PWD/vendor/nguyenquanicd/APB-BUS-Generator/apb_rtl_generator.py

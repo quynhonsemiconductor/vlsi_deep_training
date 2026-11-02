@@ -16,6 +16,7 @@
 #     bus, which does not instantiate it), RTL/filelist.f (absolute paths),
 #     Debug/debug.json.
 set -euo pipefail
+export PYTHONDONTWRITEBYTECODE=1   # the generator is vendored: write nothing into vendor/
 out=${1:?usage: gen.sh <out_dir>}
 here=util/gen/scrc_csr
 gen=$PWD/vendor/nguyenquanicd/APB-CSR-Generator/CSR_Generation.py

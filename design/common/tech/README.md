@@ -32,7 +32,10 @@ TECH=<tech> make vcs BLOCK=scrc
 The last four exist for SCRC (`QNSC_SCRC_MAS` 7.1--7.3): its mentor rule is that the
 clock gates, delays, synchronisers and the filter flip-flop are library cells, never
 inferred. `qnsc_sync_cell` is that rule's synchroniser; a data crossing that needs no
-library cell uses the behavioural `qnsc_sync` of `../rtl`.
+library cell uses the behavioural `qnsc_sync` of `../rtl`. `qnsc_rst_filter` carries its
+three delay cells inside (in `smic28/` the same `DLY4_X1M` as `qnsc_dly`), so that each
+technology's filter is one file that lints on its own; `qnsc_dly` is the delay cell for
+any other use and is not instantiated by SCRC.
 
 No block lists these files. Every flow (lint, VCS, synthesis, GCA, connectivity, sim)
 appends them, and the shared RTL of [`../common.f`](../common.f), with

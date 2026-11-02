@@ -6,7 +6,9 @@
 // =============================================================================
 
 // scrc.f also carries m_qnsc_scrc_apb_guard, which design/top instantiates
-// (MAS 8): two top modules when the block is linted alone.
+// (MAS 8): two top modules when the block is linted alone. Verilator reports it
+// at the second top it meets, m_qnsc_scrc (last in scrc.f).
+lint_off -rule MULTITOP -file "*design/scrc/rtl/m_qnsc_scrc.sv"
 lint_off -rule MULTITOP -file "*design/scrc/rtl/m_qnsc_scrc_apb_guard.sv"
 
 // ---- m_qnsc_scrc (generated with emacs) -----------------------------------------
@@ -34,7 +36,9 @@ lint_off -rule UNUSEDSIGNAL -file "*util/gen/crm_rom/m_qnsc_scrc_crm_rom.sv" -ma
 // ---- generated: SCRC CSR (APB-CSR-Generator, not edited). PPROT is not checked
 // (i_protect_en = 0, MAS 10); PWDATA bits of reserved positions are not stored;
 // APB_BUSY is read-only, so its write enable is unused; no final newline.
-lint_off -rule UNUSEDSIGNAL -file "*util/gen/scrc_csr/m_qnsc_scrc_csr.sv" -match "*"
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/scrc_csr/m_qnsc_scrc_csr.sv" -match "*'i_pprot'*"
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/scrc_csr/m_qnsc_scrc_csr.sv" -match "*'reg_pwdata'*"
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/scrc_csr/m_qnsc_scrc_csr.sv" -match "*'we_apbbusy'*"
 lint_off -rule EOFNEWLINE   -file "*util/gen/scrc_csr/m_qnsc_scrc_csr.sv"
 
 // ---- generated: the generator's round-robin arbiter (ArbBalanceRR, not edited):
