@@ -108,8 +108,8 @@ module m_qnsc_cpu2axi
     .mem_rsp_valid_o (o_data_rvalid),
     .mem_rsp_rdata_o (o_data_rdata),
     .mem_rsp_error_o (o_data_err),     // REQ-017
-    .slv_aw_cache_i  (axi_pkg::CACHE_MODIFIABLE),
-    .slv_ar_cache_i  (axi_pkg::CACHE_MODIFIABLE),
+    .slv_aw_cache_i  (4'b0000),        // Device non-bufferable: the data port reaches peripheral registers, no merge or prefetch
+    .slv_ar_cache_i  (4'b0000),
     .axi_req_o       (w_leaf_req[P_PORT_DATA]),
     .axi_rsp_i       (w_leaf_resp[P_PORT_DATA])
   );
