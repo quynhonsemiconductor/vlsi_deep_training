@@ -35,12 +35,12 @@ input logic             i_rst_n_mem,            // To u_sram_ctrl of m_vlsi_axi4
 // Beginning of automatic inputs (from unused autoinst inputs)
 input logic [31:0]      i_bus_axi_ar_addr,      // To u_sram_ctrl of m_vlsi_axi4_sram.v
 input logic [1:0]       i_bus_axi_ar_burst,     // To u_sram_ctrl of m_vlsi_axi4_sram.v
-input logic [6:0]       i_bus_axi_ar_id,        // To u_sram_ctrl of m_vlsi_axi4_sram.v
+input logic [2:0]       i_bus_axi_ar_id,        // To u_sram_ctrl of m_vlsi_axi4_sram.v
 input logic [7:0]       i_bus_axi_ar_len,       // To u_sram_ctrl of m_vlsi_axi4_sram.v
 input logic             i_bus_axi_ar_valid,     // To u_sram_ctrl of m_vlsi_axi4_sram.v
 input logic [31:0]      i_bus_axi_aw_addr,      // To u_wr_resp of m_qnsc_rom_wr_resp.v
 input logic [1:0]       i_bus_axi_aw_burst,     // To u_wr_resp of m_qnsc_rom_wr_resp.v
-input logic [6:0]       i_bus_axi_aw_id,        // To u_wr_resp of m_qnsc_rom_wr_resp.v
+input logic [2:0]       i_bus_axi_aw_id,        // To u_wr_resp of m_qnsc_rom_wr_resp.v
 input logic [7:0]       i_bus_axi_aw_len,       // To u_wr_resp of m_qnsc_rom_wr_resp.v
 input logic             i_bus_axi_aw_valid,     // To u_wr_resp of m_qnsc_rom_wr_resp.v
 input logic             i_bus_axi_b_ready,      // To u_wr_resp of m_qnsc_rom_wr_resp.v
@@ -54,11 +54,11 @@ input logic             i_bus_axi_w_valid,      // To u_wr_resp of m_qnsc_rom_wr
 // Beginning of automatic outputs (from unused autoinst outputs)
 output logic            o_bus_axi_ar_ready,     // From u_sram_ctrl of m_vlsi_axi4_sram.v
 output logic            o_bus_axi_aw_ready,     // From u_wr_resp of m_qnsc_rom_wr_resp.v
-output logic [6:0]      o_bus_axi_b_id,         // From u_wr_resp of m_qnsc_rom_wr_resp.v
+output logic [2:0]      o_bus_axi_b_id,         // From u_wr_resp of m_qnsc_rom_wr_resp.v
 output logic [1:0]      o_bus_axi_b_resp,       // From u_wr_resp of m_qnsc_rom_wr_resp.v
 output logic            o_bus_axi_b_valid,      // From u_wr_resp of m_qnsc_rom_wr_resp.v
 output logic [31:0]     o_bus_axi_r_data,       // From u_sram_ctrl of m_vlsi_axi4_sram.v
-output logic [6:0]      o_bus_axi_r_id,         // From u_sram_ctrl of m_vlsi_axi4_sram.v
+output logic [2:0]      o_bus_axi_r_id,         // From u_sram_ctrl of m_vlsi_axi4_sram.v
 output logic            o_bus_axi_r_last,       // From u_sram_ctrl of m_vlsi_axi4_sram.v
 output logic [1:0]      o_bus_axi_r_resp,       // From u_sram_ctrl of m_vlsi_axi4_sram.v
 output logic            o_bus_axi_r_valid,      // From u_sram_ctrl of m_vlsi_axi4_sram.v
@@ -140,7 +140,7 @@ logic [31:0]            w_mem_rdata;            // From u_rom_image of m_qnsc_ro
 m_vlsi_axi4_sram #(  // naming-check: ignore -- vendored module name
   .PARA_DATA_WD    (32), // contract: meta.data_width
   .PARA_ADDR_WD    (32), // contract: meta.addr_width
-  .PARA_ID_WD      (7),  // as ISRAM and DSRAM, QNSC_RAM_MAS Table 5-2
+  .PARA_ID_WD      (3),  // S_BUS master-port ID: 1-bit slave-port ID + $clog2(3 slave ports); same as ISRAM, DSRAM
   .PARA_LEN_WD     (8),
   .PARA_FIFO_DEPTH (8)
 ) u_sram_ctrl (/*AUTOINST*/
@@ -151,7 +151,7 @@ m_vlsi_axi4_sram #(  // naming-check: ignore -- vendored module name
                .o_bresp                 (),                      // Templated
                .o_bvalid                (),                      // Templated
                .o_arready               (o_bus_axi_ar_ready),    // Templated
-               .o_rid                   (o_bus_axi_r_id[6:0]),   // Templated
+               .o_rid                   (o_bus_axi_r_id[2:0]),   // Templated
                .o_rdata                 (o_bus_axi_r_data[31:0]), // Templated
                .o_rresp                 (o_bus_axi_r_resp[1:0]), // Templated
                .o_rvalid                (o_bus_axi_r_valid),     // Templated
@@ -176,7 +176,7 @@ m_vlsi_axi4_sram #(  // naming-check: ignore -- vendored module name
                .i_arvalid               (i_bus_axi_ar_valid),    // Templated
                .i_arburst               (i_bus_axi_ar_burst[1:0]), // Templated
                .i_arlen                 (i_bus_axi_ar_len[7:0]), // Templated
-               .i_arid                  (i_bus_axi_ar_id[6:0]),  // Templated
+               .i_arid                  (i_bus_axi_ar_id[2:0]),  // Templated
                .i_rready                (i_bus_axi_r_ready),     // Templated
                .i_sram_rdata            (w_mem_rdata[31:0]));     // Templated
 
@@ -201,7 +201,7 @@ m_qnsc_rom_wr_resp u_wr_resp (/*AUTOINST*/
                               // Outputs
                               .o_bus_axi_aw_ready(o_bus_axi_aw_ready),
                               .o_bus_axi_w_ready(o_bus_axi_w_ready),
-                              .o_bus_axi_b_id   (o_bus_axi_b_id[6:0]),
+                              .o_bus_axi_b_id   (o_bus_axi_b_id[2:0]),
                               .o_bus_axi_b_resp (o_bus_axi_b_resp[1:0]),
                               .o_bus_axi_b_valid(o_bus_axi_b_valid),
                               // Inputs
@@ -211,7 +211,7 @@ m_qnsc_rom_wr_resp u_wr_resp (/*AUTOINST*/
                               .i_bus_axi_aw_valid(i_bus_axi_aw_valid),
                               .i_bus_axi_aw_burst(i_bus_axi_aw_burst[1:0]),
                               .i_bus_axi_aw_len (i_bus_axi_aw_len[7:0]),
-                              .i_bus_axi_aw_id  (i_bus_axi_aw_id[6:0]),
+                              .i_bus_axi_aw_id  (i_bus_axi_aw_id[2:0]),
                               .i_bus_axi_w_data (i_bus_axi_w_data[31:0]),
                               .i_bus_axi_w_strb (i_bus_axi_w_strb[3:0]),
                               .i_bus_axi_w_valid(i_bus_axi_w_valid),

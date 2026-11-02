@@ -45,6 +45,28 @@ the generated image on its memory port, and the responder on AW/W/B. The
 responder's ports carry the wrapper's names, so its `AUTOINST` needs no
 template.
 
+AXI ID: 3 bits (`PARA_ID_WD`), the width of an S_BUS master port. The CPU
+issues a 1-bit ID, S_BUS is to take 1-bit slave-port IDs, and the crossbar adds
+`$clog2(3 slave ports)` = 2 bits on its master ports (S_BUS owner, 2026-11-02;
+`design/cpu/README.md` on the CPU branch). ISRAM, DSRAM and SYSDBG move to the
+same width. The contract has no key for it yet.
+
+## Compile with VCS
+
+`vcs/` holds what anyone needs to compile this block with VCS on the training
+server, by hand:
+
+```
+module load synopsys/vcs/W-2024.09-SP1
+cd design/rom/vcs
+./run_vcs                       # writes comp.log, simv, simv.daidir here (git-ignored)
+verdi -dbdir simv.daidir &      # schematic, after module load synopsys/verdi/W-2024.09-SP1
+```
+
+`vcs/filelist.f` only includes `../rom.f`, so the files and their order stay
+written once. `run_vcs` uses the flags of `flow/vcs/run_vcs`. Expected result:
+`Error-: 0`.
+
 ## What the layout is forced by
 
 The Ibex reset vector is `boot_addr_i + 0x80`, and the trap vector table sits at

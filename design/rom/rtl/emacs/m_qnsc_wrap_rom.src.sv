@@ -100,7 +100,7 @@ module m_qnsc_wrap_rom
 m_vlsi_axi4_sram #(  // naming-check: ignore -- vendored module name
   .PARA_DATA_WD    (32), // contract: meta.data_width
   .PARA_ADDR_WD    (32), // contract: meta.addr_width
-  .PARA_ID_WD      (7),  // as ISRAM and DSRAM, QNSC_RAM_MAS Table 5-2
+  .PARA_ID_WD      (3),  // S_BUS master-port ID: 1-bit slave-port ID + $clog2(3 slave ports); same as ISRAM, DSRAM
   .PARA_LEN_WD     (8),
   .PARA_FIFO_DEPTH (8)
 ) u_sram_ctrl (/*AUTOINST*/);

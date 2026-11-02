@@ -27,7 +27,7 @@ module m_qnsc_rom_wr_resp (
   output logic        o_bus_axi_aw_ready,
   input  logic [1:0]  i_bus_axi_aw_burst,    // not used
   input  logic [7:0]  i_bus_axi_aw_len,      // not used: the burst ends at WLAST
-  input  logic [6:0]  i_bus_axi_aw_id,
+  input  logic [2:0]  i_bus_axi_aw_id,       // S_BUS master-port ID width, as the wrapper
   // W
   input  logic [31:0] i_bus_axi_w_data,      // not used
   input  logic [3:0]  i_bus_axi_w_strb,      // not used
@@ -35,7 +35,7 @@ module m_qnsc_rom_wr_resp (
   output logic        o_bus_axi_w_ready,
   input  logic        i_bus_axi_w_last,
   // B
-  output logic [6:0]  o_bus_axi_b_id,
+  output logic [2:0]  o_bus_axi_b_id,
   output logic [1:0]  o_bus_axi_b_resp,      // always 2'b10, SLVERR
   output logic        o_bus_axi_b_valid,
   input  logic        i_bus_axi_b_ready
@@ -48,12 +48,12 @@ module m_qnsc_rom_wr_resp (
   } wr_state_t;
 
   wr_state_t  r_wr_state;
-  logic [6:0] r_bid;
+  logic [2:0] r_bid;
 
   always_ff @(posedge i_clk_mem or negedge i_rst_n_mem) begin
     if (!i_rst_n_mem) begin
       r_wr_state <= S_IDLE;
-      r_bid      <= 7'd0;
+      r_bid      <= 3'd0;
     end else begin
       case (r_wr_state)
         S_IDLE: if (i_bus_axi_aw_valid) begin
