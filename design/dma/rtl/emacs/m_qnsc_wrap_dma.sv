@@ -37,15 +37,17 @@
 // open: the UART has no clear input, its request falls when RHR is read.
 //
 // AXI3 to AXI4: the IP has ID 1 bit, LEN 4 bits, SIZE 2 bits (dma_axi32_defines.v),
-// a WID and no burst, lock, cache, prot, qos, region, atop or user. The fields
-// are zero-extended to S_BUS's widths (ID 5, LEN 8, SIZE 3, USER 1) and the
-// missing ones are constant. WID0 is dropped: the IP drives every ID 0
-// (dma_axi32.v:103-105), so its W beats follow AW order, as AXI4 requires.
+// a WID and no burst, lock, cache, prot, qos, region, atop or user. The ID is
+// 1 bit on S_BUS's slave port as well (the 1-bit slave-port ID agreed with the
+// S_BUS owner, design/cpu/README.md in #92), so it passes straight through. LEN
+// and SIZE are zero-extended to 8 and 3 bits; the missing fields are constant.
+// WID0 is dropped: the IP drives every ID 0 (dma_axi32.v:103-105), so its W
+// beats follow AW order, as AXI4 requires.
 // The IP splits a burst at 4 KiB (dma_axi32_core0_axim_cmd.v:120-123).
 //
 // Ports declared by hand, as the last group: AUTOINPUT/AUTOOUTPUT declare a
 // port only at the width an IP pin uses, and these are wider than the IP's
-// pin (paddr, AXI ID/LEN/SIZE) or have no IP pin at all (PSTRB, PPROT, the
+// pin (paddr, AXI LEN/SIZE) or have no IP pin at all (PSTRB, PPROT, the
 // AXI4-only fields). Being last, they leave no trailing comma, so this file
 // stays valid SystemVerilog before expansion (doc/guides/EMACS_AUTO.md, section 2 (1)),
 // as in m_qnsc_wrap_uart. The bits nobody reads end in w_unused.
@@ -85,9 +87,11 @@ output logic            o_bus_apb_pslverr,      // From u_dma of dma_axi32.v
 // Beginning of automatic inputs (from unused autoinst inputs)
 input logic             i_bus_axi_ar_ready,     // To u_dma of dma_axi32.v
 input logic             i_bus_axi_aw_ready,     // To u_dma of dma_axi32.v
+input logic [0:0]       i_bus_axi_b_id,         // To u_dma of dma_axi32.v
 input logic [1:0]       i_bus_axi_b_resp,       // To u_dma of dma_axi32.v
 input logic             i_bus_axi_b_valid,      // To u_dma of dma_axi32.v
 input logic [31:0]      i_bus_axi_r_data,       // To u_dma of dma_axi32.v
+input logic [0:0]       i_bus_axi_r_id,         // To u_dma of dma_axi32.v
 input logic             i_bus_axi_r_last,       // To u_dma of dma_axi32.v
 input logic [1:0]       i_bus_axi_r_resp,       // To u_dma of dma_axi32.v
 input logic             i_bus_axi_r_valid,      // To u_dma of dma_axi32.v
@@ -96,8 +100,10 @@ input logic             i_bus_axi_w_ready,      // To u_dma of dma_axi32.v
 /*AUTOOUTPUT("^o_bus_axi")*/
 // Beginning of automatic outputs (from unused autoinst outputs)
 output logic [31:0]     o_bus_axi_ar_addr,      // From u_dma of dma_axi32.v
+output logic [0:0]      o_bus_axi_ar_id,        // From u_dma of dma_axi32.v
 output logic            o_bus_axi_ar_valid,     // From u_dma of dma_axi32.v
 output logic [31:0]     o_bus_axi_aw_addr,      // From u_dma of dma_axi32.v
+output logic [0:0]      o_bus_axi_aw_id,        // From u_dma of dma_axi32.v
 output logic            o_bus_axi_aw_valid,     // From u_dma of dma_axi32.v
 output logic            o_bus_axi_b_ready,      // From u_dma of dma_axi32.v
 output logic            o_bus_axi_r_ready,      // From u_dma of dma_axi32.v
@@ -141,7 +147,6 @@ output logic            o_int_dma,              // From u_dma of dma_axi32.v
 input  logic [13:0]     i_bus_apb_paddr,        // contract: meta.apb_paddr_width; bits 12:0 used
 input  logic [3:0]      i_bus_apb_pstrb,        // not used: a store writes the whole register
 input  logic [2:0]      i_bus_apb_pprot,        // not used
-output logic [4:0]      o_bus_axi_aw_id,
 output logic [7:0]      o_bus_axi_aw_len,
 output logic [2:0]      o_bus_axi_aw_size,
 output logic [1:0]      o_bus_axi_aw_burst,
@@ -151,11 +156,9 @@ output logic [2:0]      o_bus_axi_aw_prot,
 output logic [3:0]      o_bus_axi_aw_qos,
 output logic [3:0]      o_bus_axi_aw_region,
 output logic [5:0]      o_bus_axi_aw_atop,
-output logic            o_bus_axi_aw_user,
-output logic            o_bus_axi_w_user,
-input  logic [4:0]      i_bus_axi_b_id,
-input  logic            i_bus_axi_b_user,
-output logic [4:0]      o_bus_axi_ar_id,
+output logic [0:0]      o_bus_axi_aw_user,
+output logic [0:0]      o_bus_axi_w_user,
+input  logic [0:0]      i_bus_axi_b_user,
 output logic [7:0]      o_bus_axi_ar_len,
 output logic [2:0]      o_bus_axi_ar_size,
 output logic [1:0]      o_bus_axi_ar_burst,
@@ -164,17 +167,14 @@ output logic [3:0]      o_bus_axi_ar_cache,
 output logic [2:0]      o_bus_axi_ar_prot,
 output logic [3:0]      o_bus_axi_ar_qos,
 output logic [3:0]      o_bus_axi_ar_region,
-output logic            o_bus_axi_ar_user,
-input  logic [4:0]      i_bus_axi_r_id,
-input  logic            i_bus_axi_r_user
+output logic [0:0]      o_bus_axi_ar_user,
+input  logic [0:0]      i_bus_axi_r_user
 );
 
 /*AUTOWIRE*/
 // Beginning of automatic wires (for undeclared instantiated-module outputs)
-logic [0:0]             w_ip_ar_id;             // From u_dma of dma_axi32.v
 logic [3:0]             w_ip_ar_len;            // From u_dma of dma_axi32.v
 logic [1:0]             w_ip_ar_size;           // From u_dma of dma_axi32.v
-logic [0:0]             w_ip_aw_id;             // From u_dma of dma_axi32.v
 logic [3:0]             w_ip_aw_len;            // From u_dma of dma_axi32.v
 logic [1:0]             w_ip_aw_size;           // From u_dma of dma_axi32.v
 // End of automatics
@@ -201,9 +201,8 @@ logic [1:0]             w_ip_aw_size;           // From u_dma of dma_axi32.v
 */
 
 //---------------------------------------------------------------
-// Bridge, write address: AXI3 fields zero-extended, AXI4 fields constant
+// Bridge, write address: LEN and SIZE zero-extended, AXI4 fields constant
 //---------------------------------------------------------------
-assign o_bus_axi_aw_id     = {4'b0, w_ip_aw_id};
 assign o_bus_axi_aw_len    = {4'b0, w_ip_aw_len};
 assign o_bus_axi_aw_size   = {1'b0, w_ip_aw_size};
 assign o_bus_axi_aw_burst  = 2'b01;             // INCR: every burst of the IP
@@ -223,7 +222,6 @@ assign o_bus_axi_w_user    = 1'b0;
 //---------------------------------------------------------------
 // Bridge, read address
 //---------------------------------------------------------------
-assign o_bus_axi_ar_id     = {4'b0, w_ip_ar_id};
 assign o_bus_axi_ar_len    = {4'b0, w_ip_ar_len};
 assign o_bus_axi_ar_size   = {1'b0, w_ip_ar_size};
 assign o_bus_axi_ar_burst  = 2'b01;             // INCR
@@ -235,19 +233,17 @@ assign o_bus_axi_ar_region = 4'b0000;
 assign o_bus_axi_ar_user   = 1'b0;
 
 //---------------------------------------------------------------
-// Not used: paddr[13], PSTRB, PPROT, the upper ID bits (the IP issues ID 0
-// only), USER
+// Not used: paddr[13], PSTRB, PPROT, USER
 //---------------------------------------------------------------
 logic w_unused;
 
 assign w_unused = ^{i_bus_apb_paddr[13], i_bus_apb_pstrb, i_bus_apb_pprot,
-                    i_bus_axi_b_id[4:1], i_bus_axi_r_id[4:1],
                     i_bus_axi_b_user, i_bus_axi_r_user};
 
 //---------------------------------------------------------------
 // Core: dma_axi32
 // The AXI3 port AWADDR0 ... RREADY0 becomes o_bus_axi_aw_addr ...
-// o_bus_axi_r_ready; ID, LEN and SIZE go through w_ip_* to the bridge.
+// o_bus_axi_r_ready; LEN and SIZE go through w_ip_* to the bridge.
 //---------------------------------------------------------------
 /* dma_axi32 AUTO_TEMPLATE(
     .clk                                  (i_clk_peri),
@@ -262,7 +258,7 @@ assign w_unused = ^{i_bus_apb_paddr[13], i_bus_apb_pstrb, i_bus_apb_pprot,
     .periph_\(tx\|rx\)_req                (i_dma_\1_req[]),
     .periph_\(tx\|rx\)_clr                (),
     .WID0                                 (),
-    .A\([WR]\)ID0                         (w_ip_a@"(downcase (symbol-name '\1))"_id[0:0]),       // `ID_BITS 1
+    .A\([WR]\)ID0                         (o_bus_axi_a@"(downcase (symbol-name '\1))"_id[0:0]),  // `ID_BITS 1
     .\([BR]\)ID0                          (i_bus_axi_@"(downcase (symbol-name '\1))"_id[0:0]),   // `ID_BITS 1
     .A\([WR]\)LEN0                        (w_ip_a@"(downcase (symbol-name '\1))"_len[3:0]),     // `LEN_BITS 4
     .A\([WR]\)SIZE0                       (w_ip_a@"(downcase (symbol-name '\1))"_size[1:0]),    // `SIZE_BITS 2
@@ -282,7 +278,7 @@ u_dma (/*AUTOINST*/
        .prdata                          (o_bus_apb_prdata[31:0]), // Templated
        .pslverr                         (o_bus_apb_pslverr),     // Templated
        .pready                          (o_bus_apb_pready),      // Templated
-       .AWID0                           (w_ip_aw_id[0:0]),       // Templated
+       .AWID0                           (o_bus_axi_aw_id[0:0]),  // Templated
        .AWADDR0                         (o_bus_axi_aw_addr[32-1:0]), // Templated
        .AWLEN0                          (w_ip_aw_len[3:0]),      // Templated
        .AWSIZE0                         (w_ip_aw_size[1:0]),     // Templated
@@ -293,7 +289,7 @@ u_dma (/*AUTOINST*/
        .WLAST0                          (o_bus_axi_w_last),      // Templated
        .WVALID0                         (o_bus_axi_w_valid),     // Templated
        .BREADY0                         (o_bus_axi_b_ready),     // Templated
-       .ARID0                           (w_ip_ar_id[0:0]),       // Templated
+       .ARID0                           (o_bus_axi_ar_id[0:0]),  // Templated
        .ARADDR0                         (o_bus_axi_ar_addr[32-1:0]), // Templated
        .ARLEN0                          (w_ip_ar_len[3:0]),      // Templated
        .ARSIZE0                         (w_ip_ar_size[1:0]),     // Templated
