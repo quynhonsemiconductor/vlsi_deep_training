@@ -15,11 +15,13 @@
 # =============================================================================
 
 # ---- include directories ----------------------------------------------------
-# +incdir+../../vendor/<upstream>/<path>
++incdir+../../vendor/pulp-platform/apb_i2c
 
 # ---- upstream IP, in compile order -----------------------------------------
-# ../../vendor/<upstream>/rtl/<leaf>.sv
-# ../../vendor/<upstream>/rtl/<top_of_ip>.sv
+../../vendor/pulp-platform/apb_i2c/i2c_master_defines.sv
+../../vendor/pulp-platform/apb_i2c/i2c_master_bit_ctrl.sv
+../../vendor/pulp-platform/apb_i2c/i2c_master_byte_ctrl.sv
+../../vendor/pulp-platform/apb_i2c/apb_i2c.sv
 
 # ---- ours -------------------------------------------------------------------
-# rtl/<wrapper>.sv
+rtl/m_qnsc_wrap_i2c.sv
