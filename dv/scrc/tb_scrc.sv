@@ -144,7 +144,7 @@ module tb_scrc;
     .i_bus_apb_m_0_pready (g2_ip_psel & g2_ip_penable), .i_bus_apb_m_0_pslverr (1'b0), .i_bus_apb_m_0_prdata (32'hCAFE_F00D)
   );
 
-  // ---- register state seen inside the DUT (per-domain wires of the emacs top) ----
+  // ---- register state seen inside the DUT (per-domain wires of the top) ----
   logic [17:0] icg_en;
   logic [31:0] rst_rel;
   assign icg_en  = {u_dut.w_icg_gpio_2, u_dut.w_icg_gpio_1, u_dut.w_icg_pwm, 4'b0000, u_dut.w_icg_dma,

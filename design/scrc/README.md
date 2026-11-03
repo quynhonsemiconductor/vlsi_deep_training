@@ -36,11 +36,10 @@ them; `TECH=smic28` maps them onto `sc9mc_base_svt_c31`.
 
 | File | What |
 |---|---|
-| `rtl/emacs/m_qnsc_scrc.src.sv` | the top, edited here; `make wrap BLOCK=scrc` writes `rtl/m_qnsc_scrc.sv` (instances only) |
+| `rtl/m_qnsc_scrc.sv` | the top, written by hand (in-house logic; emacs AUTOs are for the wrappers of existing IP): the instances and the bit map of `APB_BLK`/`APB_BUSY` to the guard vectors |
 | `rtl/m_qnsc_scrc_ctrl.sv` | one domain: clock gate + reset synchroniser (18 instances) |
 | `rtl/m_qnsc_scrc_rrc.sv` | reset request controller: WDT and SW requests, 16-cycle chip reset, cause enables |
 | `rtl/m_qnsc_scrc_apb_wfilter.sv` | write filter, one per master (MCPU, Ibex) |
-| `rtl/m_qnsc_scrc_map.sv` | the bit map between the CSR fields and the guard vectors |
 | `rtl/m_qnsc_scrc_apb_guard.sv` | the APB guard, instantiated 11 times in `design/top` |
 | `crm/crm_rom.S` | the MCPU program (power-up order, `CLK_EN` service loop) |
 | `constraints/scrc.sdc` | SDC |

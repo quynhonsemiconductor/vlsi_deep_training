@@ -11,7 +11,7 @@
 lint_off -rule MULTITOP -file "*design/scrc/rtl/m_qnsc_scrc.sv"
 lint_off -rule MULTITOP -file "*design/scrc/rtl/m_qnsc_scrc_apb_guard.sv"
 
-// ---- m_qnsc_scrc (generated with emacs) -----------------------------------------
+// ---- m_qnsc_scrc ---------------------------------------------------------------------
 // CLK_EN is read by MCPU over the APB BUS; the CSR's field outputs go nowhere
 // (MAS 7.6).
 lint_off -rule PINCONNECTEMPTY -file "*design/scrc/rtl/m_qnsc_scrc.sv" -match "*'o_clken_en_*'"
@@ -21,9 +21,9 @@ lint_off -rule PINCONNECTEMPTY -file "*design/scrc/rtl/m_qnsc_scrc.sv" -match "*
 lint_off -rule UNUSEDSIGNAL -file "*design/scrc/rtl/m_qnsc_scrc.sv" -match "*'w_mcpu_paddr'*"
 lint_off -rule UNUSEDSIGNAL -file "*design/scrc/rtl/m_qnsc_scrc.sv" -match "*'w_mcpu_pslverr'*"
 
-// ---- m_qnsc_scrc_map: i_guard_busy bits of the always-on domains and of reserved
-// bit 13 have no guard; design/top ties them 0 (MAS 11).
-lint_off -rule UNUSEDSIGNAL -file "*design/scrc/rtl/m_qnsc_scrc_map.sv" -match "*'i_guard_busy'*"
+// i_guard_busy bits of the always-on domains and of reserved bit 13 have no guard;
+// design/top ties them 0 (MAS 11).
+lint_off -rule UNUSEDSIGNAL -file "*design/scrc/rtl/m_qnsc_scrc.sv" -match "*'i_guard_busy'*"
 
 // ---- m_qnsc_scrc_apb_wfilter: the filter decodes word offsets; PADDR[1:0] is
 // checked by the SCRC CSR (misaligned -> PSLVERR, MAS 7.4).
