@@ -114,7 +114,7 @@ package qnsc_pkg;
   // The cluster name is what goes into the port name the naming rule requires:
   //   i_clk_<domain> / i_rst_n_<domain>
   //   i_clk_cpu   hardwired on, not writable
-  //     cpu, bus, sysdbg, syscsr
+  //     cpu, sbus, pbus, sysdbg, syscsr
   //   i_clk_mem   hardwired on, not writable
   //     rom, isram, dsram
   //   i_clk_wdt   hardwired on, not writable

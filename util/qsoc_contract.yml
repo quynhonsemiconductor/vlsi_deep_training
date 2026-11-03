@@ -358,7 +358,7 @@ clock_domains:
   clusters:
     - name: cpu
       port_suffix: cpu
-      blocks: [cpu, bus, sysdbg, syscsr]
+      blocks: [cpu, sbus, pbus, sysdbg, syscsr]
       gateable: false
       note: >
         Gating the core or either bus removes the agent that would have to

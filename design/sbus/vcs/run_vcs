@@ -1,9 +1,9 @@
 #!/bin/tcsh
 # Compile the bus block (S_BUS plus the AXI2APB bridge) with VCS, from this directory, on a compute node of the training server.
-#   cd design/bus/vcs ; ./run_vcs
+#   cd design/sbus/vcs ; ./run_vcs
 # The result is comp.log. Read "Error-" (must be 0) and every "Lint-" on our own files.
 
-setenv DESIGN m_qnsc_wrap_bus
+setenv DESIGN m_qnsc_wrap_sbus
 
 vcs -sverilog +vcs+lic+wait \
     -timescale=1ns/1ps \

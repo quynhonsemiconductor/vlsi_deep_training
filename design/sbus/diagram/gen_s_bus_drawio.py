@@ -1,10 +1,10 @@
-"""Vẽ m_qnsc_wrap_bus (S_BUS + cầu AXI2APB, không có router P_BUS) bằng draw.io, 5 trang, chữ tiếng Việt:
+"""Vẽ m_qnsc_wrap_sbus (S_BUS + cầu AXI2APB, không có router P_BUS) bằng draw.io, 5 trang, chữ tiếng Việt:
   1 block diagram mức module, 2 bản đồ địa chỉ, 3 timing, 4 bên trong crossbar, 5 chi tiết tên net và độ rộng bus.
 Ký hiệu theo QNSC_DRAWIO_LIB_V1.0 (nét 2 pt, mũi tên block, mux hình thang, mây COM).
 
 Số liệu và tên đọc từ nguồn, không gõ tay:
-  rtl/emacs/m_qnsc_wrap_bus.src.sv   tên instance, clock, ATOPs, danh sách chỉ số APB, tham số bridge
-  rtl/qnsc_s_bus_pkg.sv              độ rộng ID, Cfg của axi_xbar
+  rtl/emacs/m_qnsc_wrap_sbus.src.sv   tên instance, clock, ATOPs, danh sách chỉ số APB, tham số bridge
+  rtl/qnsc_sbus_pkg.sv              độ rộng ID, Cfg của axi_xbar
   util/qsoc_contract.yml             bản đồ bộ nhớ, ngoại vi APB, độ rộng địa chỉ
 
     python -X utf8 gen_s_bus_drawio.py [out.drawio]
@@ -20,8 +20,8 @@ import yaml
 HERE = Path(__file__).resolve().parent
 BLOCK = HERE.parent
 REPO = BLOCK.parent.parent
-src = (BLOCK / "rtl/emacs/m_qnsc_wrap_bus.src.sv").read_text(encoding="utf-8")
-pkg = (BLOCK / "rtl/qnsc_s_bus_pkg.sv").read_text(encoding="utf-8")
+src = (BLOCK / "rtl/emacs/m_qnsc_wrap_sbus.src.sv").read_text(encoding="utf-8")
+pkg = (BLOCK / "rtl/qnsc_sbus_pkg.sv").read_text(encoding="utf-8")
 contract = yaml.safe_load((REPO / "util/qsoc_contract.yml").read_text(encoding="utf-8"))
 
 
@@ -258,12 +258,12 @@ APB_N = len(apb)
 
 # ====================================================================== TRANG 1: block diagram
 p1 = Page("5. Chi tiết: tên net, độ rộng bus", 2620, 1290)
-heading(p1, "m_qnsc_wrap_bus: block diagram chi tiết (tên net, độ rộng bus)",
+heading(p1, "m_qnsc_wrap_sbus: block diagram chi tiết (tên net, độ rộng bus)",
         "Xem bảng chú giải ký hiệu ở góc dưới bên trái. Số bit tính từ typedef của axi_pkg.")
 BX0, BX1 = 330, 2200
 EXT_X = 2400
 p1.vertex(BX0, 100, BX1 - BX0, 1130, "", "rounded=0;fillColor=none;strokeWidth=3;")
-p1.text(BX0 + 10, 104, 500, 26, "<b>m_qnsc_wrap_bus</b>", 17, "left")
+p1.text(BX0 + 10, 104, 500, 26, "<b>m_qnsc_wrap_sbus</b>", 17, "left")
 CY = [270, 450, 630]
 
 for i, (name, port) in enumerate(MASTERS):
@@ -378,7 +378,7 @@ for (px, py) in ((B1[0] + 85, yb), (B2[0] + 85, yb), (B1[0] + 175, yb + 22), (B2
 
 p1.text(380, 900, 560, 300,
         sm("<b>Ghi chú</b><br>Cầu AXI2APB chạy cùng clock sbus với crossbar, nên không có mạch CDC trong wrapper.<br><br>"
-           "Cổng AXI ở biên là struct của qnsc_s_bus_pkg (slv_req_t, slv_resp_t, mst_req_t, mst_resp_t), nối thẳng vào mảng struct của axi_xbar.<br><br>"
+           "Cổng AXI ở biên là struct của qnsc_sbus_pkg (slv_req_t, slv_resp_t, mst_req_t, mst_resp_t), nối thẳng vào mảng struct của axi_xbar.<br><br>"
            "emacs sinh: cổng clock/reset và chân của 3 instance. Cổng AXI và cổng APB viết tay trong .src.sv.", 12), 12, "left", valign="top")
 
 
@@ -738,12 +738,12 @@ def two_way(page, pts, width=3):
 
 
 p0 = Page("1. Block diagram", 1620, 760)
-heading(p0, "m_qnsc_wrap_bus: block diagram",
+heading(p0, "m_qnsc_wrap_sbus: block diagram",
         "Mỗi mũi tên hai chiều là một giao diện (yêu cầu đi, phản hồi về). Bên trong crossbar chi tiết từng kênh ở trang 4, tên net và độ rộng bus ở trang 5.")
 
 WX0, WX1, WY0, WY1 = 270, 1290, 100, 650
 p0.vertex(WX0, WY0, WX1 - WX0, WY1 - WY0, "", "rounded=0;fillColor=none;strokeWidth=3;")
-p0.text(WX0 + 10, WY0 + 4, 600, 26, "<b>m_qnsc_wrap_bus</b>", 16, "left")
+p0.text(WX0 + 10, WY0 + 4, 600, 26, "<b>m_qnsc_wrap_sbus</b>", 16, "left")
 p0.region(290, 135, 980, 495, f"miền sbus: {CLK_S}, {RST_S}")
 
 # ---- crossbar

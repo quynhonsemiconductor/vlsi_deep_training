@@ -25,4 +25,4 @@ ours.
 
 SYSDBG speaks AXI4 natively, so `AXI_S0` needs no adapter. Its manager reaches
 ROM, both RAMs and the peripheral window (`SYSCSR` included), because `axi_xbar` (see
-the `bus` block) is fully connected.
+the `sbus` block) is fully connected.

@@ -51,7 +51,7 @@
 <p>Mỗi file của S_BUS thuộc một trong ba loại. Biết loại file thì biết có được sửa hay không.</p>
 <table>
   <tr><th>Loại</th><th>Ý nghĩa</th><th>Có sửa được không</th></tr>
-  <tr><td><span class="tag">Có sẵn</span></td><td>IP của người khác, nằm trong <code>vendor/</code>. Repo chỉ liệt kê trong <code>bus.f</code>, không copy.</td><td>Không</td></tr>
+  <tr><td><span class="tag">Có sẵn</span></td><td>IP của người khác, nằm trong <code>vendor/</code>. Repo chỉ liệt kê trong <code>sbus.f</code>, không copy.</td><td>Không</td></tr>
   <tr><td><span class="tag sinh">Sinh ra</span></td><td>Do công cụ tạo từ một file nguồn. Đầu file có ghi "GENERATED, DO NOT EDIT" hoặc nằm cạnh file nguồn.</td><td>Không sửa file này, sửa file nguồn rồi sinh lại</td></tr>
   <tr><td><span class="tag tu">Tự viết</span></td><td>Code của nhóm mình.</td><td>Có</td></tr>
 </table>
@@ -72,13 +72,13 @@
   <text class="sm" x="145" y="200" text-anchor="middle">sinh ra từ contract</text>
 
   <rect class="s" x="20" y="260" width="250" height="70"/>
-  <text class="md st" x="145" y="288" text-anchor="middle" font-weight="700" style="fill:var(--bg)">qnsc_s_bus_pkg.sv</text>
+  <text class="md st" x="145" y="288" text-anchor="middle" font-weight="700" style="fill:var(--bg)">qnsc_sbus_pkg.sv</text>
   <text class="sm" x="145" y="310" text-anchor="middle" style="fill:var(--bg)">tự viết: cấu hình Cfg, ID, bảng địa chỉ</text>
 
   <path class="l" d="M145,110 L145,150"/>
   <path class="l" d="M145,220 L145,260"/>
 
-  <text class="lg" x="340" y="26">Các khối bên trong m_qnsc_wrap_bus</text>
+  <text class="lg" x="340" y="26">Các khối bên trong m_qnsc_wrap_sbus</text>
   <rect class="r" x="340" y="40" width="520" height="380"/>
 
   <rect class="s" x="360" y="64" width="480" height="64"/>
@@ -111,7 +111,7 @@
   <path class="l" d="M840,335 L900,350"/>
 </svg>
 </figure>
-<p>Nét liền đậm là file tự viết, nét đứt là file sinh ra, khung thường là IP có sẵn. Khung nét đứt dài bao quanh các khối là wrapper <code>m_qnsc_wrap_bus</code>. Router P_BUS (chia cổng APB ra các ngoại vi) không nằm trong wrapper này.</p>
+<p>Nét liền đậm là file tự viết, nét đứt là file sinh ra, khung thường là IP có sẵn. Khung nét đứt dài bao quanh các khối là wrapper <code>m_qnsc_wrap_sbus</code>. Router P_BUS (chia cổng APB ra các ngoại vi) không nằm trong wrapper này.</p>
 
 <h2>3. Từng file nằm ở đâu và ai viết</h2>
 <table>
@@ -119,25 +119,25 @@
   <tr><td><code>vendor/pulp-platform/axi/src/axi_xbar.sv</code></td><td><span class="tag">Có sẵn</span></td><td>Crossbar. Nhận lệnh từ 3 master và chọn slave theo địa chỉ. Kéo theo <code>axi_demux</code>, <code>axi_mux</code>, <code>axi_err_slv</code>.</td></tr>
   <tr><td><code>axi_to_axi_lite</code>, <code>axi_lite_to_apb</code></td><td><span class="tag">Có sẵn</span></td><td>Đổi AXI4 sang AXI-Lite rồi sang APB4 cho nhánh ngoại vi.</td></tr>
   <tr><td><code>design/top/rtl/qnsc_pkg.sv</code></td><td><span class="tag sinh">Sinh ra</span></td><td>Số dùng chung của cả chip, sinh từ <code>util/qsoc_contract.yml</code>.</td></tr>
-  <tr><td><code>design/bus/rtl/qnsc_s_bus_pkg.sv</code></td><td><span class="tag tu">Tự viết</span></td><td>173 dòng. Số cổng, độ rộng ID, các giá trị <code>Cfg</code> của crossbar, bảng địa chỉ lấy từ contract.</td></tr>
-  <tr><td><code>design/bus/rtl/emacs/m_qnsc_wrap_bus.src.sv</code></td><td><span class="tag tu">Tự viết</span></td><td>278 dòng. File nguồn của wrapper. Đây là file duy nhất bạn sửa khi muốn đổi cách nối.</td></tr>
-  <tr><td><code>design/bus/rtl/m_qnsc_wrap_bus.sv</code></td><td><span class="tag sinh">Sinh ra</span></td><td>312 dòng. Do emacs sinh từ <code>.src.sv</code>. Đây là file RTL thật được build và lint.</td></tr>
-  <tr><td><code>design/bus/bus.f</code></td><td><span class="tag tu">Tự viết</span></td><td>Danh sách file build, thứ tự quan trọng: package trước, IP, rồi wrapper ở cuối.</td></tr>
+  <tr><td><code>design/sbus/rtl/qnsc_sbus_pkg.sv</code></td><td><span class="tag tu">Tự viết</span></td><td>173 dòng. Số cổng, độ rộng ID, các giá trị <code>Cfg</code> của crossbar, bảng địa chỉ lấy từ contract.</td></tr>
+  <tr><td><code>design/sbus/rtl/emacs/m_qnsc_wrap_sbus.src.sv</code></td><td><span class="tag tu">Tự viết</span></td><td>278 dòng. File nguồn của wrapper. Đây là file duy nhất bạn sửa khi muốn đổi cách nối.</td></tr>
+  <tr><td><code>design/sbus/rtl/m_qnsc_wrap_sbus.sv</code></td><td><span class="tag sinh">Sinh ra</span></td><td>312 dòng. Do emacs sinh từ <code>.src.sv</code>. Đây là file RTL thật được build và lint.</td></tr>
+  <tr><td><code>design/sbus/sbus.f</code></td><td><span class="tag tu">Tự viết</span></td><td>Danh sách file build, thứ tự quan trọng: package trước, IP, rồi wrapper ở cuối.</td></tr>
 </table>
 
 <h2>4. Cách ra được file wrapper</h2>
 <ol class="steps">
-  <li>Bạn sửa <code>m_qnsc_wrap_bus.src.sv</code>. Trong file có các comment đặc biệt như <code>/*AUTOINST*/</code> (tự điền chân của instance) và <code>/*AUTOINPUT*/</code>, <code>/*AUTOOUTPUT*/</code> (tự điền port lặp lại).</li>
-  <li>Chạy <code>make wrap</code> trong <code>design/bus/rtl/emacs/</code>. Makefile gọi emacs <code>verilog-mode</code> mở rộng các comment đặc biệt đó.</li>
-  <li>Kết quả ghi ra <code>design/bus/rtl/m_qnsc_wrap_bus.sv</code>. Chạy lại lần nữa phải ra đúng file giống hệt (không đổi gì).</li>
-  <li>Lint và mô phỏng đọc <code>bus.f</code>, rồi build đúng file <code>.sv</code> này chứ không đọc file <code>.src.sv</code>.</li>
+  <li>Bạn sửa <code>m_qnsc_wrap_sbus.src.sv</code>. Trong file có các comment đặc biệt như <code>/*AUTOINST*/</code> (tự điền chân của instance) và <code>/*AUTOINPUT*/</code>, <code>/*AUTOOUTPUT*/</code> (tự điền port lặp lại).</li>
+  <li>Chạy <code>make wrap</code> trong <code>design/sbus/rtl/emacs/</code>. Makefile gọi emacs <code>verilog-mode</code> mở rộng các comment đặc biệt đó.</li>
+  <li>Kết quả ghi ra <code>design/sbus/rtl/m_qnsc_wrap_sbus.sv</code>. Chạy lại lần nữa phải ra đúng file giống hệt (không đổi gì).</li>
+  <li>Lint và mô phỏng đọc <code>sbus.f</code>, rồi build đúng file <code>.sv</code> này chứ không đọc file <code>.src.sv</code>.</li>
 </ol>
-<div class="note"><b>Đừng sửa tay file <code>m_qnsc_wrap_bus.sv</code>.</b> Lần <code>make wrap</code> sau sẽ ghi đè và mất thay đổi. Sửa ở <code>.src.sv</code>.</div>
+<div class="note"><b>Đừng sửa tay file <code>m_qnsc_wrap_sbus.sv</code>.</b> Lần <code>make wrap</code> sau sẽ ghi đè và mất thay đổi. Sửa ở <code>.src.sv</code>.</div>
 
 <h2>5. Trong file .src.sv có gì</h2>
 <table>
   <tr><th>Phần</th><th>Dòng (xấp xỉ)</th><th>Nội dung</th></tr>
-  <tr><td>Port</td><td>đầu file</td><td>Clock/reset do emacs điền. 12 port AXI (struct của <code>qnsc_s_bus_pkg</code>) và cổng APB viết tay.</td></tr>
+  <tr><td>Port</td><td>đầu file</td><td>Clock/reset do emacs điền. 12 port AXI (struct của <code>qnsc_sbus_pkg</code>) và cổng APB viết tay.</td></tr>
   <tr><td>Kiểm tra lúc elaboration</td><td>82</td><td>Độ rộng <code>paddr</code> và <code>pwdata</code> của cổng APB phải bằng package.</td></tr>
   <tr><td>Instance <code>axi_xbar</code></td><td>163 đến 181</td><td>Truyền <code>Cfg</code> và kiểu struct, <code>ATOPs = 0</code>, <code>Connectivity = '1</code>.</td></tr>
   <tr><td>Instance <code>axi_to_axi_lite</code></td><td>197 đến 209</td><td>Phần đầu của AXI2APB.</td></tr>

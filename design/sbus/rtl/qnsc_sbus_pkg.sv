@@ -1,7 +1,7 @@
 `default_nettype none
 `timescale 1ns/1ps
 //==============================================================================
-// Module      : qnsc_s_bus_pkg
+// Module      : qnsc_sbus_pkg
 // Description : AXI4 struct typedefs, axi_xbar Cfg and address map for S_BUS.
 //               bus is an integration block (design/README.md, "Shared numbers:
 //               who may use qnsc_pkg"), so this package imports qnsc_pkg
@@ -10,7 +10,7 @@
 //==============================================================================
 `include "axi/typedef.svh"
 
-package qnsc_s_bus_pkg;
+package qnsc_sbus_pkg;
 
   import qnsc_pkg::C_ADDR_WIDTH;
   import qnsc_pkg::C_DATA_WIDTH;
@@ -145,7 +145,7 @@ package qnsc_s_bus_pkg;
   // Local to this bridge only, never a block boundary: axi_lite_to_apb takes
   // NoApbSlaves=1 here (its single output is P_BUS's own single master-input
   // port, APB_S0; P_BUS's generated router does the real per-peripheral
-  // fan-out, a separate step). Not exposed on m_qnsc_wrap_bus's own ports,
+  // fan-out, a separate step). Not exposed on m_qnsc_wrap_sbus's own ports,
   // which flatten this to individual i_apb_*/o_apb_* signals instead, so
   // this struct never needs naming-rule review.
   localparam int unsigned P_NO_APB_SLAVES = 1;
@@ -184,5 +184,5 @@ package qnsc_s_bus_pkg;
   endfunction
   localparam rule_t [P_NO_APB_RULES-1:0] P_APB_ADDR_MAP = apb_addr_map_f();
 
-endpackage : qnsc_s_bus_pkg
+endpackage : qnsc_sbus_pkg
 `default_nettype wire

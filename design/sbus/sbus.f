@@ -66,5 +66,5 @@
 ../../vendor/pulp-platform/axi/src/axi_lite_to_apb.sv
 
 # ---- ours -------------------------------------------------------------------
-rtl/qnsc_s_bus_pkg.sv
-rtl/m_qnsc_wrap_bus.sv
+rtl/qnsc_sbus_pkg.sv
+rtl/m_qnsc_wrap_sbus.sv
