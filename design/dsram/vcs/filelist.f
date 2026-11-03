@@ -1,3 +1,6 @@
-# VCS filelist for dsram — reference only, do not add files here.
-# The actual filelist is design/dsram/dsram.f (single source of truth).
-# VCS is run through: make vcs-branch BLOCK=dsram BRANCH=<branch>
+# VCS filelist of the dsram block. It only includes the block filelist, so the
+# list of files and their order are written once, in design/dsram/dsram.f.
+# -F: paths inside dsram.f resolve from design/dsram/, where dsram.f lives.
+# The shared cells (design/common) and the technology cells come from run_vcs,
+# as in every flow of the repository.
+-F ../dsram.f

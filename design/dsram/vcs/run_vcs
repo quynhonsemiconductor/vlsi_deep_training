@@ -1,5 +1,38 @@
-#!/usr/bin/env bash
-# VCS compile for dsram
-# On the server: cd ~/vlsi_deep_training && make vcs-branch BLOCK=dsram BRANCH=<branch>
-module load synopsys/vcs/W-2024.09-SP1
-make vcs-branch BLOCK=dsram BRANCH=${1:-feat/ram-wrappers-only}
+#!/bin/tcsh
+# Compile the dsram block with VCS, from this directory, on a compute node of the
+# training server (after: module load synopsys/vcs/W-2024.09-SP1).
+#   cd design/dsram/vcs ; ./run_vcs
+# Read comp.log: "Error-" must be 0, and every "Lint-" on our own files.
+# Lint- on vendor/nguyenquanicd is upstream and not edited.
+# Schematic: verdi -dbdir simv.daidir &
+#
+# Shared cells: design/common/common.f. Technology cells (design/common/tech):
+# generic by default. With the SMIC 28HKMG library, give the PDK's Verilog model:
+#   setenv TECH smic28 ; setenv PDK_V <path to the Verilog model> ; ./run_vcs
+
+setenv DESIGN m_qnsc_wrap_dsram
+if (! $?TECH) setenv TECH generic
+
+set libs = ()
+foreach f (`grep -vE '^[[:space:]]*(#|$)' ../../common/common.f`)
+  set libs = ($libs -v ../../common/$f)
+end
+foreach f (`grep -vE '^[[:space:]]*(#|$)' ../../common/tech/$TECH.f`)
+  set libs = ($libs -v ../../common/tech/$f)
+end
+if ($TECH != generic) then
+  if (! $?PDK_V) then
+    echo "TECH=$TECH needs PDK_V, the library's Verilog model"
+    exit 1
+  endif
+  set libs = ($libs -v $PDK_V)
+endif
+
+vcs -sverilog +vcs+lic+wait \
+    -timescale=1ns/1ps \
+    -F filelist.f $libs \
+    -top $DESIGN \
+    -debug_access -kdb \
+    +error+100 \
+    +lint=all \
+    -l comp.log
