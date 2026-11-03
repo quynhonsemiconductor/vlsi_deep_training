@@ -46,4 +46,4 @@ jobs:
     timeout-minutes: 5
     steps:
       # No checkout: the action reads the title from the event payload.
-      - uses: quynhonsemiconductor/ci/actions/pr-title-conventional-commits@v1
+      - uses: quynhonsemiconductor/ci/actions/pr-title-conventional-commits@abdf759277ba8a3d3bac2ba07ac1c73c642710b0 # v1.31.0
