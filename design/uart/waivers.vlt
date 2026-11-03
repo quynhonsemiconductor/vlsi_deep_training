@@ -1,12 +1,10 @@
 `verilator_config
 // UART lint waivers. Every line carries its reason (CONTRIBUTING.md, LINT stage).
 
-// apb_uart decodes PADDR[2:0] = offset bits 4:2 and has no PSTRB or PPROT
-// (QNSC_UART_MAS 5, 10). The wrapper keeps the full APB slave ports of
-// design/README.md, "APB slave conventions"; the other bits are not used.
+// apb_uart decodes PADDR[2:0] = offset bits 4:2 (QNSC_UART_MAS 5, 10). The
+// wrapper keeps the 14-bit offset of design/README.md, "APB slave
+// conventions"; the other bits are not used.
 lint_off -rule UNUSEDSIGNAL -file "*design/uart/rtl/m_qnsc_wrap_uart.sv" -match "*'i_bus_apb_paddr'*"
-lint_off -rule UNUSEDSIGNAL -file "*design/uart/rtl/m_qnsc_wrap_uart.sv" -match "*'i_bus_apb_pstrb'*"
-lint_off -rule UNUSEDSIGNAL -file "*design/uart/rtl/m_qnsc_wrap_uart.sv" -match "*'i_bus_apb_pprot'*"
 
 // Modem outputs left open on purpose: no flow control, no modem pins
 // (QNSC_UART_MAS 10).

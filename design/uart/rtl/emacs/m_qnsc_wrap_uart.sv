@@ -16,8 +16,9 @@
 // What the wrapper does (MAS 5, 10):
 //   - PADDR[2:0] = i_bus_apb_paddr[4:2]: the register index. Offset bits 11:5
 //     are not decoded, so the 32-byte map aliases across the window (MAS 6)
-//   - PSTRB and PPROT: apb_uart has neither (it ties them '1 and 0 inside).
-//     A byte, halfword or word store writes bits 7:0 (MAS 7.5)
+//   - PSTRB and PPROT: apb_uart has neither (it ties them '1 and 0 inside),
+//     so the wrapper has no such port. A byte, halfword or word store writes
+//     bits 7:0 (MAS 7.5)
 //   - modem inputs CTSN, DSRN, DCDN, RIN tied 1 (inactive), modem outputs open:
 //     no flow control
 //   - DMA_RX_REQ of apb_uart (LSR.data_ready, a level) -> o_dma_rx_req, the RX request of
@@ -27,12 +28,12 @@
 //   - PREADY, PSLVERR passed through: no wait state; PSLVERR on the accesses
 //     the MAS 6 table marks
 //
-// Ports declared by hand: i_bus_apb_paddr, i_bus_apb_pstrb, i_bus_apb_pprot.
-// AUTOINPUT declares a port only from what an instance pin uses, and apb_uart
-// uses paddr[4:2] and no pstrb/pprot; the APB slave conventions of
-// design/README.md want the full 14-bit offset and both fields on every APB
-// wrapper. They are the last ports, so this file stays valid SystemVerilog
-// before expansion. Their unused bits are waived in design/uart/waivers.vlt.
+// i_bus_apb_paddr is declared by hand: AUTOINPUT declares a port only from
+// what an instance pin uses, and apb_uart uses paddr[4:2]; the APB slave
+// conventions of design/README.md want the full 14-bit offset. It is the last
+// port, so this file stays valid SystemVerilog before expansion. Its unused
+// bits are waived in design/uart/waivers.vlt. A field the IP does not have
+// (PSTRB, PPROT) gets no port.
 
 module m_qnsc_wrap_uart
 (
@@ -98,11 +99,9 @@ output logic            o_dma_rx_req,           // From u_apb_uart of apb_uart.v
 /*AUTOOUTPUT*/
 
 //---------------------------------------------------------------
-// APB fields apb_uart does not take in full: declared by hand
+// APB offset, wider than apb_uart's PADDR: declared by hand
 //---------------------------------------------------------------
-input  logic [13:0]     i_bus_apb_paddr,        // contract: meta.apb_paddr_width; bits 4:2 used
-input  logic [3:0]      i_bus_apb_pstrb,        // not used: a store writes bits 7:0
-input  logic [2:0]      i_bus_apb_pprot         // not used
+input  logic [13:0]     i_bus_apb_paddr         // contract: meta.apb_paddr_width; bits 4:2 used
 );
 
 /*AUTOWIRE*/
@@ -169,7 +168,7 @@ apb_uart u_apb_uart (/*AUTOINST*/
                      .DSRN              (1'b1),                  // Templated
                      .DCDN              (1'b1),                  // Templated
                      .RIN               (1'b1),                  // Templated
-                     .SIN               (i_pad_uart_rx));         // Templated
+                     .SIN               (i_pad_uart_rx));        // Templated
 
 endmodule
 // Local Variables:

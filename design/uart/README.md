@@ -47,7 +47,7 @@ After one THR write to an idle transmitter, `LSR.thr_empty` and `LSR.tx_empty` s
 is sent, until the next THR write; waiting for `tx_empty` after a single byte does not wait.
 
 The wrapper adds no logic apart from that wiring: `PADDR[2:0]` = `i_bus_apb_paddr[4:2]`, `PSTRB`/`PPROT`
-not used, modem inputs tied 1, modem outputs open (MAS 5, 10).
+not ports (apb_uart has neither), modem inputs tied 1, modem outputs open (MAS 5, 10).
 
 ## Instances
 
