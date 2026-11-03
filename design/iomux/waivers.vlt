@@ -1,0 +1,11 @@
+`verilator_config
+// =============================================================================
+// Lint waivers owned by the iomux block (QNSC_IOMUX_MAS).
+// =============================================================================
+
+// ---- generated RTL (util/gen/iomux): not edited by hand, regenerated from
+// iomux_pads.yml. APB-CSR-Generator emits offset localparams it does not use,
+// reads only the low address bits it decodes, and ends without a newline.
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/iomux/m_qnsc_iomux_csr.sv" -match "*"
+lint_off -rule UNUSEDPARAM  -file "*util/gen/iomux/m_qnsc_iomux_csr.sv" -match "*"
+lint_off -rule EOFNEWLINE   -file "*util/gen/iomux/m_qnsc_iomux_csr.sv"

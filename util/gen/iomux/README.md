@@ -1,0 +1,20 @@
+# `util/gen/iomux` — IO MUX, generated
+
+`iomux_pads.yml` is the source: the ports of `m_qnsc_iomux` on the IP side, the
+function catalog (polarity and idle value of every function, with the vendored
+RTL line it comes from) and the pad table (Pad List v2). `gen.sh` is the recipe
+(`make gen IP=iomux`, checked by `make gen-check`):
+
+| File | Written by |
+|---|---|
+| `m_qnsc_iomux_mux.sv` | `util/gen_iomux.py`: one `case` per pad |
+| `iomux_expect.svh` | `util/gen_iomux.py`: the checks `dv/iomux` runs |
+| `m_qnsc_iomux_csr.sv` | APB-CSR-Generator, from a workbook `util/gen_iomux.py` writes (scratch only) |
+
+Before writing, `util/gen_iomux.py` checks the table: every function is in the
+catalog and names existing ports the right way round; every IP input is reached
+from exactly one pad and code (no priority needed, no port for nothing); every
+IP output reaches a pad; the JTAG pads are b00 of pads 0-4.
+
+To change the pin map: edit `iomux_pads.yml`, `make gen IP=iomux`, `make sim
+BLOCK=iomux`, commit the table and the regenerated files together.

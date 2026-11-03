@@ -18,8 +18,11 @@
 # +incdir+../../vendor/<upstream>/<path>
 
 # ---- upstream IP, in compile order -----------------------------------------
-# ../../vendor/<upstream>/rtl/<leaf>.sv
-# ../../vendor/<upstream>/rtl/<top_of_ip>.sv
+# none: designed in house
+
+# ---- generated (util/gen/iomux, `make gen IP=iomux`) ------------------------
+../../util/gen/iomux/m_qnsc_iomux_csr.sv
+../../util/gen/iomux/m_qnsc_iomux_mux.sv
 
 # ---- ours -------------------------------------------------------------------
-# rtl/<wrapper>.sv
+rtl/m_qnsc_iomux.sv

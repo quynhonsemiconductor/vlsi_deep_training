@@ -1,0 +1,216 @@
+# =============================================================================
+# IO MUX source table -- the only place the pin map is written.
+#
+# util/gen_iomux.py reads this file and writes, into util/gen/iomux/:
+#   m_qnsc_iomux_mux.sv   the datapath (one case per pad)
+#   m_qnsc_iomux_csr.sv   the PADSEL registers (through APB-CSR-Generator)
+#   iomux_expect.svh      the per-pad, per-code checks dv/iomux runs
+# Run: make gen IP=iomux. Never edit the generated files by hand.
+#
+# Source of `pads`: IOPAD_Pin_Summary.xlsx, sheet "Pad List v2", as updated by
+# the IO MUX owner on 2026-11-03. Only DIG pins that the mux selects are listed;
+# `dedicated` pins bypass the mux.
+#
+# Every polarity and idle value in `functions` is read from the vendored IP RTL
+# at the commit pinned in vendor/manifest.yml; `evidence` says where. Where a
+# team wrapper changes a signal on its way to the pad, `wrapper` says so.
+# =============================================================================
+
+# ---- ports of m_qnsc_iomux on the IP side (direction seen from the IO MUX) --
+# An IP output arrives on an i_ port; an IP input leaves on an o_ port.
+ports:
+  # apb_gpio x3 (gpio_0..2): gpio_out / gpio_dir / gpio_in
+  - {name: i_gpio_0_out,   dir: in,  width: 8}
+  - {name: i_gpio_0_oe,    dir: in,  width: 8}
+  - {name: o_gpio_0_in,    dir: out, width: 8}
+  - {name: i_gpio_1_out,   dir: in,  width: 8}
+  - {name: i_gpio_1_oe,    dir: in,  width: 8}
+  - {name: o_gpio_1_in,    dir: out, width: 8}
+  - {name: i_gpio_2_out,   dir: in,  width: 8}
+  - {name: i_gpio_2_oe,    dir: in,  width: 8}
+  - {name: o_gpio_2_in,    dir: out, width: 8}
+  # apb_uart x2 (uart_0, uart_1): SOUT / SIN
+  - {name: i_uart_0_tx,    dir: in,  width: 1}
+  - {name: o_uart_0_rx,    dir: out, width: 1}
+  - {name: i_uart_1_tx,    dir: in,  width: 1}
+  - {name: o_uart_1_rx,    dir: out, width: 1}
+  # SPI wrapper (host/device chosen inside it): one sck / csb / sd[3:0] set
+  - {name: i_spi_sck,      dir: in,  width: 1}
+  - {name: i_spi_sck_oe,   dir: in,  width: 1}
+  - {name: o_spi_sck,      dir: out, width: 1}
+  - {name: i_spi_csb,      dir: in,  width: 1}
+  - {name: i_spi_csb_oe,   dir: in,  width: 1}
+  - {name: o_spi_csb,      dir: out, width: 1}
+  - {name: i_spi_sd,       dir: in,  width: 4}
+  - {name: i_spi_sd_oe,    dir: in,  width: 4}
+  - {name: o_spi_sd,       dir: out, width: 4}
+  # apb_i2c: scl/sda pad_o, padoen (active low, kept by the wrapper), pad_i
+  - {name: i_i2c_scl,      dir: in,  width: 1}
+  - {name: i_i2c_scl_oe_n, dir: in,  width: 1}
+  - {name: o_i2c_scl,      dir: out, width: 1}
+  - {name: i_i2c_sda,      dir: in,  width: 1}
+  - {name: i_i2c_sda_oe_n, dir: in,  width: 1}
+  - {name: o_i2c_sda,      dir: out, width: 1}
+  # apb_adv_timer (pwm): 8 of 16 channels, 4 external inputs
+  - {name: i_pwm,          dir: in,  width: 8}
+  - {name: o_tim_ext,      dir: out, width: 4}
+  # SYSDBG JTAG TAP
+  - {name: o_jtag_tck,     dir: out, width: 1}
+  - {name: o_jtag_tms,     dir: out, width: 1}
+  - {name: o_jtag_tdi,     dir: out, width: 1}
+  - {name: i_jtag_tdo,     dir: in,  width: 1}
+  - {name: i_jtag_tdo_oe,  dir: in,  width: 1}
+  - {name: o_jtag_trst_n,  dir: out, width: 1}
+
+# ---- function catalog --------------------------------------------------------
+# kind:  in     the pad drives an IP input        (OE = 0)
+#        out    the IP drives the pad              (OE from `oe`)
+#        inout  both                                (OE from `oe`)
+# a / oe: expressions on i_ ports, or constants. y: the o_ port the pad value
+# reaches. idle: the value of `y` while no pad selects the function.
+# `match` is a regular expression on the name in the pad table; {1}, {2} are
+# its groups.
+functions:
+  - match: 'GPIO([0-2])_([0-7])'
+    kind: inout
+    a: 'i_gpio_{1}_out[{2}]'
+    oe: 'i_gpio_{1}_oe[{2}]'
+    y: 'o_gpio_{1}_in[{2}]'
+    idle: "1'b0"
+    evidence: >-
+      apb_gpio.sv:60-63 gpio_in/gpio_out/gpio_dir; gpio_dir resets to 0 (:215),
+      1 = output (:781). gpio_in is synchronised by two flops inside (:201-203).
+
+  - match: 'UART([01])_TX'
+    kind: out
+    a: 'i_uart_{1}_tx'
+    oe: "1'b1"
+    evidence: apb_uart.sv SOUT (output, no enable); idles high.
+
+  - match: 'UART([01])_RX'
+    kind: in
+    y: 'o_uart_{1}_rx'
+    idle: "1'b1"
+    evidence: >-
+      apb_uart.sv SIN; obi_uart_rx.sv:349-351 takes a 0 as a start bit, so the
+      idle value is 1 (a 0 would be a break).
+
+  - match: 'SPI_SCK'
+    kind: inout
+    a: 'i_spi_sck'
+    oe: 'i_spi_sck_oe'
+    y: 'o_spi_sck'
+    idle: "1'b0"
+    evidence: spi_host.sv:40-41 cio_sck_o/_en_o; spi_device.sv:39 cio_sck_i.
+    assumption: the SPI wrapper selects host or device and presents one set (Hieu).
+
+  - match: 'SPI_CSB'
+    kind: inout
+    a: 'i_spi_csb'
+    oe: 'i_spi_csb_oe'
+    y: 'o_spi_csb'
+    idle: "1'b1"
+    evidence: >-
+      spi_host.sv:42-43 cio_csb_o/_en_o; spi_device.sv:40 cio_csb_i, active low,
+      so 1 keeps the device deselected.
+    assumption: the SPI wrapper selects host or device and presents one set (Hieu).
+
+  - match: 'SPI_SD([0-3])'
+    kind: inout
+    a: 'i_spi_sd[{1}]'
+    oe: 'i_spi_sd_oe[{1}]'
+    y: 'o_spi_sd[{1}]'
+    idle: "1'b0"
+    evidence: spi_host.sv:44-46, spi_device.sv:41-43 cio_sd_o/_en_o/_i [3:0].
+    assumption: the SPI wrapper selects host or device and presents one set (Hieu).
+
+  - match: 'I2C_(SCL|SDA)'
+    kind: inout
+    a: 'i_i2c_{lower1}'
+    oe: '~i_i2c_{lower1}_oe_n'
+    y: 'o_i2c_{lower1}'
+    idle: "1'b1"
+    evidence: >-
+      i2c_master_bit_ctrl.sv:157,160 scl_oen/sda_oen active low, :541-542
+      scl_o/sda_o = 0 (open drain). The pad OE is active high (ARM PBIDIR), so
+      the IO MUX inverts. Idle 1: a released bus reads high.
+    wrapper: m_qnsc_wrap_i2c keeps the IP polarity (o_pad_i2c_scl_oe_n).
+
+  - match: 'PWM_([0-7])'
+    kind: out
+    a: 'i_pwm[{1}]'
+    oe: "1'b1"
+    evidence: apb_adv_timer.sv:33-34 ch_0_o/ch_1_o.
+    wrapper: m_qnsc_wrap_pwm (PR #26) o_pad_pwm[7:0] = {ch_1_o, ch_0_o}.
+
+  - match: 'TIM_EXT([0-3])'
+    kind: in
+    y: 'o_tim_ext[{1}]'
+    idle: "1'b0"
+    evidence: apb_adv_timer.sv:29 ext_sig_i.
+    wrapper: m_qnsc_wrap_pwm synchronises i_pad_tim_ext with qnsc_sync.
+
+  - match: '(TCK|TMS|TDI)'
+    kind: in
+    y: 'o_jtag_{lower1}'
+    idle: "1'b0"
+    evidence: dmi_jtag_tap.sv:28-31 tck_i/tms_i/td_i (reference; SYSDBG is in house).
+
+  - match: 'TRSTN'
+    kind: in
+    y: 'o_jtag_trst_n'
+    idle: "1'b0"
+    evidence: >-
+      dmi_jtag_tap.sv:30,104-105 trst_ni, asynchronous, active low. 0 holds the
+      TAP in reset while the pin is not JTAG.
+
+  - match: 'TDO'
+    kind: out
+    a: 'i_jtag_tdo'
+    oe: 'i_jtag_tdo_oe'
+    evidence: dmi_jtag_tap.sv:32-33,209 td_o, tdo_oe_o active high.
+
+# ---- pads selected by the mux, in vector order -------------------------------
+# code: b00 / b01 / b10 / b11; '-' = not assigned (OE = 0, Hi-Z).
+# b00 is the value after reset: JTAG and UART0 work before any software.
+pads:
+  - {pin: 5,  b00: TCK,      b01: GPIO0_7}
+  - {pin: 6,  b00: TMS,      b01: GPIO0_6}
+  - {pin: 7,  b00: TDI,      b01: GPIO0_5}
+  - {pin: 8,  b00: TDO,      b01: GPIO0_4}
+  - {pin: 9,  b00: TRSTN,    b01: GPIO0_3}
+  - {pin: 10, b00: UART0_TX, b01: GPIO0_2}
+  - {pin: 11, b00: UART0_RX, b01: GPIO0_1}
+  - {pin: 12, b00: GPIO0_0,  b01: UART1_TX}
+  - {pin: 15, b00: GPIO1_7,  b01: SPI_SCK}
+  - {pin: 16, b00: GPIO1_6,  b01: SPI_CSB}
+  - {pin: 17, b00: GPIO1_5,  b01: SPI_SD0}
+  - {pin: 18, b00: GPIO1_4,  b01: SPI_SD1}
+  - {pin: 19, b00: GPIO1_3,  b01: SPI_SD2}
+  - {pin: 20, b00: GPIO1_2,  b01: SPI_SD3}
+  - {pin: 21, b00: I2C_SCL,  b01: UART1_RX}
+  - {pin: 22, b00: I2C_SDA}
+  - {pin: 23, b00: GPIO1_1,  b01: PWM_0}
+  - {pin: 24, b00: GPIO1_0,  b01: PWM_1}
+  - {pin: 25, b00: GPIO2_7,  b01: PWM_2}
+  - {pin: 26, b00: GPIO2_6,  b01: PWM_3}
+  - {pin: 29, b00: GPIO2_5,  b01: PWM_4}
+  - {pin: 30, b00: GPIO2_4,  b01: PWM_5}
+  - {pin: 31, b00: GPIO2_1,  b01: TIM_EXT0}
+  - {pin: 32, b00: GPIO2_0,  b01: TIM_EXT1}
+  - {pin: 33, b00: TIM_EXT2}
+  - {pin: 34, b00: TIM_EXT3}
+  - {pin: 38, b00: GPIO2_3,  b01: PWM_6}
+  - {pin: 39, b00: GPIO2_2,  b01: PWM_7}
+
+# The JTAG pads: forced to b00 while i_dbg_en = 1 (SYSDBG MAS 7.1, reference).
+dbg_force: [TCK, TMS, TDI, TDO, TRSTN]
+
+# Pins that bypass the mux (documentation; the generator only checks that no
+# muxed pad uses them).
+dedicated:
+  - {pin: 1,  function: OSCIN,  to: SCRC}
+  - {pin: 4,  function: RSTN,   to: SCRC}
+  - {pin: 35, function: DBG_EN, to: "SYSDBG i_dbg_en and SYSCSR i_dbg_en"}
+open:
+  - {pin: 40, note: "empty in Pad List v2 (2026-11-03); owner to decide"}
