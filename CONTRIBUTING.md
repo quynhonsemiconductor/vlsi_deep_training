@@ -236,3 +236,9 @@ specification must agree with — the SharePoint document is checked against it 
 review, by hand. The Markdown sources that used to live in `doc/specs/` were
 removed from the repository; they remain in the git history, and a copy should be
 kept on the SharePoint.
+
+Code and block files cite a specification by name and section, never by version:
+`Spec: QNSC_RAM_MAS, on the team SharePoint` and `(MAS 7.3)`, not `QNSC_RAM_MAS (V2.5)`.
+The repository holds no copy of the document, so a version written here cannot be
+checked and drifts as the SharePoint copy moves on. A note about the past may keep
+the version it happened in ("GPIO3 was dropped in GPIO MAS V1.2"); that does not drift.
