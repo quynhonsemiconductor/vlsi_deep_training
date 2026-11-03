@@ -1,85 +1,102 @@
-# `bus` — bus fabric: S_BUS crossbar and the AXI2APB bridge
+# `sbus` — S_BUS: the AXI4 crossbar and the AXI2APB bridge
 
-**Owner:** @SinhHPT   **Spec:** [`doc/specs/QNSC_BUS_MAS.md`](../../doc/specs/QNSC_BUS_MAS.md) (build to
-`.docx` via `doc/build/build_docs.py`)   **DV:** [`../../dv/sbus`](../../dv/sbus)
+**Owner:** @SinhHPT   **Spec:** `QNSC_BUS_MAS` on the team SharePoint (`doc/BLOCKS.md`)
+**DV:** [`../../dv/sbus`](../../dv/sbus)
 
 ## What this block is
 
-The chip's system bus and the bridge to the peripheral bus. `S_BUS` is a fully-connected
-AXI4 crossbar (`axi_xbar`): three masters issue transactions here (SYSDBG on
-`AXI_S0`, CPU on `AXI_S1`, DMA on `AXI_S2`) and four destinations answer them
-(ROM `AXI_M0`, ISRAM `AXI_M1`, DSRAM `AXI_M2`, the `AXI2APB` bridge `AXI_M3`).
-`AXI2APB` (`axi_to_axi_lite` + `axi_lite_to_apb`) converts the `AXI_M3` traffic
-to one APB4 master port, which leaves this block as it is. `bus` is an **integration** block (design/README.md, "Shared numbers:
-who may use `qnsc_pkg`"): it imports the contract package directly, since
-sizing the crossbar's own address map is exactly the chip-level job an
-integration block exists to do.
+The chip's system bus and the bridge to the peripheral bus. S_BUS is a fully connected AXI4
+crossbar (`axi_xbar`): three masters issue transactions here (SYSDBG on `AXI_S0`, CPU on `AXI_S1`,
+DMA on `AXI_S2`) and four destinations answer them (ROM `AXI_M0`, ISRAM `AXI_M1`, DSRAM `AXI_M2`,
+the AXI2APB bridge `AXI_M3`). AXI2APB (`axi_to_axi_lite` + `axi_lite_to_apb`) turns the `AXI_M3`
+traffic into one APB4 master port, which leaves this block as it is.
 
-**This block delivers `S_BUS` and the `AXI2APB` bridge.** `P_BUS`'s router (the
-fan-out of the bridge's one APB4 port to the peripherals) is not part of this
-wrapper; see `doc/specs/QNSC_BUS_DECISIONS.md`, "P_BUS's router leaves the wrapper".
+`sbus` is an **integration** block (design/README.md, "Shared numbers: who may use `qnsc_pkg`"):
+it reads the contract package directly, since sizing the crossbar's address map is the chip-level
+job an integration block exists to do.
+
+P_BUS (the router that fans the one APB port out to the peripherals) is not here: it is the block
+`pbus`. The two meet at the APB port: `o_bus_apb_m_0_*` here is `i_bus_apb_s_0_*` there.
+
+## Address map
+
+From `qnsc_pkg`, never retyped. A window's end is exclusive.
+
+| Master port | Destination | Base | Size |
+|---|---|---|---|
+| `m_0` | ROM | `0x0000_0000` | 2 KiB |
+| `m_1` | ISRAM debug window, then ISRAM (one rule: they touch) | `0x2000_0000` | 4 KiB + 60 KiB |
+| `m_2` | DSRAM | `0x3000_0000` | 32 KiB |
+| `m_3` | AXI2APB, the populated part of the P_BUS window | `0x8000_0000` | 224 KiB (slots 0 to 13) |
+
+An address in no window, and slots 14 and 15 of the APB window, get **DECERR** from the
+crossbar's own `axi_err_slv`. The DMA (`s_2`) cannot reach ROM or ISRAM: the connectivity matrix
+answers DECERR and the slave never sees the access.
+
+## Crossbar settings
+
+`MaxMstTrans = 4`, `MaxSlvTrans = 8`, `FallThrough = 0`, `LatencyMode = NO_LATENCY`
+(single frequency, no register stage), `ATOPs = 0`, no default master port. The IDs are 1 bit on
+the slave ports (the masters') and 3 bit on the master ports (`1 + clog2(3)`: `axi_mux` puts the
+slave-port number in the top two bits). All of it in [`rtl/qnsc_sbus_pkg.sv`](./rtl/qnsc_sbus_pkg.sv).
 
 ## Uses (IP)
 
 | From | Module | Recorded in |
 |------|--------|-------------|
-| pulp-platform/axi | `axi_xbar` (+ its own internal `axi_demux`/`axi_mux`/`axi_multicut`/`axi_err_slv`/`addr_decode` chain), `axi_to_axi_lite`, `axi_lite_to_apb` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
-| pulp-platform/common_cells | `cc_addr_decode`, `cc_rr_arb_tree`, `cc_fifo`, `cc_counter`, `cc_id_queue` (+ their own dependencies) | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
+| pulp-platform/axi | `axi_xbar` (and the demux, mux, `axi_err_slv`, `axi_multicut` it draws in), `axi_to_axi_lite`, `axi_lite_to_apb` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
+| pulp-platform/common_cells | `cc_addr_decode`, `cc_rr_arb_tree`, `cc_fifo`, `cc_counter`, `cc_id_queue` (and their dependencies) | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
-`qnsc_sbus_pkg` (the AXI/AXI4-Lite/APB4 struct typedefs, `axi_xbar`'s `Cfg` and
-address map) is designed in house -- see `rtl/qnsc_sbus_pkg.sv`.
-Every file this block actually instantiates was traced by reading the pinned
-commit's real source, not assumed from the API docs; see
-`vendor/manifest.yml`'s notes for the full dependency chain.
+`qnsc_sbus_pkg` (the struct typedefs, `axi_xbar`'s `Cfg`, the address map) is written here.
 
 ## The wrapper is the boundary
 
-`rtl/` holds **only code written here**. Upstream IP is listed in
-[`sbus.f`](./sbus.f), never copied into `rtl/`. Reading this one directory answers
-what is ours and what is borrowed.
+`rtl/` holds only code written here; upstream IP is listed in [`sbus.f`](./sbus.f), never copied.
+The boundary is `rtl/m_qnsc_wrap_sbus.sv`, generated by emacs verilog-mode from
+`rtl/emacs/m_qnsc_wrap_sbus.src.sv` (`make wrap BLOCK=sbus`; edit the `.src.sv`, never the generated
+file). `resolve_pkg_consts.py` turns the package constants into numbers in the generated file;
+types and the function-built tables (`P_CFG`, `P_CONNECTIVITY`, `P_ADDR_MAP`) stay names.
 
-The block's outward boundary is `rtl/m_qnsc_wrap_sbus.sv`, generated by emacs
-verilog-mode from `rtl/emacs/m_qnsc_wrap_sbus.src.sv` (`make wrap BLOCK=sbus`;
-edit the `.src.sv`, never the generated file; see `doc/guides/EMACS_AUTO.md`).
-What emacs derives: the clock and reset ports and the pin connections of the three
-instances. The one APB4 port is written in the `.src.sv` too, joined to the bridge
-by plain assigns. The AXI4 ports are written by hand too: one packed struct per
-direction and port, typed from `qnsc_sbus_pkg` (`slv_req_t`, `slv_resp_t`, `mst_req_t`,
-`mst_resp_t`), joined to the crossbar's arrays by plain assigns. This departs from
-the flat-port rule of `design/README.md` on purpose (owner's decision, 2026-10-19):
-a struct carries all 45 AXI4 signals of a port in one name. The twelve lines carry
-`module-rules: ignore` and `naming-check: ignore` comments so the checks stay green.
-The struct-typed ports of the three AXI IP modules make
-verilog-mode invent pins named after the type; the template maps them to `()` and
-`flow/emacs/fix_pkg_ports.py` drops them. `bus` is an integration block, so the
-`.src.sv` reads `qnsc_pkg` (written with its package name, no import).
-
-`m_qnsc_wrap_sbus`'s own top-level ports:
+**AXI ports are one signal each** (naming rule V1.2, 3.4), so the integration at TOP maps them to
+the IPs' own `i_bus_axi_*` / `o_bus_axi_*` by name with emacs. Packed structs of `qnsc_sbus_pkg` are
+used only inside, where `axi_xbar` needs them. Both port groups are written by
+[`rtl/emacs/gen_axi_ports.py`](./rtl/emacs/gen_axi_ports.py) between its markers in the `.src.sv`
+(`python gen_axi_ports.py`, then `make wrap BLOCK=sbus`); $bits checks in the wrapper fail the
+elaboration if the package widths drift from the generated ports.
 
 | Port | Direction | Note |
 |---|---|---|
-| `i_clk_sbus`, `i_rst_n_sbus` | in | S_BUS's own domain (qnsc_pkg's "sbus" cluster: hardwired on, never gated) -- clocks the crossbar and the AXI2APB bridge, as `cpu`'s clock reaches both Ibex and `cpu2axi` |
-| `i_bus_axi_s_0_req` / `o_bus_axi_s_0_resp` | in / out | AXI4 from SYSDBG (`AXI_S0`), types `qnsc_sbus_pkg::slv_req_t` / `slv_resp_t` (183 / 54 bit, ID 5 bit) |
-| `i_bus_axi_s_1_req` / `o_bus_axi_s_1_resp` | in / out | AXI4 from CPU's CPU2AXI bridge (`AXI_S1`) |
-| `i_bus_axi_s_2_req` / `o_bus_axi_s_2_resp` | in / out | AXI4 from DMA (`AXI_S2`) |
-| `o_bus_axi_m_0_req` / `i_bus_axi_m_0_resp` | out / in | AXI4 to ROM (`AXI_M0`), types `mst_req_t` / `mst_resp_t` (187 / 58 bit, ID 7 bit) |
-| `o_bus_axi_m_1_req` / `i_bus_axi_m_1_resp` | out / in | AXI4 to ISRAM, covers both the debug window and the application region (`AXI_M1`) |
-| `o_bus_axi_m_2_req` / `i_bus_axi_m_2_resp` | out / in | AXI4 to DSRAM (`AXI_M2`) |
-| `o_bus_apb_m_0_<psignal>` / `i_bus_apb_m_0_<psignal>` | out/in | The bridge's one APB4 master port; `paddr` is 18 bits, the offset inside the AXI2APB window (`meta.pbus_paddr_width`), `pprot` is not brought out |
+| `i_clk_cpu`, `i_rst_n_cpu` | in | S_BUS is in the contract's `cpu` clock cluster (hardwired on, never gated); clocks the crossbar and the bridge |
+| `i_bus_axi_s_<n>_<channel>_<signal>`, `o_bus_axi_s_<n>_...` | in / out | slave port `n`: 0 SYSDBG, 1 CPU, 2 DMA. 45 signals each, ID 1 bit |
+| `o_bus_axi_m_<n>_<channel>_<signal>`, `i_bus_axi_m_<n>_...` | out / in | master port `n`: 0 ROM, 1 ISRAM (debug window and application), 2 DSRAM. 45 signals each, ID 3 bit |
+| `o_bus_apb_m_0_<psignal>`, `i_bus_apb_m_0_<psignal>` | out / in | the bridge's APB master port. `paddr` is 18 bit, the offset in the AXI2APB window (`meta.pbus_paddr_width`); `pprot` is not brought out |
+
+## Integration notes
+
+- **Tie-offs at TOP.** The ROM, ISRAM and DSRAM wrappers have no `b_user` and `r_user`, so the six
+  inputs `i_bus_axi_m_{0,1,2}_{b,r}_user` are tied to 0. Outputs no slave takes (`aw_size`,
+  `aw_cache`, `aw_prot`, `aw_atop`, `aw_user`, ...) are left open. The CPU and DMA wrappers match
+  the slave-port names and widths signal for signal. SYSDBG has no RTL yet, so `s_0` is unchecked.
+- **A burst into the APB window.** `axi_to_axi_lite` carries `axi_burst_splitter`, which does not
+  split a non-modifiable burst (`AxCACHE = 0`, AXI spec A3.4.1): more than one beat with `AxCACHE`
+  0 gets SLVERR and no APB access. The CPU's data port does not burst; the DMA drives `AxCACHE` 0,
+  so a DMA burst to a peripheral register would get SLVERR. `dv/sbus` test `SBUS_006` pins this.
+- **ID widths of the neighbours.** ISRAM and DSRAM still take a 7-bit ID where S_BUS gives 3. The
+  ROM wrapper (3 bit), the CPU bridge and the DMA wrapper (1 bit) already match.
 
 ## Open items
 
-Recorded with reasoning in `doc/specs/QNSC_BUS_DECISIONS.md`:
+- `AxiIdUsedSlvPorts` (= the slave-port ID width) and `UniqueIds` (= 0) are safe defaults, not
+  confirmed against what the masters really guarantee.
+- `axi_lite_to_apb`'s `pprot` output is dropped: the APB port has no `pprot`.
+- No test of `UniqueIds`, ID reordering or random traffic yet (`dv/sbus/README.md`).
 
-- `AxiIdUsedSlvPorts` and `UniqueIds` (both left at safe defaults).
-- DMA's actual `AXI_S2` ID width (assumed 5-bit for uniformity; no DMA MAS
-  exists yet to confirm).
-- `axi_lite_to_apb`'s own `pprot` output is dropped, unconnected: the wrapper's
-  APB port has no `pprot`.
-- The fan-out of `o_bus_apb_m_0_*` to the peripherals (P_BUS's router) is not in
-  this wrapper. Who builds it, and where, is not settled here.
+## Diagrams
+
+[`diagram/`](./diagram): `s_bus.drawio` is drawn by hand and is the one to edit; do not regenerate it
+(`gen_s_bus_drawio.py` is out of date, see its header). `s_bus_cau_tao.html` explains how the
+wrapper is built.
 
 ## Instances
 
-One. `design/top` instantiates `m_qnsc_wrap_sbus` once; QSOC has a single
-instance of each bus.
+One. `design/top` instantiates `m_qnsc_wrap_sbus` once; QSOC has a single instance of each bus.

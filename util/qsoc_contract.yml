@@ -265,7 +265,7 @@ interrupts:
         INT_CLEAR write (TRM 5.6), raised on transfer END or an error. The old
         iDMA idle line is gone with that IP; idle stays a port for the
         power-down sequence only. The wrapper drives o_int_dma from INT.
-        ID width 1 (ID_BITS), so the DMA fits AxiIdUsedSlvPorts = 5.
+        ID width 1 (ID_BITS), the same as every slave port of S_BUS (design/sbus).
     - line: 1
       peripheral: spi_device
       ports: [intr_upload_cmdfifo_not_empty_o, intr_upload_payload_not_empty_o,

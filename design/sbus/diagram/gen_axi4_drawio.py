@@ -430,7 +430,7 @@ a6.text(40, 860, 1800, 120, sm(
     "<b>Thêm</b><br>"
     "Đọc và ghi độc lập: AXI4 không quy định thứ tự giữa một giao dịch đọc và một giao dịch ghi.<br>"
     "AXI4 không có WID: dữ liệu ghi của các burst không được xen kẽ nhau, nên beat W đi theo đúng thứ tự AW.<br>"
-    "Trong QSOC: cầu của CPU luôn dùng ID 0 nên response về đúng thứ tự phát. S_BUS thêm 2 bit vào đầu ID (5 thành 7 bit) để biết response của master nào.", 13), 13, "left", valign="top")
+    "Trong QSOC: cầu của CPU luôn dùng ID 0 nên response về đúng thứ tự phát. S_BUS thêm 2 bit vào đầu ID (1 thành 3 bit) để biết response của master nào.", 13), 13, "left", valign="top")
 
 xml = ('<mxfile host="app.diagrams.net">' + a1.xml() + a2.xml() + a3.xml() + a4.xml() + a5.xml() + a6.xml() + "</mxfile>")
 out = Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / "axi4_co_ban.drawio"

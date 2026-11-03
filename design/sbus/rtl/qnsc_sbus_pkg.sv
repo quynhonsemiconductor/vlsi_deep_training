@@ -104,7 +104,7 @@ package qnsc_sbus_pkg;
     c.PipelineStages     = 0;
     c.AxiIdWidthSlvPorts = P_SLV_ID_W;
     // Open items, no chip-level requirement forces a different value yet;
-    // see QNSC_BUS_DECISIONS.md for the reasoning kept alongside each:
+    // see "Open items" in design/sbus/README.md:
     c.AxiIdUsedSlvPorts  = P_SLV_ID_W;  // every ID bit is compared; with 1 bit the demux keeps 2 ID counters per channel
     c.UniqueIds          = 1'b0;  // safe default until CPU/DMA/debug ID uniqueness is confirmed
     c.AxiAddrWidth       = P_AXI_ADDR_W;

@@ -82,8 +82,8 @@
   <rect class="r" x="340" y="40" width="520" height="380"/>
 
   <rect class="s" x="360" y="64" width="480" height="64"/>
-  <text class="md" x="600" y="92" text-anchor="middle" font-weight="700" style="fill:var(--bg)">Port struct nối vào crossbar</text>
-  <text class="sm" x="600" y="112" text-anchor="middle" style="fill:var(--bg)">i/o_bus_axi_*_req, _resp ⇄ mảng của axi_xbar</text>
+  <text class="md" x="600" y="92" text-anchor="middle" font-weight="700" style="fill:var(--bg)">Port AXI từng tín hiệu, gom vào struct</text>
+  <text class="sm" x="600" y="112" text-anchor="middle" style="fill:var(--bg)">i/o_bus_axi_*_&lt;kênh&gt;_&lt;tín hiệu&gt; ⇄ struct ⇄ mảng của axi_xbar</text>
 
   <rect class="b" x="360" y="160" width="480" height="96"/>
   <text class="md" x="600" y="190" text-anchor="middle" font-weight="700">u_axi_xbar : axi_xbar</text>
@@ -137,22 +137,22 @@
 <h2>5. Trong file .src.sv có gì</h2>
 <table>
   <tr><th>Phần</th><th>Dòng (xấp xỉ)</th><th>Nội dung</th></tr>
-  <tr><td>Port</td><td>đầu file</td><td>Clock/reset do emacs điền. 12 port AXI (struct của <code>qnsc_sbus_pkg</code>) và cổng APB viết tay.</td></tr>
-  <tr><td>Kiểm tra lúc elaboration</td><td>82</td><td>Độ rộng <code>paddr</code> và <code>pwdata</code> của cổng APB phải bằng package.</td></tr>
-  <tr><td>Instance <code>axi_xbar</code></td><td>163 đến 181</td><td>Truyền <code>Cfg</code> và kiểu struct, <code>ATOPs = 0</code>, <code>Connectivity = '1</code>.</td></tr>
-  <tr><td>Instance <code>axi_to_axi_lite</code></td><td>197 đến 209</td><td>Phần đầu của AXI2APB.</td></tr>
-  <tr><td>Instance <code>axi_lite_to_apb</code></td><td>223 đến 235</td><td>Phần sau của AXI2APB.</td></tr>
-  <tr><td>Nối cầu với cổng APB</td><td>từ 238</td><td>Các <code>assign</code> nối struct APB của cầu với cổng APB của wrapper.</td></tr>
-  <tr><td>Nối port AXI với mảng của crossbar</td><td>từ 252</td><td>Các <code>assign</code> thuần nối dây, không có logic.</td></tr>
+  <tr><td>Port</td><td>đầu file</td><td>Clock/reset do emacs điền. 270 port AXI, mỗi tín hiệu một port, do <code>gen_axi_ports.py</code> sinh giữa hai dòng marker, và cổng APB viết tay.</td></tr>
+  <tr><td>Kiểm tra lúc elaboration</td><td>342</td><td>Độ rộng <code>paddr</code>, <code>pwdata</code> của cổng APB và độ rộng ID, địa chỉ, dữ liệu, user của port AXI phải bằng package.</td></tr>
+  <tr><td>Instance <code>axi_xbar</code></td><td>440 đến 458</td><td>Truyền <code>Cfg</code> và kiểu struct, <code>ATOPs = 0</code>, <code>Connectivity = '1</code>.</td></tr>
+  <tr><td>Instance <code>axi_to_axi_lite</code></td><td>474 đến 486</td><td>Phần đầu của AXI2APB.</td></tr>
+  <tr><td>Instance <code>axi_lite_to_apb</code></td><td>500 đến 512</td><td>Phần sau của AXI2APB.</td></tr>
+  <tr><td>Nối cầu với cổng APB</td><td>từ 515</td><td>Các <code>assign</code> nối struct APB của cầu với cổng APB của wrapper.</td></tr>
+  <tr><td>Nối port AXI với struct của crossbar</td><td>từ 529</td><td>Các <code>assign</code> thuần nối dây, không có logic, cũng do <code>gen_axi_ports.py</code> sinh.</td></tr>
 </table>
 
 <h2>6. Dữ liệu đi qua như thế nào</h2>
 <p>Một lệnh đọc từ CPU đi như sau.</p>
 <ol class="steps">
-  <li>Master đưa tín hiệu vào struct <code>i_bus_axi_s_1_req</code>, ví dụ trường <code>ar.addr</code>.</li>
-  <li>Struct request 183 bit đi thẳng vào mảng của <code>axi_xbar</code> bằng một câu <code>assign</code>.</li>
+  <li>Master đưa tín hiệu vào các port <code>i_bus_axi_s_1_ar_addr</code>, <code>i_bus_axi_s_1_ar_valid</code>... của S_BUS.</li>
+  <li>Các <code>assign</code> gom chúng vào struct <code>w_axi_s_1_req</code>, rồi struct này đi vào mảng của <code>axi_xbar</code>.</li>
   <li><code>axi_xbar</code> so địa chỉ với bảng 4 dòng để chọn slave. Địa chỉ không khớp dòng nào thì trả DECERR.</li>
-  <li>Nếu đích là ROM, ISRAM hoặc DSRAM, struct 187 bit (ID rộng thêm 2 bit) đi ra port <code>o_bus_axi_m_n_req</code>.</li>
+  <li>Nếu đích là ROM, ISRAM hoặc DSRAM, struct (ID rộng thêm 2 bit) được tách lại thành các port <code>o_bus_axi_m_n_ar_addr</code>...</li>
   <li>Nếu đích là vùng ngoại vi 0x8000_0000, lệnh đi vào AXI2APB rồi ra cổng APB duy nhất của wrapper.</li>
   <li>Phản hồi đi ngược lại đúng đường đó.</li>
 </ol>
@@ -215,27 +215,19 @@
 <p>Khối đám mây <code>cc_addr_decode</code> trên block diagram là mạch logic thuần (không có clock), nên được vẽ hình mây theo ký hiệu của thư viện QNSC. Responder lỗi là một slave giả nằm ngay trong demux, chỉ để trả lời DECERR.</p>
 
 <h3>7.3 Kiểu 2: gắn thêm 2 bit vào ID (i_id_prepend trong mux)</h3>
-<p>Slave chỉ biết "ID này", không biết lệnh đến từ master nào. Crossbar giải quyết bằng cách <b>gắn thêm 2 bit chỉ số master vào đầu ID</b> trước khi đưa cho slave. Khi slave trả lời, nó trả lại nguyên ID 7 bit đó, và crossbar đọc 2 bit đầu để biết trả về master nào (rồi bỏ 2 bit này đi).</p>
+<p>Slave chỉ biết "ID này", không biết lệnh đến từ master nào. Crossbar giải quyết bằng cách <b>gắn thêm 2 bit chỉ số master vào đầu ID</b> trước khi đưa cho slave. Khi slave trả lời, nó trả lại nguyên ID 3 bit đó, và crossbar đọc 2 bit đầu để biết trả về master nào (rồi bỏ 2 bit này đi).</p>
 <figure>
 <svg viewBox="0 0 1040 330" role="img" aria-label="Thêm 2 bit vào đầu ID"><defs><marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--line)"/></marker></defs>
-<text class="sm" x="408" y="56" text-anchor="end">ID gốc của CPU, 5 bit</text>
+<text class="sm" x="408" y="56" text-anchor="end">ID gốc của CPU, 1 bit</text>
 <rect class="b" x="418" y="30" width="44" height="40"/><text class="md" x="440" y="56" text-anchor="middle" font-weight="700" style="">1</text>
-<rect class="b" x="462" y="30" width="44" height="40"/><text class="md" x="484" y="56" text-anchor="middle" font-weight="700" style="">0</text>
-<rect class="b" x="506" y="30" width="44" height="40"/><text class="md" x="528" y="56" text-anchor="middle" font-weight="700" style="">0</text>
-<rect class="b" x="550" y="30" width="44" height="40"/><text class="md" x="572" y="56" text-anchor="middle" font-weight="700" style="">0</text>
-<rect class="b" x="594" y="30" width="44" height="40"/><text class="md" x="616" y="56" text-anchor="middle" font-weight="700" style="">0</text>
 <text class="sm" x="320" y="146" text-anchor="end">chỉ số master (CPU = cổng s_1), 2 bit</text>
 <rect class="s" x="330" y="120" width="44" height="40"/><text class="md" x="352" y="146" text-anchor="middle" font-weight="700" style="fill:var(--bg)">0</text>
 <rect class="s" x="374" y="120" width="44" height="40"/><text class="md" x="396" y="146" text-anchor="middle" font-weight="700" style="fill:var(--bg)">1</text>
-<text class="sm" x="320" y="256" text-anchor="end">ID ra tới slave, 7 bit</text>
+<text class="sm" x="320" y="256" text-anchor="end">ID ra tới slave, 3 bit</text>
 <rect class="s" x="330" y="230" width="44" height="40"/><text class="md" x="352" y="256" text-anchor="middle" font-weight="700" style="fill:var(--bg)">0</text>
 <rect class="s" x="374" y="230" width="44" height="40"/><text class="md" x="396" y="256" text-anchor="middle" font-weight="700" style="fill:var(--bg)">1</text>
 <rect class="b" x="418" y="230" width="44" height="40"/><text class="md" x="440" y="256" text-anchor="middle" font-weight="700">1</text>
-<rect class="b" x="462" y="230" width="44" height="40"/><text class="md" x="484" y="256" text-anchor="middle" font-weight="700">0</text>
-<rect class="b" x="506" y="230" width="44" height="40"/><text class="md" x="528" y="256" text-anchor="middle" font-weight="700">0</text>
-<rect class="b" x="550" y="230" width="44" height="40"/><text class="md" x="572" y="256" text-anchor="middle" font-weight="700">0</text>
-<rect class="b" x="594" y="230" width="44" height="40"/><text class="md" x="616" y="256" text-anchor="middle" font-weight="700">0</text>
-<path class="l" d="M374,160 L374,222"/><path class="l" d="M528,70 L528,222"/>
+<path class="l" d="M374,160 L374,222"/><path class="l" d="M440,70 L440,222"/>
 
 </svg>
 </figure>
@@ -245,8 +237,8 @@
 <tr><td>CPU</td><td><code>AXI_S1</code></td><td><code>01</code></td></tr>
 <tr><td>DMA</td><td><code>AXI_S2</code></td><td><code>10</code></td></tr>
 </table>
-<p>Ví dụ trong hình lấy ID gốc 5'b10000 của CPU: bit đầu 1 là cổng dữ liệu của cầu cpu2axi (0 là cổng lệnh), bốn bit sau luôn bằng 0. 2 bit chỉ số master đứng trước, ID gốc giữ nguyên phía sau.</p>
-<p>Số 2 bit tính bằng <code>$clog2(3)</code>, nên ID đi từ 5 bit lên 7 bit. Mình đọc trực tiếp dòng <code>{pre_id_i, id}</code> trong <code>axi_id_prepend.sv</code>: chỉ số là số thứ tự cổng master.</p>
+<p>Ví dụ trong hình lấy ID gốc 1'b1 của CPU: bit này cho biết cổng dữ liệu của cầu cpu2axi (0 là cổng lệnh). 2 bit chỉ số master đứng trước, ID gốc giữ nguyên phía sau.</p>
+<p>Số 2 bit tính bằng <code>$clog2(3)</code>, nên ID đi từ 1 bit lên 3 bit. Mình đọc trực tiếp dòng <code>{pre_id_i, id}</code> trong <code>axi_id_prepend.sv</code>: chỉ số là số thứ tự cổng master.</p>
 
 <h3>7.4 Kiểu 3: nhường đường (i_aw_arbiter, i_ar_arbiter trong mux)</h3>
 <p>Nếu hai hay ba master cùng gửi lệnh tới <b>cùng một slave</b> trong cùng một chu kỳ thì chỉ một lệnh qua được. Trọng tài dùng kiểu <b>round-robin</b>: lần lượt từng master, vừa cho ai đi thì lần sau ưu tiên người kế tiếp. Nhờ vậy không master nào bị bỏ đói.</p>

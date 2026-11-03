@@ -1,3 +1,6 @@
+# OUT OF DATE, DO NOT RUN. s_bus.drawio is edited by hand and this script would overwrite it.
+# It also reads the clock names and the struct ports of an older wrapper (i_clk_sbus, i_bus_axi_s_<n>_req)
+# and stops at once on the current one, whose clock is i_clk_cpu and whose AXI ports are single signals.
 """Vẽ m_qnsc_wrap_sbus (S_BUS + cầu AXI2APB, không có router P_BUS) bằng draw.io, 5 trang, chữ tiếng Việt:
   1 block diagram mức module, 2 bản đồ địa chỉ, 3 timing, 4 bên trong crossbar, 5 chi tiết tên net và độ rộng bus.
 Ký hiệu theo QNSC_DRAWIO_LIB_V1.0 (nét 2 pt, mũi tên block, mux hình thang, mây COM).
