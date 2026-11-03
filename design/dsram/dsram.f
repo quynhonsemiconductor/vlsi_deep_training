@@ -1,5 +1,5 @@
 # =============================================================================
-# Filelist for the dsram block (QNSC_RAM_MAS V2.5).
+# Filelist for the dsram block (QNSC_RAM_MAS).
 #
 # This is the single place that says which files build this block, and in what
 # order. CI lints the block through this file, so a file not listed here is not

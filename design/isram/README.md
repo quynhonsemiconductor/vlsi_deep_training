@@ -1,6 +1,6 @@
 # `isram` — instruction SRAM (AXI_M1)
 
-**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS` (V2.5) on the team SharePoint   **DV:** [`../../dv/isram`](../../dv/isram)
+**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS` on the team SharePoint   **DV:** [`../../dv/isram`](../../dv/isram)
 
 ## What this block is
 

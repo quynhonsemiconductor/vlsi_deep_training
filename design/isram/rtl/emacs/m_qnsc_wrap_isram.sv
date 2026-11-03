@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 // QNSC wrapper of m_vlsi_axi4_sram: the QSoC ISRAM, 64 KiB on S_BUS AXI_M1.
-// Spec: QNSC_RAM_MAS (V2.5), on the team SharePoint.
+// Spec: QNSC_RAM_MAS, on the team SharePoint.
 //
 // Edit this .src.sv, then `make wrap BLOCK=isram`: emacs verilog-mode expands
 // the AUTO comments and writes rtl/m_qnsc_wrap_isram.sv, the file isram.f compiles.

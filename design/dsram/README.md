@@ -1,6 +1,6 @@
 # `dsram` — data SRAM (AXI_M2)
 
-**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS` (V2.5) on the team SharePoint   **DV:** [`../../dv/dsram`](../../dv/dsram)
+**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_RAM_MAS` on the team SharePoint   **DV:** [`../../dv/dsram`](../../dv/dsram)
 
 ## What this block is
 

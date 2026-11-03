@@ -1,6 +1,6 @@
 `verilator_config
 // =============================================================================
-// Lint waivers owned by the isram block (QNSC_RAM_MAS V2.5). Every line carries its
+// Lint waivers owned by the isram block (QNSC_RAM_MAS). Every line carries its
 // reason (CONTRIBUTING.md, LINT stage).
 // =============================================================================
 
