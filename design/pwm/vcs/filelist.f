@@ -1,4 +1,6 @@
-# VCS filelist for pwm — reference only, do not add files here.
-# The actual filelist is design/pwm/pwm.f (single source of truth).
-# VCS is run through: make vcs-branch BLOCK=pwm BRANCH=<branch>
-# which reads design/pwm/pwm.f with paths relative to design/pwm/.
+# VCS filelist of the pwm block. It only includes the block filelist, so the
+# list of files and their order are written once, in design/pwm/pwm.f.
+# -F: paths inside pwm.f resolve from design/pwm/, where pwm.f lives.
+# The shared cells (design/common) and the technology cells come from run_vcs,
+# as in every flow of the repository.
+-F ../pwm.f
