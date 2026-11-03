@@ -8,7 +8,9 @@
 lint_off -rule NEEDTIMINGOPT -file "*vendor/freecores/dma_axi/*"
 
 // Left open on purpose: no peripheral in QSoC takes a clear (the UART request
-// falls when RHR is read), and AXI4 has no WID.
+// falls when RHR is read), AXI4 has no WID, and no QSOC block reads idle (SCRC
+// has no DMA idle input).
 lint_off -rule PINCONNECTEMPTY -file "*design/dma/rtl/m_qnsc_wrap_dma.sv" -match "*'periph_tx_clr'*"
 lint_off -rule PINCONNECTEMPTY -file "*design/dma/rtl/m_qnsc_wrap_dma.sv" -match "*'periph_rx_clr'*"
 lint_off -rule PINCONNECTEMPTY -file "*design/dma/rtl/m_qnsc_wrap_dma.sv" -match "*'WID0'*"
+lint_off -rule PINCONNECTEMPTY -file "*design/dma/rtl/m_qnsc_wrap_dma.sv" -match "*'idle'*"

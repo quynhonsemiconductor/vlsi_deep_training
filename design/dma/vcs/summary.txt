@@ -1,5 +1,0 @@
-VCS W-2024.09-SP1_Full64 | block dma | top m_qnsc_wrap_dma | commit 434f317
-Compiled: 2026-11-02 10:23 +07
-Error-: 0
-Lint-: 0 on our files, 310 on vendor/ (upstream, not edited)
-Verdi KDB: generated
