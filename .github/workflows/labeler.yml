@@ -18,6 +18,9 @@ concurrency:
   group: labeler-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   label:
     uses: quynhonsemiconductor/ci/.github/workflows/labeler.yml@abdf759277ba8a3d3bac2ba07ac1c73c642710b0 # v1.31.0
