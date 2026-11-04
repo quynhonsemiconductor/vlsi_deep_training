@@ -1,0 +1,12 @@
+`verilator_config
+// Waivers owned by the wdt block. lint_all.sh passes this file when it lints
+// wdt.f. Each line has its reason.
+
+// Outputs left open on purpose (tie-off table, QNSC_WDT_MAS):
+//   aon_timer  alert_tx_o              QSoC has no alert handler
+//              racl_error_o            RACL is off (EnableRacl = 0): .valid is always 0
+//              intr_wdog_timer_bark_o  bark leaves on nmi_wdog_timer_bark_o (NMI)
+//              wkup_req_o              wake-up leaves on intr_wkup_timer_expired_o
+//   u_apb2tl   rdata_intg_o            APB has no data integrity
+//              intg_err_o              sticky copy for alerts; PSLVERR already reports it
+lint_off -rule PINCONNECTEMPTY -file "*design/wdt/rtl/m_qnsc_wrap_wdt.sv"
