@@ -2,8 +2,8 @@
 
 // =============================================================================
 // m_qnsc_scrc_ctrl -- one domain controller: clock gate + reset synchroniser
-// (QNSC_SCRC_MAS V3.4, 7.1, Figure 7-1). 18 instances in m_qnsc_scrc; the seven
-// always-on domains get i_icg_en = 1 there.
+// (QNSC_SCRC_MAS V3.5, 7.1, Figure 7-1). 13 instances in m_qnsc_scrc, one per
+// domain; the two always-on domains (sys, cpu) get i_icg_en = 1 there.
 //
 // Both are technology cells (design/common/tech): the mentor's rule is that a
 // clock gate and a synchroniser are library cells, never inferred (MAS 7.1, 11).
@@ -14,7 +14,7 @@
 module m_qnsc_scrc_ctrl (
   input  logic i_clk_root,     // w_clk_root
   input  logic i_icg_en,       // ICG_EN[n]; 1 for an always-on domain
-  input  logic i_rst_n_in,     // RST_REL[n]; sysdbg: o_rst_n_por
+  input  logic i_rst_n_in,     // RST_REL[n]
   output logic o_clk_gated,    // o_clk_<d>
   output logic o_rst_n_sync    // o_rst_n_<d>
 );

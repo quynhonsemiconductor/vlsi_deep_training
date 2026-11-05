@@ -6,13 +6,15 @@ recipe (`make gen IP=scrc_csr`, checked by `make gen-check`). QNSC_SCRC_MAS 6.
 | Offset | Register | Fields (one per domain bit) |
 |---|---|---|
 | 0x00 | `SW_RST` | `sw_rst` (bit 0) |
-| 0x04 | `CLK_EN` | `en_<d>` for the 11 gateable domains, reset `0x0003_87E8` |
+| 0x04 | `CLK_EN` | `en_<d>` for the 11 gateable domains, reset `0x0000_1FF4` |
 | 0x0C | `ICG_EN` | `icg_<d>`, gateable domains, reset 0 |
-| 0x10 | `RST_REL` | `rel_<d>` for bits 0-12, 15-17 and `rel_cpu` (bit 31), reset 0 |
-| 0x14 | `APB_BLK` | `blk_<d>`, gateable domains, reset `0x0003_87F8` |
+| 0x10 | `RST_REL` | `rel_<d>` for all 13 domains (bits 0-12; `rel_cpu` = bit 1), reset 0 |
+| 0x14 | `APB_BLK` | `blk_<d>`, gateable domains, reset `0x0000_1FFC` |
 | 0x18 | `APB_BUSY` | `busy_<d>`, gateable domains, read-only, live |
 
-Gateable domains (bit): timer_0 3, timer_1 4, uart_0 5, uart_1 6, spi 7, i2c 8,
-gpio_0 9, dma 10, pwm 15, gpio_1 16, gpio_2 17. The workbook is built from one domain
-table shared with SYSCSR (`build_workbooks.py`, kept outside the repository with the
-SYSCSR workbook); a change of the register map changes that table, then this file.
+Domains (bit), QNSC_SCRC_MAS V3.5: sys 0 and cpu 1 (always-on: `RST_REL` only),
+then the gateable timer_0 2, timer_1 3, uart_0 4, uart_1 5, spi 6, i2c 7, gpio_0 8,
+gpio_1 9, gpio_2 10, dma 11, pwm 12 (mask `0x0000_1FFC`). The workbook is built by
+`build_scrc_csr_xlsx.py`, kept outside the repository with the SCRC documents; a
+change of the register map changes that script's domain table, then this file.
+SYSCSR `DOMAIN_RST_STATUS` uses the same bit numbers.

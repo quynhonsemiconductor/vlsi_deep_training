@@ -1,5 +1,5 @@
 # =============================================================================
-# Filelist for the scrc block (QNSC_SCRC_MAS V3.4).
+# Filelist for the scrc block (QNSC_SCRC_MAS V3.5).
 #
 # This is the single place that says which files build this block, and in what
 # order. CI lints the block through this file, so a file not listed here is not

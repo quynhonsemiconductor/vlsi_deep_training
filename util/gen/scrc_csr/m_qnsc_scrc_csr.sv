@@ -38,10 +38,10 @@ module m_qnsc_scrc_csr # (
   output o_clken_en_spi,
   output o_clken_en_i2c,
   output o_clken_en_gpio_0,
-  output o_clken_en_dma,
-  output o_clken_en_pwm,
   output o_clken_en_gpio_1,
   output o_clken_en_gpio_2,
+  output o_clken_en_dma,
+  output o_clken_en_pwm,
   output o_icgen_icg_timer_0,
   output o_icgen_icg_timer_1,
   output o_icgen_icg_uart_0,
@@ -49,13 +49,12 @@ module m_qnsc_scrc_csr # (
   output o_icgen_icg_spi,
   output o_icgen_icg_i2c,
   output o_icgen_icg_gpio_0,
-  output o_icgen_icg_dma,
-  output o_icgen_icg_pwm,
   output o_icgen_icg_gpio_1,
   output o_icgen_icg_gpio_2,
-  output o_rstrel_rel_sbus,
-  output o_rstrel_rel_pbus,
-  output o_rstrel_rel_wdt,
+  output o_icgen_icg_dma,
+  output o_icgen_icg_pwm,
+  output o_rstrel_rel_sys,
+  output o_rstrel_rel_cpu,
   output o_rstrel_rel_timer_0,
   output o_rstrel_rel_timer_1,
   output o_rstrel_rel_uart_0,
@@ -63,13 +62,10 @@ module m_qnsc_scrc_csr # (
   output o_rstrel_rel_spi,
   output o_rstrel_rel_i2c,
   output o_rstrel_rel_gpio_0,
-  output o_rstrel_rel_dma,
-  output o_rstrel_rel_rom,
-  output o_rstrel_rel_ram,
-  output o_rstrel_rel_pwm,
   output o_rstrel_rel_gpio_1,
   output o_rstrel_rel_gpio_2,
-  output o_rstrel_rel_cpu,
+  output o_rstrel_rel_dma,
+  output o_rstrel_rel_pwm,
   output o_apbblk_blk_timer_0,
   output o_apbblk_blk_timer_1,
   output o_apbblk_blk_uart_0,
@@ -77,10 +73,10 @@ module m_qnsc_scrc_csr # (
   output o_apbblk_blk_spi,
   output o_apbblk_blk_i2c,
   output o_apbblk_blk_gpio_0,
-  output o_apbblk_blk_dma,
-  output o_apbblk_blk_pwm,
   output o_apbblk_blk_gpio_1,
   output o_apbblk_blk_gpio_2,
+  output o_apbblk_blk_dma,
+  output o_apbblk_blk_pwm,
   input i_apbbusy_busy_timer_0,
   input i_apbbusy_busy_timer_1,
   input i_apbbusy_busy_uart_0,
@@ -88,10 +84,10 @@ module m_qnsc_scrc_csr # (
   input i_apbbusy_busy_spi,
   input i_apbbusy_busy_i2c,
   input i_apbbusy_busy_gpio_0,
-  input i_apbbusy_busy_dma,
-  input i_apbbusy_busy_pwm,
   input i_apbbusy_busy_gpio_1,
-  input i_apbbusy_busy_gpio_2
+  input i_apbbusy_busy_gpio_2,
+  input i_apbbusy_busy_dma,
+  input i_apbbusy_busy_pwm
 );
   //Logic signal declaration
   logic apb_setup;
@@ -129,14 +125,14 @@ module m_qnsc_scrc_csr # (
   logic nxt_clken_en_i2c;
   logic reg_clken_en_gpio_0;
   logic nxt_clken_en_gpio_0;
-  logic reg_clken_en_dma;
-  logic nxt_clken_en_dma;
-  logic reg_clken_en_pwm;
-  logic nxt_clken_en_pwm;
   logic reg_clken_en_gpio_1;
   logic nxt_clken_en_gpio_1;
   logic reg_clken_en_gpio_2;
   logic nxt_clken_en_gpio_2;
+  logic reg_clken_en_dma;
+  logic nxt_clken_en_dma;
+  logic reg_clken_en_pwm;
+  logic nxt_clken_en_pwm;
   logic [31:0] clken_value;
   logic we_icgen;
   logic reg_icgen_icg_timer_0;
@@ -153,22 +149,20 @@ module m_qnsc_scrc_csr # (
   logic nxt_icgen_icg_i2c;
   logic reg_icgen_icg_gpio_0;
   logic nxt_icgen_icg_gpio_0;
-  logic reg_icgen_icg_dma;
-  logic nxt_icgen_icg_dma;
-  logic reg_icgen_icg_pwm;
-  logic nxt_icgen_icg_pwm;
   logic reg_icgen_icg_gpio_1;
   logic nxt_icgen_icg_gpio_1;
   logic reg_icgen_icg_gpio_2;
   logic nxt_icgen_icg_gpio_2;
+  logic reg_icgen_icg_dma;
+  logic nxt_icgen_icg_dma;
+  logic reg_icgen_icg_pwm;
+  logic nxt_icgen_icg_pwm;
   logic [31:0] icgen_value;
   logic we_rstrel;
-  logic reg_rstrel_rel_sbus;
-  logic nxt_rstrel_rel_sbus;
-  logic reg_rstrel_rel_pbus;
-  logic nxt_rstrel_rel_pbus;
-  logic reg_rstrel_rel_wdt;
-  logic nxt_rstrel_rel_wdt;
+  logic reg_rstrel_rel_sys;
+  logic nxt_rstrel_rel_sys;
+  logic reg_rstrel_rel_cpu;
+  logic nxt_rstrel_rel_cpu;
   logic reg_rstrel_rel_timer_0;
   logic nxt_rstrel_rel_timer_0;
   logic reg_rstrel_rel_timer_1;
@@ -183,20 +177,14 @@ module m_qnsc_scrc_csr # (
   logic nxt_rstrel_rel_i2c;
   logic reg_rstrel_rel_gpio_0;
   logic nxt_rstrel_rel_gpio_0;
-  logic reg_rstrel_rel_dma;
-  logic nxt_rstrel_rel_dma;
-  logic reg_rstrel_rel_rom;
-  logic nxt_rstrel_rel_rom;
-  logic reg_rstrel_rel_ram;
-  logic nxt_rstrel_rel_ram;
-  logic reg_rstrel_rel_pwm;
-  logic nxt_rstrel_rel_pwm;
   logic reg_rstrel_rel_gpio_1;
   logic nxt_rstrel_rel_gpio_1;
   logic reg_rstrel_rel_gpio_2;
   logic nxt_rstrel_rel_gpio_2;
-  logic reg_rstrel_rel_cpu;
-  logic nxt_rstrel_rel_cpu;
+  logic reg_rstrel_rel_dma;
+  logic nxt_rstrel_rel_dma;
+  logic reg_rstrel_rel_pwm;
+  logic nxt_rstrel_rel_pwm;
   logic [31:0] rstrel_value;
   logic we_apbblk;
   logic reg_apbblk_blk_timer_0;
@@ -213,14 +201,14 @@ module m_qnsc_scrc_csr # (
   logic nxt_apbblk_blk_i2c;
   logic reg_apbblk_blk_gpio_0;
   logic nxt_apbblk_blk_gpio_0;
-  logic reg_apbblk_blk_dma;
-  logic nxt_apbblk_blk_dma;
-  logic reg_apbblk_blk_pwm;
-  logic nxt_apbblk_blk_pwm;
   logic reg_apbblk_blk_gpio_1;
   logic nxt_apbblk_blk_gpio_1;
   logic reg_apbblk_blk_gpio_2;
   logic nxt_apbblk_blk_gpio_2;
+  logic reg_apbblk_blk_dma;
+  logic nxt_apbblk_blk_dma;
+  logic reg_apbblk_blk_pwm;
+  logic nxt_apbblk_blk_pwm;
   logic [31:0] apbblk_value;
   logic we_apbbusy;
   logic [31:0] apbbusy_value;
@@ -321,7 +309,7 @@ module m_qnsc_scrc_csr # (
     swrst_value[0] = reg_swrst_sw_rst;
     swrst_value[31:1] = '0;
   end  //Assignment for next value of clken_en_timer_0 rw
-  assign nxt_clken_en_timer_0 = (we_clken) ? reg_pwdata[3] : reg_clken_en_timer_0;
+  assign nxt_clken_en_timer_0 = (we_clken) ? reg_pwdata[2] : reg_clken_en_timer_0;
   //FF for bit clken_en_timer_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -331,7 +319,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_clken_en_timer_0 = reg_clken_en_timer_0;
   //Assignment for next value of clken_en_timer_1 rw
-  assign nxt_clken_en_timer_1 = (we_clken) ? reg_pwdata[4] : reg_clken_en_timer_1;
+  assign nxt_clken_en_timer_1 = (we_clken) ? reg_pwdata[3] : reg_clken_en_timer_1;
   //FF for bit clken_en_timer_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -341,7 +329,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_clken_en_timer_1 = reg_clken_en_timer_1;
   //Assignment for next value of clken_en_uart_0 rw
-  assign nxt_clken_en_uart_0 = (we_clken) ? reg_pwdata[5] : reg_clken_en_uart_0;
+  assign nxt_clken_en_uart_0 = (we_clken) ? reg_pwdata[4] : reg_clken_en_uart_0;
   //FF for bit clken_en_uart_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -351,7 +339,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_clken_en_uart_0 = reg_clken_en_uart_0;
   //Assignment for next value of clken_en_uart_1 rw
-  assign nxt_clken_en_uart_1 = (we_clken) ? reg_pwdata[6] : reg_clken_en_uart_1;
+  assign nxt_clken_en_uart_1 = (we_clken) ? reg_pwdata[5] : reg_clken_en_uart_1;
   //FF for bit clken_en_uart_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -361,7 +349,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_clken_en_uart_1 = reg_clken_en_uart_1;
   //Assignment for next value of clken_en_spi rw
-  assign nxt_clken_en_spi = (we_clken) ? reg_pwdata[7] : reg_clken_en_spi;
+  assign nxt_clken_en_spi = (we_clken) ? reg_pwdata[6] : reg_clken_en_spi;
   //FF for bit clken_en_spi
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -371,7 +359,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_clken_en_spi = reg_clken_en_spi;
   //Assignment for next value of clken_en_i2c rw
-  assign nxt_clken_en_i2c = (we_clken) ? reg_pwdata[8] : reg_clken_en_i2c;
+  assign nxt_clken_en_i2c = (we_clken) ? reg_pwdata[7] : reg_clken_en_i2c;
   //FF for bit clken_en_i2c
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -381,7 +369,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_clken_en_i2c = reg_clken_en_i2c;
   //Assignment for next value of clken_en_gpio_0 rw
-  assign nxt_clken_en_gpio_0 = (we_clken) ? reg_pwdata[9] : reg_clken_en_gpio_0;
+  assign nxt_clken_en_gpio_0 = (we_clken) ? reg_pwdata[8] : reg_clken_en_gpio_0;
   //FF for bit clken_en_gpio_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -390,28 +378,8 @@ module m_qnsc_scrc_csr # (
       reg_clken_en_gpio_0 <= nxt_clken_en_gpio_0;
   end 
   assign o_clken_en_gpio_0 = reg_clken_en_gpio_0;
-  //Assignment for next value of clken_en_dma rw
-  assign nxt_clken_en_dma = (we_clken) ? reg_pwdata[10] : reg_clken_en_dma;
-  //FF for bit clken_en_dma
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_clken_en_dma <= 1'h1;
-    else
-      reg_clken_en_dma <= nxt_clken_en_dma;
-  end 
-  assign o_clken_en_dma = reg_clken_en_dma;
-  //Assignment for next value of clken_en_pwm rw
-  assign nxt_clken_en_pwm = (we_clken) ? reg_pwdata[15] : reg_clken_en_pwm;
-  //FF for bit clken_en_pwm
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_clken_en_pwm <= 1'h1;
-    else
-      reg_clken_en_pwm <= nxt_clken_en_pwm;
-  end 
-  assign o_clken_en_pwm = reg_clken_en_pwm;
   //Assignment for next value of clken_en_gpio_1 rw
-  assign nxt_clken_en_gpio_1 = (we_clken) ? reg_pwdata[16] : reg_clken_en_gpio_1;
+  assign nxt_clken_en_gpio_1 = (we_clken) ? reg_pwdata[9] : reg_clken_en_gpio_1;
   //FF for bit clken_en_gpio_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -421,7 +389,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_clken_en_gpio_1 = reg_clken_en_gpio_1;
   //Assignment for next value of clken_en_gpio_2 rw
-  assign nxt_clken_en_gpio_2 = (we_clken) ? reg_pwdata[17] : reg_clken_en_gpio_2;
+  assign nxt_clken_en_gpio_2 = (we_clken) ? reg_pwdata[10] : reg_clken_en_gpio_2;
   //FF for bit clken_en_gpio_2
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -430,27 +398,46 @@ module m_qnsc_scrc_csr # (
       reg_clken_en_gpio_2 <= nxt_clken_en_gpio_2;
   end 
   assign o_clken_en_gpio_2 = reg_clken_en_gpio_2;
+  //Assignment for next value of clken_en_dma rw
+  assign nxt_clken_en_dma = (we_clken) ? reg_pwdata[11] : reg_clken_en_dma;
+  //FF for bit clken_en_dma
+  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
+    if(!i_bus_rstn) 
+      reg_clken_en_dma <= 1'h1;
+    else
+      reg_clken_en_dma <= nxt_clken_en_dma;
+  end 
+  assign o_clken_en_dma = reg_clken_en_dma;
+  //Assignment for next value of clken_en_pwm rw
+  assign nxt_clken_en_pwm = (we_clken) ? reg_pwdata[12] : reg_clken_en_pwm;
+  //FF for bit clken_en_pwm
+  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
+    if(!i_bus_rstn) 
+      reg_clken_en_pwm <= 1'h1;
+    else
+      reg_clken_en_pwm <= nxt_clken_en_pwm;
+  end 
+  assign o_clken_en_pwm = reg_clken_en_pwm;
 
   //--------------------------------------------------------------------
   //Combine the value of clken
   //--------------------------------------------------------------------
   always_comb begin
-    clken_value[2:0] = '0;
-    clken_value[3] = reg_clken_en_timer_0;
-    clken_value[4] = reg_clken_en_timer_1;
-    clken_value[5] = reg_clken_en_uart_0;
-    clken_value[6] = reg_clken_en_uart_1;
-    clken_value[7] = reg_clken_en_spi;
-    clken_value[8] = reg_clken_en_i2c;
-    clken_value[9] = reg_clken_en_gpio_0;
-    clken_value[10] = reg_clken_en_dma;
-    clken_value[14:11] = '0;
-    clken_value[15] = reg_clken_en_pwm;
-    clken_value[16] = reg_clken_en_gpio_1;
-    clken_value[17] = reg_clken_en_gpio_2;
-    clken_value[31:18] = '0;
+    clken_value[1:0] = '0;
+    clken_value[2] = reg_clken_en_timer_0;
+    clken_value[3] = reg_clken_en_timer_1;
+    clken_value[4] = reg_clken_en_uart_0;
+    clken_value[5] = reg_clken_en_uart_1;
+    clken_value[6] = reg_clken_en_spi;
+    clken_value[7] = reg_clken_en_i2c;
+    clken_value[8] = reg_clken_en_gpio_0;
+    clken_value[9] = reg_clken_en_gpio_1;
+    clken_value[10] = reg_clken_en_gpio_2;
+    clken_value[11] = reg_clken_en_dma;
+    clken_value[12] = reg_clken_en_pwm;
+    clken_value[31:13] = '0;
   end  //Assignment for next value of icgen_icg_timer_0 rw
-  assign nxt_icgen_icg_timer_0 = (we_icgen) ? reg_pwdata[3] : reg_icgen_icg_timer_0;
+  assign nxt_icgen_icg_timer_0 = (we_icgen) ? reg_pwdata[2] : reg_icgen_icg_timer_0;
   //FF for bit icgen_icg_timer_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -460,7 +447,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_icgen_icg_timer_0 = reg_icgen_icg_timer_0;
   //Assignment for next value of icgen_icg_timer_1 rw
-  assign nxt_icgen_icg_timer_1 = (we_icgen) ? reg_pwdata[4] : reg_icgen_icg_timer_1;
+  assign nxt_icgen_icg_timer_1 = (we_icgen) ? reg_pwdata[3] : reg_icgen_icg_timer_1;
   //FF for bit icgen_icg_timer_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -470,7 +457,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_icgen_icg_timer_1 = reg_icgen_icg_timer_1;
   //Assignment for next value of icgen_icg_uart_0 rw
-  assign nxt_icgen_icg_uart_0 = (we_icgen) ? reg_pwdata[5] : reg_icgen_icg_uart_0;
+  assign nxt_icgen_icg_uart_0 = (we_icgen) ? reg_pwdata[4] : reg_icgen_icg_uart_0;
   //FF for bit icgen_icg_uart_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -480,7 +467,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_icgen_icg_uart_0 = reg_icgen_icg_uart_0;
   //Assignment for next value of icgen_icg_uart_1 rw
-  assign nxt_icgen_icg_uart_1 = (we_icgen) ? reg_pwdata[6] : reg_icgen_icg_uart_1;
+  assign nxt_icgen_icg_uart_1 = (we_icgen) ? reg_pwdata[5] : reg_icgen_icg_uart_1;
   //FF for bit icgen_icg_uart_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -490,7 +477,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_icgen_icg_uart_1 = reg_icgen_icg_uart_1;
   //Assignment for next value of icgen_icg_spi rw
-  assign nxt_icgen_icg_spi = (we_icgen) ? reg_pwdata[7] : reg_icgen_icg_spi;
+  assign nxt_icgen_icg_spi = (we_icgen) ? reg_pwdata[6] : reg_icgen_icg_spi;
   //FF for bit icgen_icg_spi
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -500,7 +487,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_icgen_icg_spi = reg_icgen_icg_spi;
   //Assignment for next value of icgen_icg_i2c rw
-  assign nxt_icgen_icg_i2c = (we_icgen) ? reg_pwdata[8] : reg_icgen_icg_i2c;
+  assign nxt_icgen_icg_i2c = (we_icgen) ? reg_pwdata[7] : reg_icgen_icg_i2c;
   //FF for bit icgen_icg_i2c
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -510,7 +497,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_icgen_icg_i2c = reg_icgen_icg_i2c;
   //Assignment for next value of icgen_icg_gpio_0 rw
-  assign nxt_icgen_icg_gpio_0 = (we_icgen) ? reg_pwdata[9] : reg_icgen_icg_gpio_0;
+  assign nxt_icgen_icg_gpio_0 = (we_icgen) ? reg_pwdata[8] : reg_icgen_icg_gpio_0;
   //FF for bit icgen_icg_gpio_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -519,28 +506,8 @@ module m_qnsc_scrc_csr # (
       reg_icgen_icg_gpio_0 <= nxt_icgen_icg_gpio_0;
   end 
   assign o_icgen_icg_gpio_0 = reg_icgen_icg_gpio_0;
-  //Assignment for next value of icgen_icg_dma rw
-  assign nxt_icgen_icg_dma = (we_icgen) ? reg_pwdata[10] : reg_icgen_icg_dma;
-  //FF for bit icgen_icg_dma
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_icgen_icg_dma <= 1'h0;
-    else
-      reg_icgen_icg_dma <= nxt_icgen_icg_dma;
-  end 
-  assign o_icgen_icg_dma = reg_icgen_icg_dma;
-  //Assignment for next value of icgen_icg_pwm rw
-  assign nxt_icgen_icg_pwm = (we_icgen) ? reg_pwdata[15] : reg_icgen_icg_pwm;
-  //FF for bit icgen_icg_pwm
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_icgen_icg_pwm <= 1'h0;
-    else
-      reg_icgen_icg_pwm <= nxt_icgen_icg_pwm;
-  end 
-  assign o_icgen_icg_pwm = reg_icgen_icg_pwm;
   //Assignment for next value of icgen_icg_gpio_1 rw
-  assign nxt_icgen_icg_gpio_1 = (we_icgen) ? reg_pwdata[16] : reg_icgen_icg_gpio_1;
+  assign nxt_icgen_icg_gpio_1 = (we_icgen) ? reg_pwdata[9] : reg_icgen_icg_gpio_1;
   //FF for bit icgen_icg_gpio_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -550,7 +517,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_icgen_icg_gpio_1 = reg_icgen_icg_gpio_1;
   //Assignment for next value of icgen_icg_gpio_2 rw
-  assign nxt_icgen_icg_gpio_2 = (we_icgen) ? reg_pwdata[17] : reg_icgen_icg_gpio_2;
+  assign nxt_icgen_icg_gpio_2 = (we_icgen) ? reg_pwdata[10] : reg_icgen_icg_gpio_2;
   //FF for bit icgen_icg_gpio_2
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -559,57 +526,66 @@ module m_qnsc_scrc_csr # (
       reg_icgen_icg_gpio_2 <= nxt_icgen_icg_gpio_2;
   end 
   assign o_icgen_icg_gpio_2 = reg_icgen_icg_gpio_2;
+  //Assignment for next value of icgen_icg_dma rw
+  assign nxt_icgen_icg_dma = (we_icgen) ? reg_pwdata[11] : reg_icgen_icg_dma;
+  //FF for bit icgen_icg_dma
+  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
+    if(!i_bus_rstn) 
+      reg_icgen_icg_dma <= 1'h0;
+    else
+      reg_icgen_icg_dma <= nxt_icgen_icg_dma;
+  end 
+  assign o_icgen_icg_dma = reg_icgen_icg_dma;
+  //Assignment for next value of icgen_icg_pwm rw
+  assign nxt_icgen_icg_pwm = (we_icgen) ? reg_pwdata[12] : reg_icgen_icg_pwm;
+  //FF for bit icgen_icg_pwm
+  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
+    if(!i_bus_rstn) 
+      reg_icgen_icg_pwm <= 1'h0;
+    else
+      reg_icgen_icg_pwm <= nxt_icgen_icg_pwm;
+  end 
+  assign o_icgen_icg_pwm = reg_icgen_icg_pwm;
 
   //--------------------------------------------------------------------
   //Combine the value of icgen
   //--------------------------------------------------------------------
   always_comb begin
-    icgen_value[2:0] = '0;
-    icgen_value[3] = reg_icgen_icg_timer_0;
-    icgen_value[4] = reg_icgen_icg_timer_1;
-    icgen_value[5] = reg_icgen_icg_uart_0;
-    icgen_value[6] = reg_icgen_icg_uart_1;
-    icgen_value[7] = reg_icgen_icg_spi;
-    icgen_value[8] = reg_icgen_icg_i2c;
-    icgen_value[9] = reg_icgen_icg_gpio_0;
-    icgen_value[10] = reg_icgen_icg_dma;
-    icgen_value[14:11] = '0;
-    icgen_value[15] = reg_icgen_icg_pwm;
-    icgen_value[16] = reg_icgen_icg_gpio_1;
-    icgen_value[17] = reg_icgen_icg_gpio_2;
-    icgen_value[31:18] = '0;
-  end  //Assignment for next value of rstrel_rel_sbus rw
-  assign nxt_rstrel_rel_sbus = (we_rstrel) ? reg_pwdata[0] : reg_rstrel_rel_sbus;
-  //FF for bit rstrel_rel_sbus
+    icgen_value[1:0] = '0;
+    icgen_value[2] = reg_icgen_icg_timer_0;
+    icgen_value[3] = reg_icgen_icg_timer_1;
+    icgen_value[4] = reg_icgen_icg_uart_0;
+    icgen_value[5] = reg_icgen_icg_uart_1;
+    icgen_value[6] = reg_icgen_icg_spi;
+    icgen_value[7] = reg_icgen_icg_i2c;
+    icgen_value[8] = reg_icgen_icg_gpio_0;
+    icgen_value[9] = reg_icgen_icg_gpio_1;
+    icgen_value[10] = reg_icgen_icg_gpio_2;
+    icgen_value[11] = reg_icgen_icg_dma;
+    icgen_value[12] = reg_icgen_icg_pwm;
+    icgen_value[31:13] = '0;
+  end  //Assignment for next value of rstrel_rel_sys rw
+  assign nxt_rstrel_rel_sys = (we_rstrel) ? reg_pwdata[0] : reg_rstrel_rel_sys;
+  //FF for bit rstrel_rel_sys
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
-      reg_rstrel_rel_sbus <= 1'h0;
+      reg_rstrel_rel_sys <= 1'h0;
     else
-      reg_rstrel_rel_sbus <= nxt_rstrel_rel_sbus;
+      reg_rstrel_rel_sys <= nxt_rstrel_rel_sys;
   end 
-  assign o_rstrel_rel_sbus = reg_rstrel_rel_sbus;
-  //Assignment for next value of rstrel_rel_pbus rw
-  assign nxt_rstrel_rel_pbus = (we_rstrel) ? reg_pwdata[1] : reg_rstrel_rel_pbus;
-  //FF for bit rstrel_rel_pbus
+  assign o_rstrel_rel_sys = reg_rstrel_rel_sys;
+  //Assignment for next value of rstrel_rel_cpu rw
+  assign nxt_rstrel_rel_cpu = (we_rstrel) ? reg_pwdata[1] : reg_rstrel_rel_cpu;
+  //FF for bit rstrel_rel_cpu
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
-      reg_rstrel_rel_pbus <= 1'h0;
+      reg_rstrel_rel_cpu <= 1'h0;
     else
-      reg_rstrel_rel_pbus <= nxt_rstrel_rel_pbus;
+      reg_rstrel_rel_cpu <= nxt_rstrel_rel_cpu;
   end 
-  assign o_rstrel_rel_pbus = reg_rstrel_rel_pbus;
-  //Assignment for next value of rstrel_rel_wdt rw
-  assign nxt_rstrel_rel_wdt = (we_rstrel) ? reg_pwdata[2] : reg_rstrel_rel_wdt;
-  //FF for bit rstrel_rel_wdt
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_rstrel_rel_wdt <= 1'h0;
-    else
-      reg_rstrel_rel_wdt <= nxt_rstrel_rel_wdt;
-  end 
-  assign o_rstrel_rel_wdt = reg_rstrel_rel_wdt;
+  assign o_rstrel_rel_cpu = reg_rstrel_rel_cpu;
   //Assignment for next value of rstrel_rel_timer_0 rw
-  assign nxt_rstrel_rel_timer_0 = (we_rstrel) ? reg_pwdata[3] : reg_rstrel_rel_timer_0;
+  assign nxt_rstrel_rel_timer_0 = (we_rstrel) ? reg_pwdata[2] : reg_rstrel_rel_timer_0;
   //FF for bit rstrel_rel_timer_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -619,7 +595,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_rstrel_rel_timer_0 = reg_rstrel_rel_timer_0;
   //Assignment for next value of rstrel_rel_timer_1 rw
-  assign nxt_rstrel_rel_timer_1 = (we_rstrel) ? reg_pwdata[4] : reg_rstrel_rel_timer_1;
+  assign nxt_rstrel_rel_timer_1 = (we_rstrel) ? reg_pwdata[3] : reg_rstrel_rel_timer_1;
   //FF for bit rstrel_rel_timer_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -629,7 +605,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_rstrel_rel_timer_1 = reg_rstrel_rel_timer_1;
   //Assignment for next value of rstrel_rel_uart_0 rw
-  assign nxt_rstrel_rel_uart_0 = (we_rstrel) ? reg_pwdata[5] : reg_rstrel_rel_uart_0;
+  assign nxt_rstrel_rel_uart_0 = (we_rstrel) ? reg_pwdata[4] : reg_rstrel_rel_uart_0;
   //FF for bit rstrel_rel_uart_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -639,7 +615,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_rstrel_rel_uart_0 = reg_rstrel_rel_uart_0;
   //Assignment for next value of rstrel_rel_uart_1 rw
-  assign nxt_rstrel_rel_uart_1 = (we_rstrel) ? reg_pwdata[6] : reg_rstrel_rel_uart_1;
+  assign nxt_rstrel_rel_uart_1 = (we_rstrel) ? reg_pwdata[5] : reg_rstrel_rel_uart_1;
   //FF for bit rstrel_rel_uart_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -649,7 +625,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_rstrel_rel_uart_1 = reg_rstrel_rel_uart_1;
   //Assignment for next value of rstrel_rel_spi rw
-  assign nxt_rstrel_rel_spi = (we_rstrel) ? reg_pwdata[7] : reg_rstrel_rel_spi;
+  assign nxt_rstrel_rel_spi = (we_rstrel) ? reg_pwdata[6] : reg_rstrel_rel_spi;
   //FF for bit rstrel_rel_spi
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -659,7 +635,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_rstrel_rel_spi = reg_rstrel_rel_spi;
   //Assignment for next value of rstrel_rel_i2c rw
-  assign nxt_rstrel_rel_i2c = (we_rstrel) ? reg_pwdata[8] : reg_rstrel_rel_i2c;
+  assign nxt_rstrel_rel_i2c = (we_rstrel) ? reg_pwdata[7] : reg_rstrel_rel_i2c;
   //FF for bit rstrel_rel_i2c
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -669,7 +645,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_rstrel_rel_i2c = reg_rstrel_rel_i2c;
   //Assignment for next value of rstrel_rel_gpio_0 rw
-  assign nxt_rstrel_rel_gpio_0 = (we_rstrel) ? reg_pwdata[9] : reg_rstrel_rel_gpio_0;
+  assign nxt_rstrel_rel_gpio_0 = (we_rstrel) ? reg_pwdata[8] : reg_rstrel_rel_gpio_0;
   //FF for bit rstrel_rel_gpio_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -678,48 +654,8 @@ module m_qnsc_scrc_csr # (
       reg_rstrel_rel_gpio_0 <= nxt_rstrel_rel_gpio_0;
   end 
   assign o_rstrel_rel_gpio_0 = reg_rstrel_rel_gpio_0;
-  //Assignment for next value of rstrel_rel_dma rw
-  assign nxt_rstrel_rel_dma = (we_rstrel) ? reg_pwdata[10] : reg_rstrel_rel_dma;
-  //FF for bit rstrel_rel_dma
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_rstrel_rel_dma <= 1'h0;
-    else
-      reg_rstrel_rel_dma <= nxt_rstrel_rel_dma;
-  end 
-  assign o_rstrel_rel_dma = reg_rstrel_rel_dma;
-  //Assignment for next value of rstrel_rel_rom rw
-  assign nxt_rstrel_rel_rom = (we_rstrel) ? reg_pwdata[11] : reg_rstrel_rel_rom;
-  //FF for bit rstrel_rel_rom
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_rstrel_rel_rom <= 1'h0;
-    else
-      reg_rstrel_rel_rom <= nxt_rstrel_rel_rom;
-  end 
-  assign o_rstrel_rel_rom = reg_rstrel_rel_rom;
-  //Assignment for next value of rstrel_rel_ram rw
-  assign nxt_rstrel_rel_ram = (we_rstrel) ? reg_pwdata[12] : reg_rstrel_rel_ram;
-  //FF for bit rstrel_rel_ram
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_rstrel_rel_ram <= 1'h0;
-    else
-      reg_rstrel_rel_ram <= nxt_rstrel_rel_ram;
-  end 
-  assign o_rstrel_rel_ram = reg_rstrel_rel_ram;
-  //Assignment for next value of rstrel_rel_pwm rw
-  assign nxt_rstrel_rel_pwm = (we_rstrel) ? reg_pwdata[15] : reg_rstrel_rel_pwm;
-  //FF for bit rstrel_rel_pwm
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_rstrel_rel_pwm <= 1'h0;
-    else
-      reg_rstrel_rel_pwm <= nxt_rstrel_rel_pwm;
-  end 
-  assign o_rstrel_rel_pwm = reg_rstrel_rel_pwm;
   //Assignment for next value of rstrel_rel_gpio_1 rw
-  assign nxt_rstrel_rel_gpio_1 = (we_rstrel) ? reg_pwdata[16] : reg_rstrel_rel_gpio_1;
+  assign nxt_rstrel_rel_gpio_1 = (we_rstrel) ? reg_pwdata[9] : reg_rstrel_rel_gpio_1;
   //FF for bit rstrel_rel_gpio_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -729,7 +665,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_rstrel_rel_gpio_1 = reg_rstrel_rel_gpio_1;
   //Assignment for next value of rstrel_rel_gpio_2 rw
-  assign nxt_rstrel_rel_gpio_2 = (we_rstrel) ? reg_pwdata[17] : reg_rstrel_rel_gpio_2;
+  assign nxt_rstrel_rel_gpio_2 = (we_rstrel) ? reg_pwdata[10] : reg_rstrel_rel_gpio_2;
   //FF for bit rstrel_rel_gpio_2
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -738,42 +674,47 @@ module m_qnsc_scrc_csr # (
       reg_rstrel_rel_gpio_2 <= nxt_rstrel_rel_gpio_2;
   end 
   assign o_rstrel_rel_gpio_2 = reg_rstrel_rel_gpio_2;
-  //Assignment for next value of rstrel_rel_cpu rw
-  assign nxt_rstrel_rel_cpu = (we_rstrel) ? reg_pwdata[31] : reg_rstrel_rel_cpu;
-  //FF for bit rstrel_rel_cpu
+  //Assignment for next value of rstrel_rel_dma rw
+  assign nxt_rstrel_rel_dma = (we_rstrel) ? reg_pwdata[11] : reg_rstrel_rel_dma;
+  //FF for bit rstrel_rel_dma
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
-      reg_rstrel_rel_cpu <= 1'h0;
+      reg_rstrel_rel_dma <= 1'h0;
     else
-      reg_rstrel_rel_cpu <= nxt_rstrel_rel_cpu;
+      reg_rstrel_rel_dma <= nxt_rstrel_rel_dma;
   end 
-  assign o_rstrel_rel_cpu = reg_rstrel_rel_cpu;
+  assign o_rstrel_rel_dma = reg_rstrel_rel_dma;
+  //Assignment for next value of rstrel_rel_pwm rw
+  assign nxt_rstrel_rel_pwm = (we_rstrel) ? reg_pwdata[12] : reg_rstrel_rel_pwm;
+  //FF for bit rstrel_rel_pwm
+  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
+    if(!i_bus_rstn) 
+      reg_rstrel_rel_pwm <= 1'h0;
+    else
+      reg_rstrel_rel_pwm <= nxt_rstrel_rel_pwm;
+  end 
+  assign o_rstrel_rel_pwm = reg_rstrel_rel_pwm;
 
   //--------------------------------------------------------------------
   //Combine the value of rstrel
   //--------------------------------------------------------------------
   always_comb begin
-    rstrel_value[0] = reg_rstrel_rel_sbus;
-    rstrel_value[1] = reg_rstrel_rel_pbus;
-    rstrel_value[2] = reg_rstrel_rel_wdt;
-    rstrel_value[3] = reg_rstrel_rel_timer_0;
-    rstrel_value[4] = reg_rstrel_rel_timer_1;
-    rstrel_value[5] = reg_rstrel_rel_uart_0;
-    rstrel_value[6] = reg_rstrel_rel_uart_1;
-    rstrel_value[7] = reg_rstrel_rel_spi;
-    rstrel_value[8] = reg_rstrel_rel_i2c;
-    rstrel_value[9] = reg_rstrel_rel_gpio_0;
-    rstrel_value[10] = reg_rstrel_rel_dma;
-    rstrel_value[11] = reg_rstrel_rel_rom;
-    rstrel_value[12] = reg_rstrel_rel_ram;
-    rstrel_value[14:13] = '0;
-    rstrel_value[15] = reg_rstrel_rel_pwm;
-    rstrel_value[16] = reg_rstrel_rel_gpio_1;
-    rstrel_value[17] = reg_rstrel_rel_gpio_2;
-    rstrel_value[30:18] = '0;
-    rstrel_value[31] = reg_rstrel_rel_cpu;
+    rstrel_value[0] = reg_rstrel_rel_sys;
+    rstrel_value[1] = reg_rstrel_rel_cpu;
+    rstrel_value[2] = reg_rstrel_rel_timer_0;
+    rstrel_value[3] = reg_rstrel_rel_timer_1;
+    rstrel_value[4] = reg_rstrel_rel_uart_0;
+    rstrel_value[5] = reg_rstrel_rel_uart_1;
+    rstrel_value[6] = reg_rstrel_rel_spi;
+    rstrel_value[7] = reg_rstrel_rel_i2c;
+    rstrel_value[8] = reg_rstrel_rel_gpio_0;
+    rstrel_value[9] = reg_rstrel_rel_gpio_1;
+    rstrel_value[10] = reg_rstrel_rel_gpio_2;
+    rstrel_value[11] = reg_rstrel_rel_dma;
+    rstrel_value[12] = reg_rstrel_rel_pwm;
+    rstrel_value[31:13] = '0;
   end  //Assignment for next value of apbblk_blk_timer_0 rw
-  assign nxt_apbblk_blk_timer_0 = (we_apbblk) ? reg_pwdata[3] : reg_apbblk_blk_timer_0;
+  assign nxt_apbblk_blk_timer_0 = (we_apbblk) ? reg_pwdata[2] : reg_apbblk_blk_timer_0;
   //FF for bit apbblk_blk_timer_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -783,7 +724,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_apbblk_blk_timer_0 = reg_apbblk_blk_timer_0;
   //Assignment for next value of apbblk_blk_timer_1 rw
-  assign nxt_apbblk_blk_timer_1 = (we_apbblk) ? reg_pwdata[4] : reg_apbblk_blk_timer_1;
+  assign nxt_apbblk_blk_timer_1 = (we_apbblk) ? reg_pwdata[3] : reg_apbblk_blk_timer_1;
   //FF for bit apbblk_blk_timer_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -793,7 +734,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_apbblk_blk_timer_1 = reg_apbblk_blk_timer_1;
   //Assignment for next value of apbblk_blk_uart_0 rw
-  assign nxt_apbblk_blk_uart_0 = (we_apbblk) ? reg_pwdata[5] : reg_apbblk_blk_uart_0;
+  assign nxt_apbblk_blk_uart_0 = (we_apbblk) ? reg_pwdata[4] : reg_apbblk_blk_uart_0;
   //FF for bit apbblk_blk_uart_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -803,7 +744,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_apbblk_blk_uart_0 = reg_apbblk_blk_uart_0;
   //Assignment for next value of apbblk_blk_uart_1 rw
-  assign nxt_apbblk_blk_uart_1 = (we_apbblk) ? reg_pwdata[6] : reg_apbblk_blk_uart_1;
+  assign nxt_apbblk_blk_uart_1 = (we_apbblk) ? reg_pwdata[5] : reg_apbblk_blk_uart_1;
   //FF for bit apbblk_blk_uart_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -813,7 +754,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_apbblk_blk_uart_1 = reg_apbblk_blk_uart_1;
   //Assignment for next value of apbblk_blk_spi rw
-  assign nxt_apbblk_blk_spi = (we_apbblk) ? reg_pwdata[7] : reg_apbblk_blk_spi;
+  assign nxt_apbblk_blk_spi = (we_apbblk) ? reg_pwdata[6] : reg_apbblk_blk_spi;
   //FF for bit apbblk_blk_spi
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -823,7 +764,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_apbblk_blk_spi = reg_apbblk_blk_spi;
   //Assignment for next value of apbblk_blk_i2c rw
-  assign nxt_apbblk_blk_i2c = (we_apbblk) ? reg_pwdata[8] : reg_apbblk_blk_i2c;
+  assign nxt_apbblk_blk_i2c = (we_apbblk) ? reg_pwdata[7] : reg_apbblk_blk_i2c;
   //FF for bit apbblk_blk_i2c
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -833,7 +774,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_apbblk_blk_i2c = reg_apbblk_blk_i2c;
   //Assignment for next value of apbblk_blk_gpio_0 rw
-  assign nxt_apbblk_blk_gpio_0 = (we_apbblk) ? reg_pwdata[9] : reg_apbblk_blk_gpio_0;
+  assign nxt_apbblk_blk_gpio_0 = (we_apbblk) ? reg_pwdata[8] : reg_apbblk_blk_gpio_0;
   //FF for bit apbblk_blk_gpio_0
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -842,28 +783,8 @@ module m_qnsc_scrc_csr # (
       reg_apbblk_blk_gpio_0 <= nxt_apbblk_blk_gpio_0;
   end 
   assign o_apbblk_blk_gpio_0 = reg_apbblk_blk_gpio_0;
-  //Assignment for next value of apbblk_blk_dma rw
-  assign nxt_apbblk_blk_dma = (we_apbblk) ? reg_pwdata[10] : reg_apbblk_blk_dma;
-  //FF for bit apbblk_blk_dma
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_apbblk_blk_dma <= 1'h1;
-    else
-      reg_apbblk_blk_dma <= nxt_apbblk_blk_dma;
-  end 
-  assign o_apbblk_blk_dma = reg_apbblk_blk_dma;
-  //Assignment for next value of apbblk_blk_pwm rw
-  assign nxt_apbblk_blk_pwm = (we_apbblk) ? reg_pwdata[15] : reg_apbblk_blk_pwm;
-  //FF for bit apbblk_blk_pwm
-  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
-    if(!i_bus_rstn) 
-      reg_apbblk_blk_pwm <= 1'h1;
-    else
-      reg_apbblk_blk_pwm <= nxt_apbblk_blk_pwm;
-  end 
-  assign o_apbblk_blk_pwm = reg_apbblk_blk_pwm;
   //Assignment for next value of apbblk_blk_gpio_1 rw
-  assign nxt_apbblk_blk_gpio_1 = (we_apbblk) ? reg_pwdata[16] : reg_apbblk_blk_gpio_1;
+  assign nxt_apbblk_blk_gpio_1 = (we_apbblk) ? reg_pwdata[9] : reg_apbblk_blk_gpio_1;
   //FF for bit apbblk_blk_gpio_1
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -873,7 +794,7 @@ module m_qnsc_scrc_csr # (
   end 
   assign o_apbblk_blk_gpio_1 = reg_apbblk_blk_gpio_1;
   //Assignment for next value of apbblk_blk_gpio_2 rw
-  assign nxt_apbblk_blk_gpio_2 = (we_apbblk) ? reg_pwdata[17] : reg_apbblk_blk_gpio_2;
+  assign nxt_apbblk_blk_gpio_2 = (we_apbblk) ? reg_pwdata[10] : reg_apbblk_blk_gpio_2;
   //FF for bit apbblk_blk_gpio_2
   always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
     if(!i_bus_rstn) 
@@ -882,44 +803,62 @@ module m_qnsc_scrc_csr # (
       reg_apbblk_blk_gpio_2 <= nxt_apbblk_blk_gpio_2;
   end 
   assign o_apbblk_blk_gpio_2 = reg_apbblk_blk_gpio_2;
+  //Assignment for next value of apbblk_blk_dma rw
+  assign nxt_apbblk_blk_dma = (we_apbblk) ? reg_pwdata[11] : reg_apbblk_blk_dma;
+  //FF for bit apbblk_blk_dma
+  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
+    if(!i_bus_rstn) 
+      reg_apbblk_blk_dma <= 1'h1;
+    else
+      reg_apbblk_blk_dma <= nxt_apbblk_blk_dma;
+  end 
+  assign o_apbblk_blk_dma = reg_apbblk_blk_dma;
+  //Assignment for next value of apbblk_blk_pwm rw
+  assign nxt_apbblk_blk_pwm = (we_apbblk) ? reg_pwdata[12] : reg_apbblk_blk_pwm;
+  //FF for bit apbblk_blk_pwm
+  always_ff @ (posedge i_bus_clk, negedge i_bus_rstn) begin //FF for each bit
+    if(!i_bus_rstn) 
+      reg_apbblk_blk_pwm <= 1'h1;
+    else
+      reg_apbblk_blk_pwm <= nxt_apbblk_blk_pwm;
+  end 
+  assign o_apbblk_blk_pwm = reg_apbblk_blk_pwm;
 
   //--------------------------------------------------------------------
   //Combine the value of apbblk
   //--------------------------------------------------------------------
   always_comb begin
-    apbblk_value[2:0] = '0;
-    apbblk_value[3] = reg_apbblk_blk_timer_0;
-    apbblk_value[4] = reg_apbblk_blk_timer_1;
-    apbblk_value[5] = reg_apbblk_blk_uart_0;
-    apbblk_value[6] = reg_apbblk_blk_uart_1;
-    apbblk_value[7] = reg_apbblk_blk_spi;
-    apbblk_value[8] = reg_apbblk_blk_i2c;
-    apbblk_value[9] = reg_apbblk_blk_gpio_0;
-    apbblk_value[10] = reg_apbblk_blk_dma;
-    apbblk_value[14:11] = '0;
-    apbblk_value[15] = reg_apbblk_blk_pwm;
-    apbblk_value[16] = reg_apbblk_blk_gpio_1;
-    apbblk_value[17] = reg_apbblk_blk_gpio_2;
-    apbblk_value[31:18] = '0;
+    apbblk_value[1:0] = '0;
+    apbblk_value[2] = reg_apbblk_blk_timer_0;
+    apbblk_value[3] = reg_apbblk_blk_timer_1;
+    apbblk_value[4] = reg_apbblk_blk_uart_0;
+    apbblk_value[5] = reg_apbblk_blk_uart_1;
+    apbblk_value[6] = reg_apbblk_blk_spi;
+    apbblk_value[7] = reg_apbblk_blk_i2c;
+    apbblk_value[8] = reg_apbblk_blk_gpio_0;
+    apbblk_value[9] = reg_apbblk_blk_gpio_1;
+    apbblk_value[10] = reg_apbblk_blk_gpio_2;
+    apbblk_value[11] = reg_apbblk_blk_dma;
+    apbblk_value[12] = reg_apbblk_blk_pwm;
+    apbblk_value[31:13] = '0;
   end
   //--------------------------------------------------------------------
   //Combine the value of apbbusy
   //--------------------------------------------------------------------
   always_comb begin
-    apbbusy_value[2:0] = '0;
-    apbbusy_value[3] = i_apbbusy_busy_timer_0;
-    apbbusy_value[4] = i_apbbusy_busy_timer_1;
-    apbbusy_value[5] = i_apbbusy_busy_uart_0;
-    apbbusy_value[6] = i_apbbusy_busy_uart_1;
-    apbbusy_value[7] = i_apbbusy_busy_spi;
-    apbbusy_value[8] = i_apbbusy_busy_i2c;
-    apbbusy_value[9] = i_apbbusy_busy_gpio_0;
-    apbbusy_value[10] = i_apbbusy_busy_dma;
-    apbbusy_value[14:11] = '0;
-    apbbusy_value[15] = i_apbbusy_busy_pwm;
-    apbbusy_value[16] = i_apbbusy_busy_gpio_1;
-    apbbusy_value[17] = i_apbbusy_busy_gpio_2;
-    apbbusy_value[31:18] = '0;
+    apbbusy_value[1:0] = '0;
+    apbbusy_value[2] = i_apbbusy_busy_timer_0;
+    apbbusy_value[3] = i_apbbusy_busy_timer_1;
+    apbbusy_value[4] = i_apbbusy_busy_uart_0;
+    apbbusy_value[5] = i_apbbusy_busy_uart_1;
+    apbbusy_value[6] = i_apbbusy_busy_spi;
+    apbbusy_value[7] = i_apbbusy_busy_i2c;
+    apbbusy_value[8] = i_apbbusy_busy_gpio_0;
+    apbbusy_value[9] = i_apbbusy_busy_gpio_1;
+    apbbusy_value[10] = i_apbbusy_busy_gpio_2;
+    apbbusy_value[11] = i_apbbusy_busy_dma;
+    apbbusy_value[12] = i_apbbusy_busy_pwm;
+    apbbusy_value[31:13] = '0;
   end
   //--------------------------------------------------------------------
   //O_PRDATA phase

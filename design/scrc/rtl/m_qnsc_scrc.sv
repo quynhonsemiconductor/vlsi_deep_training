@@ -1,13 +1,13 @@
 `timescale 1ns/1ps
 
 // =============================================================================
-// m_qnsc_scrc -- System Clock and Reset Controller (QNSC_SCRC_MAS V3.4)
+// m_qnsc_scrc -- System Clock and Reset Controller (QNSC_SCRC_MAS V3.5)
 //
 // In-house logic, written by hand. Emacs verilog-mode AUTOs are kept for the
 // wrappers of existing IP (the mentor's rule); this block's top is ours.
 //
-//   i_rst_n_pad -> qnsc_rst_filter -> qnsc_rst_sync -> o_rst_n_por -> RRC -> w_rst_n_sys
-//   i_clk_pad   -> qnsc_clk_buf -> w_clk_root -> 18 x CTRL (gate + reset sync)
+//   i_rst_n_pad -> qnsc_rst_filter -> qnsc_rst_sync -> o_rst_n_por -> RRC -> w_rst_n_chip
+//   i_clk_pad   -> qnsc_clk_buf -> w_clk_root -> 13 x CTRL (gate + reset sync)
 //                                                -> o_clk_<d>, o_rst_n_<d>
 //   MCPU + CRM ROM -> WF (MCPU) -\
 //                                 > APB BUS (generated) -> SCRC CSR (generated)
@@ -18,12 +18,23 @@
 // writes requests (SW_RST, CLK_EN). No register field has two writers. The CPU is
 // never held (QNSC_SYSDBG_MAS V4.0): the only recovery is a chip reset.
 //
-// Domain bits (MAS Table 6-3), shared with SYSCSR DOMAIN_RST_STATUS:
-//   0 sbus  1 pbus  2 wdt  3 timer_0  4 timer_1  5 uart_0  6 uart_1  7 spi
-//   8 i2c  9 gpio_0  10 dma  11 rom  12 ram  13 -  14 sysdbg  15 pwm
-//   16 gpio_1  17 gpio_2  31 cpu
-//   always-on (gate enable tied 1): cpu sbus pbus rom ram sysdbg wdt
-//   gateable (CLK_EN/ICG_EN/APB_BLK/APB_BUSY bit, guard): 0x0003_87F8
+// One clock/reset pair per DOMAIN, not per IP (MAS Table 5-2, V3.5). Domain bits
+// (MAS Table 6-3), shared with SYSCSR DOMAIN_RST_STATUS:
+//   0 sys  1 cpu  2 timer_0  3 timer_1  4 uart_0  5 uart_1  6 spi  7 i2c
+//   8 gpio_0  9 gpio_1  10 gpio_2  11 dma  12 pwm
+//   always-on (gate enable tied 1, no CLK_EN/ICG_EN/APB_BLK bit): sys, cpu
+//     sys = S_BUS, P_BUS, ROM, ISRAM/DSRAM, WDT, SYSCSR, SYSDBG (clock only;
+//     SYSDBG is reset by o_rst_n_por) and the 11 APB guards
+//   gateable (CLK_EN/ICG_EN/APB_BLK/APB_BUSY bit, guard): 0x0000_1FFC
+//
+// Why software cannot stop sys or cpu (MAS 7.1): their CTRL gate enable is the
+// constant 1, CLK_EN/ICG_EN/APB_BLK have no bit 0 or 1 (read 0, write ignored),
+// and Ibex's write filter drops every write to ICG_EN, RST_REL and APB_BLK.
+//
+// APB guard handshake (MAS 7.7): o_csr_blk[n] = APB_BLK[n] closes guard n;
+// i_csr_busy[n] = guard n has a transfer in progress (PSEL at the IP) and is
+// read as APB_BUSY[n]. MCPU stops clock n only after APB_BLK[n] = 1 and
+// APB_BUSY[n] = 0. Both are CSR fields, hence the csr group (Naming Rule V1.2).
 //
 // Library cells (clock buffer, clock gates, reset synchronisers, the WDT request
 // synchroniser, the PORSTN filter) only through design/common/tech (MAS 4).
@@ -32,8 +43,8 @@ module m_qnsc_scrc (
   // ---- dedicated pads ------------------------------------------------------
   input  logic        i_clk_pad,            // CLKIN, root clock, 20 MHz
   input  logic        i_rst_n_pad,          // PORSTN, power-on reset
-  // ---- reset request ---------------------------------------------------------
-  input  logic        i_wdt_rst_req,        // WDT aon_timer_rst_req_o, sticky
+  // ---- reset request (group rst_req, proposed to Tâm, MAS 5) -----------------
+  input  logic        i_rst_req_wdt,        // naming-check: ignore -- WDT aon_timer_rst_req_o, sticky, active high; group rst_req proposed to Tâm (MAS 5), not yet in Naming Rule V1.2
   // ---- P_BUS APB_M0 (Ibex) --------------------------------------------------
   input  logic        i_bus_apb_psel,
   input  logic        i_bus_apb_penable,
@@ -45,24 +56,14 @@ module m_qnsc_scrc (
   output logic [31:0] o_bus_apb_prdata,
   output logic        o_bus_apb_pready,
   output logic        o_bus_apb_pslverr,
-  // ---- the 11 APB guards in design/top ---------------------------------------
-  input  logic [17:0] i_guard_busy,         // bit n = guard n has a transfer in progress
-  output logic [17:0] o_guard_blk,          // APB_BLK[17:0], 1 = block
-  // ---- domain clocks and resets (MAS Table 5-2) ------------------------------
+  // ---- CSR fields to/from the 11 APB guards in design/top (MAS 7.7) ----------
+  input  logic [12:0] i_csr_busy,           // APB_BUSY[n]: guard n has a transfer in progress; bits 1:0 tied 0
+  output logic [12:0] o_csr_blk,            // APB_BLK[n]: 1 = guard n blocks; bits 1:0 read 0
+  // ---- domain clocks and resets, bit order (MAS Table 5-2) -------------------
+  output logic        o_clk_sys,
+  output logic        o_rst_n_sys,
   output logic        o_clk_cpu,
   output logic        o_rst_n_cpu,
-  output logic        o_clk_sbus,
-  output logic        o_rst_n_sbus,
-  output logic        o_clk_pbus,
-  output logic        o_rst_n_pbus,
-  output logic        o_clk_rom,
-  output logic        o_rst_n_rom,
-  output logic        o_clk_ram,
-  output logic        o_rst_n_ram,
-  output logic        o_clk_sysdbg,
-  output logic        o_rst_n_sysdbg,
-  output logic        o_clk_wdt,
-  output logic        o_rst_n_wdt,
   output logic        o_clk_timer_0,
   output logic        o_rst_n_timer_0,
   output logic        o_clk_timer_1,
@@ -81,20 +82,21 @@ module m_qnsc_scrc (
   output logic        o_rst_n_gpio_1,
   output logic        o_clk_gpio_2,
   output logic        o_rst_n_gpio_2,
-  output logic        o_clk_pwm,
-  output logic        o_rst_n_pwm,
   output logic        o_clk_dma,
   output logic        o_rst_n_dma,
-  // ---- to SYSCSR -------------------------------------------------------------
+  output logic        o_clk_pwm,
+  output logic        o_rst_n_pwm,
+  // ---- power-on reset: SYSCSR and SYSDBG (survive a WDT or SW reset) ---------
   output logic        o_rst_n_por,          // power-on only; not affected by WDT or SW
-  output logic        o_cause_we_wdt,       // 1 for the whole WDT chip reset
-  output logic        o_cause_we_sw         // 1 for the whole SW chip reset
+  // ---- CSR fields to SYSCSR RESET_CAUSE (hardware set, MAS 7.3) --------------
+  output logic        o_csr_rst_cause_wdt,  // 1 for the whole WDT chip reset
+  output logic        o_csr_rst_cause_sw    // 1 for the whole SW chip reset
 );
 
   // ==========================================================================
   // 1. Root clock and power-on input stage (MAS 7.1, 7.2). Technology cells.
   // ==========================================================================
-  logic w_clk_root, w_rst_n_filt, w_rst_n_sys;
+  logic w_clk_root, w_rst_n_filt, w_rst_n_chip;
 
   qnsc_clk_buf u_clk_buf (
     .i_clk_src (i_clk_pad),
@@ -120,13 +122,13 @@ module m_qnsc_scrc (
   logic w_sw_rst;
 
   m_qnsc_scrc_rrc u_rrc (
-    .i_clk_root     (w_clk_root),
-    .i_rst_n_por    (o_rst_n_por),
-    .i_wdt_rst_req  (i_wdt_rst_req),
-    .i_sw_rst       (w_sw_rst),
-    .o_rst_n_sys    (w_rst_n_sys),
-    .o_cause_we_wdt (o_cause_we_wdt),
-    .o_cause_we_sw  (o_cause_we_sw)
+    .i_clk_root          (w_clk_root),
+    .i_rst_n_por         (o_rst_n_por),
+    .i_rst_req_wdt       (i_rst_req_wdt),
+    .i_sw_rst            (w_sw_rst),
+    .o_rst_n_chip        (w_rst_n_chip),
+    .o_csr_rst_cause_wdt (o_csr_rst_cause_wdt),
+    .o_csr_rst_cause_sw  (o_csr_rst_cause_sw)
   );
 
   // ==========================================================================
@@ -141,7 +143,7 @@ module m_qnsc_scrc (
     .PARA_INT_VECTOR   (12'h100)         // naming-check: ignore -- parameter of a vendored module; not used, i_interrupt tied 0
   ) u_mcpu (
     .i_clk       (w_clk_root),
-    .i_rst_n     (w_rst_n_sys),
+    .i_rst_n     (w_rst_n_chip),
     .i_interrupt (1'b0),
     .o_imem_addr (w_mcpu_imem_addr),
     .i_imem_data (w_mcpu_imem_data),
@@ -213,7 +215,7 @@ module m_qnsc_scrc (
 
   m_qnsc_scrc_apb_bus u_apb_bus (
     .i_clk                 (w_clk_root),
-    .i_rstn                (w_rst_n_sys),
+    .i_rstn                (w_rst_n_chip),
     // master MCPU
     .i_paddr_mcpu          (w_mcpu_paddr[13:0]),
     .i_protect_en_mcpu     (1'b0),
@@ -258,20 +260,19 @@ module m_qnsc_scrc (
   // ==========================================================================
   // 6. SCRC CSR (util/gen/scrc_csr; MAS 6). i_protect_en = 0 and i_slverr_en = 1
   //    come from the bus (MAS Table 10-1). CLK_EN is read by MCPU over the bus;
-  //    its field outputs are not used. APB_BUSY fields take the guard busy bits
-  //    of the 11 gateable domains (design/top ties the other bits 0, MAS 11).
+  //    its field outputs are not used. Only the 11 gateable domains (bits 2-12)
+  //    have CLK_EN/ICG_EN/APB_BLK/APB_BUSY fields; RST_REL has all 13 bits.
   // ==========================================================================
   logic w_icg_timer_0, w_icg_timer_1, w_icg_uart_0, w_icg_uart_1, w_icg_spi, w_icg_i2c;
-  logic w_icg_gpio_0, w_icg_dma, w_icg_pwm, w_icg_gpio_1, w_icg_gpio_2;
-  logic w_rel_sbus, w_rel_pbus, w_rel_wdt, w_rel_timer_0, w_rel_timer_1, w_rel_uart_0;
-  logic w_rel_uart_1, w_rel_spi, w_rel_i2c, w_rel_gpio_0, w_rel_dma, w_rel_rom, w_rel_ram;
-  logic w_rel_pwm, w_rel_gpio_1, w_rel_gpio_2, w_rel_cpu;
+  logic w_icg_gpio_0, w_icg_gpio_1, w_icg_gpio_2, w_icg_dma, w_icg_pwm;
+  logic w_rel_sys, w_rel_cpu, w_rel_timer_0, w_rel_timer_1, w_rel_uart_0, w_rel_uart_1;
+  logic w_rel_spi, w_rel_i2c, w_rel_gpio_0, w_rel_gpio_1, w_rel_gpio_2, w_rel_dma, w_rel_pwm;
   logic w_blk_timer_0, w_blk_timer_1, w_blk_uart_0, w_blk_uart_1, w_blk_spi, w_blk_i2c;
-  logic w_blk_gpio_0, w_blk_dma, w_blk_pwm, w_blk_gpio_1, w_blk_gpio_2;
+  logic w_blk_gpio_0, w_blk_gpio_1, w_blk_gpio_2, w_blk_dma, w_blk_pwm;
 
   m_qnsc_scrc_csr u_csr (
     .i_bus_clk              (w_clk_root),
-    .i_bus_rstn             (w_rst_n_sys),
+    .i_bus_rstn             (w_rst_n_chip),
     .i_paddr                ({11'd0, w_csr_paddr}),
     .i_protect_en           (w_csr_protect_en),
     .i_slverr_en            (w_csr_slverr_en),
@@ -294,10 +295,10 @@ module m_qnsc_scrc (
     .o_clken_en_spi         (),
     .o_clken_en_i2c         (),
     .o_clken_en_gpio_0      (),
-    .o_clken_en_dma         (),
-    .o_clken_en_pwm         (),
     .o_clken_en_gpio_1      (),
     .o_clken_en_gpio_2      (),
+    .o_clken_en_dma         (),
+    .o_clken_en_pwm         (),
     // 0x0C ICG_EN (MCPU) -> CTRL
     .o_icgen_icg_timer_0    (w_icg_timer_0),
     .o_icgen_icg_timer_1    (w_icg_timer_1),
@@ -306,14 +307,13 @@ module m_qnsc_scrc (
     .o_icgen_icg_spi        (w_icg_spi),
     .o_icgen_icg_i2c        (w_icg_i2c),
     .o_icgen_icg_gpio_0     (w_icg_gpio_0),
-    .o_icgen_icg_dma        (w_icg_dma),
-    .o_icgen_icg_pwm        (w_icg_pwm),
     .o_icgen_icg_gpio_1     (w_icg_gpio_1),
     .o_icgen_icg_gpio_2     (w_icg_gpio_2),
+    .o_icgen_icg_dma        (w_icg_dma),
+    .o_icgen_icg_pwm        (w_icg_pwm),
     // 0x10 RST_REL (MCPU) -> CTRL
-    .o_rstrel_rel_sbus      (w_rel_sbus),
-    .o_rstrel_rel_pbus      (w_rel_pbus),
-    .o_rstrel_rel_wdt       (w_rel_wdt),
+    .o_rstrel_rel_sys       (w_rel_sys),
+    .o_rstrel_rel_cpu       (w_rel_cpu),
     .o_rstrel_rel_timer_0   (w_rel_timer_0),
     .o_rstrel_rel_timer_1   (w_rel_timer_1),
     .o_rstrel_rel_uart_0    (w_rel_uart_0),
@@ -321,13 +321,10 @@ module m_qnsc_scrc (
     .o_rstrel_rel_spi       (w_rel_spi),
     .o_rstrel_rel_i2c       (w_rel_i2c),
     .o_rstrel_rel_gpio_0    (w_rel_gpio_0),
-    .o_rstrel_rel_dma       (w_rel_dma),
-    .o_rstrel_rel_rom       (w_rel_rom),
-    .o_rstrel_rel_ram       (w_rel_ram),
-    .o_rstrel_rel_pwm       (w_rel_pwm),
     .o_rstrel_rel_gpio_1    (w_rel_gpio_1),
     .o_rstrel_rel_gpio_2    (w_rel_gpio_2),
-    .o_rstrel_rel_cpu       (w_rel_cpu),
+    .o_rstrel_rel_dma       (w_rel_dma),
+    .o_rstrel_rel_pwm       (w_rel_pwm),
     // 0x14 APB_BLK (MCPU) -> guards
     .o_apbblk_blk_timer_0   (w_blk_timer_0),
     .o_apbblk_blk_timer_1   (w_blk_timer_1),
@@ -336,61 +333,45 @@ module m_qnsc_scrc (
     .o_apbblk_blk_spi       (w_blk_spi),
     .o_apbblk_blk_i2c       (w_blk_i2c),
     .o_apbblk_blk_gpio_0    (w_blk_gpio_0),
-    .o_apbblk_blk_dma       (w_blk_dma),
-    .o_apbblk_blk_pwm       (w_blk_pwm),
     .o_apbblk_blk_gpio_1    (w_blk_gpio_1),
     .o_apbblk_blk_gpio_2    (w_blk_gpio_2),
-    // 0x18 APB_BUSY (live) <- guards, bit n of i_guard_busy
-    .i_apbbusy_busy_timer_0 (i_guard_busy[3]),
-    .i_apbbusy_busy_timer_1 (i_guard_busy[4]),
-    .i_apbbusy_busy_uart_0  (i_guard_busy[5]),
-    .i_apbbusy_busy_uart_1  (i_guard_busy[6]),
-    .i_apbbusy_busy_spi     (i_guard_busy[7]),
-    .i_apbbusy_busy_i2c     (i_guard_busy[8]),
-    .i_apbbusy_busy_gpio_0  (i_guard_busy[9]),
-    .i_apbbusy_busy_dma     (i_guard_busy[10]),
-    .i_apbbusy_busy_pwm     (i_guard_busy[15]),
-    .i_apbbusy_busy_gpio_1  (i_guard_busy[16]),
-    .i_apbbusy_busy_gpio_2  (i_guard_busy[17])
+    .o_apbblk_blk_dma       (w_blk_dma),
+    .o_apbblk_blk_pwm       (w_blk_pwm),
+    // 0x18 APB_BUSY (live) <- guards, bit n of i_csr_busy
+    .i_apbbusy_busy_timer_0 (i_csr_busy[2]),
+    .i_apbbusy_busy_timer_1 (i_csr_busy[3]),
+    .i_apbbusy_busy_uart_0  (i_csr_busy[4]),
+    .i_apbbusy_busy_uart_1  (i_csr_busy[5]),
+    .i_apbbusy_busy_spi     (i_csr_busy[6]),
+    .i_apbbusy_busy_i2c     (i_csr_busy[7]),
+    .i_apbbusy_busy_gpio_0  (i_csr_busy[8]),
+    .i_apbbusy_busy_gpio_1  (i_csr_busy[9]),
+    .i_apbbusy_busy_gpio_2  (i_csr_busy[10]),
+    .i_apbbusy_busy_dma     (i_csr_busy[11]),
+    .i_apbbusy_busy_pwm     (i_csr_busy[12])
   );
 
-  // APB_BLK to the guards: bit n of a gateable domain; always-on and reserved
-  // bits read 0 (no guard).
-  //                    17            16            15         14..11   10
-  assign o_guard_blk = {w_blk_gpio_2, w_blk_gpio_1, w_blk_pwm, 4'b0000, w_blk_dma,
-  //                    9             8          7          6             5
-                        w_blk_gpio_0, w_blk_i2c, w_blk_spi, w_blk_uart_1, w_blk_uart_0,
-  //                    4              3              2..0
-                        w_blk_timer_1, w_blk_timer_0, 3'b000};
+  // APB_BLK to the guards: bit n of a gateable domain; sys and cpu (bits 1:0)
+  // have no guard and read 0.
+  assign o_csr_blk = {w_blk_pwm,    w_blk_dma,     w_blk_gpio_2,  w_blk_gpio_1,  // 12..9
+                          w_blk_gpio_0, w_blk_i2c,     w_blk_spi,     w_blk_uart_1,  //  8..5
+                          w_blk_uart_0, w_blk_timer_1, w_blk_timer_0,                //  4..2
+                          2'b00};                                                    //  1..0
 
   // ==========================================================================
   // 7. Domain controllers (MAS 7.1, Table 5-2). Gate enable = ICG_EN bit, reset
-  //    input = RST_REL bit. The seven always-on domains tie the gate enable to 1;
-  //    sysdbg's reset input is the power-on reset, so a debug session survives a
-  //    WDT or SW reset (MAS 7.8).
+  //    input = RST_REL bit. The two always-on domains tie the gate enable to 1:
+  //    no register bit can stop them. SYSDBG has no controller: it runs on
+  //    o_clk_sys and is reset by o_rst_n_por, so a debug session survives a WDT
+  //    or SW reset (MAS 7.8).
   // ==========================================================================
   // ---- always-on ---------------------------------------------------------------
+  m_qnsc_scrc_ctrl u_ctrl_sys (
+    .i_clk_root(w_clk_root), .i_icg_en(1'b1), .i_rst_n_in(w_rel_sys),
+    .o_clk_gated(o_clk_sys), .o_rst_n_sync(o_rst_n_sys));
   m_qnsc_scrc_ctrl u_ctrl_cpu (
     .i_clk_root(w_clk_root), .i_icg_en(1'b1), .i_rst_n_in(w_rel_cpu),
     .o_clk_gated(o_clk_cpu), .o_rst_n_sync(o_rst_n_cpu));
-  m_qnsc_scrc_ctrl u_ctrl_sbus (
-    .i_clk_root(w_clk_root), .i_icg_en(1'b1), .i_rst_n_in(w_rel_sbus),
-    .o_clk_gated(o_clk_sbus), .o_rst_n_sync(o_rst_n_sbus));
-  m_qnsc_scrc_ctrl u_ctrl_pbus (
-    .i_clk_root(w_clk_root), .i_icg_en(1'b1), .i_rst_n_in(w_rel_pbus),
-    .o_clk_gated(o_clk_pbus), .o_rst_n_sync(o_rst_n_pbus));
-  m_qnsc_scrc_ctrl u_ctrl_wdt (
-    .i_clk_root(w_clk_root), .i_icg_en(1'b1), .i_rst_n_in(w_rel_wdt),
-    .o_clk_gated(o_clk_wdt), .o_rst_n_sync(o_rst_n_wdt));
-  m_qnsc_scrc_ctrl u_ctrl_rom (
-    .i_clk_root(w_clk_root), .i_icg_en(1'b1), .i_rst_n_in(w_rel_rom),
-    .o_clk_gated(o_clk_rom), .o_rst_n_sync(o_rst_n_rom));
-  m_qnsc_scrc_ctrl u_ctrl_ram (
-    .i_clk_root(w_clk_root), .i_icg_en(1'b1), .i_rst_n_in(w_rel_ram),
-    .o_clk_gated(o_clk_ram), .o_rst_n_sync(o_rst_n_ram));
-  m_qnsc_scrc_ctrl u_ctrl_sysdbg (
-    .i_clk_root(w_clk_root), .i_icg_en(1'b1), .i_rst_n_in(o_rst_n_por),
-    .o_clk_gated(o_clk_sysdbg), .o_rst_n_sync(o_rst_n_sysdbg));
 
   // ---- gateable ------------------------------------------------------------------
   m_qnsc_scrc_ctrl u_ctrl_timer_0 (
@@ -414,17 +395,17 @@ module m_qnsc_scrc (
   m_qnsc_scrc_ctrl u_ctrl_gpio_0 (
     .i_clk_root(w_clk_root), .i_icg_en(w_icg_gpio_0), .i_rst_n_in(w_rel_gpio_0),
     .o_clk_gated(o_clk_gpio_0), .o_rst_n_sync(o_rst_n_gpio_0));
-  m_qnsc_scrc_ctrl u_ctrl_dma (
-    .i_clk_root(w_clk_root), .i_icg_en(w_icg_dma), .i_rst_n_in(w_rel_dma),
-    .o_clk_gated(o_clk_dma), .o_rst_n_sync(o_rst_n_dma));
-  m_qnsc_scrc_ctrl u_ctrl_pwm (
-    .i_clk_root(w_clk_root), .i_icg_en(w_icg_pwm), .i_rst_n_in(w_rel_pwm),
-    .o_clk_gated(o_clk_pwm), .o_rst_n_sync(o_rst_n_pwm));
   m_qnsc_scrc_ctrl u_ctrl_gpio_1 (
     .i_clk_root(w_clk_root), .i_icg_en(w_icg_gpio_1), .i_rst_n_in(w_rel_gpio_1),
     .o_clk_gated(o_clk_gpio_1), .o_rst_n_sync(o_rst_n_gpio_1));
   m_qnsc_scrc_ctrl u_ctrl_gpio_2 (
     .i_clk_root(w_clk_root), .i_icg_en(w_icg_gpio_2), .i_rst_n_in(w_rel_gpio_2),
     .o_clk_gated(o_clk_gpio_2), .o_rst_n_sync(o_rst_n_gpio_2));
+  m_qnsc_scrc_ctrl u_ctrl_dma (
+    .i_clk_root(w_clk_root), .i_icg_en(w_icg_dma), .i_rst_n_in(w_rel_dma),
+    .o_clk_gated(o_clk_dma), .o_rst_n_sync(o_rst_n_dma));
+  m_qnsc_scrc_ctrl u_ctrl_pwm (
+    .i_clk_root(w_clk_root), .i_icg_en(w_icg_pwm), .i_rst_n_in(w_rel_pwm),
+    .o_clk_gated(o_clk_pwm), .o_rst_n_sync(o_rst_n_pwm));
 
 endmodule

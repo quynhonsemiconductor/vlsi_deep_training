@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 
 // =============================================================================
-// m_qnsc_scrc_apb_wfilter -- write filter, one per master (QNSC_SCRC_MAS V3.4,
+// m_qnsc_scrc_apb_wfilter -- write filter, one per master (QNSC_SCRC_MAS V3.5,
 // 7.4, Table 7-2)
 //
 // APB-CSR-Generator sees one slave and cannot tell the masters apart, so each

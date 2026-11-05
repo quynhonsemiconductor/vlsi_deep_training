@@ -1,55 +1,52 @@
 00001000  00000413    28  addi s0, x0, 0
-00001004  00038b37    29  lui  s6, 0x38                 # 0x0003_8000
-00001008  7f8b0b13    30  addi s6, s6, 0x7F8            # s6 = 0x0003_87F8
-0000100c  00442483    31  lw   s1, 0x04(s0)             # CLK_EN, reset value 0x0003_87E8
+00001004  00002b37    29  lui  s6, 0x2                  # 0x0000_2000
+00001008  ffcb0b13    30  addi s6, s6, -4               # s6 = 0x0000_1FFC
+0000100c  00442483    31  lw   s1, 0x04(s0)             # CLK_EN, reset value 0x0000_1FF4
 00001010  0164f9b3    32  and  s3, s1, s6
 00001014  01342623    33  sw   s3, 0x0C(s0)             # 1. ICG_EN <- CLK_EN
 00001018  00100f93    35  addi t6, x0, 1                # 2. wait >= 3 cycles (the sw already took >= 3)
 0000101c  ffff8f93    36  W3A:    addi t6, t6, -1
 00001020  000f8463    37  beq  t6, x0, REL
 00001024  ff9ff06f    38  jal  x0, W3A
-00001028  00040a37    40  REL:    lui  s4, 0x40                 # 0x0004_0000
-0000102c  fffa0a13    41  addi s4, s4, -1               # 0x0003_FFFF
-00001030  000062b7    42  lui  t0, 0x6                  # 0x0000_6000 = bits 13, 14 (reserved, sysdbg)
-00001034  405a0a33    43  sub  s4, s4, t0               # 0x0003_9FFF
-00001038  01442823    44  sw   s4, 0x10(s0)             # 3. RST_REL: every domain except the CPU
-0000103c  00600f93    46  addi t6, x0, 6                # 4. wait >= 16 cycles (6 x 3)
-00001040  ffff8f93    47  W16:    addi t6, t6, -1
-00001044  000f8463    48  beq  t6, x0, GUARD
-00001048  ff9ff06f    49  jal  x0, W16
-0000104c  fff00293    51  GUARD:  addi t0, x0, -1
-00001050  409282b3    52  sub  t0, t0, s1               # NOT CLK_EN
-00001054  0162fab3    53  and  s5, t0, s6
-00001058  01542a23    54  sw   s5, 0x14(s0)             # 5. APB_BLK <- NOT CLK_EN AND mask: guards open FIRST
-0000105c  800002b7    56  lui  t0, 0x80000              # 0x8000_0000
-00001060  005a6a33    57  or   s4, s4, t0               # 0x8003_9FFF
-00001064  01442823    58  sw   s4, 0x10(s0)             # 6. RST_REL[31]: the CPU is released LAST
-00001068  00442283    61  IDLE:   lw   t0, 0x04(s0)             # requested clock state
-0000106c  fe928ee3    62  beq  t0, s1, IDLE             # unchanged: keep polling
-00001070  fff00313    63  addi t1, x0, -1
-00001074  405303b3    64  sub  t2, t1, t0
-00001078  0093f3b3    65  and  t2, t2, s1               # off = applied & ~requested
-0000107c  40930e33    66  sub  t3, t1, s1
-00001080  005e7e33    67  and  t3, t3, t0               # on  = requested & ~applied
-00001084  02038463    68  beq  t2, x0, START
-00001088  007aeab3    70  STOP:   or   s5, s5, t2
-0000108c  01542a23    71  sw   s5, 0x14(s0)             # APB_BLK |= off     (guard closes first)
-00001090  01842e83    72  WBUSY:  lw   t4, 0x18(s0)
-00001094  007efeb3    73  and  t4, t4, t2
-00001098  000e8463    74  beq  t4, x0, GATE             # APB_BUSY & off == 0: last transfer done
-0000109c  ff5ff06f    75  jal  x0, WBUSY
-000010a0  40730eb3    76  GATE:   sub  t4, t1, t2
-000010a4  01d9f9b3    77  and  s3, s3, t4
-000010a8  01342623    78  sw   s3, 0x0C(s0)             # ICG_EN &= ~off     (then the clock stops)
-000010ac  020e0463    80  START:  beq  t3, x0, DONE
-000010b0  01c9e9b3    81  or   s3, s3, t3
-000010b4  01342623    82  sw   s3, 0x0C(s0)             # ICG_EN |= on       (clock runs first)
-000010b8  00100f93    83  addi t6, x0, 1                # wait >= 3 cycles
-000010bc  ffff8f93    84  W3B:    addi t6, t6, -1
-000010c0  000f8463    85  beq  t6, x0, OPEN
-000010c4  ff9ff06f    86  jal  x0, W3B
-000010c8  41c30eb3    87  OPEN:   sub  t4, t1, t3
-000010cc  01dafab3    88  and  s5, s5, t4
-000010d0  01542a23    89  sw   s5, 0x14(s0)             # APB_BLK &= ~on     (then the guard opens)
-000010d4  000284b3    91  DONE:   add  s1, t0, x0               # applied = requested
-000010d8  f91ff06f    92  jal  x0, IDLE
+00001028  00002a37    40  REL:    lui  s4, 0x2                  # 0x0000_2000
+0000102c  ffda0a13    41  addi s4, s4, -3               # 0x0000_1FFD = sys (bit 0) + bits 2-12
+00001030  01442823    42  sw   s4, 0x10(s0)             # 3. RST_REL: every domain except the CPU (bit 1)
+00001034  00600f93    44  addi t6, x0, 6                # 4. wait >= 16 cycles (6 x 3)
+00001038  ffff8f93    45  W16:    addi t6, t6, -1
+0000103c  000f8463    46  beq  t6, x0, GUARD
+00001040  ff9ff06f    47  jal  x0, W16
+00001044  fff00293    49  GUARD:  addi t0, x0, -1
+00001048  409282b3    50  sub  t0, t0, s1               # NOT CLK_EN
+0000104c  0162fab3    51  and  s5, t0, s6
+00001050  01542a23    52  sw   s5, 0x14(s0)             # 5. APB_BLK <- NOT CLK_EN AND mask: guards open FIRST
+00001054  002a6a13    54  ori  s4, s4, 2                # 0x0000_1FFF
+00001058  01442823    55  sw   s4, 0x10(s0)             # 6. RST_REL[1]: the CPU is released LAST
+0000105c  00442283    58  IDLE:   lw   t0, 0x04(s0)             # requested clock state
+00001060  fe928ee3    59  beq  t0, s1, IDLE             # unchanged: keep polling
+00001064  fff00313    60  addi t1, x0, -1
+00001068  405303b3    61  sub  t2, t1, t0
+0000106c  0093f3b3    62  and  t2, t2, s1               # off = applied & ~requested
+00001070  40930e33    63  sub  t3, t1, s1
+00001074  005e7e33    64  and  t3, t3, t0               # on  = requested & ~applied
+00001078  02038463    65  beq  t2, x0, START
+0000107c  007aeab3    67  STOP:   or   s5, s5, t2
+00001080  01542a23    68  sw   s5, 0x14(s0)             # APB_BLK |= off     (guard closes first)
+00001084  01842e83    69  WBUSY:  lw   t4, 0x18(s0)
+00001088  007efeb3    70  and  t4, t4, t2
+0000108c  000e8463    71  beq  t4, x0, GATE             # APB_BUSY & off == 0: last transfer done
+00001090  ff5ff06f    72  jal  x0, WBUSY
+00001094  40730eb3    73  GATE:   sub  t4, t1, t2
+00001098  01d9f9b3    74  and  s3, s3, t4
+0000109c  01342623    75  sw   s3, 0x0C(s0)             # ICG_EN &= ~off     (then the clock stops)
+000010a0  020e0463    77  START:  beq  t3, x0, DONE
+000010a4  01c9e9b3    78  or   s3, s3, t3
+000010a8  01342623    79  sw   s3, 0x0C(s0)             # ICG_EN |= on       (clock runs first)
+000010ac  00100f93    80  addi t6, x0, 1                # wait >= 3 cycles
+000010b0  ffff8f93    81  W3B:    addi t6, t6, -1
+000010b4  000f8463    82  beq  t6, x0, OPEN
+000010b8  ff9ff06f    83  jal  x0, W3B
+000010bc  41c30eb3    84  OPEN:   sub  t4, t1, t3
+000010c0  01dafab3    85  and  s5, s5, t4
+000010c4  01542a23    86  sw   s5, 0x14(s0)             # APB_BLK &= ~on     (then the guard opens)
+000010c8  000284b3    88  DONE:   add  s1, t0, x0               # applied = requested
+000010cc  f91ff06f    89  jal  x0, IDLE

@@ -1,5 +1,5 @@
 # =============================================================================
-# CRM ROM program of the SCRC MCPU (MRV-CPU) -- QNSC_SCRC_MAS V3.4, 7.5 and 7.6
+# CRM ROM program of the SCRC MCPU (MRV-CPU) -- QNSC_SCRC_MAS V3.5, 7.5 and 7.6
 #
 # Assembled by util/gen_crm_rom.py into util/gen/crm_rom/m_qnsc_scrc_crm_rom.sv.
 # Only the 13 MRV instructions are accepted:
@@ -13,7 +13,7 @@
 #   s0 = 0            base of SCRC CSR on the internal APB BUS
 #   s1 = CLK_EN value already applied
 #   s3 = copy of ICG_EN,  s4 = copy of RST_REL,  s5 = copy of APB_BLK
-#   s6 = 0x0003_87F8  gateable mask (MAS Table 6-3)
+#   s6 = 0x0000_1FFC  gateable mask, bits 2-12 (MAS Table 6-3)
 #   t1 = 0xFFFF_FFFF  (in the runtime loop)
 #
 # SCRC CSR offsets (MAS Table 6-2): 0x04 CLK_EN, 0x0C ICG_EN, 0x10 RST_REL,
@@ -26,9 +26,9 @@
 
 _start:
         addi s0, x0, 0
-        lui  s6, 0x38                 # 0x0003_8000
-        addi s6, s6, 0x7F8            # s6 = 0x0003_87F8
-        lw   s1, 0x04(s0)             # CLK_EN, reset value 0x0003_87E8
+        lui  s6, 0x2                  # 0x0000_2000
+        addi s6, s6, -4               # s6 = 0x0000_1FFC
+        lw   s1, 0x04(s0)             # CLK_EN, reset value 0x0000_1FF4
         and  s3, s1, s6
         sw   s3, 0x0C(s0)             # 1. ICG_EN <- CLK_EN
 
@@ -37,11 +37,9 @@ W3A:    addi t6, t6, -1
         beq  t6, x0, REL
         jal  x0, W3A
 
-REL:    lui  s4, 0x40                 # 0x0004_0000
-        addi s4, s4, -1               # 0x0003_FFFF
-        lui  t0, 0x6                  # 0x0000_6000 = bits 13, 14 (reserved, sysdbg)
-        sub  s4, s4, t0               # 0x0003_9FFF
-        sw   s4, 0x10(s0)             # 3. RST_REL: every domain except the CPU
+REL:    lui  s4, 0x2                  # 0x0000_2000
+        addi s4, s4, -3               # 0x0000_1FFD = sys (bit 0) + bits 2-12
+        sw   s4, 0x10(s0)             # 3. RST_REL: every domain except the CPU (bit 1)
 
         addi t6, x0, 6                # 4. wait >= 16 cycles (6 x 3)
 W16:    addi t6, t6, -1
@@ -53,9 +51,8 @@ GUARD:  addi t0, x0, -1
         and  s5, t0, s6
         sw   s5, 0x14(s0)             # 5. APB_BLK <- NOT CLK_EN AND mask: guards open FIRST
 
-        lui  t0, 0x80000              # 0x8000_0000
-        or   s4, s4, t0               # 0x8003_9FFF
-        sw   s4, 0x10(s0)             # 6. RST_REL[31]: the CPU is released LAST
+        ori  s4, s4, 2                # 0x0000_1FFF
+        sw   s4, 0x10(s0)             # 6. RST_REL[1]: the CPU is released LAST
 
 # ---- 7.6 runtime: poll CLK_EN, apply only what changed ----------------------
 IDLE:   lw   t0, 0x04(s0)             # requested clock state
