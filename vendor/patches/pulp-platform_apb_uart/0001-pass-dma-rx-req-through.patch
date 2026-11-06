@@ -1,0 +1,53 @@
+QSOC: carry the new obi_uart output dma_rx_req_o (LSR.data_ready level) out of apb_uart.
+
+Reason: design/uart instantiates apb_uart, not obi_uart. The pin added by the obi_peripherals patch
+0001-expose-lsr-data-ready-as-dma-rx-req must pass through apb_uart_wrap (struct ports) and apb_uart
+(flat legacy ports) to reach m_qnsc_wrap_uart, where it becomes o_dma_rx_req.
+
+What it changes: one added output, dma_rx_req_o on apb_uart_wrap and DMA_RX_REQ on apb_uart, a pure
+feed-through. No existing port, connection or behaviour changes. Needs the obi_peripherals patch.
+
+Applied by util/vendor_ip.py (git apply -p1 --directory vendor/pulp-platform/apb_uart).
+Upstream base: pulp-platform/apb_uart, 8182a85d234417db46fe833533f8536644d3bee3.
+Used by: design/uart
+
+diff --git a/src/apb_uart.sv b/src/apb_uart.sv
+index 6f04168..a6bbcfc 100644
+--- a/src/apb_uart.sv
++++ b/src/apb_uart.sv
+@@ -19,6 +19,7 @@ module apb_uart(
+   output logic        PREADY,
+   output logic        PSLVERR,
+   output logic        INT,
++  output logic        DMA_RX_REQ, // QSOC: LSR.data_ready level, DMA RX request
+   output logic        OUT1N,
+   output logic        OUT2N,
+   output logic        RTSN,
+@@ -58,6 +59,7 @@ module apb_uart(
+     .apb_req_i ( apb_req ),
+     .apb_rsp_o ( apb_rsp ),
+     .intr_o    ( INT     ),
++    .dma_rx_req_o ( DMA_RX_REQ ),
+     .out1_no   ( OUT1N   ),
+     .out2_no   ( OUT2N   ),
+     .rts_no    ( RTSN    ),
+diff --git a/src/apb_uart_wrap.sv b/src/apb_uart_wrap.sv
+index f8025b4..b9b2d7b 100644
+--- a/src/apb_uart_wrap.sv
++++ b/src/apb_uart_wrap.sv
+@@ -21,6 +21,7 @@ module apb_uart_wrap #(
+ 
+   // Physical interface
+   output logic intr_o,
++  output logic dma_rx_req_o, // QSOC: LSR.data_ready level, DMA RX request
+   output logic out1_no,
+   output logic out2_no,
+   output logic rts_no,
+@@ -70,6 +71,7 @@ module apb_uart_wrap #(
+     .obi_rsp_o ( obi_rsp ),
+     .irq_o     ( intr_o  ),
+     .irq_no    (         ),
++    .dma_rx_req_o ( dma_rx_req_o ),
+     .rxd_i     ( sin_i   ),
+     .txd_o     ( sout_o  ),
+     .cts_ni    ( cts_ni  ),
