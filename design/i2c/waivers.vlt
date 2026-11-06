@@ -1,0 +1,10 @@
+`verilator_config
+// Waivers owned by the i2c block. lint_all.sh passes this file when it lints
+// i2c.f. Each line has its reason.
+
+// apb_i2c is OpenCores-style RTL: flops are written `q <= #1 d`, a
+// simulation-only delay that synthesis ignores. Verilator 5 stops with
+// NEEDTIMINGOPT unless told how to treat it; lint ignores the delays, as
+// synthesis does. vendor/ is not edited. run_sim.sh does not read this file
+// and keeps --timing.
+timing_off -file "*vendor/pulp-platform/apb_i2c/*"
