@@ -32,12 +32,13 @@ cp "$here/scrc_apb_bus.xlsx" "$out/scrc_apb_bus.xlsx"
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 ( cd "$tmp" && LOGNAME=apb-bus-generator USER=apb-bus-generator python3 "$gen" "$OLDPWD/$here/scrc_apb_bus.xlsx" MM-CFG >/dev/null )
 
+# perl, not sed: \b is a GNU sed extension that BSD sed (macOS) does not have.
 rename="s/\bm_vlsi_apb_router\b/m_qnsc_scrc_apb_bus/g;"
-rename+=" s/\bm_vlsi_decoder_\([a-z0-9_]*\)\b/m_qnsc_scrc_apb_bus_dec_\1/g;"
+rename+=" s/\bm_vlsi_decoder_([a-z0-9_]*)\b/m_qnsc_scrc_apb_bus_dec_\$1/g;"
 rename+=" s/\bm_vlsi_arbiter_scrc_csr\b/m_qnsc_scrc_apb_bus_arb_csr/g;"
 rename+=" s/\bArbBalanceRR\b/m_qnsc_scrc_apb_bus_rr/g"
 for f in "$tmp"/RTL/m_vlsi_apb_router.sv "$tmp"/RTL/Decoder/*.sv "$tmp"/RTL/Arbiter/*.sv; do
-  name=$(basename "$f" .sv | sed "$rename")
-  sed "$rename" "$f" > "$out/$name.sv"
+  name=$(basename "$f" .sv | perl -pe "$rename")
+  perl -pe "$rename" "$f" > "$out/$name.sv"
 done
-sed "$rename" "$tmp/RTL/ArbRRBalance/ArbBalanceRR.v" > "$out/m_qnsc_scrc_apb_bus_rr.v"
+perl -pe "$rename" "$tmp/RTL/ArbRRBalance/ArbBalanceRR.v" > "$out/m_qnsc_scrc_apb_bus_rr.v"
