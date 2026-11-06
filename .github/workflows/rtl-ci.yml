@@ -17,6 +17,13 @@
 # Every step calls a target of the root Makefile, so `make check` runs the same
 # commands locally.
 #
+# TOOLCHAIN: every job runs in the digest-pinned qnsc-eda container, the same
+# image the Coder workspace uses. That replaces the runner's apt Verilator, the
+# docker.io Verilator image used by Connectivity/Simulation, and the per-job
+# emacs/PyYAML installs. VCS sign-off (make vc-lint / vc-cdc / vc-rdc / syn-dc /
+# sta-pt, #50) still needs the licences on the training server and does not run
+# in this workflow.
+#
 # Jobs are deliberately independent and none is guarded by an `if` on the event
 # action -- see the comment in pr-title.yml for why that guard produces a false
 # green.
@@ -36,23 +43,25 @@ concurrency:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   # ---------------------------------------------------------------------------
   lint:
     name: Verilator lint
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
-      - name: Install Verilator
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends verilator
-          verilator --version
-
+      # Verilator comes from the qnsc-eda container image (5.054).
+      #
       # One invocation per block, driven by design/<block>/<block>.f rather than
       # by `find` -- see the header of lint_all.sh for why that matters here.
       # Blocks whose filelist has no sources yet are skipped rather than failing.
@@ -63,6 +72,8 @@ jobs:
   filelists:
     name: Filelist paths
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -79,6 +90,8 @@ jobs:
   wrappers:
     name: Generated wrappers
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     # The azure mirror has twice crawled past 10 minutes just downloading emacs
     # (#69 and #26 reruns, 2026-10-23: 54 MB over ~10 min, canceled at Get:5).
     # The download does complete; the job simply needs the headroom.
@@ -88,26 +101,9 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install emacs
-        run: |
-          # The azure geo-mirror has had whole days at ~50 KB/s (#69, #26, #84
-          # on 2026-10-23: 9 packages, 20 minutes, still canceled mid-download).
-          # Point apt at the canonical archive and let retries ride a fast path.
-          # Noble reaches the mirror through an indirection: sources.list.d
-          # holds 'URIs: mirror+file:/etc/apt/apt-mirrors.txt', and THAT file
-          # names azure. Rewriting only the sources files (v1, v2 of this PR)
-          # changed nothing -- v2's green run is azure recovering, not the fix.
-          # Rewrite the mirror list itself, then say which hosts remain.
-          sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' \
-            /etc/apt/sources.list \
-            /etc/apt/sources.list.d/*.list \
-            /etc/apt/sources.list.d/*.sources \
-            /etc/apt/apt-mirrors.txt 2>/dev/null || true
-          grep -hE '^[Uh][Rr][Ii]' /etc/apt/sources.list /etc/apt/sources.list.d/* /etc/apt/apt-mirrors.txt 2>/dev/null | sort -u
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends -o Acquire::Retries=5 emacs-nox
-          emacs --version | head -1
-
+      # emacs-nox comes from the qnsc-eda container image, so the azure-mirror
+      # download that used to crawl past 10 minutes is gone.
+      #
       # The AUTO blocks of rtl/<wrapper>.sv are written by emacs verilog-mode.
       # Regenerate each wrapper and fail if the committed file differs, so the
       # compiled wrapper cannot drift from the AUTO comments that are reviewed.
@@ -118,13 +114,12 @@ jobs:
   connectivity:
     name: Connectivity
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write   # the report is posted as one PR comment, updated in place
-    env:
-      # --json-only needs Verilator >= 5.022; the runner's apt package is older.
-      VERILATOR_IMAGE: verilator/verilator:v5.052@sha256:a5b73e2fce0b2c483396f3800940f33b6faa802331a061c21694dd27b7352120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -140,7 +135,6 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          docker pull -q "$VERILATOR_IMAGE" > /dev/null
           set +e
           bash flow/conn/ci_report.sh "${BASE_SHA:-HEAD~1}"
           echo "rc=$?" >> "$GITHUB_ENV"
@@ -154,16 +148,27 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
+          # The container image has curl + jq, not the gh CLI.
+          api="$GITHUB_API_URL/repos/$REPO"
+          list_comments() {
+            for page in $(seq 1 20); do
+              curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+                "$api/issues/$PR/comments?per_page=100&page=$page" | jq -c '.[]'
+            done
+          }
           title="**Connectivity, Verilator** (open-source cross-check; VCS and Verdi on the server are the reference)"
           if grep -q '^no block with RTL changed' build/conn/report.md; then exit 0; fi
           run="$GITHUB_SERVER_URL/$REPO/actions/runs/$GITHUB_RUN_ID"
           body=$(python3 flow/conn/ci_comment.py build/conn/report.md "$title" "$run")
-          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
-                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"**Connectivity, Verilator**\"))) | .id" | tail -1)
+          id=$(list_comments | jq -r --arg title "$title" 'select(.user.login == "github-actions[bot]" and (.body | startswith($title))) | .id' | tail -1)
           if [ -n "$id" ]; then
-            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null
+            jq -n --arg body "$body" '{body:$body}' | curl -fsS -X PATCH \
+              -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "$api/issues/comments/$id" -d @- > /dev/null
           else
-            gh api "repos/$REPO/issues/$PR/comments" -f body="$body" > /dev/null
+            jq -n --arg body "$body" '{body:$body}' | curl -fsS -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "$api/issues/$PR/comments" -d @- > /dev/null
           fi
 
       - name: Fail on a floating input or an undriven output
@@ -173,13 +178,12 @@ jobs:
   simulation:
     name: Simulation
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: write   # the result is posted as one PR comment, updated in place
-    env:
-      # the same pinned Verilator as Connectivity; --timing needs Verilator 5
-      VERILATOR_IMAGE: verilator/verilator:v5.052@sha256:a5b73e2fce0b2c483396f3800940f33b6faa802331a061c21694dd27b7352120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -194,11 +198,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          docker pull -q "$VERILATOR_IMAGE" > /dev/null
           set +e
-          docker run --rm -u "$(id -u):$(id -g)" -v "$PWD:$PWD" -w "$PWD" \
-            -e HOME=/tmp -e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0='*' \
-            --entrypoint bash "$VERILATOR_IMAGE" flow/sim/ci_sim.sh "${BASE_SHA:-HEAD~1}"
+          bash flow/sim/ci_sim.sh "${BASE_SHA:-HEAD~1}"
           echo "rc=$?" >> "$GITHUB_ENV"
           set -e
           cat build/sim/report.md >> "$GITHUB_STEP_SUMMARY"
@@ -210,21 +211,35 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
+          # The container image has curl + jq, not the gh CLI.
+          api="$GITHUB_API_URL/repos/$REPO"
+          list_comments() {
+            for page in $(seq 1 20); do
+              curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+                "$api/issues/$PR/comments?per_page=100&page=$page" | jq -c '.[]'
+            done
+          }
           title="**Simulation, Verilator** (self-checking tests of dv/; VCS on the server checks X)"
-          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
-                 --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"**Simulation, Verilator**\"))) | .id" | tail -1)
+          id=$(list_comments | jq -r --arg title "$title" 'select(.user.login == "github-actions[bot]" and (.body | startswith($title))) | .id' | tail -1)
           # Nothing simulated (no touched block has a testbench): no comment, and an
           # earlier one is removed so it cannot show a stale result. The job summary
           # still lists the skipped blocks.
           if [ "$(cat build/sim/ran 2>/dev/null || echo 0)" = 0 ]; then
-            if [ -n "$id" ]; then gh api -X DELETE "repos/$REPO/issues/comments/$id" > /dev/null; fi
+            if [ -n "$id" ]; then
+              curl -fsS -X DELETE -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" "$api/issues/comments/$id" > /dev/null
+            fi
             exit 0
           fi
           body=$(printf '%s\n\n%s\n' "$title" "$(cat build/sim/report.md)")
           if [ -n "$id" ]; then
-            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null
+            jq -n --arg body "$body" '{body:$body}' | curl -fsS -X PATCH \
+              -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "$api/issues/comments/$id" -d @- > /dev/null
           else
-            gh api "repos/$REPO/issues/$PR/comments" -f body="$body" > /dev/null
+            jq -n --arg body "$body" '{body:$body}' | curl -fsS -X POST \
+              -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "$api/issues/$PR/comments" -d @- > /dev/null
           fi
 
       # The waveform of a failing block, to open in Surfer or GTKWave.
@@ -244,6 +259,8 @@ jobs:
   generated-ip:
     name: Generated IP
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -261,14 +278,13 @@ jobs:
   hardcode:
     name: No hardcoded shared values
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-
-      - name: Install PyYAML
-        run: pip install --quiet pyyaml
 
       # The rule the anti-drift design rests on: a number shared between blocks is
       # imported from qnsc_pkg, never typed. A wrapper that writes 32'h8002_4000
@@ -286,14 +302,13 @@ jobs:
   module-rules:
     name: IP and integration module rules
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-
-      - name: Install PyYAML
-        run: pip install --quiet pyyaml
 
       # IP (every block not listed as integration in flow/lint/module_rules.yml)
       # does not use qnsc_pkg, a wrapper declares no parameter, and a file
@@ -305,14 +320,13 @@ jobs:
   contract-tags:
     name: Contract tags
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-
-      - name: Install PyYAML
-        run: pip install --quiet pyyaml
 
       # IP writes a number it shares with the chip as a literal tagged
       # `// contract: <key>`. This fails every tagged line whose number no longer
@@ -324,14 +338,13 @@ jobs:
   contract:
     name: Inter-block contract
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-
-      - name: Install PyYAML
-        run: pip install --quiet pyyaml
 
       # Regenerate design/top/rtl/qnsc_pkg.sv from util/qsoc_contract.yml and fail
       # if the committed file differs. Every number in that package is shared by
@@ -346,6 +359,8 @@ jobs:
   naming:
     name: RTL naming rule
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -369,6 +384,8 @@ jobs:
   vendor-guard:
     name: Vendor tree unmodified
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
