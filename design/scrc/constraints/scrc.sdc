@@ -27,7 +27,7 @@ set_output_delay 10.0 -clock clk_cpu [get_ports {o_bus_apb_* o_csr_blk* o_csr_rs
 
 # ---- 3. CDC constraints ------------------------------------------------------
 # One clock: no crossing between clock domains. i_rst_req_wdt goes through
-# qnsc_sync_cell (MAS 7.3) although it is synchronous, because it comes from a
+# qnsc_sync, one qnsc_sync_cell (MAS 7.3), although it is synchronous, because it comes from a
 # domain with a different reset.
 
 # ---- 4. Reset (for RDC) ------------------------------------------------------

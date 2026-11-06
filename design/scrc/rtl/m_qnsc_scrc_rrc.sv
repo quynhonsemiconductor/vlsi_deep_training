@@ -38,7 +38,8 @@ module m_qnsc_scrc_rrc (
   logic [3:0] r_cnt;
   logic       r_rst_n_chip, r_cause_wdt, r_cause_sw;
 
-  qnsc_sync_cell u_sync_wdt (
+  // qnsc_sync, P_STAGES = 2: one qnsc_sync_cell (MAS 7.3), found by `grep qnsc_sync`.
+  qnsc_sync u_sync_wdt (
     .i_clk_dst   (i_clk_root),
     .i_rst_n_dst (i_rst_n_por),
     .i_d         (i_rst_req_wdt),
