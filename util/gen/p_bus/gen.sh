@@ -34,9 +34,10 @@ tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 ( cd "$tmp" && LOGNAME=apb-bus-generator python3 "$gen" "$OLDPWD/$here/p_bus.xlsx" MM-INFO >/dev/null )
 
 # old module name -> new; the old name is also the file name (rule 2.7)
+# perl, not sed: \b is a GNU sed extension that BSD sed (macOS) does not have.
 rename="s/\bm_vlsi_apb_router\b/m_qnsc_p_bus/g; s/\bm_vlsi_decoder_axi2apb\b/m_qnsc_p_bus_dec/g;"
-rename+=" s/\bm_vlsi_arbiter_\([a-z0-9_]*\)\b/m_qnsc_p_bus_arb_\1/g"
+rename+=" s/\bm_vlsi_arbiter_([a-z0-9_]*)\b/m_qnsc_p_bus_arb_\$1/g"
 for f in "$tmp"/RTL/m_vlsi_apb_router.sv "$tmp"/RTL/Decoder/*.sv "$tmp"/RTL/Arbiter/*.sv; do
-  name=$(basename "$f" .sv | sed "$rename")
-  sed "$rename" "$f" > "$out/$name.sv"
+  name=$(basename "$f" .sv | perl -pe "$rename")
+  perl -pe "$rename" "$f" > "$out/$name.sv"
 done
