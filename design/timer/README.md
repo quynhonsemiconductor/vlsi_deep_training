@@ -15,8 +15,11 @@ never copied here. Read one directory, know what is ours and what is borrowed.
 |------|--------|-------------|
 | pulp-platform/timer_unit | `apb_timer_unit`, `timer_unit_counter`, `timer_unit_counter_presc` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
-Two instances: **TIMER0** with `MODE_64 = 1` (64-bit via chained counters),
-**TIMER1** with `MODE_64 = 0`. Note from reading the RTL: the comparator is
+Two identical instances, **TIMER0** and **TIMER1**, both 64-bit (team decision
+2026-11-06; TIMER1 was two 32-bit timers). `MODE_64` is bit 31 of `CFG_REG_LO`, a
+register bit that resets to 0 (32-bit mode), not a parameter: firmware sets it on
+both timers before use. In 64-bit mode only `irq_lo_o` fires, so the wrapper brings
+out `irq_lo_o` and leaves `irq_hi_o` open. Note from reading the RTL: the comparator is
 registered and *not* gated by the counter enable, and compare is on equality
 (not `>=`), so one-shot mode yields a held level, not a pulse — the wrapper is
 responsible for the pulse if the spec wants one.
