@@ -1,0 +1,34 @@
+#!/bin/tcsh
+# Compile the scrc block with VCS, from this directory, on a compute node of the
+# training server (after: module load synopsys/vcs/W-2024.09-SP1).
+#   cd design/scrc/vcs ; ./run_vcs
+# Read comp.log: "Error-" must be 0, and every "Lint-" on our own files.
+# Schematic: verdi -dbdir simv.daidir &
+#
+# Technology cells (design/common/tech): generic by default. With the SMIC 28HKMG
+# library, give the PDK's Verilog model of sc9mc_base_svt_c31 r1p0:
+#   setenv TECH smic28 ; setenv PDK_V <path>/sc9mc_28hkmg_base_svt_c31.v ; ./run_vcs
+
+setenv DESIGN m_qnsc_scrc
+if (! $?TECH) setenv TECH generic
+
+set libs = ()
+foreach f (`grep -vE '^[[:space:]]*(#|$)' ../../common/tech/$TECH.f`)
+  set libs = ($libs -v ../../common/tech/$f)
+end
+if ($TECH != generic) then
+  if (! $?PDK_V) then
+    echo "TECH=$TECH needs PDK_V, the library's Verilog model"
+    exit 1
+  endif
+  set libs = ($libs -v $PDK_V)
+endif
+
+vcs -sverilog +vcs+lic+wait \
+    -timescale=1ns/1ps \
+    -F filelist.f $libs \
+    -top $DESIGN \
+    -debug_access -kdb \
+    +error+100 \
+    +lint=all \
+    -l comp.log

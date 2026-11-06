@@ -1,0 +1,4 @@
+# APB-CSR-Generator reads the workbook with openpyxl (CSR_Generation.py:9).
+# The upstream has no lock file; these are the versions the RTL was generated with.
+openpyxl==3.1.5
+et-xmlfile==2.0.0

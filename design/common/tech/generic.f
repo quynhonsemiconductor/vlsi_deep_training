@@ -11,3 +11,7 @@ generic/qnsc_clk_buf.sv
 generic/qnsc_clk_inv.sv
 generic/qnsc_clk_and.sv
 generic/qnsc_sram_sp.sv
+generic/qnsc_dly.sv
+generic/qnsc_rst_sync.sv
+generic/qnsc_sync_cell.sv
+generic/qnsc_rst_filter.sv

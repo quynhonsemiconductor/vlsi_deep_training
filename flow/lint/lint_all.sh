@@ -92,7 +92,9 @@ done
 if [ $# -eq 0 ]; then
   for lib in $(echo "$tech" | grep -oE '[^ ]+\.sv'); do
     cell=$(basename "$lib" .sv); log="/tmp/lint-tech-${cell}.log"
-    verilator --lint-only -Wall -Wno-fatal --top-module "$cell" "$lib" > "$log" 2>&1
+    # The other cells as library files: qnsc_sync instantiates qnsc_sync_cell.
+    others=$(echo "$tech" | sed -E "s#-v $lib( |\$)##")
+    verilator --lint-only -Wall -Wno-fatal --top-module "$cell" "$lib" $others > "$log" 2>&1
     if grep -qE '%(Error|Warning)' "$log"; then
       printf '  %-10s FAIL (%s)\n' tech "$cell"; sed 's/^/      /' "$log"; fail=1
     fi

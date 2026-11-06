@@ -15,7 +15,7 @@ mechanically.
 
    | Kind of signal | Cell |
    |---|---|
-   | 1-bit level | `qnsc_sync` (`design/common/rtl/qnsc_sync.sv`: `P_STAGES` flops, 2 by default; reset value `P_RST_VALUE`) |
+   | 1-bit level | `qnsc_sync` (`design/common/rtl/qnsc_sync.sv`: 2 stages by default, each bit one `qnsc_sync_cell`, the technology synchroniser; reset value `P_RST_VALUE`). Do not instantiate `qnsc_sync_cell` directly in new code |
    | 1-bit event | toggle at the source, `qnsc_sync`, edge detect at the destination |
    | multi-bit bus | request/acknowledge handshake with the bus held stable, or an asynchronous FIFO |
 

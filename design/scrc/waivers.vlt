@@ -1,0 +1,50 @@
+`verilator_config
+// =============================================================================
+// Lint waivers owned by the scrc block (QNSC_SCRC_MAS V3.5). Each one names the
+// MAS section that makes the construct intentional. Checked with Verilator 5.020
+// (CI's version): with these, the block lints with no warning.
+// =============================================================================
+
+// scrc.f also carries m_qnsc_scrc_apb_guard, which design/top instantiates
+// (MAS 8): two top modules when the block is linted alone. Verilator reports it
+// at the second top it meets, m_qnsc_scrc (last in scrc.f).
+lint_off -rule MULTITOP -file "*design/scrc/rtl/m_qnsc_scrc.sv"
+lint_off -rule MULTITOP -file "*design/scrc/rtl/m_qnsc_scrc_apb_guard.sv"
+
+// ---- m_qnsc_scrc ---------------------------------------------------------------------
+// CLK_EN is read by MCPU over the APB BUS; the CSR's field outputs go nowhere
+// (MAS 7.6).
+lint_off -rule PINCONNECTEMPTY -file "*design/scrc/rtl/m_qnsc_scrc.sv" -match "*'o_clken_en_*'"
+// MRV-CPU drives a 32-bit PADDR; the SCRC window is 16 KiB, PADDR[13:0] (MAS 6).
+// MRV has no PSLVERR input, so its write filter's PSLVERR goes nowhere (MAS 4,
+// Table 10-1): a write MCPU may not make is dropped silently.
+lint_off -rule UNUSEDSIGNAL -file "*design/scrc/rtl/m_qnsc_scrc.sv" -match "*'w_mcpu_paddr'*"
+lint_off -rule UNUSEDSIGNAL -file "*design/scrc/rtl/m_qnsc_scrc.sv" -match "*'w_mcpu_pslverr'*"
+
+// i_csr_busy bits 1:0 (sys, cpu: always-on) have no guard; design/top ties
+// them 0 (MAS 11). The vector keeps the domain bit numbering.
+lint_off -rule UNUSEDSIGNAL -file "*design/scrc/rtl/m_qnsc_scrc.sv" -match "*'i_csr_busy'*"
+
+// ---- m_qnsc_scrc_apb_wfilter: the filter decodes word offsets; PADDR[1:0] is
+// checked by the SCRC CSR (misaligned -> PSLVERR, MAS 7.4).
+lint_off -rule UNUSEDSIGNAL -file "*design/scrc/rtl/m_qnsc_scrc_apb_wfilter.sv" -match "*'i_bus_apb_s_0_paddr'*"
+
+// ---- generated: CRM ROM. The ROM is word-addressed: byte offset bits [1:0] are
+// not used (MRV fetches aligned words).
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/crm_rom/m_qnsc_scrc_crm_rom.sv" -match "*'w_offset'*"
+
+// ---- generated: SCRC CSR (APB-CSR-Generator, not edited). PPROT is not checked
+// (i_protect_en = 0, MAS 10); PWDATA bits of reserved positions are not stored;
+// APB_BUSY is read-only, so its write enable is unused; no final newline.
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/scrc_csr/m_qnsc_scrc_csr.sv" -match "*'i_pprot'*"
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/scrc_csr/m_qnsc_scrc_csr.sv" -match "*'reg_pwdata'*"
+lint_off -rule UNUSEDSIGNAL -file "*util/gen/scrc_csr/m_qnsc_scrc_csr.sv" -match "*'we_apbbusy'*"
+lint_off -rule EOFNEWLINE   -file "*util/gen/scrc_csr/m_qnsc_scrc_csr.sv"
+
+// ---- generated: the generator's round-robin arbiter (ArbBalanceRR, not edited):
+// loop variable reused in nested scopes, a 32-bit count into a 2-bit field, and a
+// priority chain Verilator cannot order statically. Two masters, so the round
+// robin only alternates MCPU and IBEX (MAS 3).
+lint_off -rule VARHIDDEN  -file "*util/gen/scrc_bus/m_qnsc_scrc_apb_bus_rr.v"
+lint_off -rule WIDTHTRUNC -file "*util/gen/scrc_bus/m_qnsc_scrc_apb_bus_rr.v"
+lint_off -rule UNOPTFLAT  -file "*util/gen/scrc_bus/m_qnsc_scrc_apb_bus_rr.v"
