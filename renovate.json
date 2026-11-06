@@ -1,4 +1,25 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["local>quynhonsemiconductor/.github:renovate-config"]
+  "extends": ["local>quynhonsemiconductor/.github:renovate-config"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The qnsc-eda toolchain container in rtl-ci.yml. The digest is the identity; the moving `main` tag (moved by the qnsc-eda publish job) is what lets Renovate detect a new build and update the digest.",
+      "fileMatch": ["^\\.github/workflows/rtl-ci\\.yml$"],
+      "matchStrings": [
+        "image: ghcr\\.io/(?<depName>quynhonsemiconductor/qnsc-eda):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[0-9a-f]{64})"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "loose"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Toolchain image updates follow the 14-day release-age floor and are never automerged: every RTL job runs in this image.",
+      "matchPackageNames": ["ghcr.io/quynhonsemiconductor/qnsc-eda"],
+      "minimumReleaseAge": "14 days",
+      "automerge": false,
+      "platformAutomerge": false
+    }
+  ]
 }

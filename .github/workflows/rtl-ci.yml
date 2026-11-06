@@ -53,7 +53,7 @@ jobs:
     name: Verilator lint
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -73,7 +73,7 @@ jobs:
     name: Filelist paths
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -91,7 +91,7 @@ jobs:
     name: Generated wrappers
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     # The azure mirror has twice crawled past 10 minutes just downloading emacs
     # (#69 and #26 reruns, 2026-10-23: 54 MB over ~10 min, canceled at Get:5).
     # The download does complete; the job simply needs the headroom.
@@ -115,7 +115,7 @@ jobs:
     name: Connectivity
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 10
     permissions:
       contents: read
@@ -179,7 +179,7 @@ jobs:
     name: Simulation
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 20
     permissions:
       contents: read
@@ -260,7 +260,7 @@ jobs:
     name: Generated IP
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -279,7 +279,7 @@ jobs:
     name: No hardcoded shared values
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -303,7 +303,7 @@ jobs:
     name: IP and integration module rules
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -321,7 +321,7 @@ jobs:
     name: Contract tags
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -339,7 +339,7 @@ jobs:
     name: Inter-block contract
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -360,7 +360,7 @@ jobs:
     name: RTL naming rule
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -385,7 +385,7 @@ jobs:
     name: Vendor tree unmodified
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/quynhonsemiconductor/qnsc-eda@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
+      image: ghcr.io/quynhonsemiconductor/qnsc-eda:main@sha256:e3ad00a1f912379fd89a5ff62edbfa57c868ee5871650881128dec33e8650626
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
