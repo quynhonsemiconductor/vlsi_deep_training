@@ -21,8 +21,7 @@
 # none: designed in house
 
 # ---- generated (util/gen/iomux, `make gen IP=iomux`) ------------------------
-../../util/gen/iomux/m_qnsc_iomux_csr.sv
-../../util/gen/iomux/m_qnsc_iomux_mux.sv
+# none: m_qnsc_iomux.sv is hand-written (2026-11-05)
 
 # ---- ours -------------------------------------------------------------------
 rtl/m_qnsc_iomux.sv

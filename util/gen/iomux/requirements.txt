@@ -1,6 +1,1 @@
-# util/gen_iomux.py reads the table with PyYAML and writes the CSR workbook with
-# openpyxl; APB-CSR-Generator reads it with openpyxl (CSR_Generation.py:9).
-# Versions the committed files were generated with.
 PyYAML==6.0.3
-openpyxl==3.1.5
-et-xmlfile==2.0.0
