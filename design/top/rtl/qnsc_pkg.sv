@@ -22,6 +22,8 @@ package qnsc_pkg;
   localparam int unsigned C_APB_PADDR_WIDTH  = 14;  // P_BUS -> every APB slave: offset in its window
   localparam int unsigned C_PBUS_PADDR_WIDTH = 18;  // AXI2APB -> P_BUS: offset in the AXI2APB window
   localparam logic [31:0]  C_CHIP_ID = 32'h51534F43;  // SYSCSR CHIP_ID_REV, ASCII 'QSOC'
+  localparam logic [C_ADDR_WIDTH-1:0] C_AXI2APB_BASE = 32'h80000000;
+  localparam int unsigned C_AXI2APB_SIZE = 229376;  // 224 KiB, the populated P_BUS window (AXI_M3)
 
   // ---- memory map ----------------------------------------------------------
   // Source: QSOC_HAS Table 7-1. Every address in the 32-bit space belongs to
@@ -86,8 +88,8 @@ package qnsc_pkg;
   // above are platform-use space in the privileged specification.
   localparam int unsigned C_INT_FAST_LINES_AVAILABLE = 15;
   localparam int unsigned C_INT_FAST_LINES_USED      = 11;
-  localparam int unsigned C_INT_SOURCES_AGGREGATED   = 25;  // through INTMAP
-  localparam int unsigned C_INT_SOURCES_TOTAL        = 26;  // including the NMI
+  localparam int unsigned C_INT_SOURCES_AGGREGATED   = 24;  // through INTMAP
+  localparam int unsigned C_INT_SOURCES_TOTAL        = 25;  // including the NMI
 
   localparam int unsigned C_INT_LINE_DMA          = 0;   // mcause 16, 1 source(s), level
   localparam int unsigned C_INT_LINE_SPI_DEVICE   = 1;   // mcause 17, 8 source(s), level
@@ -95,7 +97,7 @@ package qnsc_pkg;
   localparam int unsigned C_INT_LINE_I2C          = 3;   // mcause 19, 1 source(s), level
   localparam int unsigned C_INT_LINE_UART_0       = 4;   // mcause 20, 1 source(s), level
   localparam int unsigned C_INT_LINE_UART_1       = 5;   // mcause 21, 1 source(s), level
-  localparam int unsigned C_INT_LINE_TIMER_1      = 6;   // mcause 22, 2 source(s), pulse; level in one-shot with prescaler or ref clock
+  localparam int unsigned C_INT_LINE_TIMER_1      = 6;   // mcause 22, 1 source(s), pulse; level in one-shot with prescaler or ref clock
   localparam int unsigned C_INT_LINE_PWM          = 7;   // mcause 23, 4 source(s), pulse
   localparam int unsigned C_INT_LINE_WDT_WAKEUP   = 8;   // mcause 24, 1 source(s), level
   localparam int unsigned C_INT_LINE_GPIO         = 9;   // mcause 25, 3 source(s), pulse
@@ -112,7 +114,7 @@ package qnsc_pkg;
   // The cluster name is what goes into the port name the naming rule requires:
   //   i_clk_<domain> / i_rst_n_<domain>
   //   i_clk_cpu   hardwired on, not writable
-  //     cpu, bus, sysdbg, syscsr
+  //     cpu, sbus, pbus, sysdbg, syscsr
   //   i_clk_mem   hardwired on, not writable
   //     rom, isram, dsram
   //   i_clk_wdt   hardwired on, not writable

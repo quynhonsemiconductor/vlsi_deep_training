@@ -6,7 +6,7 @@ The rule this enforces is the one the whole anti-drift design rests on:
 
     a number shared between blocks is written once, in util/qsoc_contract.yml.
 
-An integration module (top, bus, INTMAP, IO MUX, SCRC) takes it from qnsc_pkg.
+An integration module (top, S_BUS, INTMAP, IO MUX, SCRC) takes it from qnsc_pkg.
 IP does not use qnsc_pkg (design/README.md): it takes a chip value on an i_cfg_*
 port, or writes the number with a `// contract: <key>` tag that
 flow/lint/contract_tag.py checks against the contract. A tagged line is therefore

@@ -1,0 +1,11 @@
+# What ./run_vcs and Verdi write here: never committed.
+csrc/
+simv
+simv.daidir/
+comp.log
+ucli.key
+vc_hdrs.h
+AN.DB/
+verdiLog/
+novas*
+*.fsdb

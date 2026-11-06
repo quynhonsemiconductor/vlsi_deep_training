@@ -18,7 +18,7 @@
 
 integration:
   - top      # instantiates every block
-  - bus      # the address map of S_BUS and P_BUS
+  - sbus     # the address map of S_BUS (P_BUS is the block pbus)
   - intmap   # the interrupt lines of the chip
   - iomux    # the pads of the chip
   - scrc     # the clock enables and reset bits of every block

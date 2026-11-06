@@ -1,0 +1,5 @@
+VCS W-2024.09-SP1_Full64 | block isram | top m_qnsc_wrap_isram | commit 27d54fc
+Compiled: 2026-10-27 14:39 +07
+Error-: 0
+Lint-: 0 on our files, 1 on vendor/ (upstream, not edited)
+Verdi KDB: generated

@@ -108,7 +108,7 @@ Connectivity, Simulation and the title run in CI only.
 | `PR title (conventional commits)` | the title is not a conventional commit | CI |
 | `Verilator lint` | your block does not lint through its filelist | local |
 | `Filelist paths` | a path in a `.f` is absolute, or names a file that does not exist | local |
-| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make` generates from `rtl/emacs/<wrapper>.src.sv` | local |
+| `Generated wrappers` | `rtl/<wrapper>.sv` differs from what `make wrap` regenerates from its AUTO comments | local |
 | `Generated IP` | a file in `util/gen/<ip>/` differs from what its `gen.sh` produces with the pinned tools | local |
 | `Connectivity` | a changed block's top leaves an instance input open, or drives a top output from nothing | CI; `make connectivity BLOCK=` |
 | `Simulation` | a test fails in a changed block that has a testbench (`dv/<block>/`). A block with no testbench is skipped, not failed | CI; `make sim BLOCK=` |

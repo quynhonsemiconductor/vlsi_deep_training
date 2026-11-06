@@ -32,9 +32,9 @@ area/dma:
   - changed-files:
     - any-glob-to-any-file: ["design/dma/**", "dv/dma/**"]
 
-area/bus:
+area/sbus:
   - changed-files:
-    - any-glob-to-any-file: ["design/bus/**", "dv/bus/**"]
+    - any-glob-to-any-file: ["design/sbus/**", "dv/sbus/**"]
 
 area/spi:
   - changed-files:

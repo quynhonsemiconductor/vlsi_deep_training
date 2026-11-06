@@ -40,14 +40,38 @@ meta:
   # UART [4:2], WDT [5:2]) keep doing so and alias inside the window.
   apb_paddr_width: 14
   # Address bits at the input of P_BUS, from AXI2APB: the offset inside the
-  # 256 KiB AXI2APB window (0x8000_0000 - 0x8003_FFFF), 16 slots of 16 KiB.
-  # 14 slots are populated; the last two answer PSLVERR. Source: the P_BUS
-  # sheets of the team's HAS configuration (AXI2APB master, ADDRESS WIDTH 18).
+  # 256 KiB AXI2APB address space (0x8000_0000 - 0x8003_FFFF), 16 slots of 16 KiB.
+  # 14 slots are populated; the last two hold no peripheral and S_BUS answers
+  # DECERR there (apb_window_size). Source: the P_BUS sheets of the team's HAS
+  # configuration (AXI2APB master, ADDRESS WIDTH 18).
   pbus_paddr_width: 18
   # SYSCSR CHIP_ID_REV. ASCII 'QSOC', most significant byte first: 0x51 'Q',
   # 0x53 'S', 0x4F 'O', 0x43 'C'. Read by firmware, and by host tools through
   # SYSDBG, to check they run on a QSOC. Mistyped once already ('QCOS').
   chip_id: 0x51534F43
+  # AXI4 ID widths of S_BUS (pulp axi_xbar, QNSC_IP_INFO_s_bus.xlsx v1.0 of
+  # 2026-10-16, and QSOC_HAS Table 5-1). The master-facing ports ("slave ports"
+  # of the crossbar) are 5 bits -- chosen for the CPU: Ibex 4 bits plus one
+  # CPU2AXI mux bit, and AxiIdUsedSlvPorts = 5, so every master must issue
+  # at most 5 ID bits. The crossbar appends a 2-bit master index (3 masters:
+  # SYSDBG, CPU, DMA), so every slave-facing port ("master port") is 7 bits:
+  # 5 + clog2(3). A fourth master makes it 8, and RAM, ROM and SYSDBG widths
+  # move with it. Users: PARA_ID_WD of RAM and ROM, SYSDBG AxiIdWidth.
+  sbus_slave_port_id_width: 5
+  sbus_master_port_id_width: 7
+  # The populated part of the AXI2APB window, which S_BUS routes to P_BUS as one
+  # region (AXI_M3): 14 slots of 16 KiB (0x8000_0000 - 0x8003_7FFF). The window
+  # is 16 slots wide (pbus_paddr_width), but the last two slots hold no
+  # peripheral, so S_BUS leaves them out of AXI_M3 and answers DECERR there
+  # instead of passing the access on to P_BUS. Not a memory_map row of its
+  # own: it covers the same addresses as the 14 APB_M* rows below it, and
+  # memory_map's own rule is that every address belongs to exactly one row.
+  # S_BUS's crossbar and P_BUS's own router both need these same two numbers
+  # -- S_BUS to size AXI_M3's address rule, P_BUS to size its own
+  # master-side address decoder -- so they live here rather than being
+  # retyped in each block's own RTL.
+  apb_window_base: 0x80000000  # == scrc's own base: APB_M0 starts the window
+  apb_window_size: 0x38000     # 224 KiB = 14 x 16 KiB
 
 # -----------------------------------------------------------------------------
 # Memory map. Source: QSOC_HAS Table 7-1, cross-checked against QNSC_RAM_MAS
@@ -142,7 +166,10 @@ memory_map:
     size: 0x00004000
     port: APB_M7
     kind: peripheral
-    note: apb_timer_unit as two independent 32-bit timers.
+    note: >
+      apb_timer_unit in 64-bit mode, like timer_0 (team decision 2026-11-06; it
+      was two independent 32-bit timers). MODE_64 is CFG_REG_LO[31], a register
+      bit that resets to 0 (32-bit): firmware sets it on both timers before use.
   - name: uart_0
     base: 0x80020000
     size: 0x00004000
@@ -251,7 +278,7 @@ interrupts:
         INT_CLEAR write (TRM 5.6), raised on transfer END or an error. The old
         iDMA idle line is gone with that IP; idle stays a port for the
         power-down sequence only. The wrapper drives o_int_dma from INT.
-        ID width 1 (ID_BITS), so the DMA fits AxiIdUsedSlvPorts = 5.
+        ID width 1 (ID_BITS), the same as every slave port of S_BUS (design/sbus).
     - line: 1
       peripheral: spi_device
       ports: [intr_upload_cmdfifo_not_empty_o, intr_upload_payload_not_empty_o,
@@ -282,9 +309,10 @@ interrupts:
       shape: level
     - line: 6
       peripheral: timer_1
-      ports: [irq_lo_o, irq_hi_o]
-      sources: 2
+      ports: [irq_lo_o]
+      sources: 1
       shape: pulse; level in one-shot with prescaler or ref clock
+      note: 64-bit mode drives irq_lo_o only; irq_hi_o stays 0 (as timer_0).
     - line: 7
       peripheral: pwm
       ports: ["events_o[3:0]"]
@@ -344,7 +372,7 @@ clock_domains:
   clusters:
     - name: cpu
       port_suffix: cpu
-      blocks: [cpu, bus, sysdbg, syscsr]
+      blocks: [cpu, sbus, pbus, sysdbg, syscsr]
       gateable: false
       note: >
         Gating the core or either bus removes the agent that would have to
@@ -403,6 +431,15 @@ clock_domains:
 reset_sources: [power_on, watchdog, software]
 
 # -----------------------------------------------------------------------------
-# Not yet agreed. Named so the gap is visible.
+# Not yet agreed. Named so the gap is visible. Each names the owner who is to
+# supply it.
 # -----------------------------------------------------------------------------
-tbd: []
+tbd:
+  - name: dma_axi_id_bits
+    owner: Bao Vinh
+    note: >
+      The DMA's own AXI ID width. It must fit AxiIdUsedSlvPorts = 5 of the
+      crossbar (QNSC_IP_INFO_s_bus.xlsx), or sbus_slave_port_id_width grows and
+      every ID width moves with it. Answer expected to be 1: the vendored
+      dma_axi (PR200) defines ID_BITS = 1 (vendor/freecores/dma_axi, #85);
+      stays open only until the owner confirms it in QNSC_DMA_MAS V4.

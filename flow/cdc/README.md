@@ -15,12 +15,10 @@ mechanically.
 
    | Kind of signal | Cell |
    |---|---|
-   | 1-bit level | `qnsc_sync_2ff` (two flops, reset value as a parameter) |
-   | 1-bit event | toggle at the source, `qnsc_sync_2ff`, edge detect at the destination |
+   | 1-bit level | `qnsc_sync` (`design/common/rtl/qnsc_sync.sv`: `P_STAGES` flops, 2 by default; reset value `P_RST_VALUE`) |
+   | 1-bit event | toggle at the source, `qnsc_sync`, edge detect at the destination |
    | multi-bit bus | request/acknowledge handshake with the bus held stable, or an asynchronous FIFO |
 
-   The shared cells are to be added to `design/common` by the maintainers. Until
-   then a block writes its own, named `u_sync_*`, and says so in its MAS.
 3. **A bus never crosses through per-bit synchronisers.** Its bits can arrive in
    different cycles.
 4. A path that crosses without a synchroniser, because the protocol holds it stable,
