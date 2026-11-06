@@ -295,7 +295,6 @@ upstreams:
   commit: 5661aecf96f8349987e600fe4e8a124c35e3d836
   license: MentorProvided-QNSC-Course
   used_by:
-  - design/sbus
   - design/scrc
   generator: true
   notes: 'Produces m_vlsi_apb_router from a spreadsheet. Genuinely multi-master with per-slave round-robin
