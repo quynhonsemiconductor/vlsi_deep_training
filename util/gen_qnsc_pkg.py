@@ -51,6 +51,9 @@ def check_paddr(c: dict) -> list[str]:
     if lo % master or hi - lo > master:
         bad.append(f"APB regions {lo:#x}..{hi:#x} do not fit one window of "
                    f"2**pbus_paddr_width = {master:#x} aligned to itself")
+    if meta["apb_window_base"] != lo or meta["apb_window_size"] != hi - lo:
+        bad.append(f"apb_window_base/size {meta['apb_window_base']:#x}/{meta['apb_window_size']:#x} "
+                   f"must cover exactly the APB regions {lo:#x}..{hi:#x}")
     return bad
 
 
@@ -111,6 +114,9 @@ def emit(c: dict) -> str:
     a(f"  localparam int unsigned C_APB_PADDR_WIDTH  = {meta['apb_paddr_width']};  // P_BUS -> every APB slave: offset in its window")
     a(f"  localparam int unsigned C_PBUS_PADDR_WIDTH = {meta['pbus_paddr_width']};  // AXI2APB -> P_BUS: offset in the AXI2APB window")
     a(f"  localparam logic [31:0]  C_CHIP_ID = {hexlit(meta['chip_id'])};  // SYSCSR CHIP_ID_REV, ASCII 'QSOC'")
+    a(f"  localparam logic [C_ADDR_WIDTH-1:0] C_AXI2APB_BASE = {hexlit(meta['apb_window_base'])};")
+    a(f"  localparam int unsigned C_AXI2APB_SIZE = {meta['apb_window_size']};"
+      f"  // {meta['apb_window_size'] // 1024} KiB, the populated P_BUS window (AXI_M3)")
     a("")
 
     # ---- memory map ------------------------------------------------------
