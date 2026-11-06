@@ -14,7 +14,7 @@ doc/
   BLOCKS.md          every block: directory, owner, specification
   guides/            how do I work here?          -- team how-to
   rules/             what is mandatory?           -- Naming Rule, EMACS guide (owner: Tâm)
-  reference/         what did the teacher give us? -- HAS, chip diagram
+  reference/         what did the teacher give us? -- chip and block diagrams
   figures/           img/fig_qsoc_full*           -- the root README block diagram
   present/           personal notes, never committed
 ```
@@ -23,7 +23,7 @@ doc/
 |---|---|---|
 | [`guides/`](guides) | [`GETTING_STARTED.md`](guides/GETTING_STARTED.md): setup to merged PR, for any code. [`EMACS_AUTO.md`](guides/EMACS_AUTO.md): writing a module that instantiates others | yes |
 | [`rules/`](rules) | Naming Rule (`.docx` source and `.pdf` release) and the EMACS quick guide. See [`rules/README.md`](rules/README.md) | Tâm reviews every change |
-| [`reference/`](reference) | `QSOC_HAS_Report_EN_v4_final.docx`, `QNSC_Diagram.drawio`, `VLSI_SCRC.drawio`, `VLSI_SYSDBG.drawio`: material from the teacher | no |
+| [`reference/`](reference) | `QNSC_Diagram.drawio`, `VLSI_SCRC.drawio`, `VLSI_SYSDBG.drawio`: material from the teacher. The HAS is on the team SharePoint, not here | no |
 | `figures/` | `img/fig_qsoc_full.svg` and `img/fig_qsoc_full_mono.png`, the root README block diagram | generated |
 | [`present/`](present) | Keep your own study or presentation notes here. The folder is never committed | yours |
 
