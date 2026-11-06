@@ -126,18 +126,80 @@ upstreams:
 
     '
   files:
+  - src/axi_pkg.sv
   - src/axi_xbar.sv
+  - src/axi_xbar_unmuxed.sv
+  - src/axi_demux.sv
+  - src/axi_demux_simple.sv
+  - src/axi_demux_id_counters.sv
+  - src/axi_err_slv.sv
+  - src/axi_mux.sv
+  - src/axi_id_prepend.sv
+  - src/axi_multicut.sv
+  - src/axi_cut.sv
+  - src/axi_atop_filter.sv
+  - src/axi_burst_splitter.sv
+  - src/axi_burst_splitter_gran.sv
+  - src/axi_intf.sv
   - src/axi_to_axi_lite.sv
   - src/axi_lite_to_apb.sv
   - src/axi_from_mem.sv
   - src/axi_lite_from_mem.sv
   - src/axi_lite_to_axi.sv
+  - include/axi/typedef.svh
+  - include/axi/assign.svh
   notes: 'axi_xbar is fully connected -- every slave port reaches every master port through one shared
     address map -- which is what lets SYSDBG''s master read ROM. Each slave port has a private decode-error
     slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi; not used by SYSDBG
-    since its V3.0.
+    since its V3.0. src/axi_pkg.sv is listed too: every other file in this entry imports it
+    (axi_pkg::resp_t, cache_t, prot_t, ...) but it was missing from the files list and the vendored tree.
+    design/bus (S_BUS) also draws in what axi_xbar pulls in: axi_xbar_unmuxed (one cc_addr_decode pair and
+    one axi_demux per slave port, axi_multicut or axi_err_slv for every slave/master pair), axi_demux,
+    axi_demux_simple and axi_demux_id_counters (the per-ID in-flight counters), axi_mux and axi_id_prepend
+    (the per-master-port mux that widens the ID by the slave-port index), axi_err_slv (the DECERR responder),
+    axi_multicut and axi_cut, and axi_atop_filter and axi_burst_splitter(_gran), which axi_to_axi_lite
+    instantiates. axi_intf.sv is vendored even though nothing here instantiates it: axi_mux.sv and
+    axi_lite_to_axi.sv each bundle an interface-based _intf sibling module in the same file that refers to
+    the AXI_BUS and AXI_LITE interfaces axi_intf.sv defines. include/axi/typedef.svh and assign.svh are the
+    struct typedef and assign macros qnsc_s_bus_pkg uses. Read from the pinned commit''s source.
 
     '
+- name: pulp-platform/common_cells
+  url: https://github.com/pulp-platform/common_cells
+  commit: db42769334b4589b4b3fc671b34513bdb98be565
+  license: SHL-0.51
+  used_by:
+  - design/bus
+  partial: true
+  notes: 'Dependency of pulp-platform/axi (axi_xbar, axi_mux, axi_to_axi_lite), vendored at the exact commit
+    axi''s own Bender.lock pins for common_cells at 70b8e54f, not at a newer common_cells release: axi at
+    that commit calls cc_spill_register and cc_rr_arb_tree under the pre-rename cc_ naming scheme, so a newer,
+    unprefixed common_cells tree does not match. Taken for design/bus: cc_addr_decode and cc_addr_decode_dync
+    (the crossbar''s address decoder), cc_rr_arb_tree with cc_lzc and cc_pkg (the mux arbiter), cc_spill_register
+    with cc_spill_register_flushable, cc_fifo, cc_counter and cc_delta_counter (axi_err_slv and the demux ID
+    counters), cc_id_queue and cc_onehot_to_bin (axi_burst_splitter), cc_stream_register (axi_atop_filter) and
+    cc_fall_through_register. include/common_cells/registers.svh unconditionally includes
+    deprecated/registers.svh for legacy macro aliases, so both are vendored, together with assertions.svh.
+
+    '
+  files:
+  - src/cc_pkg.sv
+  - src/cc_lzc.sv
+  - src/cc_fifo.sv
+  - src/cc_spill_register_flushable.sv
+  - src/cc_spill_register.sv
+  - src/cc_rr_arb_tree.sv
+  - src/cc_addr_decode.sv
+  - src/cc_addr_decode_dync.sv
+  - src/cc_counter.sv
+  - src/cc_delta_counter.sv
+  - src/cc_id_queue.sv
+  - src/cc_onehot_to_bin.sv
+  - src/cc_stream_register.sv
+  - src/cc_fall_through_register.sv
+  - include/common_cells/assertions.svh
+  - include/common_cells/registers.svh
+  - include/common_cells/deprecated/registers.svh
 - name: pulp-platform/riscv-dbg
   url: https://github.com/pulp-platform/riscv-dbg
   commit: 643607e19df3435cfd77cc56143e2637f5900a6e
@@ -168,7 +230,7 @@ upstreams:
     1-bit AWLOCK; ID_BITS = 1), so the wrapper adapts it to the AXI4 S_BUS: WID dropped, AxLEN zero-extended,
     BID/RID stripped of the 2-bit master index. APB3 register interface, paddr 13 bits, no PSTRB (word
     writes only). pclken tied 1 (one clock). INT is a single level (the 32-bit
-    build's port is 1 bit, dma_axi32.v:47), cleared by an INT_CLEAR write (TRM 5.6);
+    build''s port is 1 bit, dma_axi32.v:47), cleared by an INT_CLEAR write (TRM 5.6);
     idle follows the TRM power-down sequence.'
   files:
   - README.txt

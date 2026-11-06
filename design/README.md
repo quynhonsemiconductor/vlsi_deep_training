@@ -330,7 +330,7 @@ Each finding starts with the rule number of the document. The usual ones:
 | `3.3/3.4 bus` | `i_axi_s_0_aw_id`, `i_paddr`, `o_axi_req` | `i_bus_axi_s_0_aw_id`, `i_bus_apb_paddr`, `o_bus_axi_req` (a struct inside a block) |
 | `2.3 signal` | `logic a, b;`, `axi_pkg::resp_t resp;` | `r_` if a flop, `w_` if combinational, `mem_` if an array |
 | `2.6 type` | `t_state`, `{IDLE, BUSY}` | `state_t`, `{S_IDLE, S_BUSY}` |
-| `2.1 module` (package) | `package s_bus_pkg` | `qnsc_s_bus_pkg`, and rename the file |
+| `2.1 module` (package) | `package s_bus_pkg` | `qnsc_sbus_pkg`, and rename the file |
 | `2.1 module` (chip top) | `m_qnsc_top` outside `design/top/rtl/` | only the chip top uses that name |
 | `2.7 file` | two modules in one file, or `foo.sv` holding `bar` | one per file; the file is the module name |
 | `1.5 vocabulary` | `o_irq_x`, `w_clock_en` | `o_int_x`, `w_clk_en` |

@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import module_rules as mr  # noqa: E402
 
-INTEGRATION = {"top", "bus", "intmap", "iomux", "scrc"}
+INTEGRATION = {"top", "sbus", "intmap", "iomux", "scrc"}
 
 # (name, block, source, expected rules)
 CASES = [
@@ -47,8 +47,8 @@ CASES = [
      "module m_qnsc_wrap_cpu (input axi_pkg::req_t i_req); endmodule", ["FLAT-PORT"]),
     ("in-house block top is a boundary too", "sysdbg",
      "module m_qnsc_sysdbg (input logic [W-1:0] i_a); endmodule", ["FLAT-PORT"]),
-    ("qnsc_pkg width in an integration block", "bus",
-     "module m_qnsc_wrap_bus (input logic [qnsc_pkg::C_N-1:0] i_a); endmodule", []),
+    ("qnsc_pkg width in an integration block", "sbus",
+     "module m_qnsc_wrap_sbus (input logic [qnsc_pkg::C_N-1:0] i_a); endmodule", []),
     ("internal wire of the IP's struct type accepted", "cpu",
      "module m_qnsc_wrap_cpu (input logic i_a);\n  qnsc_cpu2axi_pkg::req_t w_req;\nendmodule", []),
     ("a module inside the block is not its boundary", "cpu",
