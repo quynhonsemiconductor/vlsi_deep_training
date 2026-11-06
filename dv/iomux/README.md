@@ -7,12 +7,14 @@ simulation runs every test in `tests/`, in order; each prints `iomux_NNN ok: ...
 The per-pad checks (`t_expect_pad`, `t_expect_idle`) are generated with the RTL
 from the same table, `util/gen/iomux/iomux_pads.yml`, into
 `util/gen/iomux/iomux_expect.svh` (`tb.f` adds the include path). They state the
-table directly (pad k using b0 or b1: A is this signal, OE that one, IE, Y
-reaches this input), while the RTL implements it as an `if` per pad.
+table directly (pad k using code b00, b01 or b10: A is this signal, OE that
+one, IE, Y reaches this input), while the RTL implements it as a `case` per pad.
+An unassigned code (b11, or b10 outside PIN23-26; `f_max_code` in the
+testbench) is checked as OE = 0, IE = 0.
 
 | Test | Covered |
 |---|---|
-| `iomux_001` | IOMUX_SEL = 0 (reset): every muxed pad on b0, fixed pads, idle values |
-| `iomux_002` | both functions of every pad (A, OE, IE, Y, idle values): all 1, each bit alone, 40 random selects |
-| `iomux_003` | the SYSCSR JTAG lock (`o_iomux_sel[4:0]` = 0): JTAG on PIN5-9, other pads free; JTAG idle values (TCK 0, TMS 1, TDI 1, TRSTN 0) |
-| `iomux_004` | by name, not through the table: I2C open drain, IE of output-only pads, UART1 on PIN19/20 (RX idle 1), reserved PIN12 b1, fixed TIM_EXT0 on PIN33 |
+| `iomux_001` | IOMUX_SEL = 0 (reset): every muxed pad on b00, fixed pads, idle values |
+| `iomux_002` | every assigned code of every pad (A, OE, IE, Y, idle values): all b01, b10 on PIN23-26, each field alone on each code, 40 random assigned selects |
+| `iomux_003` | unassigned codes: all b11, each unassigned code of each field alone, 40 fully random selects; PIN11 b11 keeps UART0 RX at idle 1 |
+| `iomux_004` | by name, not through the table: I2C open drain, IE of output-only pads, UART1 on PIN19/20 (RX idle 1), TIM_EXT0 on PIN33, SPID on PIN23-26 b10 (MISO enable, CSB idle 1) |

@@ -1,13 +1,24 @@
-// iomux_003 -- what SYSCSR delivers while jtag_lock = 1 (o_iomux_sel[4:0] = 0,
-// the other bits as software wrote them): PIN5-9 carry JTAG, the other pads
-// follow their select. Then the JTAG idle values when PIN5-9 are GPIO: TCK = 0,
-// TMS = 1, TDI = 1, TRSTN = 0 (TAP held in reset).
-repeat (10) begin
-  i_iomux_sel = 24'($urandom) & ~24'h1F;
+// iomux_003 -- unassigned codes (b11 on every field, b10 outside PIN23-26): the
+// pad has no driver and no receiver (OE = 0, IE = 0), and the IP input it would
+// feed holds its idle value. All fields on b11, then each unassigned code of
+// each field alone, then fully random selects (assigned and unassigned mixed).
+t_set_all(2'b11);
+t_check_all(4);
+for (int f = 0; f < C_N_FIELD; f++)
+  for (int unsigned c = f_max_code(f) + 1; c <= 3; c++) begin
+    t_set_all(2'b00);
+    t_set_field(f, 2'(c));
+    t_check_all(2);
+  end
+repeat (40) begin
+  i_iomux_sel = {12'($urandom), $urandom};
   t_check_all(2);
 end
-i_iomux_sel = 24'h1F; #1;
-t_chk(o_jtag_tck === 1'b0 && o_jtag_tms === 1'b1 && o_jtag_tdi === 1'b1 && o_jtag_trst_n === 1'b0,
-      "iomux_003: JTAG idle values while PIN5-9 are GPIO");
-t_set_all(1'b0);
-$display("iomux_003 ok: JTAG on PIN5-9 under the SYSCSR lock, JTAG idle values");
+// by name: PIN11 (field 1) unassigned, pad low, UART0 RX still reads idle 1
+t_set_all(2'b00);
+t_set_field(1, 2'b11);
+i_pad_in[6] = 1'b0; #1;
+t_chk(o_pad_oe[6] === 1'b0 && o_pad_ie[6] === 1'b0 && o_uart_0_rx === 1'b1,
+      "iomux_003: PIN11 b11 Hi-Z, UART0 RX idle 1");
+t_set_all(2'b00);
+$display("iomux_003 ok: unassigned codes give Hi-Z and idle IP inputs");

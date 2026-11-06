@@ -58,16 +58,35 @@ module tb_iomux;
     #1;
   endtask
 
-  // Check every pad against the function it must use, and every unselected IP
-  // input against its idle value, for n random stimuli.
+  // Highest assigned code of select field f (Pad List v4): fields 10-13
+  // (PIN23-26) have b10 (SPID), the others b00 and b01 only. A code above it is
+  // unassigned.
+  function automatic logic [1:0] f_max_code(input int f);
+    return (f >= 10 && f <= 13) ? 2'b10 : 2'b01;
+  endfunction
+
+  // Check every pad against the function it must use (an unassigned code: no
+  // driver, no receiver), and every unselected IP input against its idle value,
+  // for n random stimuli.
   task automatic t_check_all(input int n);
     #1;
     f_update_eff();
     repeat (n) begin
       t_drive_random();
-      for (int k = 0; k < C_N_PAD; k++) t_expect_pad(k, r_sel_eff[k]);
+      for (int k = 0; k < C_N_PAD; k++)
+        if (C_SEL[k] >= 0 && r_sel_eff[k] > f_max_code(C_SEL[k]))
+          t_chk(o_pad_oe[k] === 1'b0 && o_pad_ie[k] === 1'b0,
+                $sformatf("PIN%0d code %b unassigned: OE = 0, IE = 0", C_PIN[k], r_sel_eff[k]));
+        else
+          t_expect_pad(k, r_sel_eff[k]);
       t_expect_idle();
     end
+  endtask
+
+  // every muxed pad on a random assigned code
+  task automatic t_set_random_valid();
+    for (int f = 0; f < C_N_FIELD; f++)
+      i_iomux_sel[2 * f +: 2] = 2'($urandom_range(0, 32'(f_max_code(f))));
   endtask
 
   // every muxed pad on code v
