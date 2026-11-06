@@ -1,0 +1,10 @@
+csrc/
+simv
+simv.daidir/
+*.log
+*.out
+*.key
+*.fsdb
+vc_hdrs.h
+novas*
+verdiLog/
