@@ -16,9 +16,8 @@
 //   - APB_ADDR_WIDTH = 14: the offset inside the 16 KiB APB window. apb_i2c
 //     decodes PADDR[5:2] only (apb_i2c.sv:65), so its six registers alias
 //     every 64 bytes across the window.
-//   - PSTRB and PPROT: apb_i2c has neither. The wrapper keeps both ports and
-//     leaves them unconnected (APB slave conventions, design/README.md): a
-//     byte or halfword store writes the whole register.
+//   - PSTRB and PPROT: apb_i2c has neither, and the wrapper has no such port:
+//     a byte or halfword store writes the whole register.
 //   - PREADY is 1 and PSLVERR is 0 inside apb_i2c: passed through.
 //   - SCL and SDA are open drain: the IP drives scl_pad_o = sda_pad_o = 0
 //     (i2c_master_bit_ctrl.sv:541-542) and releases the line with padoen_o,
@@ -29,12 +28,10 @@
 //     (cSCL/cSDA, i2c_master_bit_ctrl.sv:239-240): the wrapper adds none.
 //   - interrupt_o is a flop, a level held until CMD.IACK (apb_i2c.sv:183, 193).
 //
-// Ports declared by hand. AUTOINPUT/AUTOOUTPUT declare a port only from an
-// instance pin:
+// Ports declared by hand. AUTOOUTPUT declares a port only from an instance pin:
 //   - o_pad_i2c_scl_oe, o_pad_i2c_sda_oe: driven by the inverters, not by a pin.
-//   - i_bus_apb_pstrb, i_bus_apb_pprot: apb_i2c has no such pin. They are the
-//     last ports, so this file stays valid SystemVerilog before expansion; they
-//     are waived as unused in design/i2c/waivers.vlt.
+//     They are the last ports, after the AUTO sections, so this file stays
+//     valid SystemVerilog before and after expansion (no trailing comma).
 
 module m_qnsc_wrap_i2c
 (
@@ -78,8 +75,6 @@ input logic             i_pad_i2c_sda,          // To u_apb_i2c of apb_i2c.v
 output logic            o_pad_i2c_scl,          // From u_apb_i2c of apb_i2c.v
 output logic            o_pad_i2c_sda,          // From u_apb_i2c of apb_i2c.v
 // End of automatics
-output logic            o_pad_i2c_scl_oe,       // 1 = pull SCL low, 0 = Hi-Z
-output logic            o_pad_i2c_sda_oe,       // 1 = pull SDA low, 0 = Hi-Z
 
 //---------------------------------------------------------------
 // Interrupt, to INTMAP i_int_i2c: level
@@ -97,10 +92,10 @@ output logic            o_int_i2c,              // From u_apb_i2c of apb_i2c.v
 /*AUTOOUTPUT*/
 
 //---------------------------------------------------------------
-// APB fields apb_i2c does not have: declared by hand, not connected
+// PAD output enables, to IO MUX: declared by hand, driven by the inverters
 //---------------------------------------------------------------
-input  logic [3:0]      i_bus_apb_pstrb,        // not used: a store writes the whole register
-input  logic [2:0]      i_bus_apb_pprot         // not used
+output logic            o_pad_i2c_scl_oe,       // 1 = pull SCL low, 0 = Hi-Z
+output logic            o_pad_i2c_sda_oe        // 1 = pull SDA low, 0 = Hi-Z
 );
 
 /*AUTOWIRE*/
