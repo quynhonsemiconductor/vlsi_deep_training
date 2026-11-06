@@ -1,0 +1,6 @@
+`verilator_config
+// =============================================================================
+// Lint waivers owned by the iomux block (QNSC_IOMUX_MAS).
+// =============================================================================
+
+// none: rtl/m_qnsc_iomux.sv lints clean.
