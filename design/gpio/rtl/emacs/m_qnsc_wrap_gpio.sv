@@ -32,7 +32,7 @@ input logic             i_rst_n_peri,           // To u_apb_gpio of apb_gpio.v
 //---------------------------------------------------------------
 /*AUTOINPUT("^i_bus_apb")*/
 // Beginning of automatic inputs (from unused autoinst inputs)
-input logic [11:0]      i_bus_apb_paddr,        // To u_apb_gpio of apb_gpio.v
+input logic [13:0]      i_bus_apb_paddr,        // To u_apb_gpio of apb_gpio.v
 input logic             i_bus_apb_penable,      // To u_apb_gpio of apb_gpio.v
 input logic             i_bus_apb_psel,         // To u_apb_gpio of apb_gpio.v
 input logic [31:0]      i_bus_apb_pwdata,       // To u_apb_gpio of apb_gpio.v
@@ -133,7 +133,7 @@ output logic            o_int_gpio             // From u_apb_gpio of apb_gpio.v
 );
 */
 apb_gpio #(
-  .APB_ADDR_WIDTH (12), // contract: meta.apb_paddr_width
+  .APB_ADDR_WIDTH (14), // contract: meta.apb_paddr_width
   .PAD_NUM        (8),
   .NBIT_PADCFG    (4)
 ) u_apb_gpio (/*AUTOINST*/
@@ -150,7 +150,7 @@ apb_gpio #(
               .HCLK                     (i_clk_peri),            // Templated
               .HRESETn                  (i_rst_n_peri),          // Templated
               .dft_cg_enable_i          (1'b0),                  // Templated
-              .PADDR                    (i_bus_apb_paddr[11:0]), // Templated
+              .PADDR                    (i_bus_apb_paddr[13:0]), // Templated
               .PWDATA                   (i_bus_apb_pwdata[31:0]), // Templated
               .PWRITE                   (i_bus_apb_pwrite),      // Templated
               .PSEL                     (i_bus_apb_psel),        // Templated

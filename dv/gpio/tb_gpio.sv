@@ -14,7 +14,7 @@ module tb_gpio;
 
   logic        clk;
   logic        rst_n;
-  logic [11:0] paddr;
+  logic [13:0] paddr;  // contract: meta.apb_paddr_width
   logic        psel;
   logic        penable;
   logic        pwrite;
@@ -61,7 +61,7 @@ module tb_gpio;
   endtask
 
   task automatic apb_write(
-    input logic [11:0] addr,
+    input logic [13:0] addr,
     input logic [31:0] data
   );
     begin
@@ -86,7 +86,7 @@ module tb_gpio;
   endtask
 
   task automatic apb_read(
-    input  logic [11:0] addr,
+    input  logic [13:0] addr,
     output logic [31:0] data
   );
     begin

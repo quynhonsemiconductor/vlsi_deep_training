@@ -106,7 +106,7 @@ module m_qnsc_wrap_gpio
 );
 */
 apb_gpio #(
-  .APB_ADDR_WIDTH (12), // contract: meta.apb_paddr_width
+  .APB_ADDR_WIDTH (14), // contract: meta.apb_paddr_width
   .PAD_NUM        (8),
   .NBIT_PADCFG    (4)
 ) u_apb_gpio (/*AUTOINST*/);
