@@ -1,0 +1,17 @@
+#!/bin/tcsh
+# Compile the rom block with VCS, from this directory, on a compute node of the
+# training server (after: module load synopsys/vcs/W-2024.09-SP1).
+#   cd design/rom/vcs ; ./run_vcs
+# Read comp.log: "Error-" must be 0, and every "Lint-" on our own files.
+# Schematic: verdi -dbdir simv.daidir &
+
+setenv DESIGN m_qnsc_wrap_rom
+
+vcs -sverilog +vcs+lic+wait \
+    -timescale=1ns/1ps \
+    -F filelist.f \
+    -top $DESIGN \
+    -debug_access -kdb \
+    +error+100 \
+    +lint=all \
+    -l comp.log

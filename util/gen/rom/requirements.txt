@@ -1,0 +1,1 @@
+# util/gen_rom.py uses the Python standard library only.

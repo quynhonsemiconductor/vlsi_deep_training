@@ -17,12 +17,55 @@ an application into RAM.
 
 Read-only is achieved in the wrapper: the controller's write channel is tied idle
 and a small responder answers every write with `SLVERR`. The contents are a
-generated constant module, `m_qnsc_rom_image`, not a `$readmemh` array.
+generated constant module, `m_qnsc_rom_image`, not a `$readmemh` array:
+
+```bash
+make -C design/rom/boot rtl      # boot.bin -> rom_image.hex -> util/gen/rom/{rom_image.hex, m_qnsc_rom_image.sv}
+make gen-check                   # ROM_006, in CI: util/gen/rom/gen.sh regenerates the module from the hex
+```
+
+`util/gen/rom/rom_image.hex` is the built bootloader (`QNSC_BOOT_SPEC` V3.4,
+xPack riscv-none-elf-gcc 15.2.0): 734 B image, 606 B of code after the vector
+table. Rebuilding `design/rom/boot` gives the same hex byte for byte.
+Verification (`dv/rom`) comes with the DV stage.
 
 ## The wrapper is the boundary
 
 `rtl/` holds **only code written here**. Upstream IP is listed in
 [`rom.f`](./rom.f), never copied into `rtl/`.
+
+| File | Written by | What |
+|---|---|---|
+| `rtl/emacs/m_qnsc_wrap_rom.src.sv` | hand | Wrapper source: port groups, `AUTO_TEMPLATE`s, instances |
+| `rtl/m_qnsc_wrap_rom.sv` | emacs, `make wrap BLOCK=rom` | The wrapper `rom.f` compiles; never edited by hand |
+| `rtl/m_qnsc_rom_wr_resp.sv` | hand | Write-error responder (MAS 7.3), an FSM, so not generated |
+
+Inside the wrapper: the controller (write channel tied idle, MAS Table 10-1),
+the generated image on its memory port, and the responder on AW/W/B. The
+responder's ports carry the wrapper's names, so its `AUTOINST` needs no
+template.
+
+AXI ID: 3 bits (`PARA_ID_WD`), the width of an S_BUS master port. The CPU
+issues a 1-bit ID, S_BUS is to take 1-bit slave-port IDs, and the crossbar adds
+`$clog2(3 slave ports)` = 2 bits on its master ports (S_BUS owner, 2026-11-02;
+`design/cpu/README.md` on the CPU branch). ISRAM, DSRAM and SYSDBG move to the
+same width. The contract has no key for it yet.
+
+## Compile with VCS
+
+`vcs/` holds what anyone needs to compile this block with VCS on the training
+server, by hand:
+
+```
+module load synopsys/vcs/W-2024.09-SP1
+cd design/rom/vcs
+./run_vcs                       # writes comp.log, simv, simv.daidir here (git-ignored)
+verdi -dbdir simv.daidir &      # schematic, after module load synopsys/verdi/W-2024.09-SP1
+```
+
+`vcs/filelist.f` only includes `../rom.f`, so the files and their order stay
+written once. `run_vcs` uses the flags of `flow/vcs/run_vcs`. Expected result:
+`Error-: 0`.
 
 ## What the layout is forced by
 
