@@ -1,0 +1,6 @@
+`verilator_config
+// Waivers owned by the timer block. lint_all.sh passes this file when it lints
+// timer.f. Each line has its reason.
+
+// busy_o has no consumer in QSOC and is left open (QNSC_MAS_TIMER Table 10-1).
+lint_off -rule PINCONNECTEMPTY -file "*design/timer/rtl/m_qnsc_wrap_timer.sv" -match "*busy_o*"

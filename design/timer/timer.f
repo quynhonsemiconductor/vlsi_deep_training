@@ -18,8 +18,9 @@
 # +incdir+../../vendor/<upstream>/<path>
 
 # ---- upstream IP, in compile order -----------------------------------------
-# ../../vendor/<upstream>/rtl/<leaf>.sv
-# ../../vendor/<upstream>/rtl/<top_of_ip>.sv
+../../vendor/pulp-platform/timer_unit/rtl/timer_unit_counter_presc.sv
+../../vendor/pulp-platform/timer_unit/rtl/timer_unit_counter.sv
+../../vendor/pulp-platform/timer_unit/rtl/apb_timer_unit.sv
 
 # ---- ours -------------------------------------------------------------------
-# rtl/<wrapper>.sv
+rtl/m_qnsc_wrap_timer.sv

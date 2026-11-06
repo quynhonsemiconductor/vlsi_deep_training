@@ -1,10 +1,10 @@
 # `timer` — general-purpose timer
 
-**Owner:** @Nghia-VanTrong   **Spec:** `QNSC_TIMER_MAS.md` on the team SharePoint   **DV:** [`../../dv/timer`](../../dv/timer)
+**Owner:** @Thai-PhanHan   **Spec:** `QNSC_TIMER_MAS.md` on the team SharePoint   **DV:** [`../../dv/timer`](../../dv/timer)
 
 ## What this block is
 
-Two general-purpose counters behind one APB4 slave, built on the pulp-platform
+Two general-purpose counters behind one APB3 slave, built on the pulp-platform
 `apb_timer_unit`. This directory holds **only the code we write** — the wrapper.
 The IP itself lives in [`vendor/pulp-platform/timer_unit`](../../vendor) and is
 never copied here. Read one directory, know what is ours and what is borrowed.
@@ -15,8 +15,8 @@ never copied here. Read one directory, know what is ours and what is borrowed.
 |------|--------|-------------|
 | pulp-platform/timer_unit | `apb_timer_unit`, `timer_unit_counter`, `timer_unit_counter_presc` | [`vendor/manifest.yml`](../../vendor/manifest.yml) |
 
-Two instances: **TIMER0** with `MODE_64 = 1` (64-bit via chained counters),
-**TIMER1** with `MODE_64 = 0`. Note from reading the RTL: the comparator is
+Two instances, **TIMER0** and **TIMER1**, both with `MODE_64 = 1` (64-bit via
+chained counters); each uses `irq_lo_o` only, `irq_hi_o` is 0 in 64-bit mode. Note from reading the RTL: the comparator is
 registered and *not* gated by the counter enable, and compare is on equality
 (not `>=`), so one-shot mode yields a held level, not a pulse — the wrapper is
 responsible for the pulse if the spec wants one.
