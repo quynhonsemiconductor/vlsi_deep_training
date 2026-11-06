@@ -119,7 +119,7 @@ upstreams:
   commit: 70b8e54fd460e3308e58be596ceb3566a6e3576e
   license: SHL-0.51
   used_by:
-  - design/bus
+  - design/sbus
   ownership_note: 'The BUS owner''s. SYSDBG does not instantiate from it: since QNSC_SYSDBG_MAS V3.0 its
     own AXI4 manager drives AXI_S0 directly, following the teacher''s reference design, and the block
     is fully self-designed (QNSC_SYSDBG_DECISIONS D21).
@@ -153,7 +153,7 @@ upstreams:
     slave returning 32''hBADCAB1E. axi_from_mem is axi_lite_from_mem + axi_lite_to_axi; not used by SYSDBG
     since its V3.0. src/axi_pkg.sv is listed too: every other file in this entry imports it
     (axi_pkg::resp_t, cache_t, prot_t, ...) but it was missing from the files list and the vendored tree.
-    design/bus (S_BUS) also draws in what axi_xbar pulls in: axi_xbar_unmuxed (one cc_addr_decode pair and
+    design/sbus (S_BUS) also draws in what axi_xbar pulls in: axi_xbar_unmuxed (one cc_addr_decode pair and
     one axi_demux per slave port, axi_multicut or axi_err_slv for every slave/master pair), axi_demux,
     axi_demux_simple and axi_demux_id_counters (the per-ID in-flight counters), axi_mux and axi_id_prepend
     (the per-master-port mux that widens the ID by the slave-port index), axi_err_slv (the DECERR responder),
@@ -169,12 +169,12 @@ upstreams:
   commit: db42769334b4589b4b3fc671b34513bdb98be565
   license: SHL-0.51
   used_by:
-  - design/bus
+  - design/sbus
   partial: true
   notes: 'Dependency of pulp-platform/axi (axi_xbar, axi_mux, axi_to_axi_lite), vendored at the exact commit
     axi''s own Bender.lock pins for common_cells at 70b8e54f, not at a newer common_cells release: axi at
     that commit calls cc_spill_register and cc_rr_arb_tree under the pre-rename cc_ naming scheme, so a newer,
-    unprefixed common_cells tree does not match. Taken for design/bus: cc_addr_decode and cc_addr_decode_dync
+    unprefixed common_cells tree does not match. Taken for design/sbus: cc_addr_decode and cc_addr_decode_dync
     (the crossbar''s address decoder), cc_rr_arb_tree with cc_lzc and cc_pkg (the mux arbiter), cc_spill_register
     with cc_spill_register_flushable, cc_fifo, cc_counter and cc_delta_counter (axi_err_slv and the demux ID
     counters), cc_id_queue and cc_onehot_to_bin (axi_burst_splitter), cc_stream_register (axi_atop_filter) and
@@ -295,7 +295,7 @@ upstreams:
   commit: 5661aecf96f8349987e600fe4e8a124c35e3d836
   license: MentorProvided-QNSC-Course
   used_by:
-  - design/bus
+  - design/sbus
   - design/scrc
   generator: true
   notes: 'Produces m_vlsi_apb_router from a spreadsheet. Genuinely multi-master with per-slave round-robin
