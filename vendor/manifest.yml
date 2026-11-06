@@ -93,8 +93,9 @@ upstreams:
   - rtl/timer_unit_counter.sv
   - rtl/timer_unit_counter_presc.sv
   notes: 'The repository is named timer_unit; the module QSOC instantiates is apb_timer_unit. Searching
-    for a repo named after the module returns nothing. Two instances: TIMER0 with MODE_64 = 1, TIMER1
-    with MODE_64 = 0. The comparator is registered and NOT gated by the counter enable, so one-shot mode
+    for a repo named after the module returns nothing. Two identical instances, TIMER0 and TIMER1, both
+    run in 64-bit mode (team decision 2026-11-06). MODE_64 is CFG_REG_LO[31], a register bit that resets
+    to 0 (32-bit), not a parameter: firmware sets it; only irq_lo_o is wired, irq_hi_o is left open. The comparator is registered and NOT gated by the counter enable, so one-shot mode
     yields a held level with a prescaler or ref clock, and a one-cycle pulse without (QNSC_TIMER_MAS 7.3).
     Compare is on equality, not greater-or-equal.
 

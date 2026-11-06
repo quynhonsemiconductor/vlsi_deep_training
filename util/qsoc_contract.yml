@@ -166,7 +166,10 @@ memory_map:
     size: 0x00004000
     port: APB_M7
     kind: peripheral
-    note: apb_timer_unit as two independent 32-bit timers.
+    note: >
+      apb_timer_unit in 64-bit mode, like timer_0 (team decision 2026-11-06; it
+      was two independent 32-bit timers). MODE_64 is CFG_REG_LO[31], a register
+      bit that resets to 0 (32-bit): firmware sets it on both timers before use.
   - name: uart_0
     base: 0x80020000
     size: 0x00004000
@@ -306,9 +309,10 @@ interrupts:
       shape: level
     - line: 6
       peripheral: timer_1
-      ports: [irq_lo_o, irq_hi_o]
-      sources: 2
+      ports: [irq_lo_o]
+      sources: 1
       shape: pulse; level in one-shot with prescaler or ref clock
+      note: 64-bit mode drives irq_lo_o only; irq_hi_o stays 0 (as timer_0).
     - line: 7
       peripheral: pwm
       ports: ["events_o[3:0]"]
